@@ -1,8 +1,23 @@
 {
+    "name": "prediktfi-protocol",
+    "version": "1.0.0",
+    "description": "Solana/Anchor program for PrediktFi (devnet)",
+    "main": "index.js",
     "scripts": {
+        "start": "anchor localnet",
+        "dev": "anchor test",
+        "build": "anchor build",
+        "deploy": "anchor deploy",
+        "test": "anchor test",
+        "clean": "anchor clean",
+        "setup": "yarn install && anchor build",
+        "localnet": "solana-test-validator",
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
     },
+    "keywords": ["solana", "anchor", "blockchain", "prediction", "defi"],
+    "author": "Thorsrud22",
+    "license": "MIT",
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0"
     },
