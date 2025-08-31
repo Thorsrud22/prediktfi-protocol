@@ -74,21 +74,10 @@ export default function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((id, idx) => (
-              <motion.div
-                key={id}
-                initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-                whileInView={
-                  reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }
-                }
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.4,
-                  delay: idx * 0.05,
-                  ease: "easeOut",
-                }}
-              >
+            {[1, 2, 3].map((id, idx) => {
+              const item = (
                 <Link
+                  key={id}
                   href={`/market/${id}`}
                   className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 rounded-[var(--radius)]"
                 >
@@ -101,8 +90,24 @@ export default function Home() {
                     </div>
                   </Card>
                 </Link>
-              </motion.div>
-            ))}
+              );
+              if (reduce) return item;
+              return (
+                <motion.div
+                  key={id}
+                  initial={{ opacity: 0, y: 8 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{
+                    duration: 0.4,
+                    delay: idx * 0.05,
+                    ease: "easeOut",
+                  }}
+                >
+                  {item}
+                </motion.div>
+              );
+            })}
           </div>
         </section>
         {!connected ? (

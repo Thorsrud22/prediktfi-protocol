@@ -10,7 +10,8 @@
   --surface-2: #18202b;
   --border: #223042;
   --text: #e6edf6;
-  --muted: #a9b4c2;
+  /* Increase contrast for secondary text to meet AA on dark bg */
+  --muted: #c3ceda;
   --accent: #22c55e;
   --accent-2: #8b5cf6;
   --danger: #ef4444;
@@ -159,4 +160,65 @@ body {
   .markets-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Reduced motion: disable large/continuous animations */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bg {
+    animation: none !important;
+  }
+  .skeleton::after {
+    animation: none !important;
+  }
+}
+
+/* Global interactive minima and focus visibility helpers */
+button,
+a[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+label[role="button"] {
+  min-height: 44px;
+}
+
+input,
+select,
+textarea {
+  min-height: 44px;
+}
+
+/* Baseline focus-visible outline for interactive elements */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }

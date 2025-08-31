@@ -249,7 +249,7 @@ export default function MarketDetailPage() {
             </div>
 
             <div className="mt-4 flex items-center justify-between gap-3">
-              <WalletMultiButton className="!rounded-full !bg-[color:var(--surface)] !text-[color:var(--text)] !border !border-[var(--border)] !px-4 !py-2 hover:!bg-[color:var(--surface-2)]" />
+              <WalletMultiButton className="!min-h-11 !rounded-full !bg-[color:var(--surface)] !text-[color:var(--text)] !border !border-[var(--border)] !px-4 !py-2 hover:!bg-[color:var(--surface-2)] focus:!outline-none focus:!ring-2 focus:!ring-[color:var(--accent)]/60" />
               <button
                 onClick={handlePlaceBet}
                 disabled={
@@ -259,7 +259,7 @@ export default function MarketDetailPage() {
                   !!amountError ||
                   !connected
                 }
-                className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-full bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-black shadow-token focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-11 min-w-[180px] items-center justify-center gap-2 rounded-full bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-black shadow-token focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {pending && (
                   <span
