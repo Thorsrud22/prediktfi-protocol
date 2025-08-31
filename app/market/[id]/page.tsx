@@ -262,7 +262,7 @@ export default function MarketDetailPage() {
                   !!amountError ||
                   !connected
                 }
-                className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-full bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-black shadow-token focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-primary min-w-[180px] px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {pending && (
                   <span

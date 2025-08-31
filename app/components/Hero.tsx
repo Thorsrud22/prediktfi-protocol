@@ -26,17 +26,14 @@ export default function Hero() {
 
         {/* CTAs */}
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link
-            href="/"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-[color:var(--accent)] px-5 py-2.5 text-sm font-semibold text-black shadow-token outline-none transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
-          >
+          <Link href="/" className="btn-primary min-h-11 text-sm">
             Launch App
           </Link>
           <Link
             href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
             target="_blank"
             rel="noreferrer noopener"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--border)] bg-[color:var(--surface)]/60 px-5 py-2.5 text-sm font-semibold text-[color:var(--text)]/90 outline-none transition-colors hover:bg-[color:var(--surface)] focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            className="btn-outline min-h-11 text-sm"
           >
             View Docs
           </Link>

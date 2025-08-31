@@ -220,3 +220,55 @@ body {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
+
+/* Buttons and chips using tokens */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+  padding: 0.625rem 1.25rem; /* 10px 20px */
+  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  transition: filter .15s ease, transform .15s ease, background .2s ease;
+}
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-primary:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 60%, transparent); outline-offset: 3px; }
+.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  color: color-mix(in oklab, var(--text) 90%, transparent);
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.btn-outline:hover { background: var(--surface); }
+.btn-outline:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 3px; }
+
+.chip-yes {
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  color: color-mix(in oklab, var(--text) 85%, transparent);
+}
+.chip-yes[aria-selected="true"] { background: var(--accent); color: #000; }
+.chip-yes:hover { background: var(--surface); }
+.chip-yes:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 60%, transparent); outline-offset: 3px; }
+
+.chip-no {
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  color: color-mix(in oklab, var(--text) 85%, transparent);
+}
+.chip-no[aria-selected="true"] { background: var(--danger); color: #fff; }
+.chip-no:hover { background: var(--surface); }
+.chip-no:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 3px; }
