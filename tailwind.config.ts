@@ -9,18 +9,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // New token-based colors
+        // New token keys
         bg: "var(--bg)",
-        bgSoft: "var(--bg-soft)",
+        "bg-soft": "var(--bg-soft)",
         surface: "var(--surface)",
-        surface2: "var(--surface-2)",
+        "surface-2": "var(--surface-2)",
         border: "var(--border)",
         text: "var(--text)",
         muted: "var(--muted)",
         accent: "var(--accent)",
-        accent2: "var(--accent-2)",
+        "accent-2": "var(--accent-2)",
         danger: "var(--danger)",
-        // Back-compat aliases
+        // Legacy bridges
         fg: "var(--color-fg)",
         surfaceHover: "var(--color-surface-hover)",
         borderStrong: "var(--color-border-strong)",
@@ -28,7 +28,6 @@ const config: Config = {
       },
       borderRadius: {
         md: "var(--radius)",
-        DEFAULT: "var(--radius)",
       },
       boxShadow: {
         token: "var(--shadow)",
@@ -44,7 +43,6 @@ const config: Config = {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "grad-hero": "var(--grad-hero)",
       },
     },
   },

@@ -1,8 +1,9 @@
 @import "tailwindcss";
 @import "./theme.css";
 
+/* Theme tokens (CSS variables) */
 :root {
-  /* New theme tokens */
+  /* Colors */
   --bg: #0b0f14;
   --bg-soft: #0f141b;
   --surface: #121821;
@@ -21,8 +22,14 @@
   /* Radii/Shadows */
   --radius: 16px;
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
 
-  /* Back-compat aliases (keep existing utilities/styles working) */
+/* Bridge older custom properties to new tokens to keep existing utilities working */
+:root {
+  --background: var(--bg);
+  --foreground: var(--text);
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
   --color-bg: var(--bg);
   --color-fg: var(--text);
   --color-surface: var(--surface);
@@ -33,12 +40,6 @@
   --color-success: var(--accent);
   --color-danger: var(--danger);
   --radius-md: var(--radius);
-
-  /* Legacy names preserved */
-  --background: var(--bg);
-  --foreground: var(--text);
-  --color-background: var(--bg);
-  --color-foreground: var(--text);
 }
 
 body {
