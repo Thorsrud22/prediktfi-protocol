@@ -19,7 +19,7 @@
   /* Predikt brand gradient stops (deep blue → indigo → violet) */
   --brand-1: #0C2C66; /* deep blue */
   --brand-2: #1F4FE0; /* indigo */
-  --brand-3: #6A1CE5; /* violet */
+  --brand-3: #4A1ED0; /* violet - adjusted to match reference image */
 
   /* Gradients */
   --grad-hero: radial-gradient(1200px 600px at 20% -10%, #22c55e22, transparent),
@@ -55,20 +55,20 @@ body {
   overflow-x: hidden;
 }
 
-/* App-wide gradient background (deep blue → violet), subtle and non-distracting */
+/* App-wide gradient background (deep blue → violet) matching the reference design */
 .app-bg {
   background:
-    radial-gradient(1200px 700px at 15% 5%, color-mix(in oklab, var(--brand-1) 35%, transparent), transparent 60%),
-    radial-gradient(1100px 600px at 85% 15%, color-mix(in oklab, var(--brand-3) 26%, transparent), transparent 65%),
-    linear-gradient(180deg, color-mix(in oklab, var(--brand-1) 26%, #0a0e1a) 0%, #0b1220 60%, #0a0e1a 100%);
+    radial-gradient(1500px 900px at 15% 30%, color-mix(in oklab, var(--brand-1) 45%, transparent), transparent 60%),
+    radial-gradient(1200px 800px at 85% 20%, color-mix(in oklab, var(--brand-3) 35%, transparent), transparent 70%),
+    linear-gradient(180deg, #040b21 0%, #0c1e46 50%, #12114c 100%);
 }
 
-/* Utility: Predikt hero background (subtle radial + linear gradient) */
+/* Utility: Predikt hero background matching site theme */
 .bg-hero {
   background:
-    radial-gradient(1200px 600px at 20% 10%, color-mix(in oklab, var(--brand-3) 22%, transparent), transparent 60%),
-    radial-gradient(900px 500px at 80% 20%, color-mix(in oklab, var(--brand-2) 18%, transparent), transparent 65%),
-    linear-gradient(180deg, color-mix(in oklab, var(--brand-1) 30%, #0b1220) 0%, #0b1220 60%);
+    radial-gradient(1400px 800px at 20% 0%, color-mix(in oklab, var(--brand-3) 35%, transparent), transparent 70%),
+    radial-gradient(1100px 700px at 70% 20%, color-mix(in oklab, var(--brand-1) 35%, transparent), transparent 70%),
+    linear-gradient(180deg, #040b21 0%, #0d1f44 60%, #12114c 100%);
 }
 
 /* Aurora background animation */
