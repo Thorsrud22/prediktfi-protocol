@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { SITE } from "../config/site";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isMarketPage = pathname.startsWith('/market/');
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<Element | null>(null);
 
@@ -57,11 +60,12 @@ export default function Navbar() {
   }, [open]);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-[color:var(--brand-1)]/30 backdrop-blur-md bg-transparent">
+    <nav className="sticky top-0 z-50 border-b border-[color:var(--border)] bg-transparent backdrop-blur-md">
       <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-3">
         <Link
           href="/"
-          className="font-semibold tracking-tight text-[color:var(--text)]"
+          className="logo-text"
+          aria-label={SITE.name}
         >
           {SITE.name}
         </Link>
@@ -93,14 +97,18 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--border)] bg-[color:var(--surface)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--text)]/80 hover:bg-[color:var(--surface)]/40 hover:text-[color:var(--text)] backdrop-blur-sm transition-colors focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 ${
+              isMarketPage 
+                ? "bg-[color:var(--accent)] text-black shadow-token" 
+                : "border border-[color:var(--border)] bg-transparent text-[color:var(--text)]/90"
+            }`}
           >
             Launch App
           </Link>
           {/* Mobile hamburger */}
           <button
             type="button"
-            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)]/50 bg-[color:var(--surface)]/10 text-[color:var(--text)] backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)] bg-[color:var(--surface)]/70 text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
             aria-label="Open navigation menu"
             aria-haspopup="dialog"
             aria-expanded={open}
@@ -128,14 +136,14 @@ export default function Navbar() {
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="absolute right-0 top-0 h-full w-[78%] max-w-[320px] translate-x-0 rounded-l-[var(--radius)] border-l border-[var(--brand-1)]/30 bg-[color:var(--brand-1)]/10 backdrop-blur-md p-5 shadow-[var(--shadow)]"
+            className="absolute right-0 top-0 h-full w-[78%] max-w-[320px] translate-x-0 rounded-l-[var(--radius)] border-l border-[var(--border)] bg-[color:var(--bg-soft)] p-5 shadow-[var(--shadow)]"
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="font-semibold text-[color:var(--text)]">Menu</div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)]/50 bg-[color:var(--surface)]/10 text-[color:var(--text)] backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)] bg-[color:var(--surface)]/70 text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
               >
                 <span aria-hidden>✕</span>
                 <span className="sr-only">Close</span>
@@ -171,7 +179,11 @@ export default function Navbar() {
               </a>
               <Link
                 href="/"
-                className="mt-2 inline-flex items-center justify-center rounded-full border border-[var(--border)]/50 bg-[color:var(--surface)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--text)]/80 hover:bg-[color:var(--surface)]/40 hover:text-[color:var(--text)] transition-colors focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+                className={`mt-2 inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 ${
+                  isMarketPage 
+                    ? "bg-[color:var(--accent)] text-black shadow-token" 
+                    : "border border-[color:var(--border)] bg-transparent text-[color:var(--text)]/90"
+                }`}
                 onClick={() => setOpen(false)}
                 tabIndex={0}
               >

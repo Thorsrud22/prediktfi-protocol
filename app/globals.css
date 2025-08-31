@@ -48,6 +48,33 @@
   --radius-md: var(--radius);
 }
 
+/* Brand logo styling */
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #0C2C66, #1F4FE0, #6A1CE5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: hue-rotate 10s infinite linear;
+}
+
+@keyframes hue-rotate {
+  from {
+    filter: hue-rotate(0deg);
+  }
+  to {
+    filter: hue-rotate(30deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-text {
+    animation: none;
+  }
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -211,11 +238,17 @@ body {
 /* Prefer reduced motion: disable big/background animations */
 @media (prefers-reduced-motion: reduce) {
   .aurora-bg {
-  animation: none !important;
-  display: none !important; /* render without aurora when reduced motion */
+    animation: none !important;
+    display: none !important; /* render without aurora when reduced motion */
   }
   .skeleton::after {
     animation: none !important;
+  }
+  .btn-primary:hover,
+  .btn-outline:hover,
+  .market-card:hover,
+  [class*="btn-"]:hover {
+    transform: none !important;
   }
 }
 
@@ -243,19 +276,9 @@ body {
   box-shadow: 0 1px 2px rgba(0,0,0,.2);
   transition: filter .15s ease, transform .15s ease, background .2s ease;
 }
-.btn-primary:hover { 
-  filter: brightness(1.1); 
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,.3);
-}
+.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .btn-primary:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 60%, transparent); outline-offset: 3px; }
 .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
-
-@media (prefers-reduced-motion: reduce) {
-  .btn-primary:hover {
-    transform: none;
-  }
-}
 
 .btn-outline {
   display: inline-flex;
@@ -268,20 +291,10 @@ body {
   color: color-mix(in oklab, var(--text) 90%, transparent);
   font-weight: 600;
   padding: 0.625rem 1.25rem;
-  transition: background .15s ease, border-color .15s ease, color .15s ease;
+  transition: all .15s ease;
 }
-.btn-outline:hover { 
-  background: var(--surface);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,.2);
-}
+.btn-outline:hover { background: var(--surface); border-color: var(--text-muted); transform: translateY(-1px); }
 .btn-outline:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 3px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .btn-outline:hover {
-    transform: none;
-  }
-}
 
 .chip-yes {
   border: 1px solid var(--border);

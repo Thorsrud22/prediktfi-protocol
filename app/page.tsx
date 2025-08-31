@@ -20,17 +20,16 @@ export default function Home() {
         <Hero />
 
     {/* Featured Markets */}
-    <section id="markets" className="relative z-[1] mx-auto mt-12 max-w-[1100px] px-6">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-[color:var(--text)]">
+    <section id="markets" className="relative z-[1] mx-auto mt-8 max-w-[1100px] px-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[color:var(--text)]">
               Featured Markets
             </h2>
             <Link
       href="/markets"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-[color:var(--accent)] hover:underline"
+              className="text-sm text-[color:var(--accent)] hover:underline"
             >
               View all
-              <span aria-hidden className="text-xs">→</span>
             </Link>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -65,19 +64,18 @@ export default function Home() {
                     className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 rounded-[var(--radius)]"
                   >
                     <Card>
-                      <div className="mb-2 text-base text-[color:var(--text)] font-medium leading-tight">
+                      <div className="mb-1 text-[color:var(--text)] font-medium">
                         {m.title}
                       </div>
-                      <div className="mb-4 text-sm text-[color:var(--muted)] line-clamp-2">
+                      <div className="mb-3 text-sm text-[color:var(--muted)]">
                         {m.description}
                       </div>
                       <div className="flex items-center justify-between text-xs text-[color:var(--muted)]/90">
-                        <div className="space-x-2">
-                          <span>Vol: {nf.format(m.totalVolume)} SOL</span>
-                          <span>•</span>
+                        <div>
+                          <span className="mr-3">Vol: {nf.format(m.totalVolume)} SOL</span>
                           <span>Ends: {m.endDate}</span>
                         </div>
-                        <span className="inline-flex items-center rounded-full border border-[var(--brand-2)]/30 bg-[color:var(--brand-2)]/10 px-2.5 py-0.5 text-[color:var(--text)]">
+                        <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[color:var(--surface)]/60 px-2.5 py-1 text-[color:var(--text)]/90 shadow-sm">
                           View
                         </span>
                       </div>
