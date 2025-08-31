@@ -100,7 +100,7 @@ export default function Navbar() {
             className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 ${
               isMarketPage 
                 ? "bg-[color:var(--accent)] text-black shadow-token" 
-                : "border border-[color:var(--border)] bg-transparent text-[color:var(--text)]/90"
+                : "border border-[color:var(--border)] bg-transparent text-[color:var(--text)]/80 opacity-80 hover:opacity-100"
             }`}
           >
             Launch App
@@ -182,7 +182,7 @@ export default function Navbar() {
                 className={`mt-2 inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 ${
                   isMarketPage 
                     ? "bg-[color:var(--accent)] text-black shadow-token" 
-                    : "border border-[color:var(--border)] bg-transparent text-[color:var(--text)]/90"
+                    : "border border-[color:var(--border)] bg-transparent text-[color:var(--text)]/80 opacity-80 hover:opacity-100"
                 }`}
                 onClick={() => setOpen(false)}
                 tabIndex={0}

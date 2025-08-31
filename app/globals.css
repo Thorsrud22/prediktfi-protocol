@@ -292,8 +292,14 @@ body {
   font-weight: 600;
   padding: 0.625rem 1.25rem;
   transition: all .15s ease;
+  opacity: 0.8;
 }
-.btn-outline:hover { background: var(--surface); border-color: var(--text-muted); transform: translateY(-1px); }
+.btn-outline:hover { 
+  background: var(--surface); 
+  border-color: var(--text-muted); 
+  transform: translateY(-1px); 
+  opacity: 1;
+}
 .btn-outline:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 3px; }
 
 .chip-yes {

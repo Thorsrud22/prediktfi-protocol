@@ -61,7 +61,7 @@ export default function Home() {
                 <div key={m.id}>
                   <Link
                     href={`/market/${m.id}`}
-                    className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 rounded-[var(--radius)]"
+                    className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 rounded-[var(--radius)]"
                   >
                     <Card>
                       <div className="mb-1 text-[color:var(--text)] font-medium">
@@ -75,7 +75,7 @@ export default function Home() {
                           <span className="mr-3">Vol: {nf.format(m.totalVolume)} SOL</span>
                           <span>Ends: {m.endDate}</span>
                         </div>
-                        <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[color:var(--surface)]/60 px-2.5 py-1 text-[color:var(--text)]/90 shadow-sm">
+                        <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[color:var(--surface)]/70 px-2.5 py-1 text-[color:var(--text)]/90 shadow-sm transition-all group-hover:bg-[color:var(--surface)]/90">
                           View
                         </span>
                       </div>
