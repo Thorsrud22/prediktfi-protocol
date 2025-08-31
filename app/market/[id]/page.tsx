@@ -1,19 +1,24 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, notFound } from "next/navigation";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import dynamic from "next/dynamic";
-import { getMarketById } from "../../lib/markets";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+
+import Card from "../../components/Card";
+import Segmented from "../../components/Segmented";
+import PricePill from "../../components/PricePill";
+import Stat from "../../components/Stat";
+import Skeleton from "../../components/Skeleton";
 import { useToast } from "../../components/ToastProvider";
+import { getMarketById } from "../../lib/markets";
+import { env } from "../../lib/env";
 import {
+  buildExplorerTxUrl,
+  formatLamportsToSol,
   sendSolWithMemo,
   solToLamports,
-  formatLamportsToSol,
-  buildExplorerTxUrl,
 } from "../../lib/solana";
-import { env } from "../../lib/env";
-// Removed calcFeeNet; compute fee/net in lamports for precision
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 const WalletMultiButton = dynamic(
@@ -28,438 +33,274 @@ export default function MarketDetailPage() {
   const market = useMemo(() => (id ? getMarketById(id) : undefined), [id]);
   if (!market) return notFound();
 
-  const { connected, publicKey, sendTransaction } = useWallet();
   const { connection } = useConnection();
+  const { publicKey, connected, sendTransaction } = useWallet();
   const { addToast, updateToast } = useToast();
-  const [betAmount, setBetAmount] = useState("");
+
   const [betSide, setBetSide] = useState<"yes" | "no" | null>(null);
+  const [betAmount, setBetAmount] = useState<string>("");
   const [pending, setPending] = useState(false);
   const [balanceLamports, setBalanceLamports] = useState<number | null>(null);
 
-  // Fetch wallet balance when connected/publicKey changes
+  // Load wallet balance
   useEffect(() => {
     let cancelled = false;
-    async function fetchBalance() {
+    async function run() {
       if (!publicKey) {
         setBalanceLamports(null);
         return;
       }
       try {
-        const lamports = await connection.getBalance(publicKey);
-        if (!cancelled) setBalanceLamports(lamports);
-      } catch (e) {
+        const v = await connection.getBalance(publicKey);
+        if (!cancelled) setBalanceLamports(v);
+      } catch {
         if (!cancelled) setBalanceLamports(null);
       }
     }
-    fetchBalance();
+    run();
     return () => {
       cancelled = true;
     };
-  }, [publicKey, connection]);
+  }, [connection, publicKey]);
 
   const balanceSol =
     balanceLamports != null ? balanceLamports / LAMPORTS_PER_SOL : null;
 
-  const exceedsBalance = useMemo(() => {
-    if (balanceSol == null) return false;
+  const parsedAmount = useMemo(() => {
     const s = betAmount.trim();
-    if (!s) return false;
+    if (!s) return null;
     const n = Number(s);
-    if (!Number.isFinite(n)) return false;
-    return n > balanceSol + 1e-12;
-  }, [betAmount, balanceSol]);
+    return Number.isFinite(n) ? n : null;
+  }, [betAmount]);
 
-  const amountError: string | null = useMemo(() => {
+  const amountError = useMemo((): string | null => {
     const s = betAmount.trim();
     if (!s) return "Enter an amount";
-    // Prevent scientific notation and invalid characters by relying on parsing and decimal check
     const n = Number(s);
     if (!Number.isFinite(n)) return "Enter a valid number";
     if (n < 0.01) return "Minimum is 0.01 SOL";
     const parts = s.split(".");
     if (parts[1] && parts[1].length > 9) return "Max 9 decimals";
     if (balanceSol != null && n > balanceSol + 1e-12)
-      return `Exceeds balance (${balanceSol
-        .toFixed(9)
-        .replace(/0+$/, "")
-        .replace(/\.$/, "")} SOL)`;
+      return "Insufficient balance";
     return null;
   }, [betAmount, balanceSol]);
-
-  const parsedAmount = useMemo(() => {
-    const n = Number(betAmount.trim());
-    return Number.isFinite(n) ? n : null;
-  }, [betAmount]);
 
   const feeNetStr = useMemo(() => {
     if (parsedAmount == null) return null;
     try {
-      const gross = solToLamports(parsedAmount);
-      const fee = (gross * BigInt(env.feeBps)) / 10000n;
-      const net = gross - fee;
+      const lamports = solToLamports(parsedAmount);
+      const feeLamports = (lamports * BigInt(env.feeBps)) / 10_000n;
+      const netLamports = lamports - feeLamports;
       return {
-        fee: formatLamportsToSol(fee),
-        net: formatLamportsToSol(net),
+        fee: formatLamportsToSol(feeLamports),
+        net: formatLamportsToSol(netLamports),
       };
     } catch {
       return null;
     }
   }, [parsedAmount]);
 
-  const handlePlaceBet = async () => {
-    if (env.mockTx) {
-      setPending(true);
-      const toastId = addToast({
-        title: "Sending transaction",
-        loading: true,
-        duration: 0,
-      });
-      // Simulate network
-      await new Promise((r) => setTimeout(r, 300));
-      updateToast(toastId, {
-        title: "Bet placed (simulated)",
-        description: `Placed ${betAmount} SOL on ${betSide?.toUpperCase()}.`,
-        variant: "success",
-        loading: false,
-        duration: 2500,
-      });
-      setPending(false);
+  async function handlePlaceBet() {
+    if (!market) {
+      addToast({ variant: "error", title: "Market unavailable" });
+      return;
+    }
+    if (!connected || !publicKey) {
+      addToast({ variant: "error", title: "Connect wallet to bet" });
+      return;
+    }
+    if (!betSide) {
+      addToast({ variant: "error", title: "Choose a side" });
+      return;
+    }
+    if (amountError) {
+      addToast({ variant: "error", title: amountError });
+      return;
+    }
+    const n = parsedAmount ?? 0;
+    if (n <= 0) return;
+    if (!env.protocolTreasury) {
+      addToast({ variant: "error", title: "Treasury not configured" });
       return;
     }
 
-    if (!connected || !betAmount || !betSide) {
-      addToast({
-        title: "Action needed",
-        description: !connected
-          ? "Connect your wallet to place a bet."
-          : !betSide
-          ? "Choose side before placing a bet."
-          : "Enter a valid amount before placing a bet.",
-        variant: "info",
-        duration: 4000,
-      });
-      return;
-    }
-    if (amountError) return; // Should be disabled already
+    const memo = `market:${market.id}|side:${betSide}|amount:${n}`;
+    const tid = addToast({ title: "Placing bet…", loading: true, duration: 0 });
     setPending(true);
-    // Loading toast
-    const toastId = addToast({
-      title: "Sending transaction",
-      loading: true,
-      duration: 0,
-    });
-
     try {
-      const amountSol = Number(betAmount);
-      const memo = JSON.stringify({
-        t: "bet",
-        v: 1,
-        m: market.id,
-        s: betSide,
-        feeBps: env.feeBps,
-      });
-      if (!env.protocolTreasury) {
-        throw new Error("Treasury address is not configured");
+      let signature: string;
+      if (env.mockTx) {
+        // Simulate network
+        await new Promise((r) => setTimeout(r, 800));
+        signature = `MOCK_${Date.now()}`;
+      } else {
+        signature = await sendSolWithMemo({
+          connection,
+          wallet: { publicKey, sendTransaction },
+          treasury: env.protocolTreasury,
+          amountSol: n,
+          memo,
+        });
       }
-      const signature = await sendSolWithMemo({
-        connection,
-        wallet: { publicKey: publicKey!, sendTransaction },
-        treasury: env.protocolTreasury,
-        amountSol,
-        memo,
-      });
-      const link = buildExplorerTxUrl(env.cluster, signature);
-      updateToast(toastId, {
-        title: "Bet placed",
-        description: `Placed ${betAmount} SOL on ${betSide.toUpperCase()}.`,
+      const url = buildExplorerTxUrl(env.cluster, signature);
+      updateToast(tid, {
+        loading: false,
         variant: "success",
-        loading: false,
-        linkLabel: link ? "View on Explorer" : undefined,
-        linkHref: link,
-        duration: 3000,
+        title: "Bet placed",
+        description:
+          `Your ${betSide.toUpperCase()} bet of ${n} SOL was sent` as string,
+        linkLabel: "View on Explorer",
+        linkHref: url,
+        duration: 5000,
       });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      const friendly = /reject|deny|user/i.test(msg)
-        ? "Transaction rejected"
-        : /insufficient funds|insufficient/i.test(msg)
-        ? "Insufficient funds"
-        : "Transaction failed";
-      updateToast(toastId, {
-        title: friendly,
-        description: /failed/i.test(friendly) ? undefined : msg,
+      setBetAmount("");
+      setBetSide(null);
+    } catch (e: any) {
+      updateToast(tid, {
+        loading: false,
         variant: "error",
-        loading: false,
-        duration: 3500,
+        title: "Transaction failed",
+        description: e?.message || String(e),
+        duration: 6000,
       });
+    } finally {
+      setPending(false);
     }
-    setPending(false);
-  };
+  }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #0a0e1a 0%, #1a2332 50%, #0a0e1a 100%)",
-        color: "white",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <header
-        style={{
-          padding: "1rem 2rem",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <a href="/" style={{ textDecoration: "none" }}>
-          <h1
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: "bold",
-              background: "linear-gradient(90deg, #00d4ff, #0ea5e9)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              margin: 0,
-            }}
-          >
-            PrediktFi
-          </h1>
-        </a>
-        <WalletMultiButton />
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Header */}
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold text-[color:var(--text)]">
+          {market.title}
+        </h1>
+        <p className="mt-1 text-[color:var(--muted)]">{market.description}</p>
       </header>
 
-      <main style={{ padding: "2rem", maxWidth: 1000, margin: "0 auto" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            marginBottom: "0.75rem",
-          }}
-        >
-          <h2 style={{ fontSize: "2rem", margin: 0 }}>{market.title}</h2>
-          <span
-            aria-hidden={!connected}
-            style={{
-              fontSize: "0.8rem",
-              padding: "0.15rem 0.5rem",
-              borderRadius: "9999px",
-              background: "rgba(16,185,129,0.25)",
-              border: "1px solid rgba(16,185,129,0.6)",
-              color: "#ffffff",
-              fontWeight: 700,
-              letterSpacing: 0.2,
-              opacity: connected ? 1 : 0,
-              transform: connected ? "translateY(0)" : "translateY(-2px)",
-              pointerEvents: "none",
-              transition: "opacity 140ms ease, transform 140ms ease",
-              willChange: "opacity, transform",
-            }}
-          >
-            Connected
-          </span>
-        </div>
-        <p style={{ opacity: 0.8, marginBottom: "1rem" }}>
-          {market.description}
-        </p>
-        <div style={{ fontSize: "0.9rem", opacity: 0.7, marginBottom: "2rem" }}>
-          Volume: {market.totalVolume.toLocaleString()} SOL • Ends:{" "}
-          {market.endDate}
-        </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+        {/* Bet panel */}
+        <section className="md:col-span-8">
+          <Card>
+            <h2 className="mb-4 text-lg font-semibold text-[color:var(--text)]">
+              Place your bet
+            </h2>
 
-        {/* Betting Panel */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.1)",
-            padding: "2rem",
-            borderRadius: "1rem",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            maxWidth: 520,
-          }}
-        >
-          <h3 style={{ marginBottom: "1rem" }}>🎲 Place Your Bet</h3>
-          <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
-            <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  background: "rgba(16, 185, 129, 0.2)",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid rgba(16, 185, 129, 0.4)",
-                }}
-              >
-                <div style={{ fontWeight: "bold", color: "#10b981" }}>YES</div>
-                <div style={{ fontSize: "1.1rem" }}>
-                  ${market.yesPrice.toFixed(2)}
-                </div>
-              </div>
+            {/* Current prices */}
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <PricePill
+                label="YES"
+                price={`$${market.yesPrice.toFixed(2)}`}
+                trend="up"
+              />
+              <PricePill
+                label="NO"
+                price={`$${market.noPrice.toFixed(2)}`}
+                trend="down"
+              />
             </div>
-            <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  background: "rgba(244, 63, 94, 0.2)",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid rgba(244, 63, 94, 0.4)",
-                }}
-              >
-                <div style={{ fontWeight: "bold", color: "#f43f5e" }}>NO</div>
-                <div style={{ fontSize: "1.1rem" }}>
-                  ${market.noPrice.toFixed(2)}
-                </div>
-              </div>
+
+            <label className="mb-2 block text-sm font-semibold text-[color:var(--text)]">
+              Choose side
+            </label>
+            <div className="mb-4">
+              <Segmented
+                value={betSide}
+                onChange={setBetSide}
+                disabled={pending}
+              />
             </div>
-          </div>
 
-          <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>
-            Choose Side:
-          </label>
-          <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-            <button
-              onClick={() => setBetSide("yes")}
-              style={{
-                flex: 1,
-                padding: "0.75rem",
-                borderRadius: 8,
-                border:
-                  betSide === "yes"
-                    ? "2px solid #10b981"
-                    : "1px solid rgba(16,185,129,0.4)",
-                background:
-                  betSide === "yes"
-                    ? "rgba(16,185,129,0.3)"
-                    : "rgba(16,185,129,0.1)",
-                color: "#10b981",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              YES ${market.yesPrice.toFixed(2)}
-            </button>
-            <button
-              onClick={() => setBetSide("no")}
-              style={{
-                flex: 1,
-                padding: "0.75rem",
-                borderRadius: 8,
-                border:
-                  betSide === "no"
-                    ? "2px solid #f43f5e"
-                    : "1px solid rgba(244,63,94,0.4)",
-                background:
-                  betSide === "no"
-                    ? "rgba(244,63,94,0.3)"
-                    : "rgba(244,63,94,0.1)",
-                color: "#f43f5e",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              NO ${market.noPrice.toFixed(2)}
-            </button>
-          </div>
-
-          <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>
-            Bet Amount (SOL){" "}
-            {balanceSol != null && (
-              <span style={{ fontWeight: 400, opacity: 0.8 }}>
-                • Balance:{" "}
-                {balanceSol.toFixed(9).replace(/0+$/, "").replace(/\.$/, "")}{" "}
-                SOL
-              </span>
-            )}
-          </label>
-          <input
-            type="number"
-            value={betAmount}
-            onChange={(e) => setBetAmount(e.target.value)}
-            placeholder="0.1"
-            step="0.000000001"
-            min="0.01"
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              borderRadius: 8,
-              border: amountError
-                ? "1px solid rgba(244,63,94,0.7)"
-                : "1px solid rgba(255,255,255,0.2)",
-              background: "rgba(255,255,255,0.05)",
-              color: exceedsBalance ? "rgba(255,255,255,0.55)" : "white",
-              fontSize: "1rem",
-              marginBottom: 16,
-            }}
-          />
-          {amountError && (
-            <div
-              style={{
-                color: "#f87171",
-                fontSize: "0.9rem",
-                marginTop: -8,
-                marginBottom: 16,
-              }}
-            >
-              {amountError}
-            </div>
-          )}
-
-          <button
-            onClick={handlePlaceBet}
-            disabled={!betAmount || !betSide || pending || !!amountError}
-            style={{
-              width: "100%",
-              padding: "1rem",
-              borderRadius: 8,
-              border: "none",
-              background:
-                !betAmount || !betSide || pending || !!amountError
-                  ? "rgba(255,255,255,0.1)"
-                  : "linear-gradient(90deg, #0ea5e9, #0891b2)",
-              color:
-                !betAmount || !betSide || pending || !!amountError
-                  ? "rgba(255,255,255,0.5)"
-                  : "white",
-              fontSize: "1.1rem",
-              fontWeight: 700,
-              cursor:
-                !betAmount || !betSide || pending || !!amountError
-                  ? "not-allowed"
-                  : "pointer",
-            }}
-          >
-            <span
-              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-            >
-              {pending && (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: "50%",
-                    border: "2px solid rgba(255,255,255,0.35)",
-                    borderTopColor: "#ffffff",
-                    display: "inline-block",
-                    animation: "spin 0.8s linear infinite",
-                  }}
-                />
+            <label className="mb-2 block text-sm font-semibold text-[color:var(--text)]">
+              Bet Amount (SOL)
+              {balanceSol != null && (
+                <span className="ml-1 font-normal text-[color:var(--muted)]">
+                  • Balance:{" "}
+                  {balanceSol.toFixed(9).replace(/0+$/, "").replace(/\.$/, "")}{" "}
+                  SOL
+                </span>
               )}
-              {!betAmount || !betSide
-                ? "Select Side & Amount"
-                : pending
-                ? "Processing..."
-                : `Place ${betAmount} SOL Bet${
-                    feeNetStr
-                      ? ` • Fee ${feeNetStr.fee} • Net ${feeNetStr.net}`
-                      : ""
-                  }`}
-            </span>
-          </button>
-        </div>
-      </main>
+            </label>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={betAmount}
+              onChange={(e) => setBetAmount(e.target.value)}
+              placeholder="0.10"
+              step="0.000000001"
+              min={0.01}
+              className={`w-full rounded-[var(--radius)] border bg-[color:var(--surface-2)] px-4 py-2 text-[color:var(--text)] outline-none focus-visible:ring-2 ${
+                amountError ? "border-red-400" : "border-[var(--border)]"
+              }`}
+            />
+            {amountError && (
+              <div className="mt-2 text-sm text-red-400">{amountError}</div>
+            )}
+
+            <div className="mt-3 text-sm text-[color:var(--muted)]">
+              Fee {env.feeBps} bps.
+              {feeNetStr && (
+                <>
+                  {" "}
+                  Fee {feeNetStr.fee} • Net {feeNetStr.net}
+                </>
+              )}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <WalletMultiButton className="!rounded-full !bg-[color:var(--surface)] !text-[color:var(--text)] !border !border-[var(--border)] !px-4 !py-2 hover:!bg-[color:var(--surface-2)]" />
+              <button
+                onClick={handlePlaceBet}
+                disabled={
+                  !betAmount ||
+                  !betSide ||
+                  pending ||
+                  !!amountError ||
+                  !connected
+                }
+                className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-full bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-black shadow-token focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pending && (
+                  <span
+                    aria-hidden
+                    className="h-4 w-4 animate-spin rounded-full border-2 border-black/40 border-t-black"
+                  />
+                )}
+                {!connected
+                  ? "Connect wallet"
+                  : !betAmount || !betSide
+                  ? "Select side & amount"
+                  : pending
+                  ? "Processing..."
+                  : `Place ${betAmount} SOL bet`}
+              </button>
+            </div>
+          </Card>
+        </section>
+
+        {/* Market stats */}
+        <aside className="md:col-span-4">
+          <Card>
+            <div className="grid grid-cols-1 gap-3">
+              <Stat label="Cluster" value={env.cluster} />
+              <Stat label="Ends" value={market.endDate} />
+              <Stat
+                label="Volume"
+                value={`${market.totalVolume.toLocaleString()} SOL`}
+              />
+              <Stat
+                label="Wallet Balance"
+                value={
+                  balanceLamports == null
+                    ? "—"
+                    : `${(balanceLamports / LAMPORTS_PER_SOL).toFixed(4)} SOL`
+                }
+              />
+            </div>
+          </Card>
+        </aside>
+      </div>
     </div>
   );
 }
