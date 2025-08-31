@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import WalletContextProvider from "./components/WalletContextProvider";
+import ToastProvider from "./components/ToastProvider";
 import { SITE } from "./config/site";
 
 const geistSans = Geist({
@@ -62,7 +64,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Navbar />
-        <main className="min-h-screen">{children}</main>
+        <main className="min-h-screen">
+          <WalletContextProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </WalletContextProvider>
+        </main>
         <Footer />
       </body>
     </html>

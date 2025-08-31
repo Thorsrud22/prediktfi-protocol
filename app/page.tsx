@@ -71,7 +71,7 @@ export default function Home() {
                       </div>
                       <div className="flex items-center justify-between text-xs text-[color:var(--muted)]/90">
                         <span>
-                          Vol: {m.totalVolume.toLocaleString()} SOL
+                          Vol: {new Intl.NumberFormat('en-US').format(m.totalVolume)} SOL
                         </span>
                         <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[color:var(--surface)]/60 px-2 py-0.5 text-[color:var(--text)]/90">
                           View
@@ -131,7 +131,7 @@ export default function Home() {
                   alignItems: "center",
                 }}
               >
-                Volume: {market.totalVolume.toLocaleString()} SOL • Ends: {" "}
+                Volume: {new Intl.NumberFormat('en-US').format(market.totalVolume)} SOL • Ends: {" "}
                 {market.endDate}
               </div>
             </Link>

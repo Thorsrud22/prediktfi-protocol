@@ -290,7 +290,7 @@ export default function MarketDetailPage() {
               <Stat label="Ends" value={market.endDate} />
               <Stat
                 label="Volume"
-                value={`${market.totalVolume.toLocaleString()} SOL`}
+                value={`${new Intl.NumberFormat('en-US').format(market.totalVolume)} SOL`}
               />
               <Stat
                 label="Wallet Balance"
