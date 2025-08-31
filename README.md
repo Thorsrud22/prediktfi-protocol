@@ -118,6 +118,23 @@ The main configuration file for Anchor. Update the program ID and cluster settin
 ### Devnet Configuration
 The project is configured for Solana Devnet by default. To switch networks, update the `cluster` setting in `Anchor.toml`.
 
+### Environment variables (frontend)
+
+Copy `.env.example` to `.env.local` and adjust values:
+
+```bash
+cp .env.example .env.local
+```
+
+Required keys (public at runtime):
+- `NEXT_PUBLIC_CLUSTER` — devnet | testnet | mainnet-beta (default: devnet)
+- `NEXT_PUBLIC_PROGRAM_ID` — your deployed Anchor program ID (Base58)
+- `NEXT_PUBLIC_PROTOCOL_TREASURY` — treasury account public key (Base58)
+- `NEXT_PUBLIC_FEE_BPS` — protocol fee in basis points (default: 200 = 2%)
+- `NEXT_PUBLIC_MOCK_TX` — set `1` to enable mock/no-op transactions in UI for development (default: 1)
+
+Note: `.env.local` is ignored by git. Do not commit secrets.
+
 ## Testing
 
 Run the test suite:
