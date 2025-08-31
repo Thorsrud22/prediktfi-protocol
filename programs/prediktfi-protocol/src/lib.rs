@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use anchor_lang::prelude::*;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
@@ -6,7 +8,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod prediktfi_protocol {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
         msg!("PrediktFi Protocol initialized!");
         Ok(())
     }
@@ -25,7 +27,7 @@ pub mod prediktfi_protocol {
         market.total_yes_amount = 0;
         market.total_no_amount = 0;
         market.authority = ctx.accounts.authority.key();
-        
+
         msg!("Created prediction market: {}", market.description);
         Ok(())
     }
@@ -36,7 +38,7 @@ pub mod prediktfi_protocol {
         prediction: bool, // true = YES, false = NO
     ) -> Result<()> {
         let market = &mut ctx.accounts.market;
-        
+
         if market.is_resolved {
             return Err(ErrorCode::MarketAlreadyResolved.into());
         }
@@ -56,19 +58,16 @@ pub mod prediktfi_protocol {
         Ok(())
     }
 
-    pub fn resolve_market(
-        ctx: Context<ResolveMarket>,
-        outcome: bool,
-    ) -> Result<()> {
+    pub fn resolve_market(ctx: Context<ResolveMarket>, outcome: bool) -> Result<()> {
         let market = &mut ctx.accounts.market;
-        
+
         if market.is_resolved {
             return Err(ErrorCode::MarketAlreadyResolved.into());
         }
 
         market.is_resolved = true;
         market.outcome = Some(outcome);
-        
+
         msg!("Market resolved with outcome: {}", outcome);
         Ok(())
     }

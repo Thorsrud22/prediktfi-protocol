@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es2018",
+    "target": "ES2022",
     "lib": [
-      "es6"
+      "dom",
+      "dom.iterable",
+      "es2022"
     ],
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "noImplicitAny": false,
-    "sourceMap": true,
-    "outDir": "./dist",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -26,7 +25,9 @@
     ]
   },
   "include": [
-    "tests/**/*",
+    "**/*.ts",
+    "**/*.tsx",
+    "next-env.d.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": [
