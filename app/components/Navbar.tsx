@@ -68,17 +68,18 @@ export default function Navbar() {
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 sm:flex">
           <Link
-            href="/"
+            href="/markets"
             className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
           >
             Markets
           </Link>
-          <Link
-            href="/"
+          <a
+            href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
             className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            target="_blank" rel="noreferrer noopener"
           >
             Docs
-          </Link>
+          </a>
           <a
             href="https://github.com/Thorsrud22/prediktfi-protocol"
             target="_blank"
@@ -142,21 +143,22 @@ export default function Navbar() {
             </div>
             <nav className="flex flex-col gap-3">
               <Link
-                href="/"
+                href="/markets"
                 className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
                 onClick={() => setOpen(false)}
                 tabIndex={0}
               >
                 Markets
               </Link>
-              <Link
-                href="/"
+              <a
+                href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
                 className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
                 onClick={() => setOpen(false)}
                 tabIndex={0}
+                target="_blank" rel="noreferrer noopener"
               >
                 Docs
-              </Link>
+              </a>
               <a
                 href="https://github.com/Thorsrud22/prediktfi-protocol"
                 target="_blank"

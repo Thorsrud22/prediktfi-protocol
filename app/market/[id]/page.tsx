@@ -28,6 +28,7 @@ const WalletMultiButton = dynamic(
 );
 
 export default function MarketDetailPage() {
+  const nf = new Intl.NumberFormat("en-US");
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : (params?.id as string);
   const market = useMemo(() => (id ? getMarketById(id) : undefined), [id]);
@@ -290,7 +291,7 @@ export default function MarketDetailPage() {
               <Stat label="Ends" value={market.endDate} />
               <Stat
                 label="Volume"
-                value={`${new Intl.NumberFormat('en-US').format(market.totalVolume)} SOL`}
+                value={`${nf.format(market.totalVolume)} SOL`}
               />
               <Stat
                 label="Wallet Balance"

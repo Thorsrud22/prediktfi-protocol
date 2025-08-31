@@ -55,6 +55,14 @@ body {
   overflow-x: hidden;
 }
 
+/* App-wide gradient background (deep blue → violet), subtle and non-distracting */
+.app-bg {
+  background:
+    radial-gradient(1200px 700px at 15% 5%, color-mix(in oklab, var(--brand-1) 35%, transparent), transparent 60%),
+    radial-gradient(1100px 600px at 85% 15%, color-mix(in oklab, var(--brand-3) 26%, transparent), transparent 65%),
+    linear-gradient(180deg, color-mix(in oklab, var(--brand-1) 26%, #0a0e1a) 0%, #0b1220 60%, #0a0e1a 100%);
+}
+
 /* Utility: Predikt hero background (subtle radial + linear gradient) */
 .bg-hero {
   background:

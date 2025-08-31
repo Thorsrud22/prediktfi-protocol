@@ -10,6 +10,7 @@ import { useReducedMotion } from "framer-motion";
 
 export default function Home() {
   const reduce = useReducedMotion();
+  const nf = new Intl.NumberFormat("en-US");
 
   return (
     <div>
@@ -18,14 +19,14 @@ export default function Home() {
         {/* Hero section with slight fade-up */}
         <Hero />
 
-        {/* Featured Markets */}
-        <section className="relative z-[1] mx-auto mt-8 max-w-[1100px] px-6">
+    {/* Featured Markets */}
+    <section id="markets" className="relative z-[1] mx-auto mt-8 max-w-[1100px] px-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[color:var(--text)]">
               Featured Markets
             </h2>
             <Link
-              href="/"
+      href="/markets"
               className="text-sm text-[color:var(--accent)] hover:underline"
             >
               View all
@@ -70,9 +71,7 @@ export default function Home() {
                         {m.description}
                       </div>
                       <div className="flex items-center justify-between text-xs text-[color:var(--muted)]/90">
-                        <span>
-                          Vol: {new Intl.NumberFormat('en-US').format(m.totalVolume)} SOL
-                        </span>
+                        <span>Vol: {nf.format(m.totalVolume)} SOL</span>
                         <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[color:var(--surface)]/60 px-2 py-0.5 text-[color:var(--text)]/90">
                           View
                         </span>
@@ -85,58 +84,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Markets Grid */}
-        <div className="markets-grid" style={{ marginBottom: "2rem" }}>
-          {markets.map((market) => (
-            <Link
-              key={market.id}
-              href={`/market/${market.id}`}
-              className="market-card"
-              aria-labelledby={`market-title-${market.id}`}
-              aria-describedby={`market-desc-${market.id}`}
-            >
-              <h3
-                id={`market-title-${market.id}`}
-                style={{
-                  fontSize: "1.2rem",
-                  marginBottom: "0.75rem",
-                  color: "#ffffff",
-                  minHeight: 44, // touch target for heading area
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                {market.title}
-              </h3>
-              <p
-                id={`market-desc-${market.id}`}
-                style={{
-                  opacity: 0.7,
-                  marginBottom: "1rem",
-                  fontSize: "0.95rem",
-                  minHeight: 44, // ensure paragraph click area tall enough
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                {market.description}
-              </p>
-
-              <div
-                style={{
-                  fontSize: "0.9rem",
-                  opacity: 0.7,
-                  minHeight: 44, // touch target for footer row
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                Volume: {new Intl.NumberFormat('en-US').format(market.totalVolume)} SOL • Ends: {" "}
-                {market.endDate}
-              </div>
-            </Link>
-          ))}
-        </div>
+  {/* Full markets grid moved to /markets */}
       </main>
     </div>
   );
