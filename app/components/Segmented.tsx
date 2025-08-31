@@ -6,7 +6,7 @@ type Props = {
 
 export default function Segmented({ value, onChange, disabled }: Props) {
   const base =
-    "min-h-11 flex-1 rounded-full border text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 transition-colors";
+    "min-h-11 flex-1 rounded-full border text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 transition-colors";
   return (
     <div className="flex gap-2" role="tablist" aria-label="Choose side">
       <button

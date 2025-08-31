@@ -7,21 +7,21 @@ export default function Footer() {
           <div className="text-sm">© {year} PrediktFi</div>
           <div className="flex items-center gap-4 text-xs">
             <a
-              className="rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+              className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
               href="/"
               aria-label="Markets"
             >
               Markets
             </a>
             <a
-              className="rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+              className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
               href="/"
               aria-label="Docs"
             >
               Docs
             </a>
             <a
-              className="rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+              className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
               href="https://github.com/Thorsrud22/prediktfi-protocol"
               target="_blank"
               rel="noreferrer noopener"
@@ -33,7 +33,7 @@ export default function Footer() {
         </div>
         <div className="mt-4 flex items-center gap-3 text-xs opacity-70">
           <a
-            className="rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+            className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
             href="https://x.com"
             target="_blank"
             rel="noreferrer noopener"
@@ -41,7 +41,7 @@ export default function Footer() {
             Twitter
           </a>
           <a
-            className="rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+            className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
             href="https://discord.com"
             target="_blank"
             rel="noreferrer noopener"

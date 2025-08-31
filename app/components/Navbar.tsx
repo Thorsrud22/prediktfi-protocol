@@ -68,13 +68,13 @@ export default function Navbar() {
         <div className="hidden items-center gap-6 sm:flex">
           <Link
             href="/"
-            className="text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
           >
             Markets
           </Link>
           <Link
             href="/"
-            className="text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
           >
             Docs
           </Link>
@@ -82,7 +82,8 @@ export default function Navbar() {
             href="https://github.com/Thorsrud22/prediktfi-protocol"
             target="_blank"
             rel="noreferrer noopener"
-            className="text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            aria-label="Open GitHub in a new tab"
           >
             GitHub
           </a>
@@ -90,14 +91,14 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-full bg-[color:var(--accent)] px-4 py-2 text-sm font-semibold text-black shadow-token focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-[color:var(--accent)] px-4 py-2 text-sm font-semibold text-black shadow-token focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
           >
             Launch App
           </Link>
           {/* Mobile hamburger */}
           <button
             type="button"
-            className="sm:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border)] bg-[color:var(--surface)]/70 text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)] bg-[color:var(--surface)]/70 text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
             aria-label="Open navigation menu"
             aria-haspopup="dialog"
             aria-expanded={open}
@@ -132,7 +133,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] bg-[color:var(--surface)]/70 text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)] bg-[color:var(--surface)]/70 text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
               >
                 <span aria-hidden>✕</span>
                 <span className="sr-only">Close</span>

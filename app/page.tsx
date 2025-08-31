@@ -6,7 +6,7 @@ import Link from "next/link";
 import { markets } from "./lib/markets";
 import Hero from "./components/Hero";
 import Card from "./components/Card";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 
 // Render wallet button only on the client to prevent hydration mismatches
 const WalletMultiButtonDynamic = dynamic(
@@ -74,10 +74,9 @@ export default function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((id, idx) => {
-              const item = (
+            {[1, 2, 3].map((id) => (
+              <div key={id}>
                 <Link
-                  key={id}
                   href={`/market/${id}`}
                   className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 rounded-[var(--radius)]"
                 >
@@ -90,24 +89,8 @@ export default function Home() {
                     </div>
                   </Card>
                 </Link>
-              );
-              if (reduce) return item;
-              return (
-                <motion.div
-                  key={id}
-                  initial={{ opacity: 0, y: 8 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.4,
-                    delay: idx * 0.05,
-                    ease: "easeOut",
-                  }}
-                >
-                  {item}
-                </motion.div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </section>
         {!connected ? (
