@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import WalletContextProvider from "./components/WalletContextProvider";
-import ToastProvider from "./components/ToastProvider";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { SITE } from "./config/site";
@@ -62,14 +60,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <WalletContextProvider>
-          <Navbar />
-          <ToastProvider>{children}</ToastProvider>
-          <Footer />
-        </WalletContextProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Navbar />
+        <main className="min-h-screen">{children}</main>
+        <Footer />
       </body>
     </html>
   );
