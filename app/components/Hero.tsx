@@ -21,7 +21,7 @@ export default function Hero() {
 
         {/* Lead */}
   <p className="mt-4 max-w-2xl text-base sm:text-lg text-[color:var(--muted)]">
-          Tokenized predictions. Turning insights into assets. Built on Solana.
+          Turning insights into assets on Solana.
         </p>
 
         {/* CTAs */}

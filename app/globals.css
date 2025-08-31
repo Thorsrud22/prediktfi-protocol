@@ -19,7 +19,7 @@
   /* Predikt brand gradient stops (deep blue → indigo → violet) */
   --brand-1: #0C2C66; /* deep blue */
   --brand-2: #1F4FE0; /* indigo */
-  --brand-3: #4A1ED0; /* violet - adjusted to match reference image */
+  --brand-3: #6A1CE5; /* violet */
 
   /* Gradients */
   --grad-hero: radial-gradient(1200px 600px at 20% -10%, #22c55e22, transparent),
@@ -55,20 +55,20 @@ body {
   overflow-x: hidden;
 }
 
-/* App-wide gradient background (deep blue → violet) matching the reference design */
+/* App-wide gradient background (deep blue → violet), subtle and non-distracting */
 .app-bg {
   background:
-    radial-gradient(1500px 900px at 15% 30%, color-mix(in oklab, var(--brand-1) 45%, transparent), transparent 60%),
-    radial-gradient(1200px 800px at 85% 20%, color-mix(in oklab, var(--brand-3) 35%, transparent), transparent 70%),
-    linear-gradient(180deg, #040b21 0%, #0c1e46 50%, #12114c 100%);
+    radial-gradient(1200px 700px at 15% 5%, color-mix(in oklab, var(--brand-1) 35%, transparent), transparent 60%),
+    radial-gradient(1100px 600px at 85% 15%, color-mix(in oklab, var(--brand-3) 26%, transparent), transparent 65%),
+    linear-gradient(180deg, color-mix(in oklab, var(--brand-1) 26%, #0a0e1a) 0%, #0b1220 60%, #0a0e1a 100%);
 }
 
-/* Utility: Predikt hero background matching site theme */
+/* Utility: Predikt hero background (subtle radial + linear gradient) */
 .bg-hero {
   background:
-    radial-gradient(1400px 800px at 20% 0%, color-mix(in oklab, var(--brand-3) 35%, transparent), transparent 70%),
-    radial-gradient(1100px 700px at 70% 20%, color-mix(in oklab, var(--brand-1) 35%, transparent), transparent 70%),
-    linear-gradient(180deg, #040b21 0%, #0d1f44 60%, #12114c 100%);
+    radial-gradient(1200px 600px at 20% 10%, color-mix(in oklab, var(--brand-3) 22%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 80% 20%, color-mix(in oklab, var(--brand-2) 18%, transparent), transparent 65%),
+    linear-gradient(180deg, color-mix(in oklab, var(--brand-1) 30%, #0b1220) 0%, #0b1220 60%);
 }
 
 /* Aurora background animation */
@@ -243,9 +243,19 @@ body {
   box-shadow: 0 1px 2px rgba(0,0,0,.2);
   transition: filter .15s ease, transform .15s ease, background .2s ease;
 }
-.btn-primary:hover { filter: brightness(1.1); }
+.btn-primary:hover { 
+  filter: brightness(1.1); 
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
 .btn-primary:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 60%, transparent); outline-offset: 3px; }
 .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary:hover {
+    transform: none;
+  }
+}
 
 .btn-outline {
   display: inline-flex;
@@ -260,8 +270,18 @@ body {
   padding: 0.625rem 1.25rem;
   transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
-.btn-outline:hover { background: var(--surface); }
+.btn-outline:hover { 
+  background: var(--surface);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
 .btn-outline:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-outline:hover {
+    transform: none;
+  }
+}
 
 .chip-yes {
   border: 1px solid var(--border);

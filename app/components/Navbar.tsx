@@ -17,7 +17,7 @@ export default function Navbar() {
     const panel = panelRef.current;
     if (panel) {
       const focusables = panel.querySelectorAll<HTMLElement>(
-        "a[href], button:not([disabled]), [tabindex=\"0\"]"
+        'a[href], button:not([disabled]), [tabindex="0"]'
       );
       // Focus first focusable
       focusables[0]?.focus();
@@ -57,7 +57,7 @@ export default function Navbar() {
   }, [open]);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-[color:var(--brand-1)]/30 backdrop-blur-lg">
+    <nav className="sticky top-0 z-50 border-b border-[color:var(--brand-1)]/30 backdrop-blur-md bg-transparent">
       <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-3">
         <Link
           href="/"
@@ -93,14 +93,14 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-[color:var(--accent)] px-4 py-2 text-sm font-semibold text-black shadow-token focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--border)] bg-[color:var(--surface)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--text)]/80 hover:bg-[color:var(--surface)]/40 hover:text-[color:var(--text)] backdrop-blur-sm transition-colors focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
           >
             Launch App
           </Link>
           {/* Mobile hamburger */}
           <button
             type="button"
-            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-[color:var(--brand-1)]/30 bg-[color:var(--surface)]/50 text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)]/50 bg-[color:var(--surface)]/10 text-[color:var(--text)] backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
             aria-label="Open navigation menu"
             aria-haspopup="dialog"
             aria-expanded={open}
@@ -128,14 +128,14 @@ export default function Navbar() {
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="absolute right-0 top-0 h-full w-[78%] max-w-[320px] translate-x-0 rounded-l-[var(--radius)] border-l border-[color:var(--brand-1)]/30 bg-gradient-to-br from-[#0c1e40]/90 to-[#12114c]/90 backdrop-blur-md p-5 shadow-[var(--shadow)]"
+            className="absolute right-0 top-0 h-full w-[78%] max-w-[320px] translate-x-0 rounded-l-[var(--radius)] border-l border-[var(--brand-1)]/30 bg-[color:var(--brand-1)]/10 backdrop-blur-md p-5 shadow-[var(--shadow)]"
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="font-semibold text-[color:var(--text)]">Menu</div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[color:var(--brand-1)]/30 bg-[color:var(--surface)]/50 text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)]/50 bg-[color:var(--surface)]/10 text-[color:var(--text)] backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
               >
                 <span aria-hidden>✕</span>
                 <span className="sr-only">Close</span>
@@ -171,7 +171,7 @@ export default function Navbar() {
               </a>
               <Link
                 href="/"
-                className="mt-2 inline-flex items-center justify-center rounded-full bg-[color:var(--accent)] px-4 py-2 text-sm font-semibold text-black shadow-token focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+                className="mt-2 inline-flex items-center justify-center rounded-full border border-[var(--border)]/50 bg-[color:var(--surface)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--text)]/80 hover:bg-[color:var(--surface)]/40 hover:text-[color:var(--text)] transition-colors focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
                 onClick={() => setOpen(false)}
                 tabIndex={0}
               >

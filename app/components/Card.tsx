@@ -10,7 +10,7 @@ export default function Card({
   return (
     <div
       className={
-        "rounded-[var(--radius)] border border-[color:var(--brand-1)]/20 bg-gradient-to-br from-[#0c1e40]/50 to-[#12114c]/50 backdrop-blur-sm p-5 shadow-sm transition will-change-transform hover:-translate-y-0.5 hover:shadow-[var(--shadow)] " +
+        "rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface)]/70 p-5 shadow-sm transition will-change-transform hover:-translate-y-1 hover:shadow-[var(--shadow)] motion-reduce:hover:translate-y-0 motion-reduce:transition-shadow " +
         className
       }
     >
