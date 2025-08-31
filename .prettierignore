@@ -1,0 +1,12 @@
+# Ignore heavy and generated content
+node_modules/
+.target/
+target/
+app/.next/
+app/out/
+coverage/
+playwright-report/
+**/playwright-report/
+**/target/
+**/.turbo/
+**/.cache/
