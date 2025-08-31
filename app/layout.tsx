@@ -20,16 +20,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: `${SITE.name} - Tokenized Predictions on Solana`,
   description:
-    "Turn insights into tradable assets. Access the future of on-chain prediction markets with real speed and near zero fees.",
+    "Tokenized predictions. Turning insights into assets. Built on Solana.",
   openGraph: {
     siteName: SITE.name,
     title: `${SITE.name} - Tokenized Predictions on Solana`,
     description:
-      "Turn insights into tradable assets. Access the future of on-chain prediction markets with real speed and near zero fees.",
+      "Tokenized predictions. Turning insights into assets. Built on Solana.",
     type: "website",
   },
   twitter: {
     title: `${SITE.name} - Tokenized Predictions on Solana`,
+    description:
+      "Tokenized predictions. Turning insights into assets. Built on Solana.",
     card: "summary_large_image",
   },
 };

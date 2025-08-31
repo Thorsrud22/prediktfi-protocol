@@ -21,7 +21,7 @@ export default function Hero() {
 
         {/* Lead */}
   <p className="mt-4 max-w-2xl text-base sm:text-lg text-[color:var(--muted)]">
-          Place parimutuel bets on Solana. Real-time. On-chain.
+          Tokenized predictions. Turning insights into assets. Built on Solana.
         </p>
 
         {/* CTAs */}
