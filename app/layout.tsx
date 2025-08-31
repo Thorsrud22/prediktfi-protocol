@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import WalletContextProvider from "./components/WalletContextProvider";
@@ -18,6 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: `${SITE.name} - Tokenized Predictions on Solana`,
   description:
     "Tokenized predictions. Turning insights into assets. Built on Solana.",
@@ -27,13 +28,31 @@ export const metadata: Metadata = {
     description:
       "Tokenized predictions. Turning insights into assets. Built on Solana.",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: `${SITE.name} Open Graph Image`,
+      },
+    ],
   },
   twitter: {
     title: `${SITE.name} - Tokenized Predictions on Solana`,
     description:
       "Tokenized predictions. Turning insights into assets. Built on Solana.",
     card: "summary_large_image",
+    images: [
+      {
+        url: "/opengraph-image",
+        alt: `${SITE.name} Open Graph Image`,
+      },
+    ],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0C2C66",
 };
 
 export default function RootLayout({
