@@ -26,9 +26,6 @@ export default function Hero() {
 
         {/* CTAs */}
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/" className="btn-primary min-h-11 text-sm">
-            Launch App
-          </Link>
           <Link
             href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
             target="_blank"
