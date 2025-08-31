@@ -2,16 +2,48 @@
 @import "./theme.css";
 
 :root {
-  /* Bridge existing custom properties to tokens (no visual change) */
-  --background: var(--color-bg);
-  --foreground: var(--color-fg);
-  --color-background: var(--color-bg);
-  --color-foreground: var(--color-fg);
+  /* New theme tokens */
+  --bg: #0b0f14;
+  --bg-soft: #0f141b;
+  --surface: #121821;
+  --surface-2: #18202b;
+  --border: #223042;
+  --text: #e6edf6;
+  --muted: #a9b4c2;
+  --accent: #22c55e;
+  --accent-2: #8b5cf6;
+  --danger: #ef4444;
+
+  /* Gradients */
+  --grad-hero: radial-gradient(1200px 600px at 20% -10%, #22c55e22, transparent),
+    radial-gradient(1000px 600px at 100% 0%, #8b5cf622, transparent);
+
+  /* Radii/Shadows */
+  --radius: 16px;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+
+  /* Back-compat aliases (keep existing utilities/styles working) */
+  --color-bg: var(--bg);
+  --color-fg: var(--text);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border);
+  --color-accent: var(--accent);
+  --color-success: var(--accent);
+  --color-danger: var(--danger);
+  --radius-md: var(--radius);
+
+  /* Legacy names preserved */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
   overflow-x: hidden;
 }
