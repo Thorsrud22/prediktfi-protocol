@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0d1f;
-  --foreground: #e9ecff;
-  --color-background: #0a0d1f;
-  --color-foreground: #e9ecff;
+  --background: #0a0e1a;
+  --foreground: #e1f5fe;
+  --color-background: #0a0e1a;
+  --color-foreground: #e1f5fe;
 }
 
 body {
@@ -32,20 +32,20 @@ body {
   z-index: 0;
   background: radial-gradient(
       900px 600px at 20% 20%,
-      rgba(88, 142, 255, 0.18),
+      rgba(0, 212, 255, 0.12),
       transparent 60%
     ),
     radial-gradient(
       900px 600px at 80% 70%,
-      rgba(0, 220, 190, 0.16),
+      rgba(14, 165, 233, 0.1),
       transparent 60%
     ),
     radial-gradient(
       600px 600px at 60% 30%,
-      rgba(150, 110, 255, 0.16),
+      rgba(6, 182, 212, 0.08),
       transparent 60%
     ),
-    linear-gradient(180deg, #0a0d1f 0%, #0c1233 100%);
+    linear-gradient(180deg, #0a0e1a 0%, #1a2332 100%);
   filter: saturate(115%) blur(0.2px);
   animation: drift 22s ease-in-out infinite alternate;
 }

@@ -74,7 +74,7 @@ export default function Home() {
       style={{
         minHeight: "100vh",
         background:
-          "linear-gradient(135deg, #0a0e1a 0%, #1a2332 50%, #0a0e1a 100%)",
+          "linear-gradient(135deg, #0a0d1f 0%, #1a1d4b 50%, #0a0d1f 100%)",
         color: "white",
         fontFamily: "Arial, sans-serif",
       }}
@@ -93,7 +93,7 @@ export default function Home() {
           style={{
             fontSize: "2rem",
             fontWeight: "bold",
-            background: "linear-gradient(90deg, #00d4ff, #0ea5e9)",
+            background: "linear-gradient(90deg, #60a5fa, #a78bfa)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             margin: 0,
@@ -170,13 +170,13 @@ export default function Home() {
                   style={{
                     background:
                       selectedMarket?.id === market.id
-                        ? "rgba(0, 212, 255, 0.15)"
+                        ? "rgba(96, 165, 250, 0.2)"
                         : "rgba(255, 255, 255, 0.05)",
                     padding: "1.5rem",
                     borderRadius: "1rem",
                     border:
                       selectedMarket?.id === market.id
-                        ? "2px solid #00d4ff"
+                        ? "2px solid #60a5fa"
                         : "1px solid rgba(255, 255, 255, 0.1)",
                     cursor: "pointer",
                     transition: "all 0.3s ease",
@@ -211,13 +211,13 @@ export default function Home() {
                     <div style={{ textAlign: "center" }}>
                       <div
                         style={{
-                          background: "rgba(16, 185, 129, 0.2)",
+                          background: "rgba(34, 197, 94, 0.2)",
                           padding: "0.5rem 1rem",
                           borderRadius: "0.5rem",
-                          border: "1px solid rgba(16, 185, 129, 0.4)",
+                          border: "1px solid rgba(34, 197, 94, 0.3)",
                         }}
                       >
-                        <div style={{ fontWeight: "bold", color: "#10b981" }}>
+                        <div style={{ fontWeight: "bold", color: "#22c55e" }}>
                           YES
                         </div>
                         <div style={{ fontSize: "1.1rem" }}>
@@ -228,13 +228,13 @@ export default function Home() {
                     <div style={{ textAlign: "center" }}>
                       <div
                         style={{
-                          background: "rgba(244, 63, 94, 0.2)",
+                          background: "rgba(239, 68, 68, 0.2)",
                           padding: "0.5rem 1rem",
                           borderRadius: "0.5rem",
-                          border: "1px solid rgba(244, 63, 94, 0.4)",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
                         }}
                       >
-                        <div style={{ fontWeight: "bold", color: "#f43f5e" }}>
+                        <div style={{ fontWeight: "bold", color: "#ef4444" }}>
                           NO
                         </div>
                         <div style={{ fontSize: "1.1rem" }}>
@@ -296,13 +296,13 @@ export default function Home() {
                         borderRadius: "0.5rem",
                         border:
                           betSide === "yes"
-                            ? "2px solid #10b981"
-                            : "1px solid rgba(16, 185, 129, 0.4)",
+                            ? "2px solid #22c55e"
+                            : "1px solid rgba(34, 197, 94, 0.3)",
                         background:
                           betSide === "yes"
-                            ? "rgba(16, 185, 129, 0.3)"
-                            : "rgba(16, 185, 129, 0.1)",
-                        color: "#10b981",
+                            ? "rgba(34, 197, 94, 0.3)"
+                            : "rgba(34, 197, 94, 0.1)",
+                        color: "#22c55e",
                         fontWeight: "bold",
                         cursor: "pointer",
                       }}
@@ -317,13 +317,13 @@ export default function Home() {
                         borderRadius: "0.5rem",
                         border:
                           betSide === "no"
-                            ? "2px solid #f43f5e"
-                            : "1px solid rgba(244, 63, 94, 0.4)",
+                            ? "2px solid #ef4444"
+                            : "1px solid rgba(239, 68, 68, 0.3)",
                         background:
                           betSide === "no"
-                            ? "rgba(244, 63, 94, 0.3)"
-                            : "rgba(244, 63, 94, 0.1)",
-                        color: "#f43f5e",
+                            ? "rgba(239, 68, 68, 0.3)"
+                            : "rgba(239, 68, 68, 0.1)",
+                        color: "#ef4444",
                         fontWeight: "bold",
                         cursor: "pointer",
                       }}
@@ -373,7 +373,7 @@ export default function Home() {
                     background:
                       !betAmount || !betSide
                         ? "rgba(255, 255, 255, 0.1)"
-                        : "linear-gradient(90deg, #0ea5e9, #0891b2)",
+                        : "linear-gradient(90deg, #2563eb, #7c3aed)",
                     color:
                       !betAmount || !betSide
                         ? "rgba(255, 255, 255, 0.5)"
