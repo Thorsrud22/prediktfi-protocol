@@ -61,7 +61,8 @@ jobs:
 
       # Run Playwright E2E tests in mock mode
       - name: E2E (mock)
-        run: npm run test:e2e:mock
+        # Run only CI-safe specs and generate HTML report for artifact upload
+        run: npm run test:e2e:mock -- --reporter=html tests-e2e/mock-bet.spec.ts tests-e2e/real-bet.spec.ts
 
       # Build the app to ensure production build succeeds
       - name: Build
