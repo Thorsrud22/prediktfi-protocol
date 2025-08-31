@@ -61,3 +61,60 @@ body {
     rgba(0, 0, 0, 0.35) 100%
   );
 }
+
+/* Clickable card link focus styles */
+.market-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem; /* ensures height well above 44px */
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+  min-height: 44px; /* touch target min size */
+}
+
+.market-card:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.market-card:focus {
+  outline: none;
+}
+
+.market-card:focus-visible {
+  outline: 3px solid #0ea5e9;
+  outline-offset: 3px;
+}
+
+/* Simple spinner animation keyframes for toasts */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive markets grid: 1 col <640px, 2 cols <1024px, 3+ on large */
+.markets-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .markets-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .markets-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
