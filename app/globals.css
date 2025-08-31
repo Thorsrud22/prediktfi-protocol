@@ -16,6 +16,11 @@
   --accent-2: #8b5cf6;
   --danger: #ef4444;
 
+  /* Predikt brand gradient stops (deep blue → indigo → violet) */
+  --brand-1: #0C2C66; /* deep blue */
+  --brand-2: #1F4FE0; /* indigo */
+  --brand-3: #6A1CE5; /* violet */
+
   /* Gradients */
   --grad-hero: radial-gradient(1200px 600px at 20% -10%, #22c55e22, transparent),
     radial-gradient(1000px 600px at 100% 0%, #8b5cf622, transparent);
@@ -48,6 +53,14 @@ body {
   color: var(--text);
   font-family: var(--font-sans);
   overflow-x: hidden;
+}
+
+/* Utility: Predikt hero background (subtle radial + linear gradient) */
+.bg-hero {
+  background:
+    radial-gradient(1200px 600px at 20% 10%, color-mix(in oklab, var(--brand-3) 22%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 80% 20%, color-mix(in oklab, var(--brand-2) 18%, transparent), transparent 65%),
+    linear-gradient(180deg, color-mix(in oklab, var(--brand-1) 30%, #0b1220) 0%, #0b1220 60%);
 }
 
 /* Aurora background animation */
@@ -190,7 +203,8 @@ body {
 /* Prefer reduced motion: disable big/background animations */
 @media (prefers-reduced-motion: reduce) {
   .aurora-bg {
-    animation: none !important;
+  animation: none !important;
+  display: none !important; /* render without aurora when reduced motion */
   }
   .skeleton::after {
     animation: none !important;

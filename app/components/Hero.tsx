@@ -5,7 +5,7 @@ export default function Hero() {
   return (
     <section
       aria-label={`${SITE.name} hero`}
-      className="relative isolate overflow-hidden bg-[var(--bg)] before:content-[''] before:absolute before:inset-0 before:[background:var(--grad-hero)] before:opacity-100"
+  className="relative isolate overflow-hidden bg-hero"
     >
       <div className="relative z-[1] mx-auto max-w-[1100px] px-6 py-20 sm:py-24 md:py-28">
         {/* Badge */}
