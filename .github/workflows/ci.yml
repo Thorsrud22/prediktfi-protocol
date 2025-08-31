@@ -1,0 +1,78 @@
+# Simple CI pipeline for push and pull_request
+# - Uses Node.js 20 with npm cache
+# - Installs deps with npm ci
+# - Creates a .env.local suitable for tests (mock transactions)
+# - Runs typecheck, lint, unit tests, installs Playwright browsers, mock E2E, and build
+# - Uploads Playwright HTML report as an artifact
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup Node.js 20 and enable npm caching to speed up installs
+      - name: Setup Node.js 20 with npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Install dependencies using a clean, reproducible install
+      - name: Install dependencies (npm ci)
+        run: npm ci
+
+      # Create .env.local required for tests (mock mode on devnet)
+      - name: Create .env.local for tests
+        shell: bash
+        run: |
+          cat << 'EOF' > .env.local
+          NEXT_PUBLIC_CLUSTER=devnet
+          NEXT_PUBLIC_PROGRAM_ID=CHANGEME_PROGRAM_ID
+          NEXT_PUBLIC_PROTOCOL_TREASURY=HUCsxGDiAQdfmPe9MV52Dd6ERzwNNiu16aEKqFUQ1obN
+          NEXT_PUBLIC_FEE_BPS=200
+          NEXT_PUBLIC_MOCK_TX=1
+          EOF
+
+      # Run TypeScript type checks
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Run ESLint
+      - name: Lint
+        run: npm run lint
+
+      # Run unit tests
+      - name: Unit tests
+        run: npm test
+
+      # Install Playwright browsers and OS-level deps needed in GitHub-hosted runners
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      # Run Playwright E2E tests in mock mode
+      - name: E2E (mock)
+        run: npm run test:e2e:mock
+
+      # Build the app to ensure production build succeeds
+      - name: Build
+        run: npm run build
+
+      # Always upload the Playwright HTML report as an artifact for debugging
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
