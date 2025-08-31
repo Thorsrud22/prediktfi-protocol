@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { getMarketById } from "../../lib/markets";
 import { useToast } from "../../components/ToastProvider";
 import { getExplorerTxUrl } from "../../lib/solana";
+import { env } from "../../lib/env";
 import { LAMPORTS_PER_SOL, SystemProgram, Transaction } from "@solana/web3.js";
 
 const WalletMultiButton = dynamic(
@@ -113,7 +114,7 @@ export default function MarketDetailPage() {
       );
       const signature = await sendTransaction(tx, connection);
 
-      const link = getExplorerTxUrl(signature, "devnet");
+  const link = getExplorerTxUrl(signature, env.cluster);
       updateToast(toastId, {
         title: "Bet placed",
         description: `Placed ${betAmount} SOL on ${betSide.toUpperCase()}.`,
