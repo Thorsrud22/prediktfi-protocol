@@ -6,9 +6,15 @@ import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import dynamic from "next/dynamic";
 import { getMarketById } from "../../lib/markets";
 import { useToast } from "../../components/ToastProvider";
-import { getExplorerTxUrl } from "../../lib/solana";
+import {
+  sendSolWithMemo,
+  solToLamports,
+  formatLamportsToSol,
+  buildExplorerTxUrl,
+} from "../../lib/solana";
 import { env } from "../../lib/env";
-import { LAMPORTS_PER_SOL, SystemProgram, Transaction } from "@solana/web3.js";
+// Removed calcFeeNet; compute fee/net in lamports for precision
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 const WalletMultiButton = dynamic(
   () =>
@@ -80,7 +86,47 @@ export default function MarketDetailPage() {
     return null;
   }, [betAmount, balanceSol]);
 
+  const parsedAmount = useMemo(() => {
+    const n = Number(betAmount.trim());
+    return Number.isFinite(n) ? n : null;
+  }, [betAmount]);
+
+  const feeNetStr = useMemo(() => {
+    if (parsedAmount == null) return null;
+    try {
+      const gross = solToLamports(parsedAmount);
+      const fee = (gross * BigInt(env.feeBps)) / 10000n;
+      const net = gross - fee;
+      return {
+        fee: formatLamportsToSol(fee),
+        net: formatLamportsToSol(net),
+      };
+    } catch {
+      return null;
+    }
+  }, [parsedAmount]);
+
   const handlePlaceBet = async () => {
+    if (env.mockTx) {
+      setPending(true);
+      const toastId = addToast({
+        title: "Sending transaction",
+        loading: true,
+        duration: 0,
+      });
+      // Simulate network
+      await new Promise((r) => setTimeout(r, 300));
+      updateToast(toastId, {
+        title: "Bet placed (simulated)",
+        description: `Placed ${betAmount} SOL on ${betSide?.toUpperCase()}.`,
+        variant: "success",
+        loading: false,
+        duration: 2500,
+      });
+      setPending(false);
+      return;
+    }
+
     if (!connected || !betAmount || !betSide) {
       addToast({
         title: "Action needed",
@@ -104,17 +150,25 @@ export default function MarketDetailPage() {
     });
 
     try {
-      // Placeholder demo tx: a no-op transfer of 0 SOL to self, replace with program call
-      const tx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey!,
-          toPubkey: publicKey!,
-          lamports: 0,
-        })
-      );
-      const signature = await sendTransaction(tx, connection);
-
-  const link = getExplorerTxUrl(signature, env.cluster);
+      const amountSol = Number(betAmount);
+      const memo = JSON.stringify({
+        t: "bet",
+        v: 1,
+        m: market.id,
+        s: betSide,
+        feeBps: env.feeBps,
+      });
+      if (!env.protocolTreasury) {
+        throw new Error("Treasury address is not configured");
+      }
+      const signature = await sendSolWithMemo({
+        connection,
+        wallet: { publicKey: publicKey!, sendTransaction },
+        treasury: env.protocolTreasury,
+        amountSol,
+        memo,
+      });
+      const link = buildExplorerTxUrl(env.cluster, signature);
       updateToast(toastId, {
         title: "Bet placed",
         description: `Placed ${betAmount} SOL on ${betSide.toUpperCase()}.`,
@@ -125,11 +179,18 @@ export default function MarketDetailPage() {
         duration: 3000,
       });
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      const friendly = /reject|deny|user/i.test(msg)
+        ? "Transaction rejected"
+        : /insufficient funds|insufficient/i.test(msg)
+        ? "Insufficient funds"
+        : "Transaction failed";
       updateToast(toastId, {
-        title: "Transaction failed",
+        title: friendly,
+        description: /failed/i.test(friendly) ? undefined : msg,
         variant: "error",
         loading: false,
-        duration: 3000,
+        duration: 3500,
       });
     }
     setPending(false);
@@ -390,7 +451,11 @@ export default function MarketDetailPage() {
                 ? "Select Side & Amount"
                 : pending
                 ? "Processing..."
-                : `Place ${betAmount} SOL Bet`}
+                : `Place ${betAmount} SOL Bet${
+                    feeNetStr
+                      ? ` • Fee ${feeNetStr.fee} • Net ${feeNetStr.net}`
+                      : ""
+                  }`}
             </span>
           </button>
         </div>

@@ -19,12 +19,10 @@ export default function WalletContextProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // Read cluster from env: 'devnet' | 'testnet' | 'mainnet-beta'
+  // Read cluster from env: 'devnet' | 'mainnet-beta'
   const network =
     env.cluster === "mainnet-beta"
       ? WalletAdapterNetwork.Mainnet
-      : env.cluster === "testnet"
-      ? WalletAdapterNetwork.Testnet
       : WalletAdapterNetwork.Devnet;
 
   // You can also provide a custom RPC endpoint.
