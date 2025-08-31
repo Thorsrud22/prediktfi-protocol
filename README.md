@@ -187,7 +187,7 @@ MIT License - see LICENSE file for details.
 
 ## How to run V1 (devnet)
 
-1) Environment (.env.local)
+1. Environment (.env.local)
 
 ```bash
 NEXT_PUBLIC_CLUSTER=devnet
@@ -196,14 +196,14 @@ NEXT_PUBLIC_FEE_BPS=200
 NEXT_PUBLIC_MOCK_TX=0
 ```
 
-2) Start app
+2. Start app
 
 ```bash
 npm install
 npm run dev
 ```
 
-3) Manual flow in browser
+3. Manual flow in browser
 
 - Home → Select Wallet → connect your player wallet (ensure Devnet). If balance < 0.6 SOL, use Phantom Developer → Airdrop 1 SOL (or https://faucet.solana.com/).
 - Go to Active Markets → open the first market (/market/1).

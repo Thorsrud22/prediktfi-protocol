@@ -4,6 +4,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { markets } from "./lib/markets";
+import { SITE } from "./config/site";
 import Hero from "./components/Hero";
 import Card from "./components/Card";
 import { useReducedMotion } from "framer-motion";
@@ -51,7 +52,7 @@ export default function Home() {
             margin: 0,
           }}
         >
-          PrediktFi
+          {SITE.name}
         </h1>
         <WalletMultiButtonDynamic />
       </header>
@@ -97,7 +98,7 @@ export default function Home() {
           // Welcome Screen
           <div style={{ textAlign: "center", paddingTop: "4rem" }}>
             <h2 style={{ fontSize: "3rem", marginBottom: "1rem" }}>
-              Welcome to PrediktFi
+              Welcome to {SITE.name}
             </h2>
             <p
               style={{

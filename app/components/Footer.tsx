@@ -1,10 +1,11 @@
+import { SITE } from "../config/site";
+
 export default function Footer() {
-  const year = new Date().getFullYear();
   return (
     <footer className="border-t border-[var(--border)] bg-[color:var(--bg)] text-[color:var(--muted)]">
       <div className="mx-auto max-w-[1100px] px-6 py-8">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="text-sm">© {year} PrediktFi</div>
+          <div className="text-sm">© 2025 {SITE.name}</div>
           <div className="flex items-center gap-4 text-xs">
             <a
               className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"

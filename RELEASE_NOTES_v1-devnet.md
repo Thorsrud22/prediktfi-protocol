@@ -3,6 +3,7 @@
 This release enables real SOL bets on Devnet, transferring funds to a configured treasury address with an SPL Memo describing the bet.
 
 ## Features
+
 - Real transfer path (when `NEXT_PUBLIC_MOCK_TX=0`):
   - Sends entire bet amount (SOL) to `NEXT_PUBLIC_PROTOCOL_TREASURY` via `SystemProgram.transfer`.
   - Attaches SPL Memo (JSON): `{ "t": "bet", "v": 1, "m": <marketId>, "s": <side>, "feeBps": <bps> }`.
@@ -12,11 +13,13 @@ This release enables real SOL bets on Devnet, transferring funds to a configured
 - Accessible UI: clickable market cards, polite live-region toasts, focus handling.
 
 ## Limitations
+
 - No on-chain program logic yet (pure transfer + memo).
 - No automatic reconciliation or payout logic.
 - Explorer DOM varies; automated “To” address verification is best-effort in tests.
 
 ## Test steps (manual happy-path)
+
 1. Set `.env.local`:
    ```bash
    NEXT_PUBLIC_CLUSTER=devnet
@@ -32,9 +35,11 @@ This release enables real SOL bets on Devnet, transferring funds to a configured
 7. In Explorer: `?cluster=devnet`, "System Program: Transfer" → To = treasury, amount ≈ 0.5, SPL Memo shown.
 
 ## Scripts
+
 - Unit tests: `npm run unit`
 - E2E mock: `npm run test:e2e:mock`
 - E2E real (semi-automatic): `npm run test:e2e:real`
 
 ## Environment
+
 - Devnet only in this release. Treasury must be a valid base58 public key.

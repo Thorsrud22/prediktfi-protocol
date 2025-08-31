@@ -5,6 +5,7 @@ import WalletContextProvider from "./components/WalletContextProvider";
 import ToastProvider from "./components/ToastProvider";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import { SITE } from "./config/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,9 +18,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PrediktFi - Tokenized Predictions on Solana",
+  title: `${SITE.name} - Tokenized Predictions on Solana`,
   description:
     "Turn insights into tradable assets. Access the future of on-chain prediction markets with real speed and near zero fees.",
+  openGraph: {
+    siteName: SITE.name,
+    title: `${SITE.name} - Tokenized Predictions on Solana`,
+    description:
+      "Turn insights into tradable assets. Access the future of on-chain prediction markets with real speed and near zero fees.",
+    type: "website",
+  },
+  twitter: {
+    title: `${SITE.name} - Tokenized Predictions on Solana`,
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

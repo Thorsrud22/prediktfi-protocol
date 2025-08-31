@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SITE } from "../config/site";
 import { useEffect, useRef, useState } from "react";
 
 export default function Navbar() {
@@ -62,7 +63,7 @@ export default function Navbar() {
           href="/"
           className="font-semibold tracking-tight text-[color:var(--text)]"
         >
-          PrediktFi
+          {SITE.name}
         </Link>
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 sm:flex">

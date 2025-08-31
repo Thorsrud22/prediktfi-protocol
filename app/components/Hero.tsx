@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { SITE } from "../config/site";
 
 export default function Hero() {
   return (
-    <section className="relative isolate overflow-hidden bg-[var(--bg)] before:content-[''] before:absolute before:inset-0 before:[background:var(--grad-hero)] before:opacity-100">
+    <section
+      aria-label={`${SITE.name} hero`}
+      className="relative isolate overflow-hidden bg-[var(--bg)] before:content-[''] before:absolute before:inset-0 before:[background:var(--grad-hero)] before:opacity-100"
+    >
       <div className="relative z-[1] mx-auto max-w-[1100px] px-6 py-20 sm:py-24 md:py-28">
         {/* Badge */}
         <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[color:var(--surface)]/70 px-3 py-1 text-xs font-medium text-[color:var(--muted)] backdrop-blur-sm">
