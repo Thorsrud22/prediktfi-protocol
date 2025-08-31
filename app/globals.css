@@ -147,6 +147,14 @@ body {
   }
 }
 
+/* Utility: text gradient using accent -> accent-2 */
+.text-gradient {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 @media (min-width: 1024px) {
   .markets-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

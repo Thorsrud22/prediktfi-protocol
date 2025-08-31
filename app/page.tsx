@@ -4,6 +4,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { markets } from "./lib/markets";
+import Hero from "./components/Hero";
 
 // Render wallet button only on the client to prevent hydration mismatches
 const WalletMultiButtonDynamic = dynamic(
@@ -53,6 +54,8 @@ export default function Home() {
       </header>
 
       <main style={{ padding: "2rem" }}>
+        {/* Hero section (static, non-breaking) */}
+        <Hero />
         {!connected ? (
           // Welcome Screen
           <div style={{ textAlign: "center", paddingTop: "4rem" }}>
