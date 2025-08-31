@@ -1,0 +1,41 @@
+export default function Footer() {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="border-t border-[var(--border)] bg-[color:var(--bg)] text-[color:var(--muted)]">
+      <div className="mx-auto max-w-[1100px] px-6 py-8">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="text-sm">© {year} PrediktFi</div>
+          <div className="flex items-center gap-4 text-xs">
+            <a
+              className="hover:text-[color:var(--text)]"
+              href="/"
+              aria-label="Markets"
+            >
+              Markets
+            </a>
+            <a
+              className="hover:text-[color:var(--text)]"
+              href="/"
+              aria-label="Docs"
+            >
+              Docs
+            </a>
+            <a
+              className="hover:text-[color:var(--text)]"
+              href="https://github.com/Thorsrud22/prediktfi-protocol"
+              target="_blank"
+              rel="noreferrer noopener"
+              aria-label="GitHub"
+            >
+              GitHub
+            </a>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-3 text-xs opacity-70">
+          <span>Twitter</span>
+          <span>Discord</span>
+        </div>
+      </div>
+    </footer>
+  );
+}

@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { markets } from "./lib/markets";
 import Hero from "./components/Hero";
+import Card from "./components/Card";
+import { motion, useReducedMotion } from "framer-motion";
 
 // Render wallet button only on the client to prevent hydration mismatches
 const WalletMultiButtonDynamic = dynamic(
@@ -16,6 +18,7 @@ const WalletMultiButtonDynamic = dynamic(
 // Markets are now imported from app/lib/markets
 
 export default function Home() {
+  const reduce = useReducedMotion();
   const { connected, publicKey } = useWallet();
 
   return (
@@ -54,8 +57,54 @@ export default function Home() {
       </header>
 
       <main style={{ padding: "2rem" }}>
-        {/* Hero section (static, non-breaking) */}
+        {/* Hero section with slight fade-up */}
         <Hero />
+
+        {/* Featured Markets */}
+        <section className="relative z-[1] mx-auto mt-8 max-w-[1100px] px-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[color:var(--text)]">
+              Featured Markets
+            </h2>
+            <Link
+              href="/"
+              className="text-sm text-[color:var(--accent)] hover:underline"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((id, idx) => (
+              <motion.div
+                key={id}
+                initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                whileInView={
+                  reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }
+                }
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{
+                  duration: 0.4,
+                  delay: idx * 0.05,
+                  ease: "easeOut",
+                }}
+              >
+                <Link
+                  href={`/market/${id}`}
+                  className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 rounded-[var(--radius)]"
+                >
+                  <Card>
+                    <div className="mb-2 text-sm text-[color:var(--muted)]">
+                      Market #{id}
+                    </div>
+                    <div className="text-[color:var(--text)]">
+                      Sample market headline {id}
+                    </div>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </section>
         {!connected ? (
           // Welcome Screen
           <div style={{ textAlign: "center", paddingTop: "4rem" }}>
