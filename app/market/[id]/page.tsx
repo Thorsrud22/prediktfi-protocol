@@ -17,8 +17,8 @@ import {
   buildExplorerTxUrl,
   formatLamportsToSol,
   solToLamports,
+  placeBet,
 } from "../../lib/solana";
-import { sendSolWithMemo } from "../../lib/solana.server";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 const WalletMultiButton = dynamic(
@@ -121,40 +121,43 @@ export default function MarketDetailPage() {
     }
     const n = parsedAmount ?? 0;
     if (n <= 0) return;
-    if (!env.protocolTreasury) {
-      addToast({ variant: "error", title: "Treasury not configured" });
-      return;
-    }
 
-    const memo = `market:${market.id}|side:${betSide}|amount:${n}`;
-    const tid = addToast({ title: "Placing bet…", loading: true, duration: 0 });
+    const tid = addToast({ 
+      title: "Placing bet…", 
+      loading: true, 
+      duration: 0 
+    });
     setPending(true);
+
     try {
-      let signature: string;
+      const signature = await placeBet({
+        marketId: market.id,
+        side: betSide,
+        amountSol: n
+      });
+
+      // Show success toast with appropriate messaging for mock vs real
       if (env.mockTx) {
-        // Simulate network
-        await new Promise((r) => setTimeout(r, 800));
-        signature = `MOCK_${Date.now()}`;
+        updateToast(tid, {
+          loading: false,
+          variant: "success",
+          title: "Bet placed (simulated)",
+          description: `Mock tx: ${signature}`,
+          duration: 5000,
+        });
       } else {
-        signature = await sendSolWithMemo({
-          connection,
-          wallet: { publicKey, sendTransaction },
-          treasury: env.protocolTreasury,
-          amountSol: n,
-          memo,
+        const url = buildExplorerTxUrl(env.cluster, signature);
+        updateToast(tid, {
+          loading: false,
+          variant: "success",
+          title: "Bet placed",
+          description: `Your ${betSide} bet of ${n} SOL was sent`,
+          linkLabel: "View on Explorer",
+          linkHref: url,
+          duration: 5000,
         });
       }
-      const url = buildExplorerTxUrl(env.cluster, signature);
-      updateToast(tid, {
-        loading: false,
-        variant: "success",
-        title: "Bet placed",
-        description:
-          `Your ${betSide} bet of ${n} SOL was sent` as string,
-        linkLabel: "View on Explorer",
-        linkHref: url,
-        duration: 5000,
-      });
+
       setBetAmount("");
       setBetSide(null);
     } catch (e: any) {

@@ -7,6 +7,9 @@ import {
 } from "@solana/web3.js";
 import type { SendTransactionOptions } from "@solana/wallet-adapter-base";
 
+// Import environment variables
+const mockTx = process.env.NEXT_PUBLIC_MOCK_TX === "1";
+
 export type SolanaCluster = "devnet" | "testnet" | "mainnet-beta";
 
 // Memo Program ID (SPL Memo v1)
@@ -76,4 +79,37 @@ export function buildTransferWithMemoInstruction(
     data: Buffer.from(createBetMemoString(memoData), "utf-8"),
   });
   return { transferIx, memoIx };
+}
+
+// Main bet placement function with mock/real mode support
+export async function placeBet({ 
+  marketId, 
+  side, 
+  amountSol 
+}: { 
+  marketId: string; 
+  side: 'YES' | 'NO'; 
+  amountSol: number; 
+}): Promise<string> {
+  if (mockTx) {
+    // Mock mode: simulate transaction
+    const memoData = { marketId, side, amount: amountSol };
+    const fakeSignature = `mock-${Date.now()}`;
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+    
+    console.log('Mock transaction:', { memoData, signature: fakeSignature });
+    return fakeSignature;
+  } else {
+    // Real mode: TODO - implement wallet integration
+    // This will require connection, wallet adapter, and the sendSolWithMemo function
+    throw new Error('Real wallet integration not yet implemented - use mock mode');
+    
+    // TODO: Implementation would look like:
+    // const { sendSolWithMemo } = await import('./solana.server');
+    // const lamports = Number(solToLamports(amountSol));
+    // const memoData = { marketId, side, amount: amountSol };
+    // return await sendSolWithMemo(connection, wallet, treasury, memoData, lamports);
+  }
 }
