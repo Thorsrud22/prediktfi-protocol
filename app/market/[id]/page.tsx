@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 
 import Card from "../../components/Card";
 import Segmented from "../../components/Segmented";
@@ -17,7 +18,10 @@ import {
   buildExplorerTxUrl,
   formatLamportsToSol,
   solToLamports,
-  placeBet,
+  placeBetMock,
+  placeBetReal,
+  isMock,
+  MEMO_PROGRAM_ID,
 } from "../../lib/solana";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
@@ -35,8 +39,14 @@ export default function MarketDetailPage() {
   if (!market) return notFound();
 
   const { connection } = useConnection();
-  const { publicKey, connected, sendTransaction } = useWallet();
+  const { publicKey, connected, sendTransaction, wallet } = useWallet();
   const { addToast, updateToast } = useToast();
+
+  // Read treasury from environment
+  const treasuryPubkey = useMemo(() => {
+    const treasury = process.env.NEXT_PUBLIC_TREASURY;
+    return treasury ? new PublicKey(treasury) : null;
+  }, []);
 
   const [betSide, setBetSide] = useState<"YES" | "NO" | null>(null);
   const [betAmount, setBetAmount] = useState<string>("");
@@ -132,10 +142,15 @@ export default function MarketDetailPage() {
       addToast({ variant: "error", title: "Market unavailable" });
       return;
     }
-    if (!connected || !publicKey) {
+    
+    const mockMode = isMock();
+    
+    // For real mode, ensure wallet is connected
+    if (!mockMode && (!connected || !publicKey)) {
       addToast({ variant: "error", title: "Connect wallet to bet" });
       return;
     }
+    
     if (!betSide) {
       addToast({ variant: "error", title: "Choose a side" });
       return;
@@ -155,14 +170,17 @@ export default function MarketDetailPage() {
     setPending(true);
 
     try {
-      const signature = await placeBet({
-        marketId: market.id,
-        side: betSide,
-        amountSol: n
-      });
-
-      // Show success toast with appropriate messaging for mock vs real
-      if (env.mockTx) {
+      let signature: string;
+      
+      if (mockMode) {
+        // Mock mode: simulate transaction
+        const result = await placeBetMock({
+          marketId: market.id,
+          side: betSide,
+          amountSol: n
+        });
+        signature = result.signature;
+        
         updateToast(tid, {
           loading: false,
           variant: "success",
@@ -171,6 +189,44 @@ export default function MarketDetailPage() {
           duration: 5000,
         });
       } else {
+        // Real mode: send actual transaction
+        if (!treasuryPubkey) {
+          throw new Error("Treasury address not configured");
+        }
+        
+        const { tx, memoData } = await placeBetReal({
+          connection,
+          wallet: wallet?.adapter!,
+          treasury: treasuryPubkey,
+          marketId: market.id,
+          side: betSide,
+          amountSol: n
+        });
+        
+        // Send transaction using wallet adapter
+        signature = await sendTransaction(tx, connection);
+        
+        // Wait for confirmation (optional, but good UX)
+        await connection.confirmTransaction(signature, 'confirmed');
+        
+        // Parse memo data for API verification
+        const expectedMemo = JSON.parse(memoData);
+        
+        // Store bet record via API
+        try {
+          await fetch("/api/bets", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              signature,
+              expectedMemo,
+              wallet: publicKey!.toBase58()
+            })
+          });
+        } catch (err) {
+          console.warn("Failed to store bet record:", err);
+        }
+        
         const url = buildExplorerTxUrl(env.cluster, signature);
         updateToast(tid, {
           loading: false,
@@ -181,6 +237,9 @@ export default function MarketDetailPage() {
           linkHref: url,
           duration: 5000,
         });
+        
+        // TODO: POST to /api/bets with { signature, expectedMemo: memoData }
+        // This will be implemented in the next block
       }
 
       setBetAmount("");
@@ -299,7 +358,7 @@ export default function MarketDetailPage() {
                   parsedAmount <= 0 ||
                   pending ||
                   !!amountError ||
-                  !connected
+                  (!isMock && !connected)
                 }
                 data-testid="place-bet"
                 className="btn-primary min-w-[180px] px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
