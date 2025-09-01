@@ -7,6 +7,16 @@ import Hero from "./components/Hero";
 import Card from "./components/Card";
 import { useReducedMotion } from "framer-motion";
 
+// Stable formatting functions to avoid hydration mismatches
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function formatNumber(num: number): string {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 // Markets are now imported from app/lib/markets
 
 export default function Home() {
@@ -36,7 +46,7 @@ export default function Home() {
               >
                 <div className="text-sm text-white/70">{m.title}</div>
                 <div className="mt-1 text-xs text-white/50">
-                  Vol: {m.volume.toLocaleString()} SOL • Ends: {new Date(m.endsAt).toLocaleDateString()}
+                  Vol: {formatNumber(m.volume)} SOL • Ends: {formatDate(m.endsAt)}
                 </div>
               </a>
             ))}

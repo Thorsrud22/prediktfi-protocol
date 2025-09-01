@@ -1,11 +1,20 @@
+"use client";
+
 import Link from "next/link";
 import type { Metadata } from "next";
 import { MOCK_MARKETS } from "../lib/markets.mock";
 
-export const metadata: Metadata = {
-  title: "All Markets | Predikt — Tokenized predictions",
-  description: "Browse and trade on all prediction markets on Predikt",
-};
+// Stable formatting functions to avoid hydration mismatches
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function formatNumber(num: number): string {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Metadata moved to metadata.ts
 
 export default function MarketsPage() {
   return (
@@ -23,8 +32,8 @@ export default function MarketsPage() {
             <p className="mt-2 text-sm text-white/60 line-clamp-2">{m.summary}</p>
 
             <div className="mt-4 flex items-center justify-between text-xs text-white/50">
-              <span>Ends: {new Date(m.endsAt).toLocaleDateString()}</span>
-              <span>Vol: {m.volume.toLocaleString()} SOL</span>
+              <span>Ends: {formatDate(m.endsAt)}</span>
+              <span>Vol: {formatNumber(m.volume)} SOL</span>
             </div>
           </Link>
         ))}
