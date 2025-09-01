@@ -47,13 +47,18 @@ export default function Home() {
                 className="block rounded-lg border border-white/10 bg-white/5 px-4 py-3 transition-all hover:shadow-lg/10 hover:ring-1 hover:ring-white/10 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <div className="text-sm text-white/70 mb-3">{m.title}</div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/50">
-                    Ends {formatRelative(m.endsAt)}
-                  </span>
-                  <span className="rounded-full bg-white/10 px-2 py-1 text-white/60">
-                    {formatNumber(m.volume)} SOL
-                  </span>
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-white/50">
+                      Ends {formatRelative(m.endsAt)}
+                    </span>
+                    <div className="inline-flex items-center gap-1">
+                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-emerald-400 text-xs font-medium">
+                        {nf.format(m.volume)} SOL
+                      </span>
+                      <span className="text-white/40">volume</span>
+                    </div>
+                  </div>
                 </div>
               </a>
             ))}

@@ -35,6 +35,12 @@ export default function Footer() {
         <div className="mt-4 flex items-center gap-3 text-xs opacity-70">
           <a
             className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+            href="/legal"
+          >
+            Terms
+          </a>
+          <a
+            className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
             href="https://x.com"
             target="_blank"
             rel="noreferrer noopener"
