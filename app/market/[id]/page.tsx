@@ -87,6 +87,22 @@ export default function MarketDetailPage() {
     return null;
   }, [betAmount, balanceSol]);
 
+  // Enhanced fee calculation with live updates and NaN protection
+  const liveFeeNet = useMemo(() => {
+    const amount = parsedAmount || 0;
+    if (amount <= 0) {
+      return { fee: "0.000", net: "0.000" };
+    }
+    
+    const fee = amount * (env.feeBps / 10000);
+    const net = amount - fee;
+    
+    return {
+      fee: fee.toFixed(3),
+      net: net.toFixed(3),
+    };
+  }, [parsedAmount]);
+
   const feeNetStr = useMemo(() => {
     if (parsedAmount == null) return null;
     try {
@@ -101,6 +117,15 @@ export default function MarketDetailPage() {
       return null;
     }
   }, [parsedAmount]);
+
+  // Dynamic CTA button text
+  const ctaButtonText = useMemo(() => {
+    if (!connected) return "Connect wallet";
+    if (!betSide || !parsedAmount || parsedAmount <= 0) {
+      return "Select side & amount";
+    }
+    return `Place ${parsedAmount} SOL on ${betSide}`;
+  }, [connected, betSide, parsedAmount]);
 
   async function handlePlaceBet() {
     if (!market) {
@@ -224,6 +249,19 @@ export default function MarketDetailPage() {
                   • Balance:{" "}
                   {balanceSol.toFixed(9).replace(/0+$/, "").replace(/\.$/, "")}{" "}
                   SOL
+                  {env.cluster === "devnet" && (
+                    <>
+                      {" • "}
+                      <a
+                        href="https://faucet.solana.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-400 hover:text-indigo-300 underline"
+                      >
+                        Get test SOL
+                      </a>
+                    </>
+                  )}
                 </span>
               )}
             </label>
@@ -243,17 +281,12 @@ export default function MarketDetailPage() {
               }`}
             />
             {amountError && (
-              <div id="bet-amount-error" className="mt-2 text-sm text-red-400">{amountError}</div>
+              <div id="bet-amount-error" className="mt-2 text-sm text-rose-300">{amountError}</div>
             )}
 
+            {/* Live fee calculation display */}
             <div className="mt-3 text-sm text-[color:var(--muted)]">
-              Fee {env.feeBps} bps.
-              {feeNetStr && (
-                <>
-                  {" "}
-                  Fee {feeNetStr.fee} • Net {feeNetStr.net}
-                </>
-              )}
+              Fee {env.feeBps} bps • Fee: {liveFeeNet.fee} SOL • Net: {liveFeeNet.net} SOL
             </div>
 
             <div className="mt-4 flex items-center justify-between gap-3">
@@ -261,8 +294,9 @@ export default function MarketDetailPage() {
               <button
                 onClick={handlePlaceBet}
                 disabled={
-                  !betAmount ||
                   !betSide ||
+                  !parsedAmount ||
+                  parsedAmount <= 0 ||
                   pending ||
                   !!amountError ||
                   !connected
@@ -276,13 +310,7 @@ export default function MarketDetailPage() {
                     className="h-4 w-4 animate-spin rounded-full border-2 border-black/40 border-t-black"
                   />
                 )}
-                {!connected
-                  ? "Connect wallet"
-                  : !betAmount || !betSide
-                  ? "Select side & amount"
-                  : pending
-                  ? "Processing..."
-                  : `Place ${betAmount} SOL bet`}
+                {pending ? "Processing..." : ctaButtonText}
               </button>
             </div>
           </Card>

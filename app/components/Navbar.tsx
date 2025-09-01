@@ -116,7 +116,8 @@ export default function Navbar() {
                 : "border border-[color:var(--border)] bg-transparent text-[color:var(--text)]/80 opacity-80 hover:opacity-100"
             }`}
           >
-            Launch App
+            <span className="hidden sm:inline">Launch App</span>
+            <span className="sm:hidden">Open App</span>
           </Link>
           {/* Mobile hamburger */}
           <button
@@ -200,7 +201,7 @@ export default function Navbar() {
                 onClick={() => setOpen(false)}
                 tabIndex={0}
               >
-                Launch App
+                Open App
               </Link>
             </nav>
           </div>

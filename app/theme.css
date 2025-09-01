@@ -10,6 +10,7 @@
   --color-accent: #0ea5e9; /* sky-500 */
   --color-success: #10b981; /* emerald-500 */
   --color-danger: #ef4444; /* red-500 */
+  --color-ring: rgba(255, 255, 255, 0.25); /* Brighter ring for dark surfaces */
 
   /* Typography */
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
