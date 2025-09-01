@@ -6,6 +6,7 @@ import { MOCK_MARKETS } from "./lib/markets.mock";
 import Hero from "./components/Hero";
 import Card from "./components/Card";
 import { useReducedMotion } from "framer-motion";
+import { formatRelative } from "./lib/format";
 
 // Stable formatting functions to avoid hydration mismatches
 function formatDate(dateStr: string): string {
@@ -43,11 +44,16 @@ export default function Home() {
                 key={m.id}
                 href={`/market/${m.id}`}
                 data-testid={`market-card-${m.id}`}
-                className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/[0.08] transition-colors"
+                className="block rounded-lg border border-white/10 bg-white/5 px-4 py-3 transition-all hover:shadow-lg/10 hover:ring-1 hover:ring-white/10 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <div className="text-sm text-white/70">{m.title}</div>
-                <div className="mt-1 text-xs text-white/50">
-                  Vol: {formatNumber(m.volume)} SOL • Ends: {formatDate(m.endsAt)}
+                <div className="text-sm text-white/70 mb-3">{m.title}</div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-white/50">
+                    Ends {formatRelative(m.endsAt)}
+                  </span>
+                  <span className="rounded-full bg-white/10 px-2 py-1 text-white/60">
+                    {formatNumber(m.volume)} SOL
+                  </span>
                 </div>
               </a>
             ))}
