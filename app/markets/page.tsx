@@ -6,8 +6,8 @@ import { MOCK_MARKETS } from "../lib/markets.mock";
 
 // Stable formatting functions to avoid hydration mismatches
 function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  // Extract date directly from ISO string to avoid timezone issues
+  return dateStr.split('T')[0];
 }
 
 function formatNumber(num: number): string {
