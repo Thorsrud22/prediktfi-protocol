@@ -40,7 +40,75 @@ test.describe("Basic navigation flow", () => {
     const ctaButton = page.getByTestId('place-bet');
     await expect(ctaButton).toContainText("Connect wallet");
     
-    // Verify the button is disabled when wallet not connected
-    await expect(ctaButton).toBeDisabled();
+    // In mock mode, the button should be enabled even without wallet
+    // Check if we're in mock mode first
+    const mockMode = await page.evaluate(() => localStorage.getItem('NEXT_PUBLIC_MOCK_TX') === '1');
+    if (mockMode) {
+      await expect(ctaButton).toBeEnabled();
+    } else {
+      await expect(ctaButton).toBeDisabled();
+    }
+  });
+});
+
+test.describe("Portfolio page in mock mode", () => {
+  test("place mock bet and view in portfolio", async ({ page }) => {
+    // Set mock mode in localStorage
+    await page.addInitScript(() => {
+      localStorage.setItem('NEXT_PUBLIC_MOCK_TX', '1');
+    });
+
+    // Go to a market page
+    await page.goto("/market/1");
+
+    // Wait for the page to load
+    await expect(page.getByTestId('outcome-group')).toBeVisible();
+    
+    // Fill in bet amount
+    const amountInput = page.getByPlaceholder("0.1");
+    await amountInput.fill("0.25");
+    
+    // Select YES option
+    await page.getByRole('radiogroup').locator('label').filter({ hasText: 'YES' }).click();
+    
+    // Place the bet (should work in mock mode without wallet)
+    const placeBetButton = page.getByTestId('place-bet');
+    await expect(placeBetButton).toBeEnabled();
+    await placeBetButton.click();
+    
+    // Wait for success toast
+    await expect(page.getByText(/Bet placed \(simulated\)/i)).toBeVisible({ timeout: 10000 });
+    
+    // Navigate to portfolio page
+    await page.goto("/me");
+    
+    // Verify portfolio page loads
+    await expect(page.getByRole('heading', { name: 'Your predictions' })).toBeVisible();
+    
+    // Check that at least one bet is displayed
+    const betCards = page.locator('[class*="rounded-xl border"]');
+    await expect(betCards).toHaveCount(1);
+    
+    // Verify the bet details are shown correctly
+    await expect(page.getByText("YES")).toBeVisible();
+    await expect(page.getByText("0.25 SOL")).toBeVisible();
+    await expect(page.getByText(/Market:/)).toBeVisible();
+    
+    // Verify Explorer link is present
+    await expect(page.getByRole('link', { name: 'Explorer' })).toBeVisible();
+  });
+
+  test("portfolio shows empty state when no bets", async ({ page }) => {
+    // Clear localStorage to ensure no previous bets
+    await page.addInitScript(() => {
+      localStorage.removeItem('predikt:mock-bets');
+      localStorage.setItem('NEXT_PUBLIC_MOCK_TX', '1');
+    });
+
+    await page.goto("/me");
+    
+    // Verify empty state
+    await expect(page.getByRole('heading', { name: 'Your predictions' })).toBeVisible();
+    await expect(page.getByText("No predictions yet.")).toBeVisible();
   });
 });
