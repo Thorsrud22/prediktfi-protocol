@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import FastLink from "../components/FastLink";
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { MOCK_MARKETS } from "../lib/markets.mock";
@@ -123,10 +124,9 @@ function MarketsPageContent() {
         ) : filteredAndSortedMarkets.length > 0 ? (
           // Market cards
           filteredAndSortedMarkets.map((market) => (
-            <Link
+            <FastLink
               key={market.id}
               href={`/market/${market.id}`}
-              data-testid={`market-card-${market.id}`}
               className="block rounded-xl border border-white/10 bg-white/5 p-5 transition-all hover:shadow-lg/10 hover:ring-1 hover:ring-white/10 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {/* Creator Attribution */}
@@ -171,7 +171,7 @@ function MarketsPageContent() {
                   {formatNumber(market.volume)} SOL
                 </span>
               </div>
-            </Link>
+            </FastLink>
           ))
         ) : (
           // No results

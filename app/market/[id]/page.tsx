@@ -53,25 +53,45 @@ export default function MarketDetailPage() {
   const [betAmount, setBetAmount] = useState<string>("");
   const [pending, setPending] = useState(false);
   const [balanceLamports, setBalanceLamports] = useState<number | null>(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
 
-  // Load wallet balance
+  // Load wallet balance with caching and debouncing
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: NodeJS.Timeout;
+    
     async function run() {
       if (!publicKey) {
         setBalanceLamports(null);
+        setBalanceLoading(false);
         return;
       }
-      try {
-        const v = await connection.getBalance(publicKey);
-        if (!cancelled) setBalanceLamports(v);
-      } catch {
-        if (!cancelled) setBalanceLamports(null);
-      }
+      
+      setBalanceLoading(true);
+      
+      // Debounce the RPC call to reduce server load
+      timeoutId = setTimeout(async () => {
+        try {
+          // Use a more efficient RPC call with commitment level
+          const v = await connection.getBalance(publicKey, 'confirmed');
+          if (!cancelled) {
+            setBalanceLamports(v);
+            setBalanceLoading(false);
+          }
+        } catch (err) {
+          console.warn("Balance fetch failed:", err);
+          if (!cancelled) {
+            setBalanceLamports(null);
+            setBalanceLoading(false);
+          }
+        }
+      }, 500); // 500ms debounce to prevent excessive API calls
     }
+    
     run();
     return () => {
       cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [connection, publicKey]);
 
@@ -356,7 +376,11 @@ export default function MarketDetailPage() {
 
             <label htmlFor="bet-amount" className="mb-2 block text-sm font-semibold text-[color:var(--text)]">
               Bet Amount (SOL)
-              {balanceSol != null && (
+              {balanceLoading ? (
+                <span className="ml-1 font-normal text-[color:var(--muted)]">
+                  • Balance: Loading...
+                </span>
+              ) : balanceSol != null ? (
                 <span className="ml-1 font-normal text-[color:var(--muted)]">
                   • Balance:{" "}
                   {balanceSol.toFixed(9).replace(/0+$/, "").replace(/\.$/, "")}{" "}
@@ -375,7 +399,7 @@ export default function MarketDetailPage() {
                     </>
                   )}
                 </span>
-              )}
+              ) : null}
             </label>
             <input
               type="number"

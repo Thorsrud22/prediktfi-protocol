@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import FastLink from "./FastLink";
 import { SITE } from "../config/site";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -84,18 +85,18 @@ export default function Navbar() {
         </Link>
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 sm:flex">
-          <Link
+          <FastLink
             href="/markets"
-            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
           >
             Markets
-          </Link>
-          <Link
+          </FastLink>
+          <FastLink
             href="/me"
-            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
           >
             Portfolio
-          </Link>
+          </FastLink>
           <a
             href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
             className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
@@ -170,22 +171,20 @@ export default function Navbar() {
               </button>
             </div>
             <nav className="flex flex-col gap-3">
-              <Link
+              <FastLink
                 href="/markets"
-                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
                 onClick={() => setOpen(false)}
-                tabIndex={0}
               >
                 Markets
-              </Link>
-              <Link
+              </FastLink>
+              <FastLink
                 href="/me"
-                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
                 onClick={() => setOpen(false)}
-                tabIndex={0}
               >
                 Portfolio
-              </Link>
+              </FastLink>
               <a
                 href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
                 className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"

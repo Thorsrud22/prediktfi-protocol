@@ -7,7 +7,6 @@ import {
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
-
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 const CLUSTER = process.env.NEXT_PUBLIC_CLUSTER || "devnet";
@@ -27,7 +26,7 @@ export default function WalletProvider({ children }: { children: ReactNode }) {
       endpoint={ENDPOINT}
       config={{
         commitment: 'confirmed',
-        confirmTransactionInitialTimeout: 30000,
+        confirmTransactionInitialTimeout: 60000,
       }}
     >
       <SolWalletProvider wallets={wallets} autoConnect={false}>
