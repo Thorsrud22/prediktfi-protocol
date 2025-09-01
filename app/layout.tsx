@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import WalletContextProvider from "./components/WalletContextProvider";
+import WalletProvider from "./components/WalletProvider";
 import ToastProvider from "./components/ToastProvider";
 import { SITE } from "./config/site";
 
@@ -55,14 +55,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-  <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`}>
-        <Navbar />
-        <main className="min-h-screen">
-          <WalletContextProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </WalletContextProvider>
-        </main>
-        <Footer />
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`}>
+        <WalletProvider>
+          <ToastProvider>
+            <Navbar />
+            <main className="min-h-screen">{children}</main>
+            <Footer />
+          </ToastProvider>
+        </WalletProvider>
       </body>
     </html>
   );
