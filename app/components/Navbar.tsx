@@ -90,6 +90,12 @@ export default function Navbar() {
           >
             Markets
           </Link>
+          <Link
+            href="/me"
+            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+          >
+            Portfolio
+          </Link>
           <a
             href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
             className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
@@ -171,6 +177,14 @@ export default function Navbar() {
                 tabIndex={0}
               >
                 Markets
+              </Link>
+              <Link
+                href="/me"
+                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+                onClick={() => setOpen(false)}
+                tabIndex={0}
+              >
+                Portfolio
               </Link>
               <a
                 href="https://github.com/Thorsrud22/prediktfi-protocol#readme"

@@ -181,6 +181,22 @@ export default function MarketDetailPage() {
         });
         signature = result.signature;
         
+        // Store mock bet in localStorage
+        const mockBet = {
+          wallet: "mock-wallet", // Mock wallet identifier
+          signature,
+          marketId: market.id,
+          side: betSide,
+          amount: n,
+          ts: Date.now(),
+        };
+        
+        const MOCK_KEY = "predikt:mock-bets";
+        const existing = localStorage.getItem(MOCK_KEY);
+        const bets = existing ? JSON.parse(existing) : [];
+        bets.push(mockBet);
+        localStorage.setItem(MOCK_KEY, JSON.stringify(bets));
+        
         updateToast(tid, {
           loading: false,
           variant: "success",
