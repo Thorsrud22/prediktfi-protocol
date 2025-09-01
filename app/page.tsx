@@ -1,398 +1,82 @@
 "use client";
 
-import { useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import Link from "next/link";
+import { markets } from "./lib/markets";
+import { MOCK_MARKETS } from "./lib/markets.mock";
+import Hero from "./components/Hero";
+import Card from "./components/Card";
+import { useReducedMotion } from "framer-motion";
+import { formatRelative } from "./lib/format";
 
-interface Market {
-  id: string;
-  title: string;
-  description: string;
-  endDate: string;
-  yesPrice: number;
-  noPrice: number;
-  totalVolume: number;
-  isActive: boolean;
+// Stable formatting functions to avoid hydration mismatches
+function formatDate(dateStr: string): string {
+  // Extract date directly from ISO string to avoid timezone issues
+  return dateStr.split('T')[0];
 }
 
-const mockMarkets: Market[] = [
-  {
-    id: "1",
-    title: "Will SOL hit $300 by end of 2025?",
-    description: "Solana (SOL) will reach $300 USD by December 31, 2025",
-    endDate: "2025-12-31",
-    yesPrice: 0.65,
-    noPrice: 0.35,
-    totalVolume: 15420,
-    isActive: true,
-  },
-  {
-    id: "2",
-    title: "Will there be a new US President elected in 2028?",
-    description: "A new person will be elected as US President in 2028",
-    endDate: "2028-11-07",
-    yesPrice: 0.95,
-    noPrice: 0.05,
-    totalVolume: 8930,
-    isActive: true,
-  },
-  {
-    id: "3",
-    title: "Will Bitcoin ETF approval boost price above $100k?",
-    description:
-      "Bitcoin will reach above $100,000 within 6 months of major ETF approval",
-    endDate: "2025-06-30",
-    yesPrice: 0.42,
-    noPrice: 0.58,
-    totalVolume: 22100,
-    isActive: true,
-  },
-];
+function formatNumber(num: number): string {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Markets are now imported from app/lib/markets
 
 export default function Home() {
-  const { connected, publicKey } = useWallet();
-  const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
-  const [betAmount, setBetAmount] = useState("");
-  const [betSide, setBetSide] = useState<"yes" | "no" | null>(null);
-
-  const handlePlaceBet = () => {
-    if (!connected || !selectedMarket || !betAmount || !betSide) {
-      alert("Please connect wallet and select a market with bet amount");
-      return;
-    }
-
-    // Here you would integrate with your Solana program
-    alert(
-      `Placing ${betAmount} SOL bet on ${betSide.toUpperCase()} for: ${
-        selectedMarket.title
-      }`
-    );
-  };
+  const reduce = useReducedMotion();
+  const nf = new Intl.NumberFormat("en-US");
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #0a0e1a 0%, #1a2332 50%, #0a0e1a 100%)",
-        color: "white",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          padding: "1rem 2rem",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            background: "linear-gradient(90deg, #00d4ff, #0ea5e9)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            margin: 0,
-          }}
-        >
-          PrediktFi
-        </h1>
-        <WalletMultiButton />
-      </header>
+    <div>
+      <main style={{ padding: "2rem" }}>
+        <h1 className="sr-only">Predikt</h1>
+        {/* Hero section with slight fade-up */}
+        <Hero />
 
-      <div style={{ padding: "2rem" }}>
-        {!connected ? (
-          // Welcome Screen
-          <div style={{ textAlign: "center", paddingTop: "4rem" }}>
-            <h2 style={{ fontSize: "3rem", marginBottom: "1rem" }}>
-              Welcome to PrediktFi
+    {/* Featured Markets */}
+    <section id="markets" className="relative z-[1] mx-auto mt-8 max-w-[1100px] px-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[color:var(--text)]">
+              Featured Markets
             </h2>
-            <p
-              style={{
-                fontSize: "1.2rem",
-                maxWidth: "600px",
-                margin: "0 auto 2rem",
-                opacity: 0.8,
-              }}
-            >
-              Connect your Phantom wallet to start trading prediction markets on
-              Solana
-            </p>
-            <div
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                padding: "2rem",
-                borderRadius: "1rem",
-                maxWidth: "500px",
-                margin: "0 auto",
-                border: "1px solid rgba(255,255,255,0.1)",
-              }}
-            >
-              <h3 style={{ marginBottom: "1rem" }}>🚀 Get Started:</h3>
-              <ol style={{ textAlign: "left", lineHeight: "1.8" }}>
-                <li>Connect your Phantom wallet</li>
-                <li>Browse prediction markets</li>
-                <li>Place your bets on outcomes</li>
-                <li>Earn rewards for correct predictions</li>
-              </ol>
-            </div>
           </div>
-        ) : (
-          // Main App
-          <div>
-            <div style={{ marginBottom: "2rem" }}>
-              <h2 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
-                🎯 Active Markets
-              </h2>
-              <p style={{ opacity: 0.7 }}>
-                Connected: {publicKey?.toBase58().slice(0, 8)}...
-                {publicKey?.toBase58().slice(-8)}
-              </p>
-            </div>
-
-            {/* Markets Grid */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(400px, 1fr))",
-                gap: "1.5rem",
-                marginBottom: "2rem",
-              }}
-            >
-              {mockMarkets.map((market) => (
-                <div
-                  key={market.id}
-                  onClick={() => setSelectedMarket(market)}
-                  style={{
-                    background:
-                      selectedMarket?.id === market.id
-                        ? "rgba(0, 212, 255, 0.15)"
-                        : "rgba(255, 255, 255, 0.05)",
-                    padding: "1.5rem",
-                    borderRadius: "1rem",
-                    border:
-                      selectedMarket?.id === market.id
-                        ? "2px solid #00d4ff"
-                        : "1px solid rgba(255, 255, 255, 0.1)",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  <h3
-                    style={{
-                      fontSize: "1.2rem",
-                      marginBottom: "0.5rem",
-                      color: "#ffffff",
-                    }}
-                  >
-                    {market.title}
-                  </h3>
-                  <p
-                    style={{
-                      opacity: 0.7,
-                      marginBottom: "1rem",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {market.description}
-                  </p>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "1rem",
-                    }}
-                  >
-                    <div style={{ textAlign: "center" }}>
-                      <div
-                        style={{
-                          background: "rgba(16, 185, 129, 0.2)",
-                          padding: "0.5rem 1rem",
-                          borderRadius: "0.5rem",
-                          border: "1px solid rgba(16, 185, 129, 0.4)",
-                        }}
-                      >
-                        <div style={{ fontWeight: "bold", color: "#10b981" }}>
-                          YES
-                        </div>
-                        <div style={{ fontSize: "1.1rem" }}>
-                          ${market.yesPrice.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div
-                        style={{
-                          background: "rgba(244, 63, 94, 0.2)",
-                          padding: "0.5rem 1rem",
-                          borderRadius: "0.5rem",
-                          border: "1px solid rgba(244, 63, 94, 0.4)",
-                        }}
-                      >
-                        <div style={{ fontWeight: "bold", color: "#f43f5e" }}>
-                          NO
-                        </div>
-                        <div style={{ fontSize: "1.1rem" }}>
-                          ${market.noPrice.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ fontSize: "0.8rem", opacity: 0.6 }}>
-                    Volume: {market.totalVolume.toLocaleString()} SOL • Ends:{" "}
-                    {market.endDate}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Betting Panel */}
-            {selectedMarket && (
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  padding: "2rem",
-                  borderRadius: "1rem",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  maxWidth: "500px",
-                  margin: "0 auto",
-                }}
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+            {MOCK_MARKETS.slice(0, 3).map((m) => (
+              <a
+                key={m.id}
+                href={`/market/${m.id}`}
+                data-testid={`market-card-${m.id}`}
+                className="block rounded-lg border border-white/10 bg-white/5 px-4 py-3 transition-all hover:shadow-lg/10 hover:ring-1 hover:ring-white/10 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <h3 style={{ marginBottom: "1rem", textAlign: "center" }}>
-                  🎲 Place Your Bet
-                </h3>
-                <p
-                  style={{
-                    marginBottom: "1.5rem",
-                    opacity: 0.8,
-                    textAlign: "center",
-                  }}
-                >
-                  {selectedMarket.title}
-                </p>
-
-                <div style={{ marginBottom: "1rem" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Choose Side:
-                  </label>
-                  <div style={{ display: "flex", gap: "1rem" }}>
-                    <button
-                      onClick={() => setBetSide("yes")}
-                      style={{
-                        flex: 1,
-                        padding: "0.75rem",
-                        borderRadius: "0.5rem",
-                        border:
-                          betSide === "yes"
-                            ? "2px solid #10b981"
-                            : "1px solid rgba(16, 185, 129, 0.4)",
-                        background:
-                          betSide === "yes"
-                            ? "rgba(16, 185, 129, 0.3)"
-                            : "rgba(16, 185, 129, 0.1)",
-                        color: "#10b981",
-                        fontWeight: "bold",
-                        cursor: "pointer",
-                      }}
-                    >
-                      YES ${selectedMarket.yesPrice.toFixed(2)}
-                    </button>
-                    <button
-                      onClick={() => setBetSide("no")}
-                      style={{
-                        flex: 1,
-                        padding: "0.75rem",
-                        borderRadius: "0.5rem",
-                        border:
-                          betSide === "no"
-                            ? "2px solid #f43f5e"
-                            : "1px solid rgba(244, 63, 94, 0.4)",
-                        background:
-                          betSide === "no"
-                            ? "rgba(244, 63, 94, 0.3)"
-                            : "rgba(244, 63, 94, 0.1)",
-                        color: "#f43f5e",
-                        fontWeight: "bold",
-                        cursor: "pointer",
-                      }}
-                    >
-                      NO ${selectedMarket.noPrice.toFixed(2)}
-                    </button>
+                <div className="text-sm text-white/70 mb-3">{m.title}</div>
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-white/50">
+                      Ends {formatRelative(m.endsAt)}
+                    </span>
+                    <div className="inline-flex items-center gap-1">
+                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-emerald-400 text-xs font-medium">
+                        {nf.format(m.volume)} SOL
+                      </span>
+                      <span className="text-white/40">volume</span>
+                    </div>
                   </div>
                 </div>
-
-                <div style={{ marginBottom: "1.5rem" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Bet Amount (SOL):
-                  </label>
-                  <input
-                    type="number"
-                    value={betAmount}
-                    onChange={(e) => setBetAmount(e.target.value)}
-                    placeholder="0.1"
-                    step="0.01"
-                    min="0.01"
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "0.5rem",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                      background: "rgba(255, 255, 255, 0.05)",
-                      color: "white",
-                      fontSize: "1rem",
-                    }}
-                  />
-                </div>
-
-                <button
-                  onClick={handlePlaceBet}
-                  disabled={!betAmount || !betSide}
-                  style={{
-                    width: "100%",
-                    padding: "1rem",
-                    borderRadius: "0.5rem",
-                    border: "none",
-                    background:
-                      !betAmount || !betSide
-                        ? "rgba(255, 255, 255, 0.1)"
-                        : "linear-gradient(90deg, #0ea5e9, #0891b2)",
-                    color:
-                      !betAmount || !betSide
-                        ? "rgba(255, 255, 255, 0.5)"
-                        : "white",
-                    fontSize: "1.1rem",
-                    fontWeight: "bold",
-                    cursor: !betAmount || !betSide ? "not-allowed" : "pointer",
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  {!betAmount || !betSide
-                    ? "Select Side & Amount"
-                    : `Place ${betAmount} SOL Bet`}
-                </button>
-              </div>
-            )}
+              </a>
+            ))}
           </div>
-        )}
-      </div>
+          
+          <div className="mt-6 text-right">
+            <a
+              href="/markets"
+              data-testid="view-all-markets"
+              className="inline-flex items-center rounded-lg px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              View all markets
+            </a>
+          </div>
+        </section>
+
+  {/* Full markets grid moved to /markets */}
+      </main>
     </div>
   );
 }

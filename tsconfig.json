@@ -1,14 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "lib": [
-      "es6"
-    ],
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "noImplicitAny": false,
-    "sourceMap": true,
-    "outDir": "./dist",
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "es2022"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -25,12 +20,6 @@
       }
     ]
   },
-  "include": [
-    "tests/**/*",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
 }
