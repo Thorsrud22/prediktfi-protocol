@@ -1,53 +1,111 @@
-# Pull Request: Implementing Markets Page and Additional Features
+# UI Refresh V1.1: Dark Luxe + Markets Shell + Test Hardening
 
 ## Summary
-This PR implements a set of features for the PrediktFi prediction markets platform:
 
-1. Created a markets listing page with mock data
-2. Updated the landing page to feature markets with a "View all" link
-3. Improved accessibility of YES/NO segment controls using proper radio inputs
-4. Added SPL Memo utilities for bet payloads
-5. Added unit and E2E tests
-6. Fixed metadata configuration and server/client code separation
+This PR implements a comprehensive UI refresh with dark luxe theming, complete markets functionality, and robust testing infrastructure for the PrediktFi prediction markets platform.
 
-## Changes
+## What's Included
 
-### Markets Page
-- Created app/lib/markets.mock.ts with realistic market data
-- Implemented app/markets/page.tsx with responsive grid layout
-- Added market card components with proper formatting
+### 🎨 **Landing Page Polish**
+- Hero section with gradient background and improved typography
+- Accessible CTA buttons with proper focus states
+- "View all markets" link connecting to the markets listing
+- Featured markets preview (first 3 markets)
 
-### Landing Page Updates
-- Updated app/page.tsx to display featured markets
-- Added "View all" link to the markets page
+### 📊 **Markets Listing (`/markets`)**
+- Mock data with 3 realistic prediction markets
+- Responsive card grid layout (1/2/3 columns)
+- Proper market metadata display (volume, end dates)
+- SEO-optimized page structure
 
-### Accessibility Improvements
-- Completely rewrote the Segmented component to use proper radio inputs
-- Added appropriate ARIA attributes and keyboard navigation support
-- Ensured focus states are visible for keyboard users
+### 🎯 **Market Detail Improvements**
+- Accessible YES/NO radio controls using proper `radiogroup` pattern
+- 44px minimum touch targets for mobile accessibility
+- Enhanced focus states and hover interactions
+- Proper ARIA attributes for screen readers
 
-### SPL Memo Utilities
-- Added utilities in app/lib/solana.ts for creating and parsing memo data
-- Created app/lib/solana.server.ts for server-only code
-- Implemented JSON stringification/parsing with error handling
+### 🔧 **SPL Memo Integration**
+- JSON payload builder for bet metadata
+- Transfer instruction with memo attachment
+- Comprehensive unit tests for memo functionality
+- Server/client code separation for bundle optimization
 
-### Testing
-- Added unit tests for memo functionality
-- Created E2E smoke tests for basic navigation flow
-- Added mock bet tests to verify bet flow without wallet connection
+### 🔍 **Metadata & SEO**
+- Canonical URL configuration via `NEXT_PUBLIC_SITE_URL`
+- Cleaned `themeColor` for light/dark mode support
+- Proper OpenGraph and Twitter card metadata
+- Optimized for search engine indexing
 
-### Technical Improvements
-- Fixed metadata configuration in app/layout.tsx
-- Properly separated server/client code to prevent inclusion in client bundles
-- Updated environment variables for consistent testing
-- Fixed React hydration errors with string-based formatting
+### 🧪 **Test Infrastructure**
+- Stable `data-testid` selectors for E2E reliability
+- Smoke test covering full navigation flow (landing → markets → detail)
+- Mock bet flow testing without wallet requirement
+- Comprehensive unit test coverage
 
-## Testing
-- All unit tests pass with `npm run test`
-- Type checking passes with `npm run typecheck`
-- E2E tests for basic navigation and mock bet flow pass
+### ♿ **Accessibility (A11y)**
+- Focus ring visibility for keyboard navigation
+- Reduced motion respect for user preferences
+- Minimum touch target compliance (44px)
+- Proper semantic markup and ARIA attributes
 
-## Next Steps
-- Implement actual bet placement with wallet connection (in progress)
-- Add additional market details and visualizations
-- Implement filtering and sorting for markets page
+### 🚀 **CI/CD Integration**
+- TypeScript compilation passing
+- Build process optimized and error-free
+- All tests passing in CI environment
+- Mock E2E tests green and stable
+
+## Technical Details
+
+### Environment Configuration
+```bash
+NEXT_PUBLIC_CLUSTER=devnet
+NEXT_PUBLIC_MOCK_TX=1
+NEXT_PUBLIC_PROTOCOL_TREASURY=HUCsxGDiAQdfmPe9MV52Dd6ERzwNNiu16aEKqFUQ1obN
+NEXT_PUBLIC_FEE_BPS=200
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+### Test Coverage
+- **Unit Tests**: SPL memo utilities, formatting functions
+- **E2E Smoke**: Landing → Markets → Detail navigation flow
+- **E2E Mock**: Bet preparation flow (without wallet connection)
+- **Real Wallet E2E**: Manual testing workflow (requires Phantom connection)
+
+### Code Structure
+- `app/lib/markets.mock.ts` - Mock market data for development
+- `app/lib/solana.ts` - Client-safe Solana utilities
+- `app/lib/solana.server.ts` - Server-only code for bundle optimization
+- `app/components/Segmented.tsx` - Accessible YES/NO radio component
+- `tests-e2e/` - Playwright E2E test suite with stable selectors
+
+## Notes
+
+- **Real wallet E2E** remains manual (CI uses mock mode for reliability)
+- **Mock mode** enabled by default for consistent testing experience
+- **Bundle optimization** achieved through server/client code separation
+- **Accessibility compliance** follows WCAG 2.1 AA guidelines
+
+## Follow-up Items (Separate PRs)
+
+1. **Real Wallet Integration**: Wire actual wallet transactions using memo helper behind feature toggle
+2. **Visual Polish Pass**: Navbar glass effect, card elevation improvements, micro-animations
+3. **Documentation**: OG image generation, README section for mock mode setup
+4. **Performance**: Image optimization, code splitting improvements
+
+## Testing Commands
+
+```bash
+# Type checking
+npm run typecheck
+
+# Unit tests
+npm run test
+
+# E2E tests (mock mode)
+npm run test:e2e:mock
+
+# Production build
+npm run build
+```
+
+All commands pass successfully in the current implementation.
