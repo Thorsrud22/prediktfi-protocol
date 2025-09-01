@@ -147,6 +147,7 @@ export default function ToastProvider({
       <div
         role="status"
         aria-live="polite"
+        aria-atomic="true"
         aria-relevant="additions"
         style={{
           position: "fixed",
