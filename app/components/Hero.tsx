@@ -5,7 +5,7 @@ export default function Hero() {
   return (
     <section
       aria-label={`${SITE.name} hero`}
-  className="relative isolate overflow-hidden bg-hero"
+      className="relative isolate overflow-hidden bg-hero noise"
     >
       <div className="relative z-[1] mx-auto max-w-[1100px] px-6 py-20 sm:py-24 md:py-28">
         {/* Badge */}
@@ -14,18 +14,21 @@ export default function Hero() {
           <span>Live on Devnet</span>
         </div>
 
-        {/* Heading */}
-        <h1 className="mt-5 font-extrabold leading-tight text-[clamp(2.25rem,7vw,5.5rem)] text-[color:var(--text)]">
-          Predict markets <span className="text-gradient">without limits</span>.
-        </h1>
+        {/* Hero text container with constrained width */}
+        <div className="max-w-3xl md:max-w-4xl">
+          {/* Heading */}
+          <h1 className="mt-5 font-extrabold leading-tight text-[clamp(2.25rem,7vw,5.5rem)] text-[color:var(--text)]">
+            Predict markets <span className="text-gradient">without limits</span>.
+          </h1>
 
-        {/* Lead */}
-  <p className="mt-4 max-w-2xl text-base sm:text-lg text-[color:var(--muted)]">
-          Turning insights into assets — built on Solana.
-        </p>
+          {/* Lead with improved contrast */}
+          <p className="mt-4 max-w-2xl text-base sm:text-lg text-slate-200">
+            Turning insights into assets — built on Solana.
+          </p>
+        </div>
 
-        {/* CTAs */}
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        {/* CTAs - mobile stack vertically, desktop horizontal */}
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <Link
             href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
             target="_blank"

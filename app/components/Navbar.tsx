@@ -7,10 +7,21 @@ import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const isMarketPage = pathname.startsWith('/market/');
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<Element | null>(null);
+
+  // Handle scroll state for navbar border
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close on ESC and trap focus within the panel when open
   useEffect(() => {
@@ -60,7 +71,9 @@ export default function Navbar() {
   }, [open]);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-[color:var(--border)] bg-transparent backdrop-blur-md">
+    <nav className={`sticky top-0 z-50 bg-transparent backdrop-blur-md transition-colors ${
+      scrolled ? 'border-b border-white/5' : 'border-b border-transparent'
+    }`}>
       <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-3">
         <Link
           href="/"

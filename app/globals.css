@@ -98,6 +98,25 @@ body {
     linear-gradient(180deg, color-mix(in oklab, var(--brand-1) 30%, #0b1220) 0%, #0b1220 60%);
 }
 
+/* Subtle noise overlay */
+.noise {
+  position: relative;
+}
+
+.noise::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAACRSURBVHgB7doxEQAACAOw5l8z0ALucpqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABpJUOyAA1EIIO+AAAAAElFTkSuQmCC");
+  background-repeat: repeat;
+  background-size: 50px 50px;
+}
+
 /* Aurora background animation */
 @keyframes drift {
   0% {
