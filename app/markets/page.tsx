@@ -129,6 +129,37 @@ function MarketsPageContent() {
               data-testid={`market-card-${market.id}`}
               className="block rounded-xl border border-white/10 bg-white/5 p-5 transition-all hover:shadow-lg/10 hover:ring-1 hover:ring-white/10 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
+              {/* Creator Attribution */}
+              {market.creatorName && (
+                <div className="flex items-center gap-2 mb-3">
+                  {market.creatorAvatar && (
+                    <img
+                      src={market.creatorAvatar}
+                      alt={market.creatorName}
+                      className="w-6 h-6 rounded-full"
+                    />
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-white/70">{market.creatorName}</span>
+                    {market.creatorType && (
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          market.creatorType === "KOL"
+                            ? "bg-purple-500/20 text-purple-300"
+                            : market.creatorType === "EXPERT"
+                            ? "bg-blue-500/20 text-blue-300"
+                            : market.creatorType === "PREDIKT"
+                            ? "bg-green-500/20 text-green-300"
+                            : "bg-gray-500/20 text-gray-300"
+                        }`}
+                      >
+                        {market.creatorType}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <h2 className="text-lg font-semibold text-white mb-2">{market.title}</h2>
               <p className="text-sm text-white/60 line-clamp-2 mb-4">{market.summary}</p>
 

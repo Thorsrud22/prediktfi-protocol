@@ -66,7 +66,7 @@ describe("API verification logic", () => {
     const request = new NextRequest("http://localhost:3000/api/bets", {
       method: "POST",
       body: JSON.stringify({
-        signature: "test-signature-123",
+        signature: "5VfydCssapM7CjYxaK5NjbcCCdV8keeYGGXXBhGrDbQzNZ9EpDFZ4Sh3bBKy3MCNGc1vP7JEKp1mxPDbGP2A9Rkz",
         expectedMemo,
         wallet: "userWallet123",
       }),
@@ -80,7 +80,7 @@ describe("API verification logic", () => {
     expect(data.ok).toBe(true);
     expect(data.record).toMatchObject({
       wallet: "userWallet123",
-      signature: "test-signature-123",
+      signature: "5VfydCssapM7CjYxaK5NjbcCCdV8keeYGGXXBhGrDbQzNZ9EpDFZ4Sh3bBKy3MCNGc1vP7JEKp1mxPDbGP2A9Rkz",
       marketId: "btc-2024-1",
       side: "YES",
       amount: 0.1,
@@ -130,7 +130,7 @@ describe("API verification logic", () => {
     const request = new NextRequest("http://localhost:3000/api/bets", {
       method: "POST",
       body: JSON.stringify({
-        signature: "test-signature-123",
+        signature: "5VfydCssapM7CjYxaK5NjbcCCdV8keeYGGXXBhGrDbQzNZ9EpDFZ4Sh3bBKy3MCNGc1vP7JEKp1mxPDbGP2A9Rkz",
         expectedMemo,
         wallet: "userWallet123",
       }),
@@ -140,9 +140,9 @@ describe("API verification logic", () => {
     const response = await POST(request);
     const data = await response.json();
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(422);
     expect(data.ok).toBe(false);
-    expect(data.error).toBe("VERIFY_FAIL");
+    expect(data.code).toBe("VERIFY_FAIL");
   });
 
   test("should reject transaction not found or failed", async () => {
@@ -154,7 +154,7 @@ describe("API verification logic", () => {
     const request = new NextRequest("http://localhost:3000/api/bets", {
       method: "POST",
       body: JSON.stringify({
-        signature: "invalid-signature",
+        signature: "4VfydCssapM7CjYxaK5NjbcCCdV8keeYGGXXBhGrDbQzNZ9EpDFZ4Sh3bBKy3MCNGc1vP7JEKp1mxPDbGP2A9Rky",
         expectedMemo: { marketId: "btc-2024-1", side: "YES", amount: 0.1 },
         wallet: "userWallet123",
       }),
@@ -164,9 +164,9 @@ describe("API verification logic", () => {
     const response = await POST(request);
     const data = await response.json();
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(409);
     expect(data.ok).toBe(false);
-    expect(data.error).toBe("TX_NOT_CONFIRMED");
+    expect(data.code).toBe("TX_NOT_CONFIRMED");
   });
 
   test("should reject transaction with failed status", async () => {
@@ -192,7 +192,7 @@ describe("API verification logic", () => {
     const request = new NextRequest("http://localhost:3000/api/bets", {
       method: "POST",
       body: JSON.stringify({
-        signature: "failed-signature",
+        signature: "3VfydCssapM7CjYxaK5NjbcCCdV8keeYGGXXBhGrDbQzNZ9EpDFZ4Sh3bBKy3MCNGc1vP7JEKp1mxPDbGP2A9Rkx",
         expectedMemo: { marketId: "btc-2024-1", side: "YES", amount: 0.1 },
         wallet: "userWallet123",
       }),
@@ -202,9 +202,9 @@ describe("API verification logic", () => {
     const response = await POST(request);
     const data = await response.json();
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(409);
     expect(data.ok).toBe(false);
-    expect(data.error).toBe("TX_NOT_CONFIRMED");
+    expect(data.code).toBe("TX_NOT_CONFIRMED");
   });
 
   test("should reject request with missing parameters", async () => {
@@ -213,7 +213,7 @@ describe("API verification logic", () => {
     const request = new NextRequest("http://localhost:3000/api/bets", {
       method: "POST",
       body: JSON.stringify({
-        signature: "test-signature",
+        signature: "2VfydCssapM7CjYxaK5NjbcCCdV8keeYGGXXBhGrDbQzNZ9EpDFZ4Sh3bBKy3MCNGc1vP7JEKp1mxPDbGP2A9Rkw",
         // Missing expectedMemo and wallet
       }),
       headers: { "Content-Type": "application/json" },
@@ -224,6 +224,6 @@ describe("API verification logic", () => {
 
     expect(response.status).toBe(400);
     expect(data.ok).toBe(false);
-    expect(data.error).toBe("BAD_REQUEST");
+    expect(data.code).toBe("BAD_REQUEST");
   });
 });

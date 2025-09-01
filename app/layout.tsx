@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import WalletProvider from "./components/WalletProvider";
 import ToastProvider from "./components/ToastProvider";
+import { ReferralTracker } from "./components/ReferralTracker";
 import { SITE } from "./config/site";
 
 const geistSans = Geist({
@@ -17,6 +19,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const isProduction = process.env.NODE_ENV === 'production' && process.env.SOLANA_CLUSTER !== 'devnet';
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
@@ -25,7 +29,11 @@ export const metadata: Metadata = {
   },
   description: "Tokenized predictions. Turning insights into assets. Built on Solana.",
   alternates: {
-    canonical: '/',
+    canonical: isProduction ? '/' : undefined,
+  },
+  robots: isProduction ? undefined : {
+    index: false,
+    follow: false,
   },
   openGraph: {
     title: "Predikt — Tokenized predictions",
@@ -58,6 +66,9 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`}>
         <WalletProvider>
           <ToastProvider>
+            <Suspense fallback={null}>
+              <ReferralTracker />
+            </Suspense>
             <Navbar />
             <main className="min-h-screen">{children}</main>
             <Footer />

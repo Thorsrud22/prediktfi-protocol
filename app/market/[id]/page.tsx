@@ -12,6 +12,7 @@ import PricePill from "../../components/PricePill";
 import Stat from "../../components/Stat";
 import Skeleton from "../../components/Skeleton";
 import { useToast } from "../../components/ToastProvider";
+import { ShareableMarketLink } from "../../components/ReferralTracker";
 import { getMarketById } from "../../lib/markets";
 import { env } from "../../lib/env";
 import {
@@ -277,6 +278,42 @@ export default function MarketDetailPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
       <header className="mb-6">
+        {/* Creator Attribution */}
+        {market.creatorName && (
+          <div className="flex items-center gap-3 mb-4">
+            {market.creatorAvatar && (
+              <img
+                src={market.creatorAvatar}
+                alt={market.creatorName}
+                className="w-10 h-10 rounded-full"
+              />
+            )}
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="text-sm text-[color:var(--text)] font-medium">
+                  {market.creatorName}
+                </div>
+                <div className="text-xs text-[color:var(--muted)]">Market Creator</div>
+              </div>
+              {market.creatorType && (
+                <span
+                  className={`text-xs px-3 py-1 rounded-full font-medium ${
+                    market.creatorType === "KOL"
+                      ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                      : market.creatorType === "EXPERT"
+                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                      : market.creatorType === "PREDIKT"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
+                  }`}
+                >
+                  {market.creatorType}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        
         <h1 className="text-2xl font-semibold text-[color:var(--text)]">
           {market.title}
         </h1>
@@ -411,6 +448,11 @@ export default function MarketDetailPage() {
               />
             </div>
           </Card>
+          
+          {/* Shareable referral link */}
+          <div className="mt-4">
+            <ShareableMarketLink marketId={market.id} creatorId={market.creatorId} />
+          </div>
         </aside>
       </div>
     </div>

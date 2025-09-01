@@ -1,7 +1,7 @@
 {
   "name": "prediktfi-protocol",
   "version": "0.1.0",
-  "description": "PrediktFi Protocol - Solana prediction market",
+  "description": "Predikt Protocol - Solana prediction market",
   "main": "index.js",
   "scripts": {
     "test": "vitest run",

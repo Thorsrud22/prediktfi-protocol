@@ -159,7 +159,7 @@ Required keys (public at runtime):
 - `NEXT_PUBLIC_PROGRAM_ID` — your deployed Anchor program ID (Base58)
 - `NEXT_PUBLIC_PROTOCOL_TREASURY` — treasury account public key (Base58)
 - `NEXT_PUBLIC_FEE_BPS` — protocol fee in basis points (default: 200 = 2%)
-- `NEXT_PUBLIC_MOCK_TX` — set `1` to enable mock/no-op transactions in UI for development (default: 1)
+- `NEXT_PUBLIC_MOCK_TX` — set `0` for real devnet transactions, `1` for quick rollback to mock mode (default: 0)
 
 Note: `.env.local` is ignored by git. Do not commit secrets.
 

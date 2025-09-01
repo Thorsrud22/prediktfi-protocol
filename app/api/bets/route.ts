@@ -9,6 +9,36 @@ const ENDPOINT =
 const TREASURY = new PublicKey(process.env.NEXT_PUBLIC_TREASURY!);
 const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 
+// Simple rate limiting for development/devnet
+const rateLimitMap = new Map<string, number[]>();
+const RATE_LIMIT_MAX = 10; // requests
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const requests = rateLimitMap.get(ip) || [];
+  
+  // Remove old requests outside window
+  const recentRequests = requests.filter(time => now - time < RATE_LIMIT_WINDOW);
+  
+  if (recentRequests.length >= RATE_LIMIT_MAX) {
+    return true;
+  }
+  
+  recentRequests.push(now);
+  rateLimitMap.set(ip, recentRequests);
+  return false;
+}
+
+function isValidBase58Signature(sig: string): boolean {
+  // Basic validation: length 43-88 chars, base58 pattern
+  return /^[1-9A-HJ-NP-Za-km-z]{43,88}$/.test(sig);
+}
+
+function createErrorResponse(code: string, message: string, status: number) {
+  return NextResponse.json({ ok: false, code, message }, { status });
+}
+
 // simple in-memory dev store
 const store: {
   bets: Array<{
@@ -23,6 +53,12 @@ const store: {
 (globalThis as any).__prediktStore = store;
 
 export async function POST(req: NextRequest) {
+  // Rate limiting
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  if (isRateLimited(ip)) {
+    return createErrorResponse("RATE_LIMITED", "Too many requests", 429);
+  }
+
   const body = await req.json();
   const { signature, expectedMemo, wallet } = body as {
     signature: string;
@@ -31,7 +67,12 @@ export async function POST(req: NextRequest) {
   };
 
   if (!signature || !expectedMemo || !wallet) {
-    return NextResponse.json({ ok: false, error: "BAD_REQUEST" }, { status: 400 });
+    return createErrorResponse("BAD_REQUEST", "Missing required fields", 400);
+  }
+
+  // Validate signature format
+  if (!isValidBase58Signature(signature)) {
+    return createErrorResponse("BAD_REQUEST", "Invalid signature format", 400);
   }
 
   const connection = new Connection(ENDPOINT, "confirmed");
@@ -40,7 +81,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (!tx || tx.meta?.err) {
-    return NextResponse.json({ ok: false, error: "TX_NOT_CONFIRMED" }, { status: 400 });
+    return createErrorResponse("TX_NOT_CONFIRMED", "Transaction not confirmed", 409);
   }
 
   // Check transfer to TREASURY and memo content
@@ -74,7 +115,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!hasTransfer || !memoOk) {
-    return NextResponse.json({ ok: false, error: "VERIFY_FAIL" }, { status: 400 });
+    return createErrorResponse("VERIFY_FAIL", "Transaction verification failed", 422);
   }
 
   const record = {
@@ -93,6 +134,64 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const wallet = searchParams.get("wallet");
+  const sig = searchParams.get("sig");
+  
+  // If sig param is provided, do verification
+  if (sig) {
+    // Validate signature format
+    if (!isValidBase58Signature(sig)) {
+      return createErrorResponse("BAD_REQUEST", "Invalid signature format", 400);
+    }
+
+    const connection = new Connection(ENDPOINT, "confirmed");
+    
+    try {
+      const tx = await connection.getParsedTransaction(sig, {
+        maxSupportedTransactionVersion: 0,
+      });
+
+      if (!tx || tx.meta?.err) {
+        return createErrorResponse("TX_NOT_CONFIRMED", "Transaction not confirmed", 409);
+      }
+
+      // Extract memo and transfer data
+      let memo: any = null;
+      let amountLamports = 0;
+
+      // Check memo
+      for (const ix of tx.transaction.message.instructions) {
+        const prog = "programId" in ix ? (ix as any).programId : (ix as any).programId;
+        const programId = (prog?.toString?.() || (ix as any).programId)?.toString?.();
+        if (programId === MEMO_PROGRAM_ID) {
+          try {
+            const data = Buffer.from((ix as any).data, "base64").toString("utf8");
+            memo = JSON.parse(data);
+          } catch {}
+        }
+      }
+
+      // Check transfer to treasury
+      const pre = tx.meta?.preBalances || [];
+      const post = tx.meta?.postBalances || [];
+      const acctKeys = tx.transaction.message.accountKeys;
+      const treasuryIndex = acctKeys.findIndex((a: any) => a.pubkey?.toBase58?.() === TREASURY.toBase58());
+      if (treasuryIndex >= 0 && pre[treasuryIndex] != null && post[treasuryIndex] != null) {
+        amountLamports = post[treasuryIndex] - pre[treasuryIndex];
+      }
+
+      return NextResponse.json({ 
+        ok: true, 
+        memo, 
+        amountLamports, 
+        slot: tx.slot, 
+        signature: sig 
+      });
+    } catch (error) {
+      return createErrorResponse("VERIFY_FAIL", "Transaction verification failed", 422);
+    }
+  }
+  
+  // Otherwise, return stored bets
   const items = wallet ? store.bets.filter(b => b.wallet === wallet) : store.bets;
   return NextResponse.json({ ok: true, items });
 }

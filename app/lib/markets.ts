@@ -7,6 +7,11 @@ export interface Market {
   noPrice: number;
   totalVolume: number; // in SOL (mock)
   isActive: boolean;
+  // Creator/KOL attribution
+  creatorId?: string;
+  creatorName?: string;
+  creatorAvatar?: string;
+  creatorType?: "KOL" | "EXPERT" | "COMMUNITY" | "PREDIKT";
 }
 
 export const markets: Market[] = [
@@ -19,6 +24,10 @@ export const markets: Market[] = [
     noPrice: 0.35,
     totalVolume: 15420,
     isActive: true,
+    creatorId: "crypto_analyst_sol",
+    creatorName: "SolanaMax",
+    creatorAvatar: "https://api.dicebear.com/7.x/bottts/svg?seed=solanamax",
+    creatorType: "KOL",
   },
   {
     id: "2",
@@ -29,6 +38,10 @@ export const markets: Market[] = [
     noPrice: 0.05,
     totalVolume: 8930,
     isActive: true,
+    creatorId: "predikt_editorial",
+    creatorName: "Predikt Editorial",
+    creatorAvatar: "https://api.dicebear.com/7.x/shapes/svg?seed=predikt",
+    creatorType: "PREDIKT",
   },
   {
     id: "3",
@@ -40,6 +53,10 @@ export const markets: Market[] = [
     noPrice: 0.58,
     totalVolume: 22100,
     isActive: true,
+    creatorId: "btc_expert_2024",
+    creatorName: "BitcoinGuru",
+    creatorAvatar: "https://api.dicebear.com/7.x/personas/svg?seed=bitcoinguru",
+    creatorType: "EXPERT",
   },
 ];
 
