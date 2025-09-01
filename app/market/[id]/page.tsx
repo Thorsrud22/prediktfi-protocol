@@ -16,9 +16,9 @@ import { env } from "../../lib/env";
 import {
   buildExplorerTxUrl,
   formatLamportsToSol,
-  sendSolWithMemo,
   solToLamports,
 } from "../../lib/solana";
+import { sendSolWithMemo } from "../../lib/solana.server";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 const WalletMultiButton = dynamic(
@@ -210,6 +210,7 @@ export default function MarketDetailPage() {
                 value={betSide}
                 onChange={setBetSide}
                 disabled={pending}
+                data-testid="outcome-group"
               />
             </div>
 
@@ -263,6 +264,7 @@ export default function MarketDetailPage() {
                   !!amountError ||
                   !connected
                 }
+                data-testid="place-bet"
                 className="btn-primary min-w-[180px] px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {pending && (

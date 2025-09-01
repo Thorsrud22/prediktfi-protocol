@@ -26,6 +26,7 @@ export default function MarketsPage() {
           <Link
             key={m.id}
             href={`/market/${m.id}`}
+            data-testid={`market-card-${m.id}`}
             className="block rounded-xl border border-white/10 bg-white/5 hover:bg-white/[0.08] transition-colors p-5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <h2 className="text-lg font-semibold text-white">{m.title}</h2>

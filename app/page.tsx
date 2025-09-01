@@ -42,6 +42,7 @@ export default function Home() {
               <a
                 key={m.id}
                 href={`/market/${m.id}`}
+                data-testid={`market-card-${m.id}`}
                 className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/[0.08] transition-colors"
               >
                 <div className="text-sm text-white/70">{m.title}</div>
@@ -55,6 +56,7 @@ export default function Home() {
           <div className="mt-6 text-right">
             <a
               href="/markets"
+              data-testid="view-all-markets"
               className="inline-flex items-center rounded-lg px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               View all markets

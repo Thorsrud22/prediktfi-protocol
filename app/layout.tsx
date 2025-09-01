@@ -24,7 +24,9 @@ export const metadata: Metadata = {
     template: "%s | Predikt",
   },
   description: "Tokenized predictions. Turning insights into assets. Built on Solana.",
-  themeColor: "#4F46E5",
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: "Predikt — Tokenized predictions",
     description: "Predict markets without limits. Turning insights into assets. Built on Solana.",
@@ -40,7 +42,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#4F46E5",
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#4F46E5' },
+    { media: '(prefers-color-scheme: dark)', color: '#4F46E5' },
+  ],
 };
 
 export default function RootLayout({

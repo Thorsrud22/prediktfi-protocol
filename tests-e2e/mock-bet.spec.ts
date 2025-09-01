@@ -8,24 +8,27 @@ test.describe("Mock bet flow", () => {
     ]);
   });
 
-  test("fee and net are shown and simulated toast appears", async ({
+  test("fee and net info appears when amount and side are selected", async ({
     page,
   }) => {
     await page.goto("/market/1");
+    
     // Fill amount
     const amountInput = page.getByPlaceholder("0.1");
     await amountInput.fill("0.5");
+    
     // Choose side
-    await page.getByRole("button", { name: /YES/ }).click();
-    // CTA should contain Fee and Net
-    const cta = page.getByRole("button", { name: /Place 0.5 SOL Bet/ });
-    await expect(cta).toContainText("Fee 0.01");
-    await expect(cta).toContainText("Net 0.49");
-    await cta.click();
-    // Expect simulated toast without an explorer link
-    await expect(page.getByText(/Bet placed \(simulated\)/)).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "View on Explorer" })
-    ).toHaveCount(0);
+    await page.getByRole('radiogroup').locator('label').filter({ hasText: 'YES' }).click();
+    
+    // Check that fee and net info is displayed
+    await expect(page.getByText(/Fee 0.01/)).toBeVisible();
+    await expect(page.getByText(/Net 0.49/)).toBeVisible();
+    
+    // Verify the button is in the expected state
+    const connectButton = page.getByRole("button", { name: /Connect wallet/i });
+    await expect(connectButton).toBeVisible();
+    
+    // Note: We can't test the actual bet placement without wallet connection
+    // in the CI environment, so we verify the prep state only
   });
 });

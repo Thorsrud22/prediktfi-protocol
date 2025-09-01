@@ -21,16 +21,16 @@ test.describe("Real Devnet Happy-Path (semi-automatic)", () => {
     await expect(connectedBadge).toBeVisible({ timeout: 5 * 60 * 1000 });
 
     // 2) Choose side YES and set amount 0.5
-    await page.getByRole("button", { name: /YES/ }).click();
+    await page.getByRole('radiogroup').locator('label').filter({ hasText: 'YES' }).click();
     const amountInput = page.getByPlaceholder("0.1");
     await amountInput.fill("0.5");
 
-    // Assert CTA shows Fee and Net
-    await expect(page.getByRole("button", { name: /Fee 0\.01/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Net 0\.49/ })).toBeVisible();
+    // Assert Fee and Net info is shown (not on button)
+    await expect(page.getByText(/Fee 0\.01/)).toBeVisible();
+    await expect(page.getByText(/Net 0\.49/)).toBeVisible();
 
     // 3) Click CTA and instruct manual signing
-    const cta = page.getByRole("button", { name: /Place 0\.5 SOL Bet/ });
+    const cta = page.getByRole("button", { name: /Place 0\.5 SOL bet/i });
     await cta.click();
     await expect(page.getByText(/Sending transaction/i)).toBeVisible();
     console.log(

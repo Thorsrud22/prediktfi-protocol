@@ -49,6 +49,24 @@ prediktfi-protocol/
 3. **Run tests:**
 
    ```bash
+   # Run unit tests
+   npm run test
+   
+   # Run end-to-end tests (mock)
+   npm run test:e2e:mock
+   
+   # Run end-to-end tests with real wallet (requires manual interaction)
+   npm run test:e2e:real
+   ```
+   
+4. **Development:**
+
+   ```bash
+   # Start Next.js development server
+   npm run dev
+   ```
+
+   ```bash
    anchor test
    ```
 

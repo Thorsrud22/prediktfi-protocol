@@ -7,9 +7,10 @@ type Props = {
   value: "YES" | "NO" | null;
   onChange: (v: "YES" | "NO") => void;
   disabled?: boolean;
+  "data-testid"?: string;
 };
 
-export default function Segmented({ value, onChange, disabled }: Props) {
+export default function Segmented({ value, onChange, disabled, "data-testid": testId }: Props) {
   const name = useId();
 
   const base =
@@ -18,7 +19,7 @@ export default function Segmented({ value, onChange, disabled }: Props) {
   const noChecked = value === "NO";
 
   return (
-    <div role="radiogroup" className="grid grid-cols-2 gap-4">
+    <div role="radiogroup" className="grid grid-cols-2 gap-4" data-testid={testId}>
       <div>
         <input
           type="radio"
@@ -32,6 +33,7 @@ export default function Segmented({ value, onChange, disabled }: Props) {
         />
         <label
           htmlFor={`${name}-yes`}
+          data-testid="outcome-yes"
           className={clsx(
             base,
             yesChecked
@@ -56,6 +58,7 @@ export default function Segmented({ value, onChange, disabled }: Props) {
         />
         <label
           htmlFor={`${name}-no`}
+          data-testid="outcome-no"
           className={clsx(
             base,
             noChecked

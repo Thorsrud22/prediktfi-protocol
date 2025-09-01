@@ -11,8 +11,20 @@ test.describe("Real bet flow (best-effort)", () => {
     await page.goto("/market/1");
     const amountInput = page.getByPlaceholder("0.1");
     await amountInput.fill("0.5");
-    await page.getByRole("button", { name: /YES/ }).click();
-    const cta = page.getByRole("button", { name: /Place 0.5 SOL Bet/ });
+    
+    // Choose YES using the accessible radio button
+    await page.getByRole('radiogroup').locator('label').filter({ hasText: 'YES' }).click();
+    
+    // Note: This test will fail in CI as it requires a connected wallet,
+    // but we're updating the selector for consistency
+    const cta = page.getByRole("button", { name: /Place 0.5 SOL bet/i });
+    
+    // Display current button instead of failing if the wallet isn't connected
+    const buttons = await page.getByRole('button').all();
+    const buttonTexts = await Promise.all(buttons.map(b => b.textContent()));
+    console.log(`Available buttons: ${buttonTexts.join(', ')}`);
+    
+    // Continue with test (will still fail in CI without a wallet)
     await cta.click();
     // Expect loading toast
     await expect(page.getByText(/Sending transaction/)).toBeVisible();

@@ -6,26 +6,24 @@ test.describe("Basic navigation flow", () => {
 
     await expect(page.getByText(/Predict markets without limits/i)).toBeVisible();
 
-    // Gå til markets
-    const viewAll = page.getByRole("link", { name: /View all/i });
-    if (await viewAll.isVisible()) {
-      await viewAll.click();
-    } else {
-      await page.goto("/markets");
-    }
+    // Go to markets using the data-testid
+    await page.getByTestId('view-all-markets').click();
 
     await expect(page).toHaveURL(/\/markets/);
 
-    // Wait for cards to be visible
-    await page.waitForSelector("a[href^='/market/']");
-    const cards = page.locator("a[href^='/market/']");
-    const cardCount = await cards.count();
-    expect(cardCount).toBeGreaterThan(0);
-
+    // Wait for market cards to be visible
+    await expect(page.getByRole('heading', { name: 'All Markets' })).toBeVisible();
+    
+    // Get market cards using data-testid and verify count
+    const cards = page.getByTestId(/market-card-/);
+    await expect(cards).toHaveCount(3); // matches current mock size
     await cards.first().click();
+    
+    // Verify we're on a market detail page
     await expect(page).toHaveURL(/\/market\/\d+/);
 
-    await expect(page.getByRole('radiogroup').getByText('YES')).toBeVisible();
-    await expect(page.getByRole('radiogroup').getByText('NO')).toBeVisible();
+    // Check that the outcome group and place bet button are visible
+    await expect(page.getByTestId('outcome-group')).toBeVisible();
+    await expect(page.getByTestId('place-bet')).toBeVisible();
   });
 });
