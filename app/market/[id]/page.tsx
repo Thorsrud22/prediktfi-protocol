@@ -38,7 +38,7 @@ export default function MarketDetailPage() {
   const { publicKey, connected, sendTransaction } = useWallet();
   const { addToast, updateToast } = useToast();
 
-  const [betSide, setBetSide] = useState<"yes" | "no" | null>(null);
+  const [betSide, setBetSide] = useState<"YES" | "NO" | null>(null);
   const [betAmount, setBetAmount] = useState<string>("");
   const [pending, setPending] = useState(false);
   const [balanceLamports, setBalanceLamports] = useState<number | null>(null);
@@ -150,7 +150,7 @@ export default function MarketDetailPage() {
         variant: "success",
         title: "Bet placed",
         description:
-          `Your ${betSide.toUpperCase()} bet of ${n} SOL was sent` as string,
+          `Your ${betSide} bet of ${n} SOL was sent` as string,
         linkLabel: "View on Explorer",
         linkHref: url,
         duration: 5000,

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { markets } from "./lib/markets";
+import { MOCK_MARKETS } from "./lib/markets.mock";
 import Hero from "./components/Hero";
 import Card from "./components/Card";
 import { useReducedMotion } from "framer-motion";
@@ -25,65 +26,29 @@ export default function Home() {
             <h2 className="text-lg font-semibold text-[color:var(--text)]">
               Featured Markets
             </h2>
-            <Link
-      href="/markets"
-              className="text-sm text-[color:var(--accent)] hover:underline"
-            >
-              View all
-            </Link>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {(() => {
-              const top = markets
-                .filter((m) => m.isActive)
-                .sort((a, b) => b.totalVolume - a.totalVolume)
-                .slice(0, 3);
-              if (top.length === 0) {
-                return [1, 2, 3].map((id) => (
-                  <div key={id}>
-                    <Link
-                      href={`/market/${id}`}
-                      className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 rounded-[var(--radius)]"
-                    >
-                      <Card>
-                        <div className="mb-2 text-sm text-[color:var(--muted)]">
-                          Market #{id}
-                        </div>
-                        <div className="text-[color:var(--text)]">
-                          Sample market headline {id}
-                        </div>
-                      </Card>
-                    </Link>
-                  </div>
-                ));
-              }
-              return top.map((m) => (
-                <div key={m.id}>
-                  <Link
-                    href={`/market/${m.id}`}
-                    className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 rounded-[var(--radius)]"
-                  >
-                    <Card>
-                      <div className="mb-1 text-[color:var(--text)] font-medium">
-                        {m.title}
-                      </div>
-                      <div className="mb-3 text-sm text-[color:var(--muted)]">
-                        {m.description}
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-[color:var(--muted)]/90">
-                        <div>
-                          <span className="mr-3">Vol: {nf.format(m.totalVolume)} SOL</span>
-                          <span>Ends: {m.endDate}</span>
-                        </div>
-                        <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[color:var(--surface)]/70 px-2.5 py-1 text-[color:var(--text)]/90 shadow-sm transition-all group-hover:bg-[color:var(--surface)]/90">
-                          View
-                        </span>
-                      </div>
-                    </Card>
-                  </Link>
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+            {MOCK_MARKETS.slice(0, 3).map((m) => (
+              <a
+                key={m.id}
+                href={`/market/${m.id}`}
+                className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/[0.08] transition-colors"
+              >
+                <div className="text-sm text-white/70">{m.title}</div>
+                <div className="mt-1 text-xs text-white/50">
+                  Vol: {m.volume.toLocaleString()} SOL • Ends: {new Date(m.endsAt).toLocaleDateString()}
                 </div>
-              ));
-            })()}
+              </a>
+            ))}
+          </div>
+          
+          <div className="mt-6 text-right">
+            <a
+              href="/markets"
+              className="inline-flex items-center rounded-lg px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              View all markets
+            </a>
           </div>
         </section>
 

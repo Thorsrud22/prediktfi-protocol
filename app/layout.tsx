@@ -19,40 +19,28 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-  title: `${SITE.name} - Tokenized Predictions on Solana`,
-  description:
-    "Tokenized predictions. Turning insights into assets. Built on Solana.",
+  title: {
+    default: "Predikt — Tokenized predictions",
+    template: "%s | Predikt",
+  },
+  description: "Tokenized predictions. Turning insights into assets. Built on Solana.",
+  themeColor: "#4F46E5",
   openGraph: {
-    siteName: SITE.name,
-    title: `${SITE.name} - Tokenized Predictions on Solana`,
-    description:
-      "Tokenized predictions. Turning insights into assets. Built on Solana.",
+    title: "Predikt — Tokenized predictions",
+    description: "Predict markets without limits. Turning insights into assets. Built on Solana.",
     type: "website",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: `${SITE.name} Open Graph Image`,
-      },
-    ],
+    images: ["/og/opengraph-image.png"],
   },
   twitter: {
-    title: `${SITE.name} - Tokenized Predictions on Solana`,
-    description:
-      "Tokenized predictions. Turning insights into assets. Built on Solana.",
     card: "summary_large_image",
-    images: [
-      {
-        url: "/opengraph-image",
-        alt: `${SITE.name} Open Graph Image`,
-      },
-    ],
+    title: "Predikt — Tokenized predictions",
+    description: "Predict markets without limits. Built on Solana.",
+    images: ["/og/opengraph-image.png"],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0C2C66",
+  themeColor: "#4F46E5",
 };
 
 export default function RootLayout({

@@ -104,3 +104,28 @@ export async function sendSolWithMemo(args: {
   });
   return signature;
 }
+
+export type BetMemoData = {
+  marketId: string;
+  side: "YES" | "NO";
+  amount: number; // i SOL, appen konverterer til lamports utenfor
+};
+
+export function createBetMemoString(data: BetMemoData): string {
+  return JSON.stringify(data);
+}
+
+export function buildTransferWithMemoInstruction(
+  from: PublicKey,
+  to: PublicKey,
+  lamports: number,
+  memoData: BetMemoData
+): { transferIx: TransactionInstruction; memoIx: TransactionInstruction } {
+  const transferIx = SystemProgram.transfer({ fromPubkey: from, toPubkey: to, lamports });
+  const memoIx = new TransactionInstruction({
+    keys: [],
+    programId: MEMO_PROGRAM_ID,
+    data: Buffer.from(createBetMemoString(memoData), "utf-8"),
+  });
+  return { transferIx, memoIx };
+}
