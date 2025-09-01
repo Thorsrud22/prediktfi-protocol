@@ -20,9 +20,9 @@ test.describe("Mock bet flow", () => {
     // Choose side
     await page.getByRole('radiogroup').locator('label').filter({ hasText: 'YES' }).click();
     
-    // Check that fee and net info is displayed
-    await expect(page.getByText(/Fee 0.01/)).toBeVisible();
-    await expect(page.getByText(/Net 0.49/)).toBeVisible();
+    // Check that fee and net info is displayed (with live calculation format)
+    await expect(page.getByText(/Fee: 0\.010 SOL/)).toBeVisible();
+    await expect(page.getByText(/Net: 0\.490 SOL/)).toBeVisible();
     
     // Verify the button is in the expected state
     const connectButton = page.getByRole("button", { name: /Connect wallet/i });

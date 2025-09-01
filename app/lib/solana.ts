@@ -96,29 +96,3 @@ export async function placeBetMock(params: {
 export function isMock() {
   return process.env.NEXT_PUBLIC_MOCK_TX === "1";
 }
-
-// Legacy placeBet function for compatibility with existing market detail page
-export async function placeBet({ 
-  marketId, 
-  side, 
-  amountSol 
-}: { 
-  marketId: string; 
-  side: BetSide; 
-  amountSol: number; 
-}): Promise<string> {
-  if (isMock()) {
-    const result = await placeBetMock({ marketId, side, amountSol });
-    return result.signature;
-  } else {
-    // Real mode: TODO - implement wallet integration
-    // This will require connection, wallet adapter, and the sendSolWithMemo function
-    throw new Error('Real wallet integration not yet implemented - use mock mode');
-    
-    // TODO: Implementation would look like:
-    // const { sendSolWithMemo } = await import('./solana.server');
-    // const lamports = Number(solToLamports(amountSol));
-    // const memoData = { marketId, side, amount: amountSol };
-    // return await sendSolWithMemo(connection, wallet, treasury, memoData, lamports);
-  }
-}
