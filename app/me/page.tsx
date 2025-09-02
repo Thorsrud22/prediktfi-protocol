@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { verifyBetTransaction, getExplorerUrl } from "../lib/solana";
 
 type Bet = {
   wallet: string;
@@ -20,9 +20,13 @@ const MOCK_KEY = "predikt:mock-bets";
 
 export default function PortfolioPage() {
   const { publicKey, connected } = useWallet();
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<Bet[]>([]);
   const [verifying, setVerifying] = useState<Set<string>>(new Set());
   const base58 = publicKey?.toBase58();
+
+  // Check for signature query parameter
+  const signatureParam = searchParams.get("sig");
 
   useEffect(() => {
     async function load() {
@@ -34,18 +38,32 @@ export default function PortfolioPage() {
         const res = await fetch(`/api/bets?wallet=${base58}`).then(r=>r.json());
         setItems(res.items || []);
       }
+      
+      // If signature parameter exists, highlight it
+      if (signatureParam) {
+        // You could add special highlighting or verification status here
+        console.log("New transaction signature:", signatureParam);
+      }
     }
     load();
-  }, [base58]);
+  }, [base58, signatureParam]);
 
   const handleVerify = async (signature: string) => {
     setVerifying(prev => new Set(prev).add(signature));
     
     try {
-      const result = await verifyBetTransaction(signature);
+      // Call API to verify transaction
+      const response = await fetch("/api/bets", {
+        method: "GET",
+      });
+      const data = await response.json();
+      
+      // Check if this signature exists in the verified bets
+      const verified = data.items?.some((bet: any) => bet.signature === signature);
+      
       setItems(prev => prev.map(bet => 
         bet.signature === signature 
-          ? { ...bet, verified: result.ok, verificationError: result.error }
+          ? { ...bet, verified: verified, verificationError: verified ? undefined : "NOT_FOUND" }
           : bet
       ));
     } catch (error) {
@@ -129,7 +147,7 @@ export default function PortfolioPage() {
                 </div>
                 
                 <Link
-                  href={isMockMode ? "#" : getExplorerUrl(b.signature)}
+                  href={isMockMode ? "#" : `https://explorer.solana.com/tx/${b.signature}?cluster=devnet`}
                   className={`text-[color:var(--accent)] underline-offset-2 hover:underline ${isMockMode ? "opacity-50 pointer-events-none" : ""}`}
                   target={isMockMode ? undefined : "_blank"}
                   rel={isMockMode ? undefined : "noopener noreferrer"}

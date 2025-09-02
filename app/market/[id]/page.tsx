@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
+import { clusterApiUrl, Connection, PublicKey, Transaction } from "@solana/web3.js";
 
 import Card from "../../components/Card";
 import Segmented from "../../components/Segmented";
@@ -226,28 +226,51 @@ export default function MarketDetailPage() {
           duration: 5000,
         });
       } else {
-        // Real mode: send actual transaction
-        if (!treasuryPubkey) {
-          throw new Error("Treasury address not configured");
+        // Real mode: send actual transaction using server action
+        if (!publicKey) {
+          throw new Error("Wallet not connected");
         }
         
-        const { tx, memoData } = await placeBetReal({
-          connection,
-          wallet: wallet?.adapter!,
-          treasury: treasuryPubkey,
-          marketId: market.id,
-          side: betSide,
-          amountSol: n
-        });
+        // Create form data for server action
+        const formData = new FormData();
+        formData.append("marketId", market.id);
+        formData.append("side", betSide);
+        formData.append("amount", n.toString());
+        formData.append("walletPublicKey", publicKey.toBase58());
+        
+        // Import and call server action
+        const { placeBetReal: placeBetRealAction } = await import("../../../src/app/actions/placeBetReal");
+        const result = await placeBetRealAction(formData);
+        
+        if (!result.success || !result.transaction || !result.memoData) {
+          throw new Error(result.error || "Transaction failed");
+        }
+        
+        // Deserialize transaction
+        const transactionBuffer = Buffer.from(result.transaction, "base64");
+        const tx = Transaction.from(transactionBuffer);
+        
+        // Update memo with localStorage data
+        const ref = localStorage.getItem("predikt:ref") || "";
+        const creatorId = localStorage.getItem("predikt:creatorId") || "";
+        
+        const memoData = JSON.parse(result.memoData);
+        memoData.ref = ref;
+        memoData.creatorId = creatorId;
+        
+        // Update memo instruction with complete data
+        const memoInstruction = tx.instructions.find((ix: any) => 
+          ix.programId.equals(MEMO_PROGRAM_ID)
+        );
+        if (memoInstruction) {
+          memoInstruction.data = Buffer.from(JSON.stringify(memoData), "utf8");
+        }
         
         // Send transaction using wallet adapter
         signature = await sendTransaction(tx, connection);
         
-        // Wait for confirmation (optional, but good UX)
+        // Wait for confirmation
         await connection.confirmTransaction(signature, 'confirmed');
-        
-        // Parse memo data for API verification
-        const expectedMemo = JSON.parse(memoData);
         
         // Store bet record via API
         try {
@@ -256,8 +279,8 @@ export default function MarketDetailPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               signature,
-              expectedMemo,
-              wallet: publicKey!.toBase58()
+              expectedMemo: memoData,
+              wallet: publicKey.toBase58()
             })
           });
         } catch (err) {
@@ -275,8 +298,8 @@ export default function MarketDetailPage() {
           duration: 5000,
         });
         
-        // TODO: POST to /api/bets with { signature, expectedMemo: memoData }
-        // This will be implemented in the next block
+        // Redirect to portfolio with signature
+        window.location.href = `/me?sig=${signature}`;
       }
 
       setBetAmount("");
