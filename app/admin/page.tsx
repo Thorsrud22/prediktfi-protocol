@@ -1,270 +1,331 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Card from "../components/Card";
+import MarketCard from "../components/MarketCard";
+import { slugifyTitle, buildRefUrl, generateMarketId } from "../lib/creator-utils";
+import { getAttribution } from "../lib/attribution";
 
-type MarketDraft = {
+type MarketFormData = {
   title: string;
-  description: string;
-  endDate: string;
+  subtitle: string;
+  endsAt: string;
+  category: "KOL" | "Expert" | "Sports" | "Crypto" | "Culture" | "Predikt";
+  creatorHandle: string;
   creatorId: string;
-  creatorName: string;
-  creatorType: "KOL" | "EXPERT" | "COMMUNITY" | "PREDIKT";
+  avatarUrl: string;
+  poolLamports: string;
 };
 
 export default function AdminPage() {
-  const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [adminKey, setAdminKey] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [draft, setDraft] = useState<MarketDraft>({
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [formData, setFormData] = useState<MarketFormData>({
     title: "",
-    description: "",
-    endDate: "",
+    subtitle: "",
+    endsAt: "",
+    category: "Predikt",
+    creatorHandle: "",
     creatorId: "",
-    creatorName: "",
-    creatorType: "PREDIKT",
+    avatarUrl: "",
+    poolLamports: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Load creatorId from localStorage on mount
   useEffect(() => {
-    // Check if admin is enabled
-    const adminEnabled = process.env.NEXT_PUBLIC_ENABLE_ADMIN === 'true';
-    if (!adminEnabled) {
-      router.push('/404');
-      return;
+    const attribution = getAttribution();
+    if (attribution.creatorId) {
+      setFormData(prev => ({
+        ...prev,
+        creatorId: attribution.creatorId || "",
+      }));
     }
-    setIsLoading(false);
-  }, [router]);
+  }, []);
 
-  // Simple admin key check (in production, use proper auth)
-  const handleLogin = () => {
-    if (adminKey === process.env.NEXT_PUBLIC_ADMIN_KEY || adminKey === "predikt2025") {
-      setIsAuthorized(true);
-    } else {
-      alert("Invalid admin key");
-    }
+  // Generate market ID based on title
+  const marketId = formData.title ? generateMarketId(formData.title) : "";
+
+  // Generate ref URL
+  const generateRefUrl = () => {
+    if (!marketId || !formData.creatorId) return "";
+    
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const attribution = getAttribution();
+    const storedRef = attribution.ref;
+    
+    return buildRefUrl(siteUrl, marketId, formData.creatorId, storedRef);
   };
 
-  const handleCreateMarket = async () => {
-    if (!draft.title || !draft.description || !draft.endDate) {
-      alert("Please fill in all required fields");
-      return;
-    }
+  const refUrl = generateRefUrl();
 
-    setIsSubmitting(true);
+  // Handle copy to clipboard
+  const handleCopyUrl = async () => {
+    if (!refUrl) return;
+    
     try {
-      const response = await fetch("/api/admin/markets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
-      });
-
-      if (response.ok) {
-        alert("Market created successfully!");
-        setDraft({
-          title: "",
-          description: "",
-          endDate: "",
-          creatorId: "",
-          creatorName: "",
-          creatorType: "PREDIKT",
-        });
-        router.push("/markets");
-      } else {
-        throw new Error("Failed to create market");
-      }
-    } catch (error) {
-      alert("Error creating market: " + String(error));
-    } finally {
-      setIsSubmitting(false);
+      await navigator.clipboard.writeText(refUrl);
+      setCopySuccess(true);
+      
+      // Reset success state after 2 seconds
+      setTimeout(() => {
+        setCopySuccess(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy URL:", err);
     }
   };
 
-  const marketTemplates = [
-    {
-      title: "Will [CRYPTO] hit $[PRICE] by [DATE]?",
-      description: "[CRYPTO] will reach $[PRICE] USD by [DATE]",
-      category: "Crypto",
-    },
-    {
-      title: "Will [COMPANY] stock reach $[PRICE] by [DATE]?",
-      description: "[COMPANY] stock price will hit $[PRICE] by [DATE]",
-      category: "Stocks",
-    },
-    {
-      title: "Will [EVENT] happen by [DATE]?",
-      description: "[EVENT] will occur before [DATE]",
-      category: "Events",
-    },
-  ];
-
-  if (isLoading) {
-    return (
-      <main className="mx-auto max-w-md px-4 py-16">
-        <div className="text-center text-[color:var(--muted)]">Loading...</div>
-      </main>
-    );
-  }
-
-  if (!isAuthorized) {
-    return (
-      <main className="mx-auto max-w-md px-4 py-16">
-        <Card>
-          <h1 className="text-2xl font-bold text-[color:var(--text)] mb-6 text-center">
-            Admin Access
-          </h1>
-          <div className="space-y-4">
-            <input
-              type="password"
-              placeholder="Admin Key"
-              value={adminKey}
-              onChange={(e) => setAdminKey(e.target.value)}
-              className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface-2)] px-4 py-2 text-[color:var(--text)] outline-none focus-visible:ring-2"
-              onKeyPress={(e) => e.key === "Enter" && handleLogin()}
-            />
-            <button
-              onClick={handleLogin}
-              className="w-full btn-primary py-2"
-            >
-              Login
-            </button>
-          </div>
-        </Card>
-      </main>
-    );
-  }
+  // Handle form field changes
+  const handleInputChange = (field: keyof MarketFormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="text-3xl font-bold text-[color:var(--text)] mb-8">
-        Market Generator
-      </h1>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-[color:var(--text)] mb-2">
+          Creator Hub
+        </h1>
+        <p className="text-[color:var(--muted)]">
+          Create and manage prediction markets as a content creator or analyst
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Market Templates */}
-        <Card>
-          <h2 className="text-xl font-semibold text-[color:var(--text)] mb-4">
-            Quick Templates
-          </h2>
-          <div className="space-y-3">
-            {marketTemplates.map((template, i) => (
-              <div
-                key={i}
-                className="p-3 border border-[var(--border)] rounded-lg cursor-pointer hover:bg-[color:var(--surface-2)] transition-colors"
-                onClick={() => {
-                  setDraft(prev => ({
-                    ...prev,
-                    title: template.title,
-                    description: template.description,
-                  }));
-                }}
-              >
-                <div className="font-medium text-[color:var(--text)] text-sm mb-1">
-                  {template.category}
-                </div>
-                <div className="text-[color:var(--muted)] text-sm">
-                  {template.title}
-                </div>
+        {/* Form */}
+        <div className="space-y-6">
+          <div className="bg-[color:var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
+            <h2 className="text-xl font-semibold text-[color:var(--text)] mb-4">
+              Market Details
+            </h2>
+            
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-[color:var(--text)] mb-1">
+                  Title *
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange("title", e.target.value)}
+                  className="w-full px-3 py-2 bg-[color:var(--surface-2)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+                  placeholder="Will Bitcoin reach $100k by 2025?"
+                />
               </div>
-            ))}
+
+              {/* Subtitle */}
+              <div>
+                <label htmlFor="subtitle" className="block text-sm font-medium text-[color:var(--text)] mb-1">
+                  Subtitle (optional)
+                </label>
+                <textarea
+                  id="subtitle"
+                  value={formData.subtitle}
+                  onChange={(e) => handleInputChange("subtitle", e.target.value)}
+                  className="w-full px-3 py-2 bg-[color:var(--surface-2)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+                  rows={2}
+                  placeholder="Additional context or description"
+                />
+              </div>
+
+              {/* End Date/Time */}
+              <div>
+                <label htmlFor="endsAt" className="block text-sm font-medium text-[color:var(--text)] mb-1">
+                  Ends At *
+                </label>
+                <input
+                  id="endsAt"
+                  type="datetime-local"
+                  value={formData.endsAt}
+                  onChange={(e) => handleInputChange("endsAt", e.target.value)}
+                  className="w-full px-3 py-2 bg-[color:var(--surface-2)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-[color:var(--text)] mb-1">
+                  Category *
+                </label>
+                <select
+                  id="category"
+                  value={formData.category}
+                  onChange={(e) => handleInputChange("category", e.target.value as MarketFormData["category"])}
+                  className="w-full px-3 py-2 bg-[color:var(--surface-2)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+                >
+                  <option value="KOL">KOL</option>
+                  <option value="Expert">Expert</option>
+                  <option value="Sports">Sports</option>
+                  <option value="Crypto">Crypto</option>
+                  <option value="Culture">Culture</option>
+                  <option value="Predikt">Predikt</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </Card>
 
-        {/* Market Creation Form */}
-        <Card>
-          <h2 className="text-xl font-semibold text-[color:var(--text)] mb-4">
-            Create Market
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-[color:var(--text)] mb-1">
-                Title *
-              </label>
-              <input
-                value={draft.title}
-                onChange={(e) => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface-2)] px-3 py-2 text-[color:var(--text)] outline-none focus-visible:ring-2"
-                placeholder="Market question..."
-              />
+          {/* Creator Info */}
+          <div className="bg-[color:var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
+            <h2 className="text-xl font-semibold text-[color:var(--text)] mb-4">
+              Creator Info
+            </h2>
+            
+            <div className="space-y-4">
+              {/* Creator Handle */}
+              <div>
+                <label htmlFor="creatorHandle" className="block text-sm font-medium text-[color:var(--text)] mb-1">
+                  Creator Handle *
+                </label>
+                <input
+                  id="creatorHandle"
+                  type="text"
+                  value={formData.creatorHandle}
+                  onChange={(e) => handleInputChange("creatorHandle", e.target.value)}
+                  className="w-full px-3 py-2 bg-[color:var(--surface-2)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+                  placeholder="CryptoAnalyst"
+                />
+              </div>
+
+              {/* Creator ID */}
+              <div>
+                <label htmlFor="creatorId" className="block text-sm font-medium text-[color:var(--text)] mb-1">
+                  Creator ID *
+                </label>
+                <input
+                  id="creatorId"
+                  type="text"
+                  value={formData.creatorId}
+                  onChange={(e) => handleInputChange("creatorId", e.target.value)}
+                  className="w-full px-3 py-2 bg-[color:var(--surface-2)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+                  placeholder="crypto_analyst_123"
+                />
+              </div>
+
+              {/* Avatar URL */}
+              <div>
+                <label htmlFor="avatarUrl" className="block text-sm font-medium text-[color:var(--text)] mb-1">
+                  Avatar URL (V1)
+                </label>
+                <input
+                  id="avatarUrl"
+                  type="url"
+                  value={formData.avatarUrl}
+                  onChange={(e) => handleInputChange("avatarUrl", e.target.value)}
+                  className="w-full px-3 py-2 bg-[color:var(--surface-2)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+                  placeholder="https://api.dicebear.com/7.x/personas/svg?seed=creator"
+                />
+              </div>
+
+              {/* Pool Lamports */}
+              <div>
+                <label htmlFor="poolLamports" className="block text-sm font-medium text-[color:var(--text)] mb-1">
+                  Pool Lamports (optional)
+                </label>
+                <input
+                  id="poolLamports"
+                  type="number"
+                  value={formData.poolLamports}
+                  onChange={(e) => handleInputChange("poolLamports", e.target.value)}
+                  className="w-full px-3 py-2 bg-[color:var(--surface-2)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+                  placeholder="1000000000000"
+                />
+              </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[color:var(--text)] mb-1">
-                Description *
-              </label>
-              <textarea
-                value={draft.description}
-                onChange={(e) => setDraft(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface-2)] px-3 py-2 text-[color:var(--text)] outline-none focus-visible:ring-2"
-                rows={3}
-                placeholder="Detailed description..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[color:var(--text)] mb-1">
-                End Date *
-              </label>
-              <input
-                type="date"
-                value={draft.endDate}
-                onChange={(e) => setDraft(prev => ({ ...prev, endDate: e.target.value }))}
-                className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface-2)] px-3 py-2 text-[color:var(--text)] outline-none focus-visible:ring-2"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[color:var(--text)] mb-1">
-                Creator Name
-              </label>
-              <input
-                value={draft.creatorName}
-                onChange={(e) => setDraft(prev => ({ ...prev, creatorName: e.target.value }))}
-                className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface-2)] px-3 py-2 text-[color:var(--text)] outline-none focus-visible:ring-2"
-                placeholder="Creator display name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[color:var(--text)] mb-1">
-                Creator ID
-              </label>
-              <input
-                value={draft.creatorId}
-                onChange={(e) => setDraft(prev => ({ ...prev, creatorId: e.target.value }))}
-                className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface-2)] px-3 py-2 text-[color:var(--text)] outline-none focus-visible:ring-2"
-                placeholder="creator_unique_id"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[color:var(--text)] mb-1">
-                Creator Type
-              </label>
-              <select
-                value={draft.creatorType}
-                onChange={(e) => setDraft(prev => ({ ...prev, creatorType: e.target.value as any }))}
-                className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface-2)] px-3 py-2 text-[color:var(--text)] outline-none focus-visible:ring-2"
-              >
-                <option value="PREDIKT">Predikt Editorial</option>
-                <option value="KOL">Key Opinion Leader</option>
-                <option value="EXPERT">Domain Expert</option>
-                <option value="COMMUNITY">Community</option>
-              </select>
-            </div>
-
-            <button
-              onClick={handleCreateMarket}
-              disabled={isSubmitting}
-              className="w-full btn-primary py-3 disabled:opacity-50"
-            >
-              {isSubmitting ? "Creating..." : "Create Market"}
-            </button>
           </div>
-        </Card>
+        </div>
+
+        {/* Preview and Share */}
+        <div className="space-y-6">
+          {/* Market Preview */}
+          <div className="bg-[color:var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
+            <h2 className="text-xl font-semibold text-[color:var(--text)] mb-4">
+              Preview
+            </h2>
+            
+            {formData.title && formData.creatorHandle ? (
+              <MarketCard
+                id={marketId}
+                title={formData.title}
+                subtitle={formData.subtitle || undefined}
+                endsAt={formData.endsAt ? new Date(formData.endsAt).getTime() : Date.now() + 30 * 24 * 60 * 60 * 1000}
+                poolLamports={formData.poolLamports ? parseInt(formData.poolLamports) : 1000000000000}
+                participants={42}
+                creator={{
+                  handle: formData.creatorHandle,
+                  badge: formData.category,
+                  avatarUrl: formData.avatarUrl || `https://api.dicebear.com/7.x/personas/svg?seed=${formData.creatorHandle}`,
+                }}
+                category={formData.category}
+              />
+            ) : (
+              <div className="text-center py-8 text-[color:var(--muted)]">
+                Fill in the form to see preview
+              </div>
+            )}
+          </div>
+
+          {/* Ref URL Generator */}
+          <div className="bg-[color:var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
+            <h2 className="text-xl font-semibold text-[color:var(--text)] mb-4">
+              Share URL
+            </h2>
+            
+            {refUrl ? (
+              <div className="space-y-4">
+                <div className="bg-[color:var(--surface-2)] border border-[var(--border)] rounded px-3 py-2">
+                  <code className="text-xs text-[color:var(--muted)] break-all">
+                    {refUrl}
+                  </code>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleCopyUrl}
+                    className="btn-primary px-4 py-2 text-sm flex-1"
+                  >
+                    {copySuccess ? "Copied!" : "Copy URL"}
+                  </button>
+                  
+                  <div 
+                    aria-live="polite" 
+                    className={`text-xs transition-opacity duration-200 ${
+                      copySuccess 
+                        ? "text-green-600 dark:text-green-400 opacity-100" 
+                        : "opacity-0"
+                    }`}
+                  >
+                    ✓ URL copied
+                  </div>
+                </div>
+                
+                <p className="text-xs text-[color:var(--muted)]">
+                  This URL carries attribution for referrals and creators
+                </p>
+              </div>
+            ) : (
+              <div className="text-center py-4 text-[color:var(--muted)]">
+                Fill in title and creator ID to generate share URL
+              </div>
+            )}
+          </div>
+
+          {/* Generated Market ID */}
+          {marketId && (
+            <div className="bg-[color:var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-4">
+              <h3 className="text-sm font-medium text-[color:var(--text)] mb-2">
+                Generated Market ID
+              </h3>
+              <code className="text-sm text-[color:var(--muted)]">
+                {marketId}
+              </code>
+            </div>
+          )}
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

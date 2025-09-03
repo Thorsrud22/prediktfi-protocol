@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "All Markets | Predikt — Tokenized predictions",
-  description: "Browse and trade on all prediction markets on Predikt",
+  title: "Legacy Markets | Predikt — AI-first prediction studio",
+  description: "Legacy prediction markets view. Try the new AI-first Studio for creating insights.",
 };
 
 export default function MarketsLayout({

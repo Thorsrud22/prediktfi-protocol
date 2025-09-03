@@ -10,7 +10,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const isMarketPage = pathname.startsWith('/market/');
+  const isInsightPage = pathname.startsWith('/i/');
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<Element | null>(null);
 
@@ -78,24 +78,32 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-3">
         <Link
           href="/"
-          className="logo-text"
+          className="logo-text flex items-center hover:opacity-90 transition-opacity"
           aria-label={SITE.name}
         >
-          {SITE.name}
+          <span>Pre</span>
+          <span className="opacity-80">di</span>
+          <span className="opacity-60">kt</span>
         </Link>
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 sm:flex">
           <FastLink
-            href="/markets"
-            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
+            href="/studio"
+            className="min-h-11 text-sm font-semibold text-[color:var(--text)] hover:text-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
           >
-            Markets
+            Studio
           </FastLink>
           <FastLink
-            href="/me"
+            href="/feed"
             className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
           >
-            Portfolio
+            Feed
+          </FastLink>
+          <FastLink
+            href="/pricing"
+            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
+          >
+            Pricing
           </FastLink>
           <a
             href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
@@ -116,15 +124,21 @@ export default function Navbar() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/"
+            href="/pricing"
+            className="hidden sm:inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-medium bg-[color:var(--accent)]/10 text-[color:var(--accent)] hover:bg-[color:var(--accent)]/20 transition-all focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+          >
+            Upgrade
+          </Link>
+          <Link
+            href="/studio"
             className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 ${
-              isMarketPage 
+              isInsightPage 
                 ? "bg-[color:var(--accent)] text-black shadow-token" 
                 : "border border-[color:var(--border)] bg-transparent text-[color:var(--text)]/80 opacity-80 hover:opacity-100"
             }`}
           >
-            <span className="hidden sm:inline">Launch App</span>
-            <span className="sm:hidden">Open App</span>
+            <span className="hidden sm:inline">Open Studio</span>
+            <span className="sm:hidden">Studio</span>
           </Link>
           {/* Mobile hamburger */}
           <button
@@ -172,18 +186,25 @@ export default function Navbar() {
             </div>
             <nav className="flex flex-col gap-3">
               <FastLink
-                href="/markets"
-                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
+                href="/studio"
+                className="rounded-md px-2 py-2 font-semibold text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
                 onClick={() => setOpen(false)}
               >
-                Markets
+                Studio
               </FastLink>
               <FastLink
-                href="/me"
+                href="/feed"
                 className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
                 onClick={() => setOpen(false)}
               >
-                Portfolio
+                Feed
+              </FastLink>
+              <FastLink
+                href="/pricing"
+                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Pricing
               </FastLink>
               <a
                 href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
@@ -205,16 +226,16 @@ export default function Navbar() {
                 GitHub
               </a>
               <Link
-                href="/"
+                href="/studio"
                 className={`mt-2 inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 ${
-                  isMarketPage 
+                  isInsightPage 
                     ? "bg-[color:var(--accent)] text-black shadow-token" 
                     : "border border-[color:var(--border)] bg-transparent text-[color:var(--text)]/80 opacity-80 hover:opacity-100"
                 }`}
                 onClick={() => setOpen(false)}
                 tabIndex={0}
               >
-                Open App
+                Open Studio
               </Link>
             </nav>
           </div>

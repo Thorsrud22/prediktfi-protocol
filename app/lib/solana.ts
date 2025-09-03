@@ -155,3 +155,12 @@ export async function placeBetMock(params: {
 export function isMock() {
   return process.env.NEXT_PUBLIC_MOCK_TX === "1";
 }
+
+// Helper to create memo instruction for insights
+export function createInsightMemoInstruction(data: Buffer): TransactionInstruction {
+  return new TransactionInstruction({
+    programId: MEMO_PROGRAM_ID,
+    keys: [],
+    data,
+  });
+}

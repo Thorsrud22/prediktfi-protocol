@@ -33,7 +33,7 @@ export default function Hero() {
       aria-label={`${SITE.name} hero`}
       className="relative isolate overflow-hidden bg-hero noise"
     >
-      <div className="relative z-[1] mx-auto max-w-[1100px] px-6 py-20 sm:py-24 md:py-28">
+      <div className="relative z-[1] mx-auto max-w-[1100px] px-6 py-12 sm:py-16 md:py-18">
         {/* Badge */}
         <div className="flex items-center gap-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[color:var(--surface)]/70 px-3 py-1 text-xs font-medium text-[color:var(--muted)] backdrop-blur-sm">
@@ -46,39 +46,43 @@ export default function Hero() {
               <span>Mock Mode</span>
             </div>
           )}
+          {!isMockMode && (
+            <button
+              onClick={handleTryMockMode}
+              className="text-xs text-[color:var(--muted)]/70 hover:text-[color:var(--muted)] transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--accent)]/50 rounded"
+            >
+              Try mock mode
+            </button>
+          )}
         </div>
 
         {/* Hero text container with constrained width */}
         <div className="max-w-3xl md:max-w-4xl">
           {/* Heading */}
           <h1 className="mt-5 font-extrabold leading-tight text-[clamp(2.25rem,7vw,5.5rem)] text-[color:var(--text)]">
-            Predict markets <span className="text-gradient">without limits</span>.
+            Ask smarter. <span className="text-gradient">Log insights on-chain</span>.
           </h1>
 
           {/* Lead with improved contrast */}
           <p className="mt-4 max-w-2xl text-base sm:text-lg text-slate-200">
-            Turning insights into assets — built on Solana.
+            Predikt is an AI-first prediction studio. Ask a question, get a probability with rationale, and stamp it on Solana.
           </p>
         </div>
 
-        {/* CTAs - mobile stack vertically, desktop horizontal */}
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        {/* CTAs - primary and secondary actions */}
+        <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
           <Link
-            href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="btn-outline min-h-11 text-sm"
+            href="/studio"
+            className="btn-primary min-h-11 text-sm inline-flex items-center"
           >
-            View Docs
+            Open Studio
           </Link>
-          {!isMockMode && (
-            <button
-              onClick={handleTryMockMode}
-              className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
-            >
-              Try mock mode
-            </button>
-          )}
+          <Link
+            href="/feed"
+            className="text-sm text-[color:var(--muted)]/80 hover:text-[color:var(--muted)] transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--accent)]/50 rounded"
+          >
+            View Feed
+          </Link>
         </div>
 
         {/* Trust row (optional) */}

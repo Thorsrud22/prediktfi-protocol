@@ -153,13 +153,16 @@ Copy `.env.example` to `.env.local` and adjust values:
 cp .env.example .env.local
 ```
 
-Required keys (public at runtime):
+Required keys:
 
-- `NEXT_PUBLIC_CLUSTER` — devnet | testnet | mainnet-beta (default: devnet)
-- `NEXT_PUBLIC_PROGRAM_ID` — your deployed Anchor program ID (Base58)
-- `NEXT_PUBLIC_PROTOCOL_TREASURY` — treasury account public key (Base58)
-- `NEXT_PUBLIC_FEE_BPS` — protocol fee in basis points (default: 200 = 2%)
+- `SOLANA_CLUSTER` — devnet | mainnet-beta (default: devnet)
+- `SOLANA_RPC_URL` — RPC endpoint URL (server-side only)
+- `SOLANA_TREASURY` — treasury account public key (Base58, server-side only)
 - `NEXT_PUBLIC_MOCK_TX` — set `0` for real devnet transactions, `1` for quick rollback to mock mode (default: 0)
+- `NEXT_PUBLIC_SITE_URL` — site URL for Next.js (default: http://localhost:3000)
+- `NEXT_PUBLIC_ENABLE_ADMIN` — enable admin panel (optional, default: false)
+- `ADMIN_USER` — admin username (server-side only, optional)
+- `ADMIN_PASS` — admin password (server-side only, optional)
 
 Note: `.env.local` is ignored by git. Do not commit secrets.
 

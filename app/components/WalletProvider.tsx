@@ -28,9 +28,24 @@ export default function WalletProvider({ children }: { children: ReactNode }) {
       config={{
         commitment: 'confirmed',
         confirmTransactionInitialTimeout: 30000,
+        httpHeaders: {
+          'Content-Type': 'application/json',
+        },
+        wsEndpoint: undefined, // Disable websocket to reduce instability
+        disableRetryOnRateLimit: false,
+        // Additional stability settings
+        fetch: undefined, // Use default fetch
       }}
     >
-      <SolWalletProvider wallets={wallets} autoConnect={false}>
+      <SolWalletProvider 
+        wallets={wallets} 
+        autoConnect={false}
+        localStorageKey="wallet-adapter"
+        onError={(error) => {
+          console.warn('Wallet error:', error);
+          // Don't crash the app on wallet errors
+        }}
+      >
         <WalletModalProvider>{children}</WalletModalProvider>
       </SolWalletProvider>
     </ConnectionProvider>

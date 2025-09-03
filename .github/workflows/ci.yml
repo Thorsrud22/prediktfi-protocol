@@ -36,11 +36,14 @@ jobs:
         shell: bash
         run: |
           cat << 'EOF' > .env.local
-          NEXT_PUBLIC_CLUSTER=devnet
-          NEXT_PUBLIC_PROGRAM_ID=CHANGEME_PROGRAM_ID
-          NEXT_PUBLIC_PROTOCOL_TREASURY=HUCsxGDiAQdfmPe9MV52Dd6ERzwNNiu16aEKqFUQ1obN
-          NEXT_PUBLIC_FEE_BPS=200
+          SOLANA_CLUSTER=devnet
+          SOLANA_RPC_URL=https://api.devnet.solana.com
+          SOLANA_TREASURY=HUCsxGDiAQdfmPe9MV52Dd6ERzwNNiu16aEKqFUQ1obN
           NEXT_PUBLIC_MOCK_TX=1
+          NEXT_PUBLIC_SITE_URL=http://localhost:3000
+          NEXT_PUBLIC_ENABLE_ADMIN=false
+          ADMIN_USER=admin
+          ADMIN_PASS=test
           EOF
 
       # Run TypeScript type checks

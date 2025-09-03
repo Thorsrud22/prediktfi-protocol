@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// LEGACY API: This endpoint is from the old prediction markets admin system.
+// Current insights are managed through the Studio interface instead.
+
 // In-memory store for development (in production, use database)
 const marketStore = {
   markets: [] as any[],

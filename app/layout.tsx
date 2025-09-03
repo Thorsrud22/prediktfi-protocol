@@ -6,7 +6,9 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import WalletProvider from "./components/WalletProvider";
 import ToastProvider from "./components/ToastProvider";
-import { ReferralTracker } from "./components/ReferralTracker";
+import ConsentGate from "./components/ConsentGate";
+import AttributionBoot from "./components/AttributionBoot";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SITE } from "./config/site";
 
 const geistSans = Geist({
@@ -24,10 +26,10 @@ const isProduction = process.env.NODE_ENV === 'production' && process.env.SOLANA
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "Predikt — Tokenized predictions",
+    default: "Predikt — AI-first prediction studio",
     template: "%s | Predikt",
   },
-  description: "Tokenized predictions. Turning insights into assets. Built on Solana.",
+  description: "Ask questions, get AI probabilities with rationale, and log verifiable insights on Solana.",
   alternates: {
     canonical: isProduction ? '/' : undefined,
   },
@@ -36,15 +38,15 @@ export const metadata: Metadata = {
     follow: false,
   },
   openGraph: {
-    title: "Predikt — Tokenized predictions",
-    description: "Predict markets without limits. Turning insights into assets. Built on Solana.",
+    title: "Predikt — AI-first prediction studio",
+    description: "Ask questions, get AI probabilities with rationale, and log verifiable insights on Solana.",
     type: "website",
     images: ["/og/opengraph-image.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Predikt — Tokenized predictions",
-    description: "Predict markets without limits. Built on Solana.",
+    title: "Predikt — AI-first prediction studio",
+    description: "Ask questions, get AI probabilities with rationale, and log verifiable insights on Solana.",
     images: ["/og/opengraph-image.png"],
   },
 };
@@ -64,13 +66,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`}>
-        <WalletProvider>
+                <WalletProvider>
           <ToastProvider>
-            <Suspense fallback={null}>
-              <ReferralTracker />
-            </Suspense>
+            <ConsentGate />
             <Navbar />
-            <main className="min-h-screen">{children}</main>
+            <main className="flex min-h-screen flex-col">
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
+            </main>
             <Footer />
           </ToastProvider>
         </WalletProvider>

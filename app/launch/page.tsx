@@ -14,6 +14,9 @@ type LaunchItem = {
 
 export default function LaunchPage() {
   const [items, setItems] = useState<LaunchItem[]>([
+    // NOTE: This is a legacy development dashboard for the old prediction market system.
+    // Predikt has evolved into an AI-first prediction studio platform.
+    
     // Core Platform
     {
       id: "wallet-integration",
@@ -23,23 +26,23 @@ export default function LaunchPage() {
       category: "core",
     },
     {
-      id: "betting-system",
-      title: "Betting System",
-      description: "Real and mock betting with memo JSON and referral support",
+      id: "insight-system",
+      title: "Insight System", 
+      description: "Real and mock insight logging with memo JSON and referral support",
       status: "completed",
       category: "core",
     },
     {
       id: "api-verification",
       title: "API Verification",
-      description: "Transaction verification and bet storage endpoints",
+      description: "Transaction verification and insight storage endpoints",
       status: "completed",
       category: "core",
     },
     {
-      id: "portfolio-system",
-      title: "Portfolio System",
-      description: "User predictions with verification status display",
+      id: "insights-dashboard",
+      title: "Insights Dashboard",
+      description: "User insights with verification status display",
       status: "completed",
       category: "core",
     },
@@ -51,24 +54,24 @@ export default function LaunchPage() {
       category: "core",
     },
 
-    // Content & Markets
+    // Content & Insights
     {
-      id: "market-generator",
-      title: "Market Generator",
-      description: "Admin interface for creating curated markets",
+      id: "insight-generator", 
+      title: "Insight Generator",
+      description: "Studio interface for creating AI-backed insights",
       status: "completed",
       category: "content",
     },
     {
-      id: "initial-markets",
-      title: "Initial Markets",
-      description: "3+ seed markets with creator attribution",
+      id: "initial-insights",
+      title: "Initial Insights",
+      description: "3+ seed insights with creator attribution", 
       status: "completed",
       category: "content",
     },
     {
-      id: "market-templates",
-      title: "Market Templates",
+      id: "insight-templates",
+      title: "Insight Templates",
       description: "Quick templates for crypto, stocks, and events",
       status: "completed",
       category: "content",
@@ -289,16 +292,16 @@ export default function LaunchPage() {
           </h3>
           <div className="space-y-3">
             <Link
-              href="/markets"
+              href="/feed"
               className="block w-full text-center px-4 py-2 bg-[color:var(--accent)] text-white rounded-lg hover:opacity-90 transition-opacity"
             >
-              View Markets
+              View Feed
             </Link>
             <Link
-              href="/admin"
+              href="/studio"
               className="block w-full text-center px-4 py-2 border border-[var(--border)] text-[color:var(--text)] rounded-lg hover:bg-[color:var(--surface-2)] transition-colors"
             >
-              Admin Panel
+              Open Studio
             </Link>
             <Link
               href="/legal"

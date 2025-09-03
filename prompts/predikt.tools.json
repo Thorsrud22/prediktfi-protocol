@@ -1,0 +1,98 @@
+{
+  "version": "1.0",
+  "tools": {
+    "predikt-relaxed": {
+      "displayName": "Predikt Relaxed",
+      "description": "Relaxed tool set for Predikt development with auto-approval",
+      "autoApprove": true,
+      "commands": {
+        "allow": [
+          "pnpm.*",
+          "npm.*", 
+          "npx.*",
+          "node.*",
+          "git (status|pull|fetch|switch|checkout|restore|reset --hard [^/].*)$",
+          "git add.*",
+          "git commit.*",
+          "git merge.*",
+          "vercel.*",
+          "echo.*"
+        ],
+        "deny": [
+          "rm -rf.*",
+          "sudo.*",
+          "chmod.*",
+          "chown.*",
+          "mkfs.*",
+          "dd.*",
+          ".*(curl|wget).*(sh|bash).*",
+          ".*docker.*(prune|rm|exec).*"
+        ]
+      },
+      "filesystem": {
+        "allowWrite": [
+          "app/**",
+          "components/**", 
+          "lib/**",
+          "pages/**",
+          "public/**",
+          "scripts/**",
+          "styles/**",
+          "tests/**",
+          "package.json",
+          "pnpm-workspace.yaml",
+          "pnpm-lock.yaml",
+          "tsconfig*.json",
+          "next.config.*",
+          ".env.example"
+        ],
+        "denyWrite": [
+          "*.key",
+          "*.pem",
+          ".env*",
+          ".git/**",
+          "node_modules/**"
+        ]
+      }
+    },
+    "predikt-strict": {
+      "displayName": "Predikt Strict",
+      "description": "Strict tool set for Predikt with manual approval",
+      "autoApprove": false,
+      "commands": {
+        "allow": [
+          "git status",
+          "git pull",
+          "git fetch",
+          "pnpm install",
+          "npm install",
+          "echo.*"
+        ],
+        "deny": [
+          "rm -rf.*",
+          "sudo.*",
+          "chmod.*",
+          "chown.*",
+          "mkfs.*",
+          "dd.*",
+          ".*(curl|wget).*(sh|bash).*",
+          ".*docker.*(prune|rm|exec).*"
+        ]
+      },
+      "filesystem": {
+        "allowWrite": [
+          "app/**",
+          "components/**"
+        ],
+        "denyWrite": [
+          "*.key",
+          "*.pem", 
+          ".env*",
+          ".git/**",
+          "node_modules/**"
+        ]
+      }
+    }
+  },
+  "defaultSet": "predikt-relaxed"
+}

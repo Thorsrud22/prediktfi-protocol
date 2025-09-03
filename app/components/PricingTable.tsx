@@ -1,0 +1,125 @@
+'use client';
+
+import { useState } from 'react';
+
+export default function PricingTable() {
+  const [showModal, setShowModal] = useState(false);
+
+  const plans = [
+    {
+      name: 'Free',
+      price: '$0',
+      period: 'forever',
+      features: [
+        '10 insights per day',
+        'Community feed',
+        'Templates'
+      ],
+      cta: 'Get Started',
+      current: true
+    },
+    {
+      name: 'Pro',
+      price: 'Coming Soon',
+      period: 'beta',
+      features: [
+        'Unlimited insights',
+        'Priority processing',
+        'Advanced prompts',
+        'Upcoming crypto payments'
+      ],
+      cta: 'Start Pro (Beta)',
+      highlight: true
+    }
+  ];
+
+  return (
+    <>
+      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {plans.map((plan) => (
+          <div
+            key={plan.name}
+            className={`relative rounded-2xl border p-8 ${
+              plan.highlight
+                ? 'border-[--accent] bg-gradient-to-b from-[--accent]/5 to-transparent'
+                : 'border-[--border] bg-[--surface]'
+            }`}
+          >
+            {plan.highlight && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-[--accent] text-white px-3 py-1 rounded-full text-sm font-medium">
+                  Popular
+                </span>
+              </div>
+            )}
+            
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-[--text] mb-2">{plan.name}</h3>
+              <div className="mb-1">
+                <span className="text-3xl font-bold text-[--text]">{plan.price}</span>
+                {plan.period && (
+                  <span className="text-gray-500 ml-1">/{plan.period}</span>
+                )}
+              </div>
+            </div>
+
+            <ul className="space-y-3 mb-8">
+              {plan.features.map((feature, index) => (
+                <li key={index} className="flex items-center text-[--text]">
+                  <svg className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={() => {
+                if (plan.highlight) {
+                  setShowModal(true);
+                }
+              }}
+              disabled={plan.current}
+              className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+                plan.current
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : plan.highlight
+                  ? 'bg-[--accent] text-white hover:bg-[--accent]/90'
+                  : 'border border-[--border] text-[--text] hover:bg-gray-50'
+              }`}
+            >
+              {plan.current ? 'Current Plan' : plan.cta}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Beta Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold mb-4">Pro Plan Coming Soon</h3>
+            <p className="text-gray-600 mb-6">
+              Crypto payments via Coinbase Commerce coming soon. No charge today.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 py-2 px-4 bg-[--accent] text-white rounded-lg hover:bg-[--accent]/90"
+              >
+                Get Notified
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

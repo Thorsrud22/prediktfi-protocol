@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
+  // Geofence: Block Norway (NO) on mainnet for /market and /api routes
+  const cluster = process.env.SOLANA_CLUSTER;
+  const pathname = request.nextUrl.pathname;
+  
+  if (cluster === 'mainnet-beta' && (pathname.startsWith('/market') || pathname.startsWith('/api'))) {
+    // Check country code from various headers (in order of preference)
+    const countryCode = request.headers.get('x-vercel-ip-country') || 
+                       request.headers.get('cf-ipcountry') || 
+                       request.headers.get('x-country');
+    
+    if (countryCode === 'NO') {
+      return NextResponse.redirect(new URL('/blocked', request.url));
+    }
+  }
+
   // Check if this is an admin route
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Check if admin is enabled
-    const adminEnabled = process.env.NEXT_PUBLIC_ENABLE_ADMIN === 'true';
+    // Check if admin is enabled (using '1' instead of 'true')
+    const adminEnabled = process.env.NEXT_PUBLIC_ENABLE_ADMIN === '1';
     
     if (!adminEnabled) {
       return NextResponse.rewrite(new URL('/404', request.url));
@@ -16,11 +31,11 @@ export function middleware(request: NextRequest) {
     const adminPass = process.env.ADMIN_PASS;
 
     if (adminUser && adminPass) {
-      if (!authHeader) {
-        return new NextResponse('Auth required', {
+      if (!authHeader || !authHeader.startsWith('Basic ')) {
+        return new NextResponse('Authentication required', {
           status: 401,
           headers: {
-            'WWW-Authenticate': 'Basic realm="Admin Area"',
+            'WWW-Authenticate': 'Basic realm="Creator Hub Admin"',
           },
         });
       }
@@ -30,7 +45,12 @@ export function middleware(request: NextRequest) {
       const [username, password] = credentials.split(':');
 
       if (username !== adminUser || password !== adminPass) {
-        return new NextResponse('Invalid credentials', { status: 401 });
+        return new NextResponse('Invalid credentials', {
+          status: 401,
+          headers: {
+            'WWW-Authenticate': 'Basic realm="Creator Hub Admin"',
+          },
+        });
       }
     }
   }
@@ -39,5 +59,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/admin/:path*'
+  matcher: ['/admin/:path*', '/market/:path*', '/api/:path*']
 };

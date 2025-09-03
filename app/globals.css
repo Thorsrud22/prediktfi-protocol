@@ -50,28 +50,23 @@
 
 /* Brand logo styling */
 .logo-text {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  background: linear-gradient(90deg, #0C2C66, #1F4FE0, #6A1CE5);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: hue-rotate 10s infinite linear;
+  font-size: 1.75rem;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  color: #1F4FE0;
+  transition: all 0.2s ease;
+  text-decoration: none;
 }
 
-@keyframes hue-rotate {
-  from {
-    filter: hue-rotate(0deg);
-  }
-  to {
-    filter: hue-rotate(30deg);
-  }
+.logo-text:hover {
+  color: #1F4FE0;
+  text-decoration: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .logo-text {
-    animation: none;
+    transition: none !important;
   }
 }
 
@@ -338,3 +333,28 @@ body {
 .chip-no[aria-selected="true"] { background: var(--danger); color: #fff; }
 .chip-no:hover { background: var(--surface); }
 .chip-no:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 3px; }
+
+/* Line clamp utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}

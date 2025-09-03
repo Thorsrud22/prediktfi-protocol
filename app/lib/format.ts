@@ -18,3 +18,14 @@ export function formatRelative(date: string | Date): string {
     return 'Invalid date';
   }
 }
+
+export function formatNumber(num: number): string {
+  return new Intl.NumberFormat('en-US').format(num);
+}
+
+export function formatSol(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}

@@ -1,14 +1,13 @@
 type UiCluster = "devnet" | "mainnet-beta";
 
-const rawCluster = process.env.NEXT_PUBLIC_CLUSTER;
-export const cluster: UiCluster =
-  rawCluster === "mainnet-beta" ? "mainnet-beta" : "devnet";
+// Use only allowed environment variables
+const mockTx = process.env.NEXT_PUBLIC_MOCK_TX === "1";
 
-export const protocolTreasury = process.env.NEXT_PUBLIC_PROTOCOL_TREASURY || "";
+// Read cluster from environment variable, defaulting to devnet for safety
+const rawCluster = process.env.SOLANA_CLUSTER;
+export const cluster: UiCluster = (rawCluster === "mainnet-beta") ? "mainnet-beta" : "devnet";
 
-export const feeBps = Number(process.env.NEXT_PUBLIC_FEE_BPS ?? 200);
-
-export const mockTx = process.env.NEXT_PUBLIC_MOCK_TX === "1";
+export const feeBps = 200; // Fixed fee instead of env variable
 
 export const isReal = !mockTx;
 
@@ -16,7 +15,6 @@ export const clusterQuery = `?cluster=${cluster}`;
 
 export const env = {
   cluster,
-  protocolTreasury,
   feeBps,
   mockTx,
   isReal,

@@ -1,45 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey } from "@solana/web3.js";
+import { MEMO_PROGRAM_ID } from "@solana/spl-memo";
 
-const CLUSTER = process.env.NEXT_PUBLIC_CLUSTER || "devnet";
-const ENDPOINT =
-  CLUSTER === "devnet"
-    ? "https://api.devnet.solana.com"
-    : "https://api.mainnet-beta.solana.com";
-const TREASURY = new PublicKey(process.env.NEXT_PUBLIC_TREASURY!);
-const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
+// LEGACY API: This endpoint is from the old prediction markets system.
+// New insights use the /api/insights endpoint instead.
 
-// Simple rate limiting for development/devnet
-const rateLimitMap = new Map<string, number[]>();
-const RATE_LIMIT_MAX = 10; // requests
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+// Rate limiting storage (in production, use Redis or database)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 10 * 1000; // 10 seconds
+const RATE_LIMIT_MAX = 5; // 5 calls per window
 
-function isRateLimited(ip: string): boolean {
+function getRateLimitKey(ip: string, signature: string): string {
+  return `${ip}:${signature}`;
+}
+
+function isRateLimited(key: string): boolean {
   const now = Date.now();
-  const requests = rateLimitMap.get(ip) || [];
+  const record = rateLimitStore.get(key);
   
-  // Remove old requests outside window
-  const recentRequests = requests.filter(time => now - time < RATE_LIMIT_WINDOW);
+  if (!record || now > record.resetTime) {
+    // Reset or create new record
+    rateLimitStore.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return false;
+  }
   
-  if (recentRequests.length >= RATE_LIMIT_MAX) {
+  if (record.count >= RATE_LIMIT_MAX) {
     return true;
   }
   
-  recentRequests.push(now);
-  rateLimitMap.set(ip, recentRequests);
+  record.count++;
   return false;
 }
 
-function isValidBase58Signature(sig: string): boolean {
-  // Basic validation: length 43-88 chars, base58 pattern
-  return /^[1-9A-HJ-NP-Za-km-z]{43,88}$/.test(sig);
+function cleanupRateLimitStore() {
+  const now = Date.now();
+  for (const [key, record] of rateLimitStore.entries()) {
+    if (now > record.resetTime) {
+      rateLimitStore.delete(key);
+    }
+  }
 }
 
-function createErrorResponse(code: string, message: string, status: number) {
-  return NextResponse.json({ ok: false, code, message }, { status });
-}
-
-// simple in-memory dev store
+// simple in-memory dev store for POST endpoint compatibility
 const store: {
   bets: Array<{
     wallet: string;
@@ -52,11 +54,170 @@ const store: {
 } = (globalThis as any).__prediktStore || { bets: [] };
 (globalThis as any).__prediktStore = store;
 
+function isValidBase58Signature(sig: string): boolean {
+  // Basic validation: length 43-88 chars, base58 pattern
+  return /^[1-9A-HJ-NP-Za-km-z]{43,88}$/.test(sig);
+}
+
+function createErrorResponse(code: string, message: string, status: number) {
+  return NextResponse.json({ ok: false, code, message }, { status });
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    // Clean up expired rate limit records
+    cleanupRateLimitStore();
+    
+    // Get signature from query params
+    const { searchParams } = new URL(request.url);
+    const sig = searchParams.get("sig");
+    
+    if (!sig) {
+      return NextResponse.json(
+        { error: "BAD_REQUEST", message: "Missing signature parameter" },
+        { status: 400 }
+      );
+    }
+    
+    // Get client IP for rate limiting
+    const ip = request.headers.get("x-forwarded-for") || 
+               request.headers.get("x-real-ip") || 
+               "unknown";
+    
+    // Check rate limiting per IP and signature
+    const rateLimitKey = getRateLimitKey(ip, sig);
+    if (isRateLimited(rateLimitKey)) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Too many requests for this signature" },
+        { status: 429 }
+      );
+    }
+    
+    // Create Solana connection using SOLANA_RPC_URL
+    const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
+    const connection = new Connection(rpcUrl, "confirmed");
+    
+    // Get treasury address
+    const treasuryAddress = process.env.SOLANA_TREASURY;
+    if (!treasuryAddress) {
+      throw new Error("SOLANA_TREASURY environment variable not set");
+    }
+    const treasury = new PublicKey(treasuryAddress);
+    
+    // Get transaction status first
+    const statusResponse = await connection.getSignatureStatus(sig, {
+      searchTransactionHistory: true
+    });
+    
+    if (!statusResponse.value) {
+      return NextResponse.json(
+        { error: "VERIFY_FAIL", message: "Transaction not found" },
+        { status: 422 }
+      );
+    }
+    
+    const status = statusResponse.value;
+    
+    // Check if transaction is confirmed or finalized
+    if (!status.confirmationStatus || 
+        (status.confirmationStatus !== "confirmed" && status.confirmationStatus !== "finalized")) {
+      return NextResponse.json(
+        { error: "TX_NOT_CONFIRMED", message: "Transaction not confirmed or finalized" },
+        { status: 409 }
+      );
+    }
+    
+    // Get full transaction details
+    const transaction = await connection.getTransaction(sig, {
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 0
+    });
+    
+    if (!transaction) {
+      return NextResponse.json(
+        { error: "VERIFY_FAIL", message: "Transaction details not available" },
+        { status: 422 }
+      );
+    }
+    
+    // Find memo instruction by matching program ID with MEMO_PROGRAM_ID constant
+    let memo = "";
+    
+    // Handle both legacy and versioned transactions
+    const message = transaction.transaction.message;
+    let instructions: any[] = [];
+    let accountKeys: PublicKey[] = [];
+    
+    if ('instructions' in message) {
+      // Legacy transaction
+      instructions = message.instructions;
+      accountKeys = message.accountKeys;
+    } else {
+      // Versioned transaction (v0)
+      instructions = message.compiledInstructions || [];
+      accountKeys = message.staticAccountKeys || [];
+    }
+    
+    for (const instruction of instructions) {
+      if (instruction.programIdIndex !== undefined) {
+        const programId = accountKeys[instruction.programIdIndex];
+        if (programId && programId.equals(MEMO_PROGRAM_ID)) {
+          memo = Buffer.from(instruction.data, 'base64').toString('utf8');
+          break;
+        }
+      }
+    }
+    
+    // Calculate amountLamports by treasury balance difference pre and post
+    let amountLamports = 0;
+    if (transaction.meta?.preBalances && transaction.meta?.postBalances) {
+      // Find treasury account index
+      const treasuryIndex = accountKeys.findIndex(
+        (key: PublicKey) => key.equals(treasury)
+      );
+      
+      if (treasuryIndex !== -1) {
+        const preBalance = transaction.meta.preBalances[treasuryIndex];
+        const postBalance = transaction.meta.postBalances[treasuryIndex];
+        amountLamports = postBalance - preBalance;
+      }
+    }
+    
+    // Return success response with all required fields
+    return NextResponse.json({
+      ok: true,
+      signature: sig,
+      amountLamports,
+      memo,
+      slot: transaction.slot
+    });
+    
+  } catch (error) {
+    console.error("Bet verification error:", error);
+    return NextResponse.json(
+      { error: "VERIFY_FAIL", message: "Failed to verify transaction" },
+      { status: 422 }
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
-  // Rate limiting
+  // Rate limiting for POST (keep existing functionality)
   const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-  if (isRateLimited(ip)) {
+  
+  // Simple rate limiting for POST
+  const now = Date.now();
+  const postRateLimitKey = `POST:${ip}`;
+  const postRecord = rateLimitStore.get(postRateLimitKey);
+  
+  if (postRecord && now < postRecord.resetTime && postRecord.count >= 10) {
     return createErrorResponse("RATE_LIMITED", "Too many requests", 429);
+  }
+  
+  if (!postRecord || now > (postRecord.resetTime || 0)) {
+    rateLimitStore.set(postRateLimitKey, { count: 1, resetTime: now + 60000 });
+  } else {
+    postRecord.count++;
   }
 
   const body = await req.json();
@@ -75,7 +236,10 @@ export async function POST(req: NextRequest) {
     return createErrorResponse("BAD_REQUEST", "Invalid signature format", 400);
   }
 
-  const connection = new Connection(ENDPOINT, "confirmed");
+  const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
+  const connection = new Connection(rpcUrl, "confirmed");
+  const treasury = new PublicKey(process.env.SOLANA_TREASURY!);
+
   const tx = await connection.getParsedTransaction(signature, {
     maxSupportedTransactionVersion: 0,
   });
@@ -90,9 +254,9 @@ export async function POST(req: NextRequest) {
 
   // Check memo
   for (const ix of tx.transaction.message.instructions) {
-    const prog = "programId" in ix ? (ix as any).programId : (ix as any).programId; // compatibility
+    const prog = "programId" in ix ? (ix as any).programId : (ix as any).programId;
     const programId = (prog?.toString?.() || (ix as any).programId)?.toString?.();
-    if (programId === MEMO_PROGRAM_ID) {
+    if (programId === MEMO_PROGRAM_ID.toString()) {
       try {
         const data = Buffer.from((ix as any).data, "base64").toString("utf8");
         const parsed = JSON.parse(data);
@@ -105,11 +269,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Check transfer to treasury (parsed)
+  // Check transfer to treasury
   const pre = tx.meta?.preBalances || [];
   const post = tx.meta?.postBalances || [];
   const acctKeys = tx.transaction.message.accountKeys;
-  const treasuryIndex = acctKeys.findIndex((a: any) => a.pubkey?.toBase58?.() === TREASURY.toBase58());
+  const treasuryIndex = acctKeys.findIndex((a: any) => a.pubkey?.toBase58?.() === treasury.toBase58());
   if (treasuryIndex >= 0 && pre[treasuryIndex] != null && post[treasuryIndex] != null) {
     hasTransfer = post[treasuryIndex] > pre[treasuryIndex];
   }
@@ -129,69 +293,4 @@ export async function POST(req: NextRequest) {
   store.bets.push(record);
 
   return NextResponse.json({ ok: true, record });
-}
-
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const wallet = searchParams.get("wallet");
-  const sig = searchParams.get("sig");
-  
-  // If sig param is provided, do verification
-  if (sig) {
-    // Validate signature format
-    if (!isValidBase58Signature(sig)) {
-      return createErrorResponse("BAD_REQUEST", "Invalid signature format", 400);
-    }
-
-    const connection = new Connection(ENDPOINT, "confirmed");
-    
-    try {
-      const tx = await connection.getParsedTransaction(sig, {
-        maxSupportedTransactionVersion: 0,
-      });
-
-      if (!tx || tx.meta?.err) {
-        return createErrorResponse("TX_NOT_CONFIRMED", "Transaction not confirmed", 409);
-      }
-
-      // Extract memo and transfer data
-      let memo: any = null;
-      let amountLamports = 0;
-
-      // Check memo
-      for (const ix of tx.transaction.message.instructions) {
-        const prog = "programId" in ix ? (ix as any).programId : (ix as any).programId;
-        const programId = (prog?.toString?.() || (ix as any).programId)?.toString?.();
-        if (programId === MEMO_PROGRAM_ID) {
-          try {
-            const data = Buffer.from((ix as any).data, "base64").toString("utf8");
-            memo = JSON.parse(data);
-          } catch {}
-        }
-      }
-
-      // Check transfer to treasury
-      const pre = tx.meta?.preBalances || [];
-      const post = tx.meta?.postBalances || [];
-      const acctKeys = tx.transaction.message.accountKeys;
-      const treasuryIndex = acctKeys.findIndex((a: any) => a.pubkey?.toBase58?.() === TREASURY.toBase58());
-      if (treasuryIndex >= 0 && pre[treasuryIndex] != null && post[treasuryIndex] != null) {
-        amountLamports = post[treasuryIndex] - pre[treasuryIndex];
-      }
-
-      return NextResponse.json({ 
-        ok: true, 
-        memo, 
-        amountLamports, 
-        slot: tx.slot, 
-        signature: sig 
-      });
-    } catch (error) {
-      return createErrorResponse("VERIFY_FAIL", "Transaction verification failed", 422);
-    }
-  }
-  
-  // Otherwise, return stored bets
-  const items = wallet ? store.bets.filter(b => b.wallet === wallet) : store.bets;
-  return NextResponse.json({ ok: true, items });
 }
