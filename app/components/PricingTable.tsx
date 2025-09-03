@@ -115,9 +115,10 @@ export default function PricingTable({ initialIsPro = false }: { initialIsPro?: 
                   if (plan.highlight) startCheckout().catch(() => alert('Checkout failed'));
                 }}
                 disabled={isPro}
-                className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+                aria-disabled={isPro}
+                className={`w-full py-3 px-6 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--accent]/60 focus-visible:ring-offset-2 ${
                   isPro
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'bg-slate-200 text-slate-600 cursor-not-allowed opacity-100'
                     : plan.highlight
                     ? 'bg-[--accent] text-white hover:bg-[--accent]/90'
                     : 'border border-[--border] text-[--text] hover:bg-gray-50'

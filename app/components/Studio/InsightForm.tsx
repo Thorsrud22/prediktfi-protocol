@@ -155,7 +155,8 @@ const InsightForm: React.FC<InsightFormProps> = ({ onSubmit, onPredict, isLoadin
       <button
         type="submit"
         disabled={isFormLoading || !question.trim() || !topic || !horizon}
-        className="w-full bg-[--accent] text-white py-2 px-4 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[--accent]/90 transition-colors"
+        aria-disabled={isFormLoading || !question.trim() || !topic || !horizon}
+        className="w-full py-2 px-4 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--accent]/60 focus-visible:ring-offset-2 disabled:bg-slate-200 disabled:text-slate-600 disabled:cursor-not-allowed disabled:opacity-100 enabled:bg-[--accent] enabled:text-white enabled:hover:bg-[--accent]/90"
       >
         {isFormLoading ? 'Getting AI Insight...' : 'Get AI Insight'}
       </button>
