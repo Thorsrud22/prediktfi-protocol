@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import WalletProvider from "./components/WalletProvider";
+import WalletProvider from "./components/WalletProviderDev";
 import ToastProvider from "./components/ToastProvider";
 import ConsentGate from "./components/ConsentGate";
 import AttributionBoot from "./components/AttributionBoot";
