@@ -6,8 +6,18 @@ import { useEffect, useState } from "react";
 
 export default function Hero() {
   const [isMockMode, setIsMockMode] = useState(false);
+  
+  // Check if we're in production
+  const isProduction = process.env.NODE_ENV === 'production' && 
+    (process.env.NEXT_PUBLIC_APP_ENV === 'production' || 
+     window.location.hostname !== 'localhost');
 
   useEffect(() => {
+    // Don't show mock mode in production
+    if (isProduction) {
+      return;
+    }
+    
     // Check for mock mode from URL or localStorage
     const urlParams = new URLSearchParams(window.location.search);
     const hasMockParam = urlParams.get('mock') === '1';
@@ -40,13 +50,13 @@ export default function Hero() {
             <span aria-hidden>●</span>
             <span>Live on Devnet</span>
           </div>
-          {isMockMode && (
+          {!isProduction && isMockMode && (
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400 backdrop-blur-sm">
               <span aria-hidden>⚡</span>
               <span>Mock Mode</span>
             </div>
           )}
-          {!isMockMode && (
+          {!isProduction && !isMockMode && (
             <button
               onClick={handleTryMockMode}
               className="text-xs text-[color:var(--muted)]/70 hover:text-[color:var(--muted)] transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--accent)]/50 rounded"
