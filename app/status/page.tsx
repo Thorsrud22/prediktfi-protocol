@@ -11,11 +11,14 @@ export default async function StatusPage() {
   const headersList = await headers();
   const plan = headersList.get('x-plan') || 'free';
   
-  // Get build info from environment
-  const commitSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'development';
-  const buildTime = process.env.BUILD_TIME || 'unknown';
+  // Get build info from Vercel environment variables
+  const commitSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'unknown';
+  const commitMessage = process.env.VERCEL_GIT_COMMIT_MESSAGE || 'unknown';
+  const commitAuthor = process.env.VERCEL_GIT_COMMIT_AUTHOR_LOGIN || 'unknown';
+  const buildTime = process.env.BUILD_TIME || new Date().toISOString();
   const nodeEnv = process.env.NODE_ENV || 'development';
   const appEnv = process.env.NEXT_PUBLIC_APP_ENV || 'development';
+  const githubRepo = process.env.GITHUB_REPOSITORY || process.env.VERCEL_GIT_REPO_SLUG;
 
   return (
     <div className="min-h-screen bg-[--background]">
@@ -79,12 +82,35 @@ export default async function StatusPage() {
             </div>
             <div>
               <span className="font-medium text-[--text]">Commit SHA:</span>
-              <span className="ml-2 font-mono text-[--muted]">{commitSha.slice(0, 8)}</span>
+              {commitSha !== 'unknown' && githubRepo ? (
+                <a 
+                  href={`https://github.com/${githubRepo}/commit/${commitSha}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-2 font-mono text-[--accent] hover:underline"
+                >
+                  {commitSha.slice(0, 8)}
+                </a>
+              ) : (
+                <span className="ml-2 font-mono text-[--muted]">{commitSha.slice(0, 8)}</span>
+              )}
             </div>
             <div>
               <span className="font-medium text-[--text]">Build Time:</span>
               <span className="ml-2 text-[--muted]">{buildTime}</span>
             </div>
+            {commitMessage !== 'unknown' && (
+              <div className="md:col-span-2">
+                <span className="font-medium text-[--text]">Last Commit:</span>
+                <span className="ml-2 text-[--muted]">{commitMessage}</span>
+              </div>
+            )}
+            {commitAuthor !== 'unknown' && (
+              <div>
+                <span className="font-medium text-[--text]">Author:</span>
+                <span className="ml-2 text-[--muted]">{commitAuthor}</span>
+              </div>
+            )}
           </div>
         </div>
 
