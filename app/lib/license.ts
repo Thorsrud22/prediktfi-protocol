@@ -1,3 +1,4 @@
+import 'server-only';
 // Server-only license utilities for stateless Pro licenses (Node runtime)
 // Scheme: BASE58(chargeId + "." + HMAC_SHA256(secret, chargeId)[:16])
 

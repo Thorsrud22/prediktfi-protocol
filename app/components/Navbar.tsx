@@ -105,6 +105,12 @@ export default function Navbar() {
           >
             Pricing
           </FastLink>
+          <FastLink
+            href="/account"
+            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
+          >
+            Account
+          </FastLink>
           <a
             href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
             className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
@@ -205,6 +211,13 @@ export default function Navbar() {
                 onClick={() => setOpen(false)}
               >
                 Pricing
+              </FastLink>
+              <FastLink
+                href="/account"
+                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Account
               </FastLink>
               <a
                 href="https://github.com/Thorsrud22/prediktfi-protocol#readme"

@@ -1,3 +1,4 @@
+import 'server-only';
 // Server-only Coinbase Commerce client helpers (edge-safe)
 
 const API_BASE = "https://api.commerce.coinbase.com";

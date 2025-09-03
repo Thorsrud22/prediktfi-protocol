@@ -1,5 +1,6 @@
 import { computeFromChargeId } from "../../lib/license";
 import { fetchChargeByCode, isMockMode } from "../../lib/coinbase";
+import { trackServer } from "../../lib/analytics";
 import { CopyButton } from "../../components/CopyButton";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,9 @@ export default async function BillingSuccessPage({ searchParams }: { searchParam
         </div>
       );
     }
+
+    // Track successful checkout completion
+    trackServer('checkout_completed');
 
     const license = computeFromChargeId(chargeId);
 

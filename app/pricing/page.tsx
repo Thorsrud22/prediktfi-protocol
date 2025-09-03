@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import PricingTable from '../components/PricingTable';
 import { cookies } from 'next/headers';
+import { trackServer } from '../lib/analytics';
 
 export const metadata: Metadata = {
   title: 'Pricing - Predikt | AI-Powered Prediction Platform',
@@ -21,6 +22,10 @@ export default async function PricingPage() {
   const c = await cookies();
   const plan = c.get('predikt_plan')?.value;
   const isPro = plan === 'pro';
+  
+  // Track pricing page view
+  trackServer('pricing_viewed', { where: 'pricing' });
+  
   return (
     <div className="min-h-screen bg-[--background]">
       <div className="container mx-auto px-4 py-16">
@@ -34,10 +39,19 @@ export default async function PricingPage() {
           </p>
         </div>
 
-  {/* Pricing Table */}
-  <PricingTable initialIsPro={isPro} />
+        {/* Pricing Table */}
+        <PricingTable initialIsPro={isPro} />
 
-        {/* FAQ Section */}
+        {/* Account Management Link */}
+        <div className="mt-12 text-center">
+          <p className="text-sm text-gray-600 mb-2">Already upgraded?</p>
+          <a 
+            href="/account" 
+            className="text-[--accent] hover:text-[--accent]/80 font-medium"
+          >
+            Manage Pro →
+          </a>
+        </div>        {/* FAQ Section */}
         <div className="mt-20 max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-[--text] text-center mb-12">
             Frequently Asked Questions

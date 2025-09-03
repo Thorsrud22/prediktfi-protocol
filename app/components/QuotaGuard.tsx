@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ReactNode } from 'react';
 import { getQuota, isExhausted, resetIfNewDay } from '../lib/quota';
+import { trackClient } from '../lib/analytics';
 import Link from 'next/link';
 
 interface QuotaGuardProps {
@@ -22,8 +23,11 @@ export default function QuotaGuard({ children, onExhausted, className }: QuotaGu
     setQuota(currentQuota);
     setExhausted(isQuotaExhausted);
     
-    if (isQuotaExhausted && onExhausted) {
-      onExhausted();
+    if (isQuotaExhausted) {
+      trackClient('quota_exhausted', { limit: currentQuota.limit });
+      if (onExhausted) {
+        onExhausted();
+      }
     }
   }, [onExhausted]);
 
@@ -53,6 +57,8 @@ export default function QuotaGuard({ children, onExhausted, className }: QuotaGu
                     body: JSON.stringify({ license: code })
                   }).then((r) => {
                     if (r.ok) {
+                      trackClient('license_redeemed');
+                      trackClient('pro_activated');
                       window.location.reload();
                     } else {
                       alert('Invalid or not yet confirmed');

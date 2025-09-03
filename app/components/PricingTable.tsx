@@ -2,8 +2,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { trackClient } from '../lib/analytics';
 
 async function startCheckout(): Promise<void> {
+  trackClient('checkout_created');
   const res = await fetch('/api/billing/checkout', { method: 'POST' });
   if (!res.ok) throw new Error('checkout_failed');
   const json = await res.json();
@@ -16,6 +18,10 @@ async function redeemLicense(license: string): Promise<boolean> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ license }),
   });
+  if (res.ok) {
+    trackClient('license_redeemed');
+    trackClient('pro_activated');
+  }
   return res.ok;
 }
 
