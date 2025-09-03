@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyWebhook, fetchChargeById } from "../../../lib/coinbase";
+import { fetchChargeById } from "../../../lib/coinbase";
+import { verifyWebhook } from "../../../lib/coinbase-webhook";
 
 export const runtime = "nodejs";
 

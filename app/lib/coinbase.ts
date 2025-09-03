@@ -1,5 +1,4 @@
-// Server-only Coinbase Commerce client helpers
-import crypto from "crypto";
+// Server-only Coinbase Commerce client helpers (edge-safe)
 
 const API_BASE = "https://api.commerce.coinbase.com";
 
@@ -74,14 +73,4 @@ export async function fetchChargeById(id: string): Promise<any> {
   return json?.data;
 }
 
-export function verifyWebhook(rawBody: string, signature: string | null | undefined): boolean {
-  const secret = process.env.COINBASE_COMMERCE_SHARED_SECRET;
-  if (!secret || !signature) return false;
-  const hmac = crypto.createHmac("sha256", secret);
-  const digest = hmac.update(rawBody).digest("hex");
-  try {
-    return crypto.timingSafeEqual(Buffer.from(signature, "utf8"), Buffer.from(digest, "utf8"));
-  } catch {
-    return false;
-  }
-}
+// Webhook verification is Node-only and lives in coinbase-webhook.ts
