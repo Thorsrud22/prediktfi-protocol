@@ -1,23 +1,9 @@
 import { computeFromChargeId } from "../../lib/license";
 import { fetchChargeByCode, isMockMode } from "../../lib/coinbase";
+import { CopyButton } from "../../components/CopyButton";
 
 export const dynamic = "force-dynamic";
 
-function CopyButton({ text }: { text: string }) {
-  return (
-    <button
-      className="px-3 py-2 border rounded-md text-sm"
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          alert('Copied');
-        } catch {}
-      }}
-    >
-      Copy
-    </button>
-  );
-}
 
 async function getData(code: string) {
   if (code.startsWith("MOCK-") || isMockMode()) {
@@ -66,12 +52,12 @@ export default async function BillingSuccessPage({ searchParams }: { searchParam
 
         <div className="p-4 border rounded-lg bg-[--surface] mb-6 flex items-center gap-2">
           <code className="text-sm break-all">{license}</code>
-          <CopyButton text={license} />
+          <CopyButton label="license" value={license} />
         </div>
 
         <form action="/api/billing/redeem" method="POST" className="flex items-center gap-3">
           <input type="hidden" name="license" value={license} />
-          <button formAction={async (_formData: any) => {}} className="px-4 py-2 bg-[--accent] text-white rounded-md" >
+          <button type="submit" className="px-4 py-2 bg-[--accent] text-white rounded-md" >
             Redeem now
           </button>
         </form>

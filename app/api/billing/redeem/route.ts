@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseAndVerify } from '../../../lib/license';
 import { fetchChargeById, isMockMode } from '../../../lib/coinbase';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {

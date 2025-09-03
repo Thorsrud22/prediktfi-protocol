@@ -43,6 +43,26 @@ export default function QuotaGuard({ children, onExhausted, className }: QuotaGu
               >
                 Upgrade to Pro for unlimited insights →
               </Link>
+              <button
+                onClick={() => {
+                  const code = prompt('Have a license? Paste it to redeem');
+                  if (!code) return;
+                  fetch('/api/billing/redeem', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ license: code })
+                  }).then((r) => {
+                    if (r.ok) {
+                      window.location.reload();
+                    } else {
+                      alert('Invalid or not yet confirmed');
+                    }
+                  });
+                }}
+                className="ml-3 text-sm text-gray-600 underline"
+              >
+                Redeem code
+              </button>
             </div>
           </div>
         </div>
