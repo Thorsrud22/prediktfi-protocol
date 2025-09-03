@@ -44,16 +44,27 @@ export default async function PricingPage() {
         {/* Pricing Table */}
         <PricingTable initialIsPro={isPro} />
 
-        {/* Account Management Link */}
-        <div className="mt-12 text-center">
-          <p className="text-sm text-gray-600 mb-2">Already upgraded?</p>
-          <a 
-            href="/account" 
-            className="text-[--accent] hover:text-[--accent]/80 font-medium"
-          >
-            Manage Pro →
-          </a>
-        </div>        {/* FAQ Section */}
+        {/* Account Management Link - show for Pro users or hint for Free users */}
+        {isPro ? (
+          <div className="mt-12 text-center">
+            <a 
+              href="/account" 
+              className="inline-flex items-center text-[--accent] hover:text-[--accent]/80 font-medium"
+            >
+              Manage Pro →
+            </a>
+          </div>
+        ) : (
+          <div className="mt-12 text-center">
+            <p className="text-sm text-gray-600 mb-2">Already upgraded?</p>
+            <a 
+              href="/account" 
+              className="text-[--accent] hover:text-[--accent]/80 font-medium"
+            >
+              Manage Pro →
+            </a>
+          </div>
+        )}        {/* FAQ Section */}
         <div className="mt-20 max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-[--text] text-center mb-12">
             Frequently Asked Questions
@@ -87,14 +98,6 @@ export default async function PricingPage() {
               </p>
             </div>
           </div>
-        </div>
-        
-        {/* Already upgraded link */}
-        <div className="text-center mt-12">
-          <p className="text-sm text-gray-500 mb-2">Already upgraded?</p>
-          <a href="/account" className="text-[--accent] hover:underline font-medium">
-            Manage Pro →
-          </a>
         </div>
       </div>
     </div>

@@ -81,7 +81,7 @@ export default function PricingTable({ initialIsPro = false }: { initialIsPro?: 
             }`}
           >
             {plan.highlight && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                 <span className="bg-[--accent] text-white px-3 py-1 rounded-full text-sm font-medium">
                   Popular
                 </span>
@@ -109,23 +109,28 @@ export default function PricingTable({ initialIsPro = false }: { initialIsPro?: 
               ))}
             </ul>
 
-            <div className="flex gap-2">
+                        <div className="flex gap-2">
               <button
                 onClick={() => {
                   if (plan.highlight) startCheckout().catch(() => alert('Checkout failed'));
                 }}
-                disabled={plan.current || isPro}
-              className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-                plan.current || isPro
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : plan.highlight
-                  ? 'bg-[--accent] text-white hover:bg-[--accent]/90'
-                  : 'border border-[--border] text-[--text] hover:bg-gray-50'
-              }`}
+                disabled={isPro}
+                className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+                  isPro
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : plan.highlight
+                    ? 'bg-[--accent] text-white hover:bg-[--accent]/90'
+                    : 'border border-[--border] text-[--text] hover:bg-gray-50'
+                }`}
               >
-                {plan.current || isPro ? 'You’re Pro' : plan.cta}
+                {isPro && plan.highlight 
+                  ? "You're Pro" 
+                  : isPro && !plan.highlight
+                  ? "Current Plan"
+                  : plan.cta
+                }
               </button>
-              {plan.highlight && (
+              {plan.highlight && !isPro && (
                 <button
                   type="button"
                   onClick={() => setRedeemOpen(true)}
