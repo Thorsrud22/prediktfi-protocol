@@ -15,6 +15,9 @@
     "typecheck": "tsc --noEmit",
     "test:e2e:mock": "playwright test",
     "test:e2e:real": "playwright test tests-e2e/real-wallet.spec.ts",
+    "test:smoke": "./scripts/smoke-e7.sh",
+    "smoke:e7": "bash scripts/smoke-e7.sh",
+    "qa:all": "pnpm vitest run && bash scripts/test-e5-qa.sh && bash scripts/smoke-e7.sh",
     "unit": "vitest run"
   },
   "dependencies": {
