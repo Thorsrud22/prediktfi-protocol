@@ -1,92 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { predict, PredictInput } from '../../../lib/ai/kernel';
-import { mockAdapter } from '../../../lib/ai/adapters/mock';
-import { baselineAdapter } from '../../../lib/ai/adapters/baseline';
-
-// In-memory rate limiting store
-interface RateLimit {
-  count: number;
-  resetTime: number;
-  dailyCount: number;
-  dailyResetTime: number;
-}
-
-const rateLimitStore = new Map<string, RateLimit>();
-const RATE_LIMIT_WINDOW = 6 * 1000; // 6 seconds minimum between requests
-const DAILY_LIMIT_MAX = 50; // 50 requests per day per IP
-
-function getClientIP(request: NextRequest): string {
-  // Try various headers for IP detection
-  const forwarded = request.headers.get('x-forwarded-for');
-  const real = request.headers.get('x-real-ip');
-  const remote = request.headers.get('x-remote-addr');
-  
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  if (real) {
-    return real;
-  }
-  if (remote) {
-    return remote;
-  }
-  
-  // Fallback to a generic identifier
-  return 'unknown-ip';
-}
-
-function checkRateLimit(ip: string): { allowed: boolean; code?: string; message?: string } {
-  const now = Date.now();
-  const limit = rateLimitStore.get(ip) || {
-    count: 0,
-    resetTime: now + RATE_LIMIT_WINDOW,
-    dailyCount: 0,
-    dailyResetTime: getNextDayStart()
-  };
-  
-  // Check daily limit reset
-  if (now > limit.dailyResetTime) {
-    limit.dailyCount = 0;
-    limit.dailyResetTime = getNextDayStart();
-  }
-  
-  // Check daily cap
-  if (limit.dailyCount >= DAILY_LIMIT_MAX) {
-    return {
-      allowed: false,
-      code: 'FREE_DAILY_LIMIT',
-      message: 'Daily free cap reached. Visit /pricing to upgrade'
-    };
-  }
-  
-  // Check frequency limit (minimum 6 seconds between requests)
-  if (now < limit.resetTime) {
-    return {
-      allowed: false,
-      code: 'RATE_LIMIT', 
-      message: 'Too many requests. Try again shortly.'
-    };
-  }
-  
-  // Update limits
-  limit.count = 1;
-  limit.resetTime = now + RATE_LIMIT_WINDOW;
-  limit.dailyCount++;
-  
-  rateLimitStore.set(ip, limit);
-  return { allowed: true };
-}
-
-function getNextDayStart(): number {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  return tomorrow.getTime();
-}
-
-function createErrorResponse(error: string, message: string, status: number) {
-  return NextResponse.json({ error, message }, { status });
-}
+import { rateLimitOrThrow } from '../../../lib/rate';
 
 function validatePredictInput(body: any): { isValid: boolean; input?: PredictInput; error?: string } {
   if (!body || typeof body !== 'object') {
@@ -143,88 +57,57 @@ function validatePredictInput(body: any): { isValid: boolean; input?: PredictInp
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting check
-    const clientIP = getClientIP(request);
-    const rateLimitResult = checkRateLimit(clientIP);
-    
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json({
-        ok: false,
-        code: rateLimitResult.code,
-        message: rateLimitResult.message
-      }, { status: 429 });
-    }
+    // Apply rate limiting with Pro bypass
+    await rateLimitOrThrow(request);
     
     // Parse and validate request body
-    let body: any;
-    try {
-      body = await request.json();
-    } catch (e) {
-      return createErrorResponse(
-        'BAD_REQUEST',
-        'Invalid JSON in request body',
-        400
-      );
-    }
-    
+    const body = await request.json();
     const validation = validatePredictInput(body);
+    
     if (!validation.isValid) {
-      return createErrorResponse(
-        'BAD_REQUEST',
-        validation.error || 'Invalid input',
-        400
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
       );
     }
     
-    const input = validation.input!;
+    // Generate prediction using the AI kernel
+    const result = await predict(validation.input!);
     
-    // Check for adapter override in development
-    const isDev = process.env.NODE_ENV === 'development';
-    const adapterParam = request.nextUrl.searchParams.get('adapter');
-    
-    let result;
-    
-    if (isDev && adapterParam === 'baseline') {
-      try {
-        // Force baseline adapter in development
-        result = await baselineAdapter(input);
-      } catch (error) {
-        console.warn('Baseline adapter failed, falling back to mock:', error);
-        result = await mockAdapter(input);
-      }
-    } else if (isDev && adapterParam === 'mock') {
-      // Force mock adapter in development
-      result = await mockAdapter(input);
-    } else {
-      // Use default kernel logic (baseline for crypto, mock for others)
-      result = await predict(input);
-    }
-    
-    // Return successful prediction
-    return NextResponse.json({
-      prob: result.prob,
-      drivers: result.drivers,
-      rationale: result.rationale,
-      model: result.model,
-      scenarioId: result.scenarioId,
-      ts: result.ts
-    }, { status: 200 });
+    return NextResponse.json(result);
     
   } catch (error) {
-    console.error('Prediction API error:', error);
-    return createErrorResponse(
-      'SERVER_ERROR',
-      'Failed to generate prediction. Please try again.',
-      500
+    console.error('AI predict error:', error);
+    
+    // Handle rate limit errors with structured response
+    if (error instanceof Error) {
+      if (error.message.includes('rate_limit_exceeded')) {
+        return NextResponse.json(
+          { 
+            error: 'rate_limit_exceeded',
+            message: 'Too many requests. Please wait before trying again.',
+            code: 'RATE_LIMIT'
+          },
+          { status: 429 }
+        );
+      }
+      
+      if (error.message.includes('daily_limit_exceeded')) {
+        return NextResponse.json(
+          { 
+            error: 'daily_limit_exceeded',
+            message: 'Daily limit reached. Upgrade to Pro for unlimited access.',
+            code: 'FREE_DAILY_LIMIT'
+          },
+          { status: 429 }
+        );
+      }
+    }
+    
+    // Generic server error
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
-}
-
-// Method not allowed for other HTTP methods
-export async function GET() {
-  return createErrorResponse(
-    'METHOD_NOT_ALLOWED',
-    'Only POST method is allowed',
-    405
-  );
 }

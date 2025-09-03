@@ -1,11 +1,15 @@
 // Zero-dependency analytics helper for client + server tracking
 export type AnalyticsEvent = 
   | 'pricing_viewed'
+  | 'account_viewed'
   | 'checkout_created' 
   | 'checkout_completed'
   | 'license_redeemed'
   | 'pro_activated'
-  | 'quota_exhausted';
+  | 'quota_exhausted'
+  | 'pro_bypass_hit'
+  | 'already_pro_at_checkout'
+  | 'webhook_duplicate_ignored';
 
 interface AnalyticsPayload {
   name: AnalyticsEvent;
@@ -48,8 +52,14 @@ export function trackClient(name: AnalyticsEvent, props?: Record<string, string 
 /**
  * Server-side tracking via structured console logging
  * Can be ingested by log aggregators without additional deps
+ * Respects ENABLE_ANALYTICS environment variable
  */
 export function trackServer(name: AnalyticsEvent, props?: Record<string, string | number | boolean>): void {
+  // Skip analytics if disabled in environment
+  if (process.env.ENABLE_ANALYTICS === 'false') {
+    return;
+  }
+  
   const payload = {
     kind: 'analytics',
     name,

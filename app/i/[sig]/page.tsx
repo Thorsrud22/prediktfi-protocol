@@ -7,8 +7,8 @@ import { buildShareUrl, persistReferralData } from '../../lib/share';
 import { Suspense } from 'react';
 
 interface PageProps {
-  params: { sig: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ sig: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 const ERROR_MESSAGES: Record<InsightErrorCode, string> = {
@@ -61,7 +61,7 @@ async function fetchInsight(sig: string, cluster: string = 'devnet') {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { sig } = params;
+  const { sig } = await params;
   
   // Attempt to fetch insight for metadata
   const result = await fetchInsight(sig);
@@ -140,7 +140,7 @@ function ReferralHandler({ searchParams }: { searchParams: PageProps['searchPara
 }
 
 export default async function InsightPermalinkPage({ params, searchParams }: PageProps) {
-  const { sig } = params;
+  const { sig } = await params;
   
   if (!sig || typeof sig !== 'string') {
     notFound();

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getPlanFromRequest } from './app/lib/plan';
 
 export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+  
+  // Add plan info header (info hint for debugging)
+  const planInfo = getPlanFromRequest(request);
+  response.headers.set('x-plan', planInfo.plan);
+  
   // Geofence: Block Norway (NO) on mainnet for /market and /api routes
   const cluster = process.env.SOLANA_CLUSTER;
   const pathname = request.nextUrl.pathname;
@@ -55,12 +62,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  const res = NextResponse.next();
-  const plan = request.cookies.get('predikt_plan')?.value;
-  if (plan) {
-    res.headers.set('x-plan', plan);
-  }
-  return res;
+  return response;
 }
 
 export const config = {

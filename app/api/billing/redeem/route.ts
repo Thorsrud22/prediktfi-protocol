@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseAndVerify } from '../../../lib/license';
 import { fetchChargeById, isMockMode } from '../../../lib/coinbase';
 import { trackServer } from '../../../lib/analytics';
+import { setProCookie } from '../../../lib/plan';
 
 export const runtime = 'nodejs';
 
@@ -50,14 +51,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-  const res = NextResponse.json({ ok: true });
-    res.cookies.set('predikt_plan', 'pro', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365,
-      path: '/',
-    });
+    const res = NextResponse.json({ ok: true });
+    
+    // Set production-secure Pro cookie
+    setProCookie(res, 'pro');
     
     // Track successful license redemption and pro activation
     trackServer('license_redeemed', { source: 'success' });

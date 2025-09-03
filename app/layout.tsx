@@ -10,6 +10,8 @@ import ConsentGate from "./components/ConsentGate";
 import AttributionBoot from "./components/AttributionBoot";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SITE } from "./config/site";
+import { getPlanFromRequest } from "./lib/plan";
+import { headers } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,13 +60,20 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Get plan from middleware header
+  const headersList = await headers();
+  const plan = headersList.get('x-plan') || 'free';
+
   return (
     <html lang="en">
+      <head>
+        <meta name="x-plan" content={plan} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`}>
                 <WalletProvider>
           <ToastProvider>

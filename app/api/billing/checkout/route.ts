@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCharge, isMockMode } from "../../../lib/coinbase";
+import { isProRequest } from "../../../lib/plan";
+import { trackServer } from "../../../lib/analytics";
 
 export const runtime = "edge"; // lightweight
 
-export async function POST(_req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
+    // Check if user is already Pro
+    if (isProRequest(request)) {
+      trackServer('already_pro_at_checkout');
+      return NextResponse.json({ 
+        ok: false, 
+        code: 'already_pro',
+        message: 'You already have Pro access. Visit /account to manage your subscription.',
+        redirect_url: '/account'
+      }, { status: 200 });
+    }
+
     const baseUrl = process.env.PREDIKT_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const intent = "pro-monthly";
     const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);

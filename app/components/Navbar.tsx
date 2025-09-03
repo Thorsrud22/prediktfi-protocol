@@ -5,12 +5,14 @@ import FastLink from "./FastLink";
 import { SITE } from "../config/site";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useIsPro } from "../lib/use-plan";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const isInsightPage = pathname.startsWith('/i/');
+  const isPro = useIsPro();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<Element | null>(null);
 
@@ -107,9 +109,14 @@ export default function Navbar() {
           </FastLink>
           <FastLink
             href="/account"
-            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
+            className="min-h-11 text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors flex items-center gap-1.5"
           >
             Account
+            {isPro && (
+              <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#F7931E] px-1.5 py-0.5 text-[10px] font-medium text-white">
+                PRO
+              </span>
+            )}
           </FastLink>
           <a
             href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
@@ -129,12 +136,14 @@ export default function Navbar() {
           </a>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/pricing"
-            className="hidden sm:inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-medium bg-[color:var(--accent)]/10 text-[color:var(--accent)] hover:bg-[color:var(--accent)]/20 transition-all focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
-          >
-            Upgrade
-          </Link>
+          {!isPro && (
+            <Link
+              href="/pricing"
+              className="hidden sm:inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-medium bg-[color:var(--accent)]/10 text-[color:var(--accent)] hover:bg-[color:var(--accent)]/20 transition-all focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60"
+            >
+              Upgrade
+            </Link>
+          )}
           <Link
             href="/studio"
             className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/60 ${
@@ -214,10 +223,15 @@ export default function Navbar() {
               </FastLink>
               <FastLink
                 href="/account"
-                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors"
+                className="rounded-md px-2 py-2 text-[color:var(--text)] hover:bg-[color:var(--surface)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 transition-colors flex items-center gap-2"
                 onClick={() => setOpen(false)}
               >
                 Account
+                {isPro && (
+                  <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#F7931E] px-1.5 py-0.5 text-[10px] font-medium text-white">
+                    PRO
+                  </span>
+                )}
               </FastLink>
               <a
                 href="https://github.com/Thorsrud22/prediktfi-protocol#readme"

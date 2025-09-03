@@ -19,8 +19,9 @@ async function getData(code: string) {
   return { status, chargeId: charge?.id } as const;
 }
 
-export default async function BillingSuccessPage({ searchParams }: { searchParams: { code?: string } }) {
-  const code = searchParams?.code || "";
+export default async function BillingSuccessPage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
+  const params = await searchParams;
+  const code = params?.code || "";
 
   if (!code) {
     return (
