@@ -26,36 +26,12 @@ export default function PricingPage() {
             Predikt Pro
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Unlimited insights, faster models, priority processing
+            Unlimited insights, faster models, priority processing. Pay with crypto via Coinbase Commerce.
           </p>
         </div>
 
         {/* Pricing Table */}
         <PricingTable />
-
-        {/* Beta Code Section */}
-        <div className="mt-16 text-center">
-          <div className="bg-[--surface] border border-[--border] rounded-lg p-8 max-w-md mx-auto">
-            <h3 className="text-lg font-semibold text-[--text] mb-4">
-              Have a beta code?
-            </h3>
-            <form action="/api/billing/redeem" method="POST" className="space-y-4">
-              <input
-                type="text"
-                name="code"
-                placeholder="Enter your beta code"
-                className="w-full px-3 py-2 border border-[--border] rounded-lg bg-[--surface] text-[--text] focus:outline-none focus:ring-2 focus:ring-[--accent]"
-                required
-              />
-              <button
-                type="submit"
-                className="w-full bg-[--accent] text-white py-2 px-4 rounded-lg font-medium hover:bg-[--accent]/90 transition-colors"
-              >
-                Redeem Code
-              </button>
-            </form>
-          </div>
-        </div>
 
         {/* FAQ Section */}
         <div className="mt-20 max-w-3xl mx-auto">
@@ -78,7 +54,7 @@ export default function PricingPage() {
                 How does the Pro plan work?
               </h3>
               <p className="text-gray-600">
-                Pro gives you unlimited insights with faster processing, advanced prompts, and priority support. Crypto payments coming soon.
+                Pro gives you unlimited insights with faster processing, advanced prompts, and priority support.
               </p>
             </div>
             

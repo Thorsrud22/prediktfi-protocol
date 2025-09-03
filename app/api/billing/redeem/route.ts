@@ -1,50 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseAndVerify } from '../../../lib/license';
+import { fetchChargeById, isMockMode } from '../../../lib/coinbase';
 
-const VALID_BETA_CODE = 'PREDIKT_BETA';
+export const runtime = 'edge';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { code } = body;
-    
-    if (!code || typeof code !== 'string') {
-      return NextResponse.json({
-        ok: false,
-        code: 'INVALID_CODE',
-        message: 'Invalid or missing beta code'
-      }, { status: 400 });
+    let license: string | undefined;
+    const contentType = request.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const body = await request.json();
+      license = body?.license;
+    } else if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
+      const form = await request.formData();
+      license = String(form.get('license') || '');
+    } else {
+      // best-effort try json then form
+      try {
+        const body = await request.json();
+        license = body?.license;
+      } catch {
+        const form = await request.formData();
+        license = String(form.get('license') || '');
+      }
     }
-    
-    if (code.trim().toUpperCase() !== VALID_BETA_CODE) {
-      return NextResponse.json({
-        ok: false,
-        code: 'INVALID_CODE', 
-        message: 'Invalid beta code'
-      }, { status: 400 });
+
+    if (!license || typeof license !== 'string') {
+      return NextResponse.json({ ok: false, message: 'Invalid or missing license' }, { status: 400 });
     }
-    
-    // Set pro plan cookie
-    const response = NextResponse.json({
-      ok: true,
-      plan: 'pro',
-      message: 'Beta code redeemed successfully'
-    });
-    
-    response.cookies.set('predikt_plan', 'pro', {
+
+    const verified = parseAndVerify(license);
+    if (!verified.ok || !verified.chargeId) {
+      return NextResponse.json({ ok: false, message: verified.error || 'Invalid license' }, { status: 400 });
+    }
+
+    // Optional fast re-check with Coinbase when not in mock mode
+    if (!isMockMode()) {
+      try {
+        const charge = await fetchChargeById(verified.chargeId);
+        const status: string | undefined = charge?.timeline?.[charge.timeline.length - 1]?.status || charge?.status;
+        const acceptable = status === 'CONFIRMED' || status === 'RESOLVED' || status === 'confirmed' || status === 'resolved';
+        if (!acceptable) {
+          return NextResponse.json({ ok: false, message: 'Charge not confirmed yet' }, { status: 400 });
+        }
+      } catch (e: any) {
+        // If the check fails, fail closed
+        return NextResponse.json({ ok: false, message: 'Verification failed' }, { status: 400 });
+      }
+    }
+
+  const res = NextResponse.json({ ok: true });
+    res.cookies.set('predikt_plan', 'pro', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-      path: '/'
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/',
     });
-    
-    return response;
+    return res;
   } catch (error) {
-    console.error('Redeem error:', error);
-    return NextResponse.json({
-      ok: false,
-      code: 'REDEEM_ERROR',
-      message: 'Failed to redeem beta code'
-    }, { status: 500 });
+    return NextResponse.json({ ok: false, message: 'redeem_failed' }, { status: 500 });
   }
 }

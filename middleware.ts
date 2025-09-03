@@ -55,7 +55,12 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  const plan = request.cookies.get('predikt_plan')?.value;
+  if (plan) {
+    res.headers.set('x-plan', plan);
+  }
+  return res;
 }
 
 export const config = {

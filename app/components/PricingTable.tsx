@@ -1,12 +1,41 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+async function startCheckout(): Promise<void> {
+  const res = await fetch('/api/billing/checkout', { method: 'POST' });
+  if (!res.ok) throw new Error('checkout_failed');
+  const json = await res.json();
+  if (json?.hosted_url) window.location.href = json.hosted_url as string;
+}
+
+async function redeemLicense(license: string): Promise<boolean> {
+  const res = await fetch('/api/billing/redeem', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ license }),
+  });
+  return res.ok;
+}
 
 export default function PricingTable() {
   const [showModal, setShowModal] = useState(false);
+  const [redeemOpen, setRedeemOpen] = useState(false);
+  const [license, setLicense] = useState('');
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    // We can't read httpOnly cookie in client. Optionally rely on middleware-provided header echoed by a lightweight endpoint.
+    // Simple heuristic: call a tiny endpoint that returns plan based on cookie; to keep scope small, try to parse document.cookie fallback.
+    // If not available, buttons remain enabled; server pages will still respect plan.
+    try {
+      if (document.cookie.includes('predikt_plan=pro')) setIsPro(true);
+    } catch {}
+  }, []);
 
   const plans = [
-    {
+  {
       name: 'Free',
       price: '$0',
       period: 'forever',
@@ -20,15 +49,15 @@ export default function PricingTable() {
     },
     {
       name: 'Pro',
-      price: 'Coming Soon',
-      period: 'beta',
+      price: '$9',
+      period: 'month',
       features: [
         'Unlimited insights',
         'Priority processing',
         'Advanced prompts',
-        'Upcoming crypto payments'
+        'Crypto payments via Coinbase'
       ],
-      cta: 'Start Pro (Beta)',
+      cta: 'Upgrade with Crypto',
       highlight: true
     }
   ];
@@ -74,48 +103,71 @@ export default function PricingTable() {
               ))}
             </ul>
 
-            <button
-              onClick={() => {
-                if (plan.highlight) {
-                  setShowModal(true);
-                }
-              }}
-              disabled={plan.current}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (plan.highlight) startCheckout().catch(() => alert('Checkout failed'));
+                }}
+                disabled={plan.current || isPro}
               className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-                plan.current
+                plan.current || isPro
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : plan.highlight
                   ? 'bg-[--accent] text-white hover:bg-[--accent]/90'
                   : 'border border-[--border] text-[--text] hover:bg-gray-50'
               }`}
-            >
-              {plan.current ? 'Current Plan' : plan.cta}
-            </button>
+              >
+                {plan.current || isPro ? 'You’re Pro' : plan.cta}
+              </button>
+              {plan.highlight && (
+                <button
+                  type="button"
+                  onClick={() => setRedeemOpen(true)}
+                  className="py-3 px-4 border border-[--border] rounded-lg text-[--text] hover:bg-gray-50"
+                >
+                  Redeem code
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Beta Modal */}
-      {showModal && (
+      {/* Redeem Modal */}
+      {redeemOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-bold mb-4">Pro Plan Coming Soon</h3>
-            <p className="text-gray-600 mb-6">
-              Crypto payments via Coinbase Commerce coming soon. No charge today.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 py-2 px-4 bg-[--accent] text-white rounded-lg hover:bg-[--accent]/90"
-              >
-                Get Notified
-              </button>
+            <h3 className="text-lg font-bold mb-4">Redeem your license</h3>
+            <div className="space-y-4">
+              <input
+                value={license}
+                onChange={(e) => setLicense(e.target.value)}
+                placeholder="Paste license code"
+                className="w-full px-3 py-2 border border-[--border] rounded-lg bg-[--surface] text-[--text]"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setRedeemOpen(false)}
+                  className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    const ok = await redeemLicense(license);
+                    if (ok) {
+                      setIsPro(true);
+                      setRedeemOpen(false);
+                      alert('Redeemed! You are now Pro.');
+                    } else {
+                      alert('Invalid or not yet confirmed');
+                    }
+                  }}
+                  className="flex-1 py-2 px-4 bg-[--accent] text-white rounded-lg hover:bg-[--accent]/90"
+                >
+                  Redeem
+                </button>
+              </div>
             </div>
           </div>
         </div>
