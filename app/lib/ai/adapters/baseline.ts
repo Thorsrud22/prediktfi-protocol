@@ -1,8 +1,93 @@
 import { PredictInput, PredictOutput } from '../kernel';
-import { EnhancedPredictOutput } from '../enhanced-types';
-import { AnalysisEngine } from '../analysis-engine';
 import { slugify, nowTs } from '../util';
 import { mockAdapter } from './mock';
+
+interface CoinGeckoPrice {
+  [key: string]: {
+    usd: number;
+    usd_24h_change: number;
+  };
+}
+
+async function fetchCryptoPrice(symbol: string): Promise<{ price: number; change24h: number } | null> {
+  try {
+    // Map common symbols to CoinGecko IDs
+    const symbolMap: { [key: string]: string } = {
+      'btc': 'bitcoin',
+      'bitcoin': 'bitcoin',
+      'eth': 'ethereum',
+      'ethereum': 'ethereum',
+      'sol': 'solana',
+      'solana': 'solana',
+      'ada': 'cardano',
+      'cardano': 'cardano'
+    };
+
+    const coinId = symbolMap[symbol.toLowerCase()] || 'bitcoin';
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`,
+      { 
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`CoinGecko API error: ${response.status}`);
+    }
+
+    const data: CoinGeckoPrice = await response.json();
+    const coinData = data[coinId];
+    
+    if (!coinData) {
+      throw new Error(`No data for ${coinId}`);
+    }
+
+    return {
+      price: coinData.usd,
+      change24h: coinData.usd_24h_change || 0
+    };
+  } catch (error) {
+    console.warn('Failed to fetch crypto price:', error);
+    return null;
+  }
+}
+
+function calculateProbability(change24h: number, horizon: string): number {
+  // Simple heuristic based on 24h change and volatility
+  const absChange = Math.abs(change24h);
+  
+  // Base probability around 0.5
+  let prob = 0.5;
+  
+  // Adjust based on trend direction
+  if (change24h > 0) {
+    prob += 0.1; // Slight bullish bias for positive trends
+  } else if (change24h < 0) {
+    prob -= 0.1; // Slight bearish bias for negative trends
+  }
+  
+  // Adjust based on volatility (higher volatility = more uncertainty)
+  if (absChange > 10) {
+    prob += (Math.random() - 0.5) * 0.3; // High volatility = more random
+  } else if (absChange > 5) {
+    prob += (Math.random() - 0.5) * 0.2; // Medium volatility
+  } else {
+    prob += (Math.random() - 0.5) * 0.1; // Low volatility = more predictable
+  }
+  
+  // Horizon adjustment
+  if (horizon.includes('24h') || horizon.includes('1d')) {
+    // Short term: trend continuation more likely
+    prob += change24h > 0 ? 0.05 : -0.05;
+  } else if (horizon.includes('week') || horizon.includes('month')) {
+    // Longer term: mean reversion tendency
+    prob += change24h > 0 ? -0.02 : 0.02;
+  }
+  
+  // Clamp between 0.05 and 0.95
+  return Math.max(0.05, Math.min(0.95, prob));
+}
 
 export async function baselineAdapter(input: PredictInput): Promise<PredictOutput> {
   const scenarioId = slugify(`${input.topic}-${input.question}-${input.horizon}`);
@@ -11,64 +96,6 @@ export async function baselineAdapter(input: PredictInput): Promise<PredictOutpu
     // Extract crypto symbol from topic or question
     const text = `${input.topic} ${input.question}`.toLowerCase();
     let symbol = 'bitcoin'; // default
-    
-    if (text.includes('btc') || text.includes('bitcoin')) symbol = 'bitcoin';
-    else if (text.includes('eth') || text.includes('ethereum')) symbol = 'ethereum';
-    else if (text.includes('sol') || text.includes('solana')) symbol = 'solana';
-    else if (text.includes('ada') || text.includes('cardano')) symbol = 'cardano';
-
-    // Initialize advanced analysis engine
-    const analysisEngine = new AnalysisEngine();
-    
-    // Perform comprehensive analysis with progress tracking
-    console.log(`Starting advanced analysis for ${symbol}...`);
-    const startTime = Date.now();
-    
-    const analysis = await analysisEngine.performAdvancedAnalysis(
-      symbol,
-      input.question,
-      input.horizon,
-      (status, progress) => {
-        console.log(`[${progress}%] ${status}`);
-      }
-    );
-
-    const processingTime = Math.round((Date.now() - startTime) / 1000 * 100) / 100;
-    
-    // Extract key insights for the traditional format
-    const mainScenario = analysis.scenarios.find(s => s.name === 'likely') || analysis.scenarios[0];
-    
-    // Generate enhanced drivers based on actual analysis
-    const drivers = [
-      `Technical: ${analysis.technical.trend} trend (${analysis.technical.change24h > 0 ? '+' : ''}${analysis.technical.change24h.toFixed(1)}% 24h)`,
-      `Sentiment: ${analysis.sentiment.overallSentiment} (F&G: ${analysis.sentiment.fearGreedIndex || 'N/A'})`,
-      `Risk Level: ${analysis.risks.length > 2 ? 'High' : analysis.risks.length > 0 ? 'Medium' : 'Low'} (${analysis.risks.length} factors)`
-    ];
-
-    // Generate comprehensive rationale
-    const confidenceLabel = analysis.confidence > 0.7 ? 'high' : analysis.confidence > 0.4 ? 'moderate' : 'low';
-    const rationale = `Advanced ${processingTime}s analysis with ${confidenceLabel} confidence (${Math.round(analysis.confidence * 100)}%). ${analysis.methodology}`;
-
-    // Create enhanced output
-    const enhancedOutput: EnhancedPredictOutput = {
-      prob: analysis.probability,
-      drivers,
-      rationale,
-      model: 'advanced-baseline-v1',
-      scenarioId,
-      ts: nowTs(),
-      analysis,
-      confidence: analysis.confidence,
-      processingTime
-    };
-
-    return enhancedOutput;
-    
-  } catch (error) {
-    console.warn('Advanced baseline adapter failed, using mock fallback:', error);
-    return await mockAdapter(input);
-  }
-}
     
     if (text.includes('btc') || text.includes('bitcoin')) symbol = 'bitcoin';
     else if (text.includes('eth') || text.includes('ethereum')) symbol = 'ethereum';
@@ -100,7 +127,7 @@ export async function baselineAdapter(input: PredictInput): Promise<PredictOutpu
       prob: Math.round(prob * 100) / 100,
       drivers,
       rationale,
-      model: 'baseline-v0',
+      model: 'baseline-v0-fallback',
       scenarioId,
       ts: nowTs()
     };

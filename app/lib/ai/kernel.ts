@@ -17,10 +17,10 @@ export interface PredictOutput {
 }
 
 import { mockAdapter } from './adapters/mock';
-import { baselineAdapter } from './adapters/baseline-advanced';
+import { baselineAdapter } from './adapters/baseline';
 
 export async function predict(input: PredictInput): Promise<PredictOutput> {
-  // For v1, use advanced baseline for crypto topics, mock for everything else
+  // For v1, use baseline for crypto topics, mock for everything else
   const isCrypto = input.topic.toLowerCase().includes('crypto') || 
                    input.topic.toLowerCase().includes('bitcoin') ||
                    input.topic.toLowerCase().includes('ethereum') ||
@@ -31,7 +31,7 @@ export async function predict(input: PredictInput): Promise<PredictOutput> {
 
   try {
     if (isCrypto) {
-      console.log('Using advanced baseline adapter for crypto analysis...');
+      console.log('Using baseline adapter for crypto analysis...');
       return await baselineAdapter(input);
     } else {
       console.log('Using mock adapter for non-crypto analysis...');
