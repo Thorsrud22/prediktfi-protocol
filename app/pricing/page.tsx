@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import PricingTable from '../components/PricingTable';
 import { cookies } from 'next/headers';
 import { trackServer } from '../lib/analytics';
+import Seen from './Seen';
 
 export const metadata: Metadata = {
   title: 'Pricing - Predikt | AI-Powered Prediction Platform',
@@ -28,6 +29,7 @@ export default async function PricingPage() {
   
   return (
     <div className="min-h-screen bg-[--background]">
+      <Seen />
       <div className="container mx-auto px-4 py-16">
         {/* Hero Section */}
         <div className="text-center mb-16">
@@ -85,6 +87,14 @@ export default async function PricingPage() {
               </p>
             </div>
           </div>
+        </div>
+        
+        {/* Already upgraded link */}
+        <div className="text-center mt-12">
+          <p className="text-sm text-gray-500 mb-2">Already upgraded?</p>
+          <a href="/account" className="text-[--accent] hover:underline font-medium">
+            Manage Pro →
+          </a>
         </div>
       </div>
     </div>

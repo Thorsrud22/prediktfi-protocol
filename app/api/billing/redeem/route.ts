@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseAndVerify } from '../../../lib/license';
 import { fetchChargeById, isMockMode } from '../../../lib/coinbase';
+import { trackServer } from '../../../lib/analytics';
 
 export const runtime = 'nodejs';
 
@@ -57,6 +58,11 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 365,
       path: '/',
     });
+    
+    // Track successful license redemption and pro activation
+    trackServer('license_redeemed', { source: 'success' });
+    trackServer('pro_activated');
+    
     return res;
   } catch (error) {
     return NextResponse.json({ ok: false, message: 'redeem_failed' }, { status: 500 });

@@ -2,12 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+// Handle all HTTP methods gracefully
 export async function POST(request: NextRequest) {
+  return handleAnalytics(request);
+}
+
+export async function GET(request: NextRequest) {
+  return handleAnalytics(request);
+}
+
+export async function PUT(request: NextRequest) {
+  return handleAnalytics(request);
+}
+
+export async function PATCH(request: NextRequest) {
+  return handleAnalytics(request);
+}
+
+export async function DELETE(request: NextRequest) {
+  return handleAnalytics(request);
+}
+
+async function handleAnalytics(request: NextRequest) {
   try {
-    // Parse JSON payload (or default to empty if malformed)
+    // Parse JSON payload (or default to empty if malformed/GET)
     let payload = {};
     try {
-      payload = await request.json();
+      if (request.method !== 'GET') {
+        payload = await request.json();
+      }
     } catch {
       // Malformed JSON - continue with empty payload
     }

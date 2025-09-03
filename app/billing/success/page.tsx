@@ -2,6 +2,7 @@ import { computeFromChargeId } from "../../lib/license";
 import { fetchChargeByCode, isMockMode } from "../../lib/coinbase";
 import { trackServer } from "../../lib/analytics";
 import { CopyButton } from "../../components/CopyButton";
+import CheckoutCompleted from "./CheckoutCompleted";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,8 @@ export default async function BillingSuccessPage({ searchParams }: { searchParam
 
     return (
       <div className="container mx-auto px-4 py-16">
-        <h1 className="text-3xl font-bold mb-2">Payment received 🎉 Here’s your Pro license</h1>
+        <CheckoutCompleted hasCode={Boolean(code)} />
+        <h1 className="text-3xl font-bold mb-2">Payment received 🎉 Here's your Pro license</h1>
         <p className="text-gray-600 mb-6">Copy this code and redeem to activate Pro on this browser.</p>
 
         <div className="p-4 border rounded-lg bg-[--surface] mb-6 flex items-center gap-2">
