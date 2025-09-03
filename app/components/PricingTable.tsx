@@ -19,11 +19,11 @@ async function redeemLicense(license: string): Promise<boolean> {
   return res.ok;
 }
 
-export default function PricingTable() {
+export default function PricingTable({ initialIsPro = false }: { initialIsPro?: boolean } = {}) {
   const [showModal, setShowModal] = useState(false);
   const [redeemOpen, setRedeemOpen] = useState(false);
   const [license, setLicense] = useState('');
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(initialIsPro);
 
   useEffect(() => {
     // We can't read httpOnly cookie in client. Optionally rely on middleware-provided header echoed by a lightweight endpoint.

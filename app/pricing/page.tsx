@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import PricingTable from '../components/PricingTable';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Pricing - Predikt | AI-Powered Prediction Platform',
@@ -16,7 +17,10 @@ export const metadata: Metadata = {
   }
 };
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const c = await cookies();
+  const plan = c.get('predikt_plan')?.value;
+  const isPro = plan === 'pro';
   return (
     <div className="min-h-screen bg-[--background]">
       <div className="container mx-auto px-4 py-16">
@@ -30,8 +34,8 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* Pricing Table */}
-        <PricingTable />
+  {/* Pricing Table */}
+  <PricingTable initialIsPro={isPro} />
 
         {/* FAQ Section */}
         <div className="mt-20 max-w-3xl mx-auto">
