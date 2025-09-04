@@ -1,230 +1,312 @@
 # PrediktFi Protocol
 
-An AI-first prediction studio with freemium quotas and shareable insights, built on Solana.
+🎯 **AI-Powered Prediction Studio** - Generate insights on any topic using advanced AI analysis with built-in rate limiting and freemium quotas.
 
-## 🎯 Current Status: E8 AI Prediction Studio
+## ✨ What is PrediktFi?
 
-PrediktFi is now a comprehensive AI prediction analysis platform featuring:
-- **AI Analysis Engine**: Technical indicators, sentiment analysis, and probability modeling
-- **Freemium Quotas**: Free tier with upgrade options
-- **Shareable Insights**: Export and share analysis results
-- **Studio Interface**: Interactive prediction workspace
-- **API Endpoints**: RESTful analysis APIs
+PrediktFi is an intelligent prediction platform that helps you analyze and forecast outcomes across various topics. Whether you're looking at political events, market trends, or social phenomena, our AI Studio provides data-driven probability assessments with clear reasoning.
 
-## 🏗️ Project Structure
+### Key Features
+- **🤖 AI Studio**: Interactive workspace for generating predictions on any topic
+- **📊 Smart Analysis**: Advanced probability modeling with confidence intervals  
+- **⚡ Real-time Results**: Instant predictions with detailed explanations
+- **🎁 Freemium Model**: Free tier with daily quotas, Pro plans for unlimited access
+- **🔒 Rate Limited**: Intelligent throttling to ensure fair usage
+- **📱 Modern UI**: Clean, responsive interface built with Next.js and Tailwind
+
+## 🏗️ Project Architecture
 
 ```
 prediktfi-protocol/
-├── app/                       # Next.js frontend application
-│   ├── api/                   # API routes
-│   │   ├── analysis/          # AI analysis endpoints
-│   │   └── status/            # Health check endpoint
-│   ├── studio/                # Main prediction studio UI
-│   ├── components/            # React components
-│   └── lib/                   # Utilities and helpers
-├── src/                       # Analysis engine modules
-│   ├── lib/
-│   │   ├── analysis/          # Core analysis engine
-│   │   ├── indicators/        # Technical indicators (RSI, SMA, EMA, ATR)
-│   │   ├── data/             # Data sources and adapters
-│   │   └── sentiment/        # Sentiment analysis
-├── programs/                  # Solana/Anchor smart contracts
-│   └── prediktfi-protocol/    # Core prediction protocol
-├── tests/                     # Test suite
-├── docs/                      # Documentation
-│   └── prod_verification.md   # Production deployment guide
-└── smoke-e8.sh               # E8 deployment verification
+├── app/                       # Next.js 15.5.2 Application
+│   ├── studio/               # 🎯 Main AI Studio Interface
+│   │   └── page.tsx          # Interactive prediction workspace
+│   ├── api/                  # RESTful API Endpoints
+│   │   ├── ai/predict/       # Core prediction engine
+│   │   ├── analytics/        # Usage tracking
+│   │   └── status/           # Health monitoring
+│   ├── components/           # React UI Components
+│   │   ├── Navbar.tsx        # Navigation with brand theming
+│   │   ├── Hero.tsx          # Landing page hero
+│   │   └── ui/               # Reusable UI elements
+│   ├── lib/                  # Core Libraries
+│   │   ├── ai/               # AI prediction kernel
+│   │   │   ├── kernel.ts     # Main prediction logic
+│   │   │   └── adapters/     # Mock & baseline adapters
+│   │   ├── rate.ts           # Rate limiting system
+│   │   ├── plan.ts           # Freemium plan management
+│   │   └── analytics.ts      # Usage analytics
+│   └── globals.css           # Global styles + wallet extension fixes
+├── tests/                    # Comprehensive Test Suite
+│   ├── *.test.ts            # Unit tests for all components
+│   └── tests-e2e/           # End-to-end testing
+├── docs/                     # Documentation
+└── scripts/                  # Deployment & verification scripts
 ```
 
 ## 🚀 Quick Start
 
-### Development Setup
+### 1. Development Setup
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+```bash
+# Clone and setup
+git clone https://github.com/Thorsrud22/prediktfi-protocol.git
+cd prediktfi-protocol
+npm install
 
-2. **Start development server:**
-   ```bash
-   npm run dev
-   ```
+# Start development server
+npm run dev
 
-3. **Run tests:**
-   ```bash
-   # Unit tests
-   npm run test
-   
-   # E8 smoke test
-   npm run smoke:e8
-   
-   # Full QA suite
-   npm run qa:all
-   ```
+# Visit AI Studio
+open http://localhost:3000/studio
+```
 
-### Smart Contract Development
+### 2. Using AI Studio
 
-1. **Build Anchor program:**
-   ```bash
-   anchor build
-   ```
+1. **Navigate to Studio**: Visit `/studio` to access the prediction workspace
+2. **Enter Your Question**: Describe what you want to predict (e.g., "Will FRP win the election?")
+3. **Select Category**: Choose from Politics, Technology, Finance, Sports, etc.
+4. **Set Time Horizon**: Pick timeframe (24 hours, 1 week, 1 month, etc.)
+5. **Get AI Analysis**: Receive probability assessment with detailed reasoning
+6. **Share Results**: Export insights for further discussion or analysis
 
-2. **Run smart contract tests:**
-   ```bash
-   anchor test
-   ```
+### 3. API Usage
 
-3. **Deploy to devnet:**
-   ```bash
-   anchor deploy --provider.cluster devnet
-   ```
+```bash
+# Generate a prediction
+curl -X POST http://localhost:3000/api/ai/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "Politics",
+    "question": "Will renewable energy adoption increase this year?",
+    "horizon": "12 months"
+  }'
 
-## 📊 Key Features
+# Check system status
+curl http://localhost:3000/api/status
+```
 
-### AI Analysis Engine
-- **Technical Indicators**: RSI, SMA, EMA, ATR, Support/Resistance, MA Cross
-- **Sentiment Integration**: Fear & Greed Index
-- **Probability Modeling**: Confidence intervals and scenario analysis
-- **Performance Optimized**: Linear time O(n) algorithms
+## 🧠 AI Prediction Engine
 
-### Studio Interface
-- Interactive analysis workspace at `/studio`
-- Real-time probability calculations
-- Exportable insight reports
-- Progress tracking and results visualization
+### How It Works
 
-### API Endpoints
-- `GET /api/status` - System health and build info
-- `POST /api/analysis` - AI prediction analysis
-- Comprehensive error handling and validation
+1. **Input Processing**: Analyzes your question and context
+2. **Probability Modeling**: Uses sophisticated algorithms to assess likelihood
+3. **Reasoning Generation**: Provides clear explanations for predictions  
+4. **Confidence Scoring**: Indicates reliability of the prediction
+5. **Scenario Mapping**: Considers multiple potential outcomes
 
-## 🔧 Development Scripts
+### Supported Topics
+- **Politics**: Elections, policy changes, political events
+- **Technology**: Product launches, adoption rates, market trends
+- **Finance**: Market movements, economic indicators
+- **Sports**: Game outcomes, season predictions
+- **Society**: Social trends, demographic shifts
+- **Environment**: Climate events, policy impacts
+
+### Rate Limiting & Plans
+
+**Free Tier**:
+- ✅ 50 predictions per day
+- ✅ Basic AI analysis
+- ✅ All prediction categories
+- ⏱️ 6-second rate limiting
+
+**Pro Plan** (Coming Soon):
+- ✅ Unlimited predictions
+- ✅ Advanced AI models
+- ✅ Priority processing
+- ✅ Export capabilities
+- ✅ API access
+
+## 🔧 Development & Testing
 
 ```bash
 # Development
-npm run dev          # Start Next.js dev server
-npm run dev:safe     # Start without Turbo mode
+npm run dev              # Start Next.js development server  
+npm run dev -- --port 3002  # Start on custom port
 
 # Testing
-npm run test         # Unit tests with Vitest
-npm run smoke:e8     # E8 deployment verification
-npm run qa:all       # Full test suite
+npm run test             # Unit tests with Vitest
+npm run test:e2e:mock    # End-to-end tests with Playwright
+npm run typecheck        # TypeScript validation
 
 # Building
-npm run build        # Build for production
-npm run validate:build # Pre-build validation
+npm run build            # Production build
+npm run start            # Start production server
 
-# Linting & Formatting
-npm run lint         # ESLint check
-npm run typecheck    # TypeScript validation
+# Code Quality
+npm run lint             # ESLint check
+npm run lint:fix         # Auto-fix linting issues
+```
+
+### Environment Variables
+
+Create `.env.local` for development:
+
+```bash
+# Optional: Override default settings
+NEXT_PUBLIC_APP_ENV=development
+ENABLE_ANALYTICS=true
+
+# Production only
+NEXT_PUBLIC_ENABLE_ADMIN=1
+ADMIN_USER=your_admin_username
+ADMIN_PASS=your_admin_password
 ```
 
 ## 📡 API Reference
 
-### Health Check
-```bash
-GET /api/status
-```
-Returns system status, environment, and build information.
+### Core Endpoints
 
-### Analysis Engine
-```bash
-POST /api/analysis
+#### Prediction Generation
+```http
+POST /api/ai/predict
+Content-Type: application/json
+
 {
-  "assetId": "bitcoin",
-  "vsCurrency": "usd", 
-  "horizon": "7d"
+  "topic": "Politics",
+  "question": "Will the new climate policy pass?", 
+  "horizon": "3 months",
+  "context": "Optional additional context"
 }
 ```
-*Note: Currently returns 501 - Analysis engine in development*
 
-### Studio Interface
-Visit `/studio` for the interactive prediction workspace.
+**Response:**
+```json
+{
+  "prob": 0.72,
+  "drivers": ["Public support", "Political climate", "Economic factors"],
+  "rationale": "Analysis suggests high likelihood based on current trends.",
+  "model": "mock-v0",
+  "scenarioId": "climate-policy-pass-3-months", 
+  "ts": "2025-09-04T19:23:45.123Z"
+}
+```
 
-## 🚀 Production Deployment
+#### System Status
+```http
+GET /api/status
+```
 
-### Vercel Deployment
-1. Connect GitHub repository to Vercel
-2. Set production branch to `main` or `release_e8`
-3. Configure environment variables:
-   ```
+**Response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-09-04T19:23:45.123Z",
+  "environment": "development",
+  "features": ["ai_studio", "rate_limiting", "analytics"]
+}
+```
+
+#### Analytics (Internal)
+```http  
+POST /api/analytics
+```
+
+Used internally for tracking usage patterns and system performance.
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. **Connect Repository**:
+   - Import your GitHub repository to Vercel
+   - Select `main` branch for production
+   - Vercel auto-detects Next.js configuration
+
+2. **Environment Variables**:
+   ```bash
    NEXT_PUBLIC_APP_ENV=production
-   NEXT_PUBLIC_COINBASE_API_KEY=your_key
-   NEXT_PUBLIC_ANTHROPIC_API_KEY=your_key
+   ENABLE_ANALYTICS=true
    ```
 
-### Deployment Verification
-```bash
-# Run smoke test against production
-./smoke-e8.sh https://your-domain.com
+3. **Custom Domain** (Optional):
+   - Add your domain in Vercel dashboard
+   - Configure DNS settings
+   - SSL certificates are handled automatically
 
-# Check status endpoint
+### Manual Deployment
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+
+# Deploy to your hosting provider
+# (Copy .next folder and package.json)
+```
+
+### Health Monitoring
+
+```bash
+# Verify deployment
 curl https://your-domain.com/api/status
+
+# Test AI prediction endpoint
+curl -X POST https://your-domain.com/api/ai/predict \
+  -H "Content-Type: application/json" \
+  -d '{"topic": "Technology", "question": "Test question", "horizon": "1 week"}'
 ```
 
-### Emergency Rollback
-```bash
-# Deploy from stable tag
-git checkout e8_stable
-git push origin release_e8 --force
+## 🛡️ Security & Performance
 
-# Or promote previous deployment in Vercel dashboard
-```
+### Security Features
+- **Rate Limiting**: Intelligent throttling prevents abuse
+- **Input Validation**: All API inputs are sanitized and validated
+- **Error Handling**: Graceful error responses without information leakage
+- **Content Security**: XSS protection and secure headers
+- **Environment Isolation**: Separate configs for dev/staging/production
 
-## 🛡️ Security & Compliance
+### Performance Optimizations
+- **Turbopack**: Fast development builds with Next.js 15.5.2
+- **Efficient Caching**: Smart caching strategies for predictions
+- **Memory Management**: Optimized Node.js memory allocation (8GB limit)
+- **Code Splitting**: Automatic bundle optimization
+- **Image Optimization**: Next.js built-in image handling
 
-- **Geofencing**: Norway blocked on mainnet routes
-- **Rate Limiting**: API endpoints protected
-- **Environment Isolation**: Dev/staging/production separation
-- **Content Security Policy**: XSS protection enabled
+## 🤝 Contributing
+
+### Getting Started
+1. Fork the repository on GitHub
+2. Clone your fork: `git clone https://github.com/yourusername/prediktfi-protocol.git`
+3. Create a feature branch: `git checkout -b feat/amazing-feature`
+4. Make your changes and add tests
+5. Run the test suite: `npm run test`
+6. Commit with clear messages: `git commit -m "feat: add amazing feature"`
+7. Push to your branch: `git push origin feat/amazing-feature`
+8. Open a Pull Request
+
+### Code Standards
+- **TypeScript**: Strict mode enabled, full type coverage required
+- **Testing**: Unit tests for new features, maintain >80% coverage  
+- **Linting**: ESLint + Prettier for consistent formatting
+- **Documentation**: Update README and inline docs for new features
 
 ## 📚 Documentation
 
-- [`docs/prod_verification.md`](docs/prod_verification.md) - Production deployment checklist
-- [`MIGRATION.md`](MIGRATION.md) - Legacy migration guide
-- `smoke-e8.sh` - Automated deployment verification
+- **API Docs**: See API Reference section above
+- **Component Docs**: Inline JSDoc comments in components
+- **Architecture**: See Project Architecture section
+- **Deployment**: See Deployment section for production setup
 
-## 🏷️ Stable Tags
+## � License
 
-- `e8_stable` - Latest verified E8 implementation
-- `production_stable` - Last known good production deploy
+MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🧪 Testing Strategy
+## 🆘 Support & Community
 
-**Unit Tests**: Core logic and utilities  
-**Integration Tests**: API endpoints and database  
-**E2E Tests**: Full user workflows  
-**Smoke Tests**: Production deployment verification
-   cp -r nextjs-boilerplate/* prediktfi-protocol/app/
+- **Issues**: [GitHub Issues](https://github.com/Thorsrud22/prediktfi-protocol/issues) for bug reports
+- **Discussions**: [GitHub Discussions](https://github.com/Thorsrud22/prediktfi-protocol/discussions) for questions
+- **Documentation**: Check the `docs/` directory for additional guides
 
-## 🔧 Prerequisites
+---
 
-- [Node.js](https://nodejs.org/) 18+
-- [Rust](https://rustup.rs/) (for Solana development)
-- [Solana CLI](https://docs.solana.com/cli/install-solana-cli-tools)
-- [Anchor Framework](https://book.anchor-lang.com/getting_started/installation.html)
+**🎯 Ready to explore the future of AI-powered predictions?**
 
-## ⚙️ Configuration
-
-### Environment Variables
-Copy `.env.example` to `.env.local`:
-```bash
-cp .env.example .env.local
-```
-
-Required for production:
-```env
-NEXT_PUBLIC_APP_ENV=production
-NEXT_PUBLIC_COINBASE_API_KEY=your_coinbase_key
-NEXT_PUBLIC_ANTHROPIC_API_KEY=your_anthropic_key
-```
-
-### Solana Configuration
-Update `Anchor.toml` for different networks:
-```toml
-[provider]
-cluster = "devnet"  # or "mainnet-beta"
-```
+Visit `/studio` and start generating insights on any topic that interests you!
 
 ## 🤝 Contributing
 
