@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL-koding test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; }
+        .test-case { border: 1px solid #ccc; padding: 15px; margin: 15px 0; border-radius: 8px; }
+        .url-display { background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all; margin: 10px 0; }
+        .success { color: green; }
+        .input-field { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; background: #0066cc; color: white; }
+    </style>
+</head>
+<body>
+    <h1>RefPanel URL-koding Test</h1>
+    
+    <div class="test-case">
+        <h2>Live URL Generering Test</h2>
+        <label>
+            Ref verdi (prøv uvanlige tegn):
+            <input type="text" id="refInput" class="input-field" value="min-ref-æøå&spesial" placeholder="Skriv inn ref verdi...">
+        </label>
+        <label>
+            Creator verdi:
+            <input type="text" id="creatorInput" class="input-field" value="creator@domain.com/path" placeholder="Skriv inn creator verdi...">
+        </label>
+        <label>
+            Market ID:
+            <input type="text" id="marketInput" class="input-field" value="bitcoin-🚀-test" placeholder="Skriv inn market ID...">
+        </label>
+        <button onclick="generateUrl()">Generer URL</button>
+        
+        <div id="generatedUrl" class="url-display">Klikk "Generer URL" for å teste...</div>
+        <div id="parseResult"></div>
+    </div>
+
+    <div class="test-case">
+        <h2>Forhåndsdefinerte Test Cases</h2>
+        <div id="predefinedTests"></div>
+    </div>
+
+    <div class="test-case">
+        <h2>Attribution Test Links</h2>
+        <p>Klikk på lenkene under for å teste at attribution capture fungerer med spesialtegn:</p>
+        <div id="attributionLinks"></div>
+    </div>
+
+    <script>
+        // Simuler RefPanel URL generering
+        function generateRefPanelUrl(marketId, refValue, creatorValue) {
+            const baseUrl = "http://localhost:3000";
+            const marketPath = `/market/${encodeURIComponent(marketId)}`;
+            
+            const url = new URL(marketPath, baseUrl);
+            if (refValue) {
+                url.searchParams.set("ref", refValue);
+            }
+            if (creatorValue) {
+                url.searchParams.set("creator", creatorValue);
+            }
+            
+            return url.toString();
+        }
+
+        function generateUrl() {
+            const ref = document.getElementById('refInput').value;
+            const creator = document.getElementById('creatorInput').value;
+            const market = document.getElementById('marketInput').value;
+            
+            const generatedUrl = generateRefPanelUrl(market, ref, creator);
+            document.getElementById('generatedUrl').textContent = generatedUrl;
+            
+            // Test parsing tilbake
+            try {
+                const parsedUrl = new URL(generatedUrl);
+                const parsedRef = parsedUrl.searchParams.get('ref');
+                const parsedCreator = parsedUrl.searchParams.get('creator');
+                
+                const parseResult = document.getElementById('parseResult');
+                parseResult.innerHTML = `
+                    <strong>Parsing test:</strong><br>
+                    <span class="success">✓ Original ref: "${ref}" → Parsed: "${parsedRef}" ${ref === parsedRef ? '✓' : '✗'}</span><br>
+                    <span class="success">✓ Original creator: "${creator}" → Parsed: "${parsedCreator}" ${creator === parsedCreator ? '✓' : '✗'}</span>
+                `;
+            } catch (e) {
+                document.getElementById('parseResult').innerHTML = `<span style="color: red;">✗ Invalid URL: ${e.message}</span>`;
+            }
+        }
+
+        // Forhåndsdefinerte test cases
+        const predefinedCases = [
+            { name: 'Norske tegn', market: 'bitcoin-økning', ref: 'min-ref-æøå', creator: 'analytiker_ø' },
+            { name: 'Spesialtegn', market: 'test&special?chars', ref: 'ref#with%symbols', creator: 'user@domain.com' },
+            { name: 'Emojis', market: 'bitcoin-🚀', ref: 'ref-🎯', creator: 'expert-💰' },
+            { name: 'Mellomrom', market: 'long market name', ref: 'my ref spaces', creator: 'user name' }
+        ];
+
+        function createPredefinedTests() {
+            const container = document.getElementById('predefinedTests');
+            predefinedCases.forEach((testCase, index) => {
+                const url = generateRefPanelUrl(testCase.market, testCase.ref, testCase.creator);
+                
+                container.innerHTML += `
+                    <div style="margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                        <strong>${testCase.name}</strong><br>
+                        Input: market="${testCase.market}", ref="${testCase.ref}", creator="${testCase.creator}"<br>
+                        <div class="url-display" style="font-size: 12px;">${url}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function createAttributionLinks() {
+            const container = document.getElementById('attributionLinks');
+            const testLinks = [
+                { ref: 'test-æøå', creator: 'norsk-creator', desc: 'Norske tegn' },
+                { ref: 'test&special=chars', creator: 'user@domain.com', desc: 'Spesialtegn' },
+                { ref: 'ref with spaces', creator: 'creator/path', desc: 'Mellomrom og skråstrek' }
+            ];
+
+            testLinks.forEach(link => {
+                const url = generateRefPanelUrl('1', link.ref, link.creator);
+                container.innerHTML += `
+                    <div style="margin: 10px 0;">
+                        <a href="${url}" target="_blank">${link.desc}: ${link.ref} / ${link.creator}</a>
+                        <div style="font-size: 12px; color: #666;">${url}</div>
+                    </div>
+                `;
+            });
+        }
+
+        // Initialize på page load
+        window.addEventListener('load', () => {
+            createPredefinedTests();
+            createAttributionLinks();
+            generateUrl(); // Generate initial example
+        });
+    </script>
+</body>
+</html>

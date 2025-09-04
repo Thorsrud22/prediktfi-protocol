@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RefPanel Copy Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { border: 1px solid #ccc; padding: 15px; margin: 15px 0; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .copy-btn { background: #0066cc; color: white; }
+        .copy-btn:disabled { background: #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .link-display { background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <h1>RefPanel Copy Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Copy Test - Market 1 (SolanaMax)</h2>
+        <div class="link-display" id="link1">http://localhost:3000/market/1?ref=crypto_analyst_sol&creator=crypto_analyst_sol</div>
+        <button class="copy-btn" onclick="testCopy('link1', 'status1')">Kopier</button>
+        <div id="status1" aria-live="polite"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Copy Test - With Custom Ref</h2>
+        <div class="link-display" id="link2">http://localhost:3000/market/2?ref=myref&creator=predikt_editorial</div>
+        <button class="copy-btn" onclick="testCopy('link2', 'status2')">Kopier</button>
+        <div id="status2" aria-live="polite"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Attribution Test</h2>
+        <p>Click this link to test attribution capture:</p>
+        <a href="http://localhost:3000/market/1?ref=testref&creator=testcreator" target="_blank">
+            Test Market with Attribution
+        </a>
+        <p><small>After clicking, check browser localStorage for 'predikt:ref' and 'predikt:creatorId'</small></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Browser Support Check</h2>
+        <div id="clipboard-support"></div>
+        <div id="https-check"></div>
+    </div>
+
+    <script>
+        // Check browser support
+        function checkSupport() {
+            const clipboardSupport = document.getElementById('clipboard-support');
+            const httpsCheck = document.getElementById('https-check');
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                clipboardSupport.innerHTML = '<span class="success">✓ Clipboard API supported</span>';
+            } else {
+                clipboardSupport.innerHTML = '<span class="error">✗ Clipboard API not supported</span>';
+            }
+            
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                httpsCheck.innerHTML = '<span class="success">✓ Secure context (HTTPS or localhost)</span>';
+            } else {
+                httpsCheck.innerHTML = '<span class="error">✗ Insecure context - clipboard may not work</span>';
+            }
+        }
+
+        async function testCopy(linkId, statusId) {
+            const linkElement = document.getElementById(linkId);
+            const statusElement = document.getElementById(statusId);
+            const link = linkElement.textContent;
+            
+            try {
+                await navigator.clipboard.writeText(link);
+                statusElement.innerHTML = '<span class="success">✓ Lenke kopiert</span>';
+                
+                // Reset after 2 seconds (like RefPanel)
+                setTimeout(() => {
+                    statusElement.innerHTML = '';
+                }, 2000);
+            } catch (err) {
+                statusElement.innerHTML = '<span class="error">✗ Copy failed: ' + err.message + '</span>';
+            }
+        }
+
+        // Check support on load
+        window.addEventListener('load', checkSupport);
+        
+        // Test localStorage access
+        console.log('Testing localStorage access...');
+        try {
+            localStorage.setItem('test', 'value');
+            localStorage.removeItem('test');
+            console.log('✓ localStorage working');
+        } catch (e) {
+            console.error('✗ localStorage failed:', e);
+        }
+    </script>
+</body>
+</html>
