@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
+import "../src/styles/design-tokens.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import WalletProvider from "./components/WalletProviderDev";
@@ -70,12 +71,21 @@ export default async function RootLayout({
   const plan = headersList.get('x-plan') || 'free';
 
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <meta name="x-plan" content={plan} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Set theme before hydration to prevent flash
+              document.documentElement.setAttribute('data-theme', 'dark');
+              document.documentElement.style.setProperty('--theme-bg', '#0f172a');
+            `,
+          }}
+        />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`}>
-                <WalletProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-br from-[#0B1426] via-[#1E3A8A] to-[#5B21B6] text-slate-100`}>
+        <WalletProvider>
           <ToastProvider>
             <ConsentGate />
             <Navbar />

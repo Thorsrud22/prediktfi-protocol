@@ -167,26 +167,38 @@ function StudioContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-[#0B1426]/50 border-b border-blue-800/30">
+        <div className="mx-auto max-w-7xl px-4">
           <div className="flex items-center justify-between h-16">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">AI Studio</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="text-2xl font-bold text-blue-100">AI Studio</h1>
+              <p className="text-sm text-blue-200/80 mt-1">
                 Get AI-powered insights and log them on-chain
-                <span className="ml-4 text-[--accent]">
+                <span className="ml-4 text-emerald-300 font-medium">
                   Free remaining: {quota.remaining}/{quota.limit}
                 </span>
               </p>
             </div>
-            <div className="flex items-center gap-4 relative">
-              <span className="text-sm text-gray-500">
-                Cluster: <span className="font-mono">{env.cluster}</span>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-blue-200/80">
+                Cluster: <span className="font-mono text-blue-300">{env.cluster}</span>
               </span>
-              <div className="relative z-50">
-                <WalletMultiButton className="!bg-indigo-600 !text-white !border-0 hover:!bg-indigo-700" />
+              <div>
+                <WalletMultiButton 
+                  style={{
+                    background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+                    color: '#F8FAFC',
+                    border: 'none',
+                    fontWeight: '500',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    height: '40px',
+                    transition: 'all 150ms ease-in-out',
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -194,7 +206,7 @@ function StudioContent() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Progress Steps */}
         <div className="mb-8">
           <nav aria-label="Progress">
@@ -262,18 +274,12 @@ function StudioContent() {
             
             {/* Show preview gauge if we have response but haven't navigated to preview */}
             {response && input && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Preview</h3>
-                <div className="flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-indigo-600 mb-2">
-                      {Math.round(response.prob * 100)}%
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {response.model}
-                    </div>
-                  </div>
-                </div>
+                            <div className="bg-[color:var(--surface)] rounded-lg shadow-sm border border-[var(--border)] p-6">
+                <h3 className="text-lg font-semibold text-[color:var(--text)] mb-3">Create New Insight</h3>
+                <InsightForm
+                  onSubmit={handleSubmit}
+                  loading={loading}
+                />
               </div>
             )}
           </div>
@@ -317,18 +323,18 @@ function RecentInsightsFeed() {
 
   return (
     <div className="mt-12">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Insights</h2>
+      <h2 className="text-lg font-semibold text-[color:var(--text)] mb-4">Recent Insights</h2>
       <div className="grid gap-4">
         {insights.slice(0, 3).map((insight, index) => (
-          <div key={index} className="bg-white rounded-lg border border-gray-200 p-4">
+          <div key={index} className="bg-[color:var(--surface)] rounded-lg border border-[var(--border)] p-4">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-medium text-gray-900 truncate">{insight.question}</h3>
-              <span className="text-2xl font-bold text-indigo-600">
+              <h3 className="font-medium text-[color:var(--text)] truncate">{insight.question}</h3>
+              <span className="text-2xl font-bold text-[color:var(--accent)]">
                 {Math.round(insight.prob * 100)}%
               </span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="bg-gray-100 px-2 py-1 rounded text-xs">{insight.topic}</span>
+            <div className="flex items-center gap-2 text-sm text-[color:var(--muted)]">
+              <span className="bg-[color:var(--surface-2)] px-2 py-1 rounded text-xs">{insight.topic}</span>
               <span>{insight.horizon}</span>
               <span>•</span>
               <span>{new Date(insight.ts).toLocaleDateString()}</span>

@@ -20,25 +20,14 @@ import { mockAdapter } from './adapters/mock';
 import { baselineAdapter } from './adapters/baseline';
 
 export async function predict(input: PredictInput): Promise<PredictOutput> {
-  // For v1, use baseline for crypto topics, mock for everything else
-  const isCrypto = input.topic.toLowerCase().includes('crypto') || 
-                   input.topic.toLowerCase().includes('bitcoin') ||
-                   input.topic.toLowerCase().includes('ethereum') ||
-                   input.topic.toLowerCase().includes('solana') ||
-                   input.question.toLowerCase().includes('btc') ||
-                   input.question.toLowerCase().includes('eth') ||
-                   input.question.toLowerCase().includes('sol');
-
   try {
-    if (isCrypto) {
-      console.log('Using baseline adapter for crypto analysis...');
-      return await baselineAdapter(input);
-    } else {
-      console.log('Using mock adapter for non-crypto analysis...');
-      return await mockAdapter(input);
-    }
-  } catch (error) {
-    console.warn('Prediction adapter failed, falling back to mock:', error);
+    // For v1, use mock adapter for all topics to ensure reliability
+    // Baseline adapter with external API calls disabled for now
+    console.log('Using mock adapter for analysis...');
     return await mockAdapter(input);
+  } catch (error) {
+    console.error('Prediction failed:', error);
+    // Final fallback - should not happen with mock adapter
+    throw new Error('AI prediction service temporarily unavailable');
   }
 }

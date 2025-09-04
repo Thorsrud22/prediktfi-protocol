@@ -82,8 +82,8 @@ export default function PricingTable({ initialIsPro = false }: { initialIsPro?: 
           >
             {plan.highlight && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                <span className="bg-[--accent] text-white px-3 py-1 rounded-full text-sm font-medium">
-                  Popular
+                <span className="bg-gradient-to-r from-[var(--brand-2)] to-[var(--brand-3)] text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg">
+                  Recommended
                 </span>
               </div>
             )}

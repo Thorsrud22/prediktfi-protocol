@@ -24,23 +24,36 @@ async function fetchCryptoPrice(symbol: string): Promise<{ price: number; change
     };
 
     const coinId = symbolMap[symbol.toLowerCase()] || 'bitcoin';
+    
+    // Add timeout and better error handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const response = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`,
       { 
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: { 
+          'Accept': 'application/json',
+          'User-Agent': 'Predikt/1.0'
+        },
+        signal: controller.signal
       }
     );
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      throw new Error(`CoinGecko API error: ${response.status}`);
+      console.warn(`CoinGecko API error: ${response.status} ${response.statusText}`);
+      return null;
     }
 
     const data: CoinGeckoPrice = await response.json();
     const coinData = data[coinId];
     
     if (!coinData) {
-      throw new Error(`No data for ${coinId}`);
+      console.warn(`No data for ${coinId}`);
+      return null;
     }
 
     return {
@@ -48,7 +61,7 @@ async function fetchCryptoPrice(symbol: string): Promise<{ price: number; change
       change24h: coinData.usd_24h_change || 0
     };
   } catch (error) {
-    console.warn('Failed to fetch crypto price:', error);
+    console.warn(`Crypto price fetch failed for ${symbol}:`, error);
     return null;
   }
 }

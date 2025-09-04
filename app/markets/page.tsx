@@ -107,10 +107,10 @@ function MarketsContent() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[color:var(--text)] mb-2">
+        <h1 className="text-3xl font-bold text-blue-100 mb-2">
           Prediction Markets
         </h1>
-        <p className="text-[color:var(--muted)]">
+        <p className="text-blue-200/80">
           Bet on future outcomes with real SOL
         </p>
       </div>
@@ -124,9 +124,9 @@ function MarketsContent() {
             placeholder="Search markets..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-3 bg-[color:var(--surface)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] placeholder:text-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)] focus:border-transparent"
+            className="w-full px-4 py-3 bg-[#0B1426]/50 border border-blue-800/40 rounded-lg text-blue-100 placeholder:text-blue-300/60 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
           />
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[color:var(--muted)]">
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-300/60">
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -142,14 +142,14 @@ function MarketsContent() {
         {/* Sort dropdown and Hide ended toggle */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <label htmlFor="sort" className="text-sm font-medium text-[color:var(--text)]">
+            <label htmlFor="sort" className="text-sm font-medium text-slate-300">
               Sort by:
             </label>
             <select
               id="sort"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-3 py-2 bg-[color:var(--surface)] border border-[var(--border)] rounded-[var(--radius)] text-[color:var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+              className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="ending-soon">Ending soon</option>
               <option value="most-volume">Most volume</option>
@@ -157,7 +157,7 @@ function MarketsContent() {
           </div>
           
           <div className="flex items-center gap-2">
-            <label htmlFor="hide-ended" className="text-sm font-medium text-[color:var(--text)] cursor-pointer">
+            <label htmlFor="hide-ended" className="text-sm font-medium text-slate-300 cursor-pointer">
               Hide ended
             </label>
             <input
@@ -165,7 +165,7 @@ function MarketsContent() {
               type="checkbox"
               checked={hideEnded}
               onChange={(e) => setHideEnded(e.target.checked)}
-              className="w-4 h-4 text-[color:var(--primary)] bg-[color:var(--surface)] border-[var(--border)] rounded focus:ring-[color:var(--primary)] focus:ring-2"
+              className="w-4 h-4 text-blue-500 bg-slate-900/50 border-slate-700 rounded focus:ring-blue-500 focus:ring-2"
             />
           </div>
         </div>
@@ -186,15 +186,15 @@ function MarketsContent() {
           {filteredAndSortedMarkets.length === 0 ? (
             /* Empty state */
             <div className="text-center py-12">
-              <div className="mx-auto w-24 h-24 bg-[color:var(--surface-2)] rounded-full flex items-center justify-center mb-4">
-                <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="text-[color:var(--muted)]">
+              <div className="mx-auto w-24 h-24 bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
+                <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="text-slate-500">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0118 12a8 8 0 01-8 8 8 8 0 01-8-8 8 8 0 018-8 7.962 7.962 0 014.291 1.709" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-[color:var(--text)] mb-2">
+              <h3 className="text-lg font-semibold text-slate-100 mb-2">
                 No markets found
               </h3>
-              <p className="text-[color:var(--muted)] mb-4">
+              <p className="text-slate-400 mb-4">
                 {debouncedSearch || selectedCategory !== "All" 
                   ? "Try adjusting your search or filters to find markets." 
                   : "No active markets are available right now."}
@@ -206,7 +206,7 @@ function MarketsContent() {
                     setSelectedCategory("All");
                     setHideEnded(true);
                   }}
-                  className="px-4 py-2 bg-[color:var(--primary)] text-white rounded-[var(--radius)] hover:opacity-90 transition-opacity"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   Clear filters
                 </button>

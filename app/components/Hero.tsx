@@ -41,12 +41,12 @@ export default function Hero() {
   return (
     <section
       aria-label={`${SITE.name} hero`}
-      className="relative isolate overflow-hidden bg-hero noise"
+      className="relative isolate overflow-hidden min-h-[600px] flex items-center"
     >
-      <div className="relative z-[1] mx-auto max-w-[1100px] px-6 py-12 sm:py-16 md:py-18">
+      <div className="mx-auto max-w-7xl px-4 relative z-10 py-20">
         {/* Badge */}
-        <div className="flex items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[color:var(--surface)]/70 px-3 py-1 text-xs font-medium text-[color:var(--muted)] backdrop-blur-sm">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-700/50 bg-[#0B1426]/70 px-3 py-1 text-xs font-medium text-blue-200 backdrop-blur-sm">
             <span aria-hidden>●</span>
             <span>Live on Devnet</span>
           </div>
@@ -59,58 +59,50 @@ export default function Hero() {
           {!isProduction && !isMockMode && (
             <button
               onClick={handleTryMockMode}
-              className="text-xs text-[color:var(--muted)]/70 hover:text-[color:var(--muted)] transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--accent)]/50 rounded"
+              className="text-xs text-blue-300/70 hover:text-blue-200 transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400/50 rounded"
             >
               Try mock mode
             </button>
           )}
         </div>
 
-        {/* Hero text container with constrained width */}
-        <div className="max-w-3xl md:max-w-4xl">
+        {/* Hero text container */}
+        <div className="max-w-4xl">
           {/* Heading */}
-          <h1 className="mt-5 font-extrabold leading-tight text-[clamp(2.25rem,7vw,5.5rem)] text-[color:var(--text)]">
-            Ask smarter. <span className="text-gradient">Log insights on-chain</span>.
+          <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight text-blue-100">
+            Ask smarter. <span className="bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">Log insights on-chain</span>.
           </h1>
 
-          {/* Lead with improved contrast */}
-          <p className="mt-4 max-w-2xl text-base sm:text-lg text-slate-200">
+          {/* Lead */}
+          <p className="mt-6 max-w-2xl text-lg text-blue-200/90">
             Predikt is an AI-first prediction studio. Ask a question, get a probability with rationale, and stamp it on Solana.
           </p>
         </div>
 
-        {/* CTAs - primary and secondary actions */}
-        <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
+        {/* CTAs */}
+        <div className="mt-10 flex flex-col sm:flex-row items-start gap-4">
           <Link
             href="/studio"
-            className="btn-primary min-h-11 text-sm inline-flex items-center"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:shadow-lg transition-all"
           >
             Open Studio
           </Link>
           <Link
             href="/feed"
-            className="text-sm text-[color:var(--muted)]/80 hover:text-[color:var(--muted)] transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--accent)]/50 rounded"
+            className="text-sm text-slate-400 hover:text-slate-300 transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 rounded"
           >
             View Feed
           </Link>
         </div>
 
-        {/* Trust row (optional) */}
-        <div className="mt-10 flex items-center gap-2 text-xs text-[color:var(--muted)]/80">
+        {/* Trust row */}
+        <div className="mt-12 flex items-center gap-2 text-xs text-slate-500">
           <span>Powered by Solana</span>
-          {/* Optional logo slot; 60% opacity */}
           <span className="opacity-60" aria-hidden>
             ◆
           </span>
         </div>
       </div>
-
-      {/* Reduced motion: keep visuals static; nothing animated here */}
-      <style jsx>{`
-        @media (prefers-reduced-motion: reduce) {
-          /* No animations to disable in this section, placeholder for future */
-        }
-      `}</style>
     </section>
   );
 }
