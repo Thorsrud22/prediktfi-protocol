@@ -1,0 +1,103 @@
+{
+  "profiles": [
+    {
+      "id": "default",
+      "name": "Balanced Analysis",
+      "description": "Equal weight between technical and sentiment with moderate risk assessment",
+      "version": "1.0.0",
+      "weights": {
+        "technical": 0.50,
+        "sentiment": 0.30,
+        "risk": 0.20
+      },
+      "thresholds": {
+        "rsi": {
+          "overbought": 70,
+          "oversold": 30
+        },
+        "atr": {
+          "high_volatility": 2.0
+        },
+        "fng": {
+          "extreme_fear": 25,
+          "fear": 45,
+          "greed": 55,
+          "extreme_greed": 75
+        }
+      },
+      "intervals": {
+        "multipliers": {
+          "24h": 1.2,
+          "7d": 2.0,
+          "30d": 3.0
+        }
+      }
+    },
+    {
+      "id": "technical_focused",
+      "name": "Technical Heavy",
+      "description": "Emphasizes technical indicators over sentiment",
+      "version": "1.0.0",
+      "weights": {
+        "technical": 0.65,
+        "sentiment": 0.20,
+        "risk": 0.15
+      },
+      "thresholds": {
+        "rsi": {
+          "overbought": 75,
+          "oversold": 25
+        },
+        "atr": {
+          "high_volatility": 1.8
+        },
+        "fng": {
+          "extreme_fear": 20,
+          "fear": 40,
+          "greed": 60,
+          "extreme_greed": 80
+        }
+      },
+      "intervals": {
+        "multipliers": {
+          "24h": 1.0,
+          "7d": 1.8,
+          "30d": 2.5
+        }
+      }
+    },
+    {
+      "id": "sentiment_aware",
+      "name": "Sentiment Aware",
+      "description": "Higher weight on market sentiment and fear/greed dynamics",
+      "version": "1.0.0",
+      "weights": {
+        "technical": 0.35,
+        "sentiment": 0.45,
+        "risk": 0.20
+      },
+      "thresholds": {
+        "rsi": {
+          "overbought": 65,
+          "oversold": 35
+        },
+        "atr": {
+          "high_volatility": 2.2
+        },
+        "fng": {
+          "extreme_fear": 30,
+          "fear": 50,
+          "greed": 50,
+          "extreme_greed": 70
+        }
+      },
+      "intervals": {
+        "multipliers": {
+          "24h": 1.4,
+          "7d": 2.2,
+          "30d": 3.5
+        }
+      }
+    }
+  ]
+}

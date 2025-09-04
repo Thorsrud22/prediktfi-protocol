@@ -1,156 +1,261 @@
 # PrediktFi Protocol
 
-A Solana/Anchor program for PrediktFi - a decentralized prediction market platform on Solana (Devnet).
+An AI-first prediction studio with freemium quotas and shareable insights, built on Solana.
 
-## Overview
+## 🎯 Current Status: E8 AI Prediction Studio
 
-PrediktFi Protocol allows users to create and participate in prediction markets on various topics. Users can place predictions on outcomes and earn rewards based on correct predictions.
+PrediktFi is now a comprehensive AI prediction analysis platform featuring:
+- **AI Analysis Engine**: Technical indicators, sentiment analysis, and probability modeling
+- **Freemium Quotas**: Free tier with upgrade options
+- **Shareable Insights**: Export and share analysis results
+- **Studio Interface**: Interactive prediction workspace
+- **API Endpoints**: RESTful analysis APIs
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 prediktfi-protocol/
-├── programs/
-│   └── prediktfi-protocol/
-│       ├── src/
-│       │   └── lib.rs          # Main program logic
-│       └── Cargo.toml          # Program dependencies
-├── tests/
-│   └── prediktfi-protocol.ts   # Test files
-├── migrations/
-│   └── deploy.js              # Deployment script
-├── app/                       # Frontend application (if needed)
-├── Anchor.toml                # Anchor configuration
-├── Cargo.toml                 # Workspace configuration
-└── package.json               # Node.js dependencies
+├── app/                       # Next.js frontend application
+│   ├── api/                   # API routes
+│   │   ├── analysis/          # AI analysis endpoints
+│   │   └── status/            # Health check endpoint
+│   ├── studio/                # Main prediction studio UI
+│   ├── components/            # React components
+│   └── lib/                   # Utilities and helpers
+├── src/                       # Analysis engine modules
+│   ├── lib/
+│   │   ├── analysis/          # Core analysis engine
+│   │   ├── indicators/        # Technical indicators (RSI, SMA, EMA, ATR)
+│   │   ├── data/             # Data sources and adapters
+│   │   └── sentiment/        # Sentiment analysis
+├── programs/                  # Solana/Anchor smart contracts
+│   └── prediktfi-protocol/    # Core prediction protocol
+├── tests/                     # Test suite
+├── docs/                      # Documentation
+│   └── prod_verification.md   # Production deployment guide
+└── smoke-e8.sh               # E8 deployment verification
 ```
 
-## Prerequisites
+## 🚀 Quick Start
 
-- [Rust](https://rustup.rs/)
-- [Solana CLI](https://docs.solana.com/cli/install-solana-cli-tools)
-- [Anchor Framework](https://book.anchor-lang.com/getting_started/installation.html)
-- [Node.js](https://nodejs.org/)
-
-## Quick Start
+### Development Setup
 
 1. **Install dependencies:**
-
    ```bash
    npm install
    ```
 
-2. **Build the program:**
+2. **Start development server:**
+   ```bash
+   npm run dev
+   ```
 
+3. **Run tests:**
+   ```bash
+   # Unit tests
+   npm run test
+   
+   # E8 smoke test
+   npm run smoke:e8
+   
+   # Full QA suite
+   npm run qa:all
+   ```
+
+### Smart Contract Development
+
+1. **Build Anchor program:**
    ```bash
    anchor build
    ```
 
-3. **Run tests:**
-
-   ```bash
-   # Run unit tests
-   npm run test
-   
-   # Run end-to-end tests (mock)
-   npm run test:e2e:mock
-   
-   # Run end-to-end tests with real wallet (requires manual interaction)
-   npm run test:e2e:real
-   ```
-   
-4. **Development:**
-
-   ```bash
-   # Start Next.js development server
-   npm run dev
-   ```
-
+2. **Run smart contract tests:**
    ```bash
    anchor test
    ```
 
-4. **Deploy to devnet:**
+3. **Deploy to devnet:**
    ```bash
    anchor deploy --provider.cluster devnet
    ```
 
-## Program Features
+## 📊 Key Features
 
-- **Create Prediction Markets**: Authorities can create new prediction markets with descriptions and end timestamps
-- **Place Predictions**: Users can place YES/NO predictions with specified amounts
-- **Resolve Markets**: Authorities can resolve markets with final outcomes
-- **Error Handling**: Comprehensive error handling for expired markets and resolved markets
+### AI Analysis Engine
+- **Technical Indicators**: RSI, SMA, EMA, ATR, Support/Resistance, MA Cross
+- **Sentiment Integration**: Fear & Greed Index
+- **Probability Modeling**: Confidence intervals and scenario analysis
+- **Performance Optimized**: Linear time O(n) algorithms
 
-## Moving from NextJS Boilerplate Repository
+### Studio Interface
+- Interactive analysis workspace at `/studio`
+- Real-time probability calculations
+- Exportable insight reports
+- Progress tracking and results visualization
 
-If your files are currently in a `nextjs-boilerplate` repository and you want to migrate to this `prediktfi-protocol` repository:
+### API Endpoints
+- `GET /api/status` - System health and build info
+- `POST /api/analysis` - AI prediction analysis
+- Comprehensive error handling and validation
 
-### Option 1: Move Frontend Files to `app/` Directory
-
-1. **Clone your nextjs-boilerplate repository locally:**
-
-   ```bash
-   git clone https://github.com/your-username/nextjs-boilerplate.git
-   ```
-
-2. **Copy relevant files to this repository:**
-
-   ```bash
-   # Copy NextJS frontend to app directory
-   cp -r nextjs-boilerplate/* prediktfi-protocol/app/
-
-   # Or copy specific directories you need
-   cp -r nextjs-boilerplate/src prediktfi-protocol/app/
-   cp -r nextjs-boilerplate/pages prediktfi-protocol/app/
-   cp -r nextjs-boilerplate/components prediktfi-protocol/app/
-   ```
-
-3. **Update package.json** to include frontend build scripts:
-   ```json
-   {
-     "scripts": {
-       "dev": "cd app && npm run dev",
-       "build:frontend": "cd app && npm run build",
-       "build:all": "anchor build && npm run build:frontend"
-     }
-   }
-   ```
-
-### Option 2: Use This Repository as Your Main Workspace
-
-1. **Set your Codespaces to point to this repository:**
-
-   - Go to GitHub Codespaces settings
-   - Ensure you're opening Codespaces from `Thorsrud22/prediktfi-protocol`
-   - Delete any existing Codespaces from the nextjs-boilerplate repository
-
-2. **Move your NextJS code here and maintain both frontend and smart contract in one repo**
-
-### Option 3: Keep Separate Repositories
-
-If you prefer to keep frontend and smart contract separate:
-
-- Use this repository for Solana/Anchor smart contract development
-- Keep your NextJS frontend in the nextjs-boilerplate repository
-- Use the smart contract's deployed program ID in your frontend
-
-## Configuration
-
-### Anchor.toml
-
-The main configuration file for Anchor. Update the program ID and cluster settings as needed.
-
-### Devnet Configuration
-
-The project is configured for Solana Devnet by default. To switch networks, update the `cluster` setting in `Anchor.toml`.
-
-### Environment variables (frontend)
-
-Copy `.env.example` to `.env.local` and adjust values:
+## 🔧 Development Scripts
 
 ```bash
+# Development
+npm run dev          # Start Next.js dev server
+npm run dev:safe     # Start without Turbo mode
+
+# Testing
+npm run test         # Unit tests with Vitest
+npm run smoke:e8     # E8 deployment verification
+npm run qa:all       # Full test suite
+
+# Building
+npm run build        # Build for production
+npm run validate:build # Pre-build validation
+
+# Linting & Formatting
+npm run lint         # ESLint check
+npm run typecheck    # TypeScript validation
+```
+
+## 📡 API Reference
+
+### Health Check
+```bash
+GET /api/status
+```
+Returns system status, environment, and build information.
+
+### Analysis Engine
+```bash
+POST /api/analysis
+{
+  "assetId": "bitcoin",
+  "vsCurrency": "usd", 
+  "horizon": "7d"
+}
+```
+*Note: Currently returns 501 - Analysis engine in development*
+
+### Studio Interface
+Visit `/studio` for the interactive prediction workspace.
+
+## 🚀 Production Deployment
+
+### Vercel Deployment
+1. Connect GitHub repository to Vercel
+2. Set production branch to `main` or `release_e8`
+3. Configure environment variables:
+   ```
+   NEXT_PUBLIC_APP_ENV=production
+   NEXT_PUBLIC_COINBASE_API_KEY=your_key
+   NEXT_PUBLIC_ANTHROPIC_API_KEY=your_key
+   ```
+
+### Deployment Verification
+```bash
+# Run smoke test against production
+./smoke-e8.sh https://your-domain.com
+
+# Check status endpoint
+curl https://your-domain.com/api/status
+```
+
+### Emergency Rollback
+```bash
+# Deploy from stable tag
+git checkout e8_stable
+git push origin release_e8 --force
+
+# Or promote previous deployment in Vercel dashboard
+```
+
+## 🛡️ Security & Compliance
+
+- **Geofencing**: Norway blocked on mainnet routes
+- **Rate Limiting**: API endpoints protected
+- **Environment Isolation**: Dev/staging/production separation
+- **Content Security Policy**: XSS protection enabled
+
+## 📚 Documentation
+
+- [`docs/prod_verification.md`](docs/prod_verification.md) - Production deployment checklist
+- [`MIGRATION.md`](MIGRATION.md) - Legacy migration guide
+- `smoke-e8.sh` - Automated deployment verification
+
+## 🏷️ Stable Tags
+
+- `e8_stable` - Latest verified E8 implementation
+- `production_stable` - Last known good production deploy
+
+## 🧪 Testing Strategy
+
+**Unit Tests**: Core logic and utilities  
+**Integration Tests**: API endpoints and database  
+**E2E Tests**: Full user workflows  
+**Smoke Tests**: Production deployment verification
+   cp -r nextjs-boilerplate/* prediktfi-protocol/app/
+
+## 🔧 Prerequisites
+
+- [Node.js](https://nodejs.org/) 18+
+- [Rust](https://rustup.rs/) (for Solana development)
+- [Solana CLI](https://docs.solana.com/cli/install-solana-cli-tools)
+- [Anchor Framework](https://book.anchor-lang.com/getting_started/installation.html)
+
+## ⚙️ Configuration
+
+### Environment Variables
+Copy `.env.example` to `.env.local`:
+```bash
 cp .env.example .env.local
+```
+
+Required for production:
+```env
+NEXT_PUBLIC_APP_ENV=production
+NEXT_PUBLIC_COINBASE_API_KEY=your_coinbase_key
+NEXT_PUBLIC_ANTHROPIC_API_KEY=your_anthropic_key
+```
+
+### Solana Configuration
+Update `Anchor.toml` for different networks:
+```toml
+[provider]
+cluster = "devnet"  # or "mainnet-beta"
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch: `git checkout -b feat/your-feature`
+3. Run tests: `npm run qa:all`
+4. Commit changes: `git commit -m "feat: your feature"`
+5. Push to branch: `git push origin feat/your-feature`
+6. Submit pull request
+
+### Code Quality
+- TypeScript strict mode enabled
+- ESLint + Prettier for formatting
+- Comprehensive test coverage required
+- Smoke tests must pass before deployment
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Documentation**: Check `docs/` directory
+- **Issues**: GitHub Issues for bug reports
+- **Discussions**: GitHub Discussions for questions
+
+---
+
+## 🗂️ Legacy Information
+
+*The following sections contain information about older versions and migration paths.*
 ```
 
 Required keys:
@@ -172,59 +277,35 @@ To use real transfers from the connected wallet to the protocol treasury with an
 
 ```bash
 NEXT_PUBLIC_CLUSTER=devnet
-NEXT_PUBLIC_PROTOCOL_TREASURY=<your_devnet_treasury_pubkey>
-NEXT_PUBLIC_FEE_BPS=200
-NEXT_PUBLIC_MOCK_TX=0
-```
+### Legacy Migration Information
 
-Behavior:
+For historical context, this repository previously supported a simpler prediction market system. Key migration information:
 
-- The full bet amount (SOL) is sent to `NEXT_PUBLIC_PROTOCOL_TREASURY` using `SystemProgram.transfer`.
-- An SPL Memo is attached describing the bet (JSON):
-  `{ "t": "bet", "v": 1, "m": <marketId>, "s": <side>, "feeBps": <bps> }`.
-- The UI shows a toast with a "View on Explorer" link (`?cluster=devnet` or `?cluster=mainnet-beta`).
+**Old System (V1)**:
+- Simple betting with SOL transfers
+- Basic market creation
+- Minimal UI
 
-## Testing
+**Current System (E8)**:
+- AI-powered analysis engine
+- Comprehensive studio interface
+- Freemium quota system
+- RESTful APIs
 
-Run the test suite:
+**Migration Path**:
+If upgrading from V1, see [`MIGRATION.md`](MIGRATION.md) for detailed migration steps.
 
+**Deprecated Environment Variables**:
 ```bash
-anchor test
+# No longer needed in E8
+NEXT_PUBLIC_PROTOCOL_TREASURY=<deprecated>
+NEXT_PUBLIC_FEE_BPS=<deprecated>
+NEXT_PUBLIC_MOCK_TX=<deprecated>
 ```
 
-Tests are located in the `tests/` directory and written in TypeScript.
+---
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details.
-
-## How to run V1 (devnet)
-
-1. Environment (.env.local)
-
-```bash
-NEXT_PUBLIC_CLUSTER=devnet
-NEXT_PUBLIC_PROTOCOL_TREASURY=<your_devnet_treasury_pubkey>
-NEXT_PUBLIC_FEE_BPS=200
-NEXT_PUBLIC_MOCK_TX=0
-```
-
-2. Start app
-
-```bash
-npm install
-npm run dev
-```
-
-3. Manual flow in browser
+**🚀 Ready to build the future of AI-powered predictions!**
 
 - Home → Select Wallet → connect your player wallet (ensure Devnet). If balance < 0.6 SOL, use Phantom Developer → Airdrop 1 SOL (or https://faucet.solana.com/).
 - Go to Active Markets → open the first market (/market/1).
