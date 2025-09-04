@@ -10,6 +10,7 @@ import ToastProvider from "./components/ToastProvider";
 import ConsentGate from "./components/ConsentGate";
 import AttributionBoot from "./components/AttributionBoot";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import PhantomOverlayRemover from "./components/PhantomOverlayRemover";
 import { SITE } from "./config/site";
 import { getPlanFromRequest } from "./lib/plan";
 import { headers } from "next/headers";
@@ -76,6 +77,7 @@ export default async function RootLayout({
         <meta name="x-plan" content={plan} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-br from-[#0B1426] via-[#1E3A8A] to-[#5B21B6] text-slate-100`}>
+        <PhantomOverlayRemover />
         <WalletProvider>
           <ToastProvider>
             <ConsentGate />

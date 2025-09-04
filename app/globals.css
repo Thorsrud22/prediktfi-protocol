@@ -370,3 +370,36 @@ body {
   -webkit-line-clamp: 3;
   line-clamp: 3;
 }
+
+/* Hide Phantom wallet browser extension overlay */
+div[id*="phantom"] {
+  display: none !important;
+}
+
+/* Hide other wallet extension overlays that might appear */
+div[data-phantom] {
+  display: none !important;
+}
+
+/* If it's an iframe from wallet extension */
+iframe[src*="phantom"] {
+  display: none !important;
+}
+
+/* Generic class-based approach for wallet overlays */
+.wallet-adapter-modal-overlay-phantom,
+.phantom-overlay,
+.phantom-widget {
+  display: none !important;
+}
+
+/* More aggressive approach - hide any fixed/absolute positioned elements with high z-index that might be wallet overlays */
+div[style*="position: fixed"][style*="z-index"]:has(img[alt*="phantom" i]),
+div[style*="position: absolute"][style*="z-index"]:has(img[alt*="phantom" i]) {
+  display: none !important;
+}
+
+/* Target elements that commonly appear in the top-right corner (typical wallet overlay position) */
+div[style*="position: fixed"][style*="right"][style*="top"]:has(img) {
+  display: none !important;
+}
