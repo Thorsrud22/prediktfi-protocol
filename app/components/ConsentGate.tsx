@@ -13,8 +13,15 @@ interface ConsentGateProps {
 export default function ConsentGate({ forceShow = false, onConsentGiven }: ConsentGateProps = {}) {
   const [showDialog, setShowDialog] = useState(false);
   const [isMainnet, setIsMainnet] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     // Check if we're on mainnet (use server-side cluster info via data attribute or other method)
     // For now, we'll check if we're in production and not explicitly devnet
     const isProduction = process.env.NODE_ENV === 'production';
@@ -33,7 +40,7 @@ export default function ConsentGate({ forceShow = false, onConsentGiven }: Conse
       // Allow forcing dialog even on devnet for testing
       setShowDialog(true);
     }
-  }, [forceShow]);
+  }, [forceShow, mounted]);
 
   const handleAccept = async () => {
     try {

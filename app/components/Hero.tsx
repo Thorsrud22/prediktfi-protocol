@@ -6,15 +6,18 @@ import { useEffect, useState } from "react";
 
 export default function Hero() {
   const [isMockMode, setIsMockMode] = useState(false);
-  
-  // Check if we're in production
-  const isProduction = process.env.NODE_ENV === 'production' && 
-    (process.env.NEXT_PUBLIC_APP_ENV === 'production' || 
-     window.location.hostname !== 'localhost');
+  const [isProduction, setIsProduction] = useState(false);
 
   useEffect(() => {
+    // Check if we're in production - do this on client side to avoid hydration mismatch
+    const prodCheck = process.env.NODE_ENV === 'production' && 
+      (process.env.NEXT_PUBLIC_APP_ENV === 'production' || 
+       window.location.hostname !== 'localhost');
+    
+    setIsProduction(prodCheck);
+
     // Don't show mock mode in production
-    if (isProduction) {
+    if (prodCheck) {
       return;
     }
     
