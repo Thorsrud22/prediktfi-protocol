@@ -58,7 +58,7 @@ function validatePredictInput(body: any): { isValid: boolean; input?: PredictInp
 export async function POST(request: NextRequest) {
   try {
     // Apply rate limiting with Pro bypass
-    await rateLimitOrThrow(request);
+    rateLimitOrThrow(request);
     
     // Parse and validate request body
     const body = await request.json();

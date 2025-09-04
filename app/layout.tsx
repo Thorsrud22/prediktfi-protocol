@@ -10,7 +10,6 @@ import ToastProvider from "./components/ToastProvider";
 import ConsentGate from "./components/ConsentGate";
 import AttributionBoot from "./components/AttributionBoot";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import PhantomOverlayRemover from "./components/PhantomOverlayRemover";
 import { SITE } from "./config/site";
 import { getPlanFromRequest } from "./lib/plan";
 import { headers } from "next/headers";
@@ -56,10 +55,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0b1020' },
-  ],
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default async function RootLayout({
@@ -72,12 +69,57 @@ export default async function RootLayout({
   const plan = headersList.get('x-plan') || 'free';
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="x-plan" content={plan} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Hide Phantom wallet overlays as soon as possible
+              (function() {
+                const hidePhantomOverlays = () => {
+                  const selectors = [
+                    'div[id*="phantom"]',
+                    'div[data-phantom]',
+                    'iframe[src*="phantom"]',
+                    'div[style*="position: fixed"][style*="z-index: 9999"]',
+                    'div[style*="position: fixed"][style*="z-index: 10000"]'
+                  ];
+                  
+                  selectors.forEach(selector => {
+                    try {
+                      document.querySelectorAll(selector).forEach(el => {
+                        el.style.display = 'none';
+                        el.style.visibility = 'hidden';
+                        el.style.opacity = '0';
+                      });
+                    } catch(e) {}
+                  });
+                };
+                
+                // Run immediately
+                hidePhantomOverlays();
+                
+                // Run when DOM is ready
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', hidePhantomOverlays);
+                } else {
+                  hidePhantomOverlays();
+                }
+                
+                // Monitor for new elements
+                if (typeof MutationObserver !== 'undefined') {
+                  new MutationObserver(hidePhantomOverlays).observe(document.body || document.documentElement, {
+                    childList: true,
+                    subtree: true
+                  });
+                }
+              })();
+            `,
+          }}
+        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-br from-[#0B1426] via-[#1E3A8A] to-[#5B21B6] text-slate-100`}>
-        <PhantomOverlayRemover />
         <WalletProvider>
           <ToastProvider>
             <ConsentGate />
