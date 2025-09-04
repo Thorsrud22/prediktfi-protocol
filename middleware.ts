@@ -1,16 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlanFromRequest } from './app/lib/plan';
+
+// Redirect table for old paths to new studio
+const redirectMap: Record<string, string> = {
+  '/trade': '/studio',
+  '/paper': '/studio', 
+  '/markets': '/studio',
+  '/betting': '/studio',
+  '/predict': '/studio',
+  '/dashboard': '/studio',
+  '/portfolio': '/studio',
+  '/positions': '/studio',
+  '/live-trading': '/studio',
+  '/paper-trading': '/studio'
+};
 
 export function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  
+  // Check if path needs redirect to studio
+  if (redirectMap[pathname]) {
+    console.log(`🔄 Redirecting ${pathname} → ${redirectMap[pathname]}`);
+    return NextResponse.redirect(new URL(redirectMap[pathname], request.url));
+  }
+  
   const response = NextResponse.next();
   
-  // Add plan info header (info hint for debugging)
-  const planInfo = getPlanFromRequest(request);
-  response.headers.set('x-plan', planInfo.plan);
+  // Add simple plan header for debugging
+  response.headers.set('x-plan', 'free');
   
   // Geofence: Block Norway (NO) on mainnet for /market and /api routes
   const cluster = process.env.SOLANA_CLUSTER;
-  const pathname = request.nextUrl.pathname;
   
   if (cluster === 'mainnet-beta' && (pathname.startsWith('/market') || pathname.startsWith('/api'))) {
     // Check country code from various headers (in order of preference)
@@ -66,5 +85,19 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/market/:path*', '/api/:path*']
+  matcher: [
+    '/admin/:path*', 
+    '/market/:path*', 
+    '/api/:path*',
+    '/trade',
+    '/paper', 
+    '/markets',
+    '/betting',
+    '/predict',
+    '/dashboard',
+    '/portfolio',
+    '/positions',
+    '/live-trading',
+    '/paper-trading'
+  ]
 };

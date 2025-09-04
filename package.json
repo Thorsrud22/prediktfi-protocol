@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
+    "prebuild": "npm run validate:build",
     "build": "next build",
+    "validate:build": "node -e \"console.log('🔍 Validating build...'); if (!require('fs').existsSync('app/page.tsx')) { console.error('❌ Invalid app root - app/page.tsx not found'); process.exit(1); } if (!require('fs').existsSync('app/api/status/route.ts')) { console.error('❌ Status endpoint missing'); process.exit(1); } console.log('✅ Build validation passed');\"",
     "deploy": "anchor deploy",
     "lint": "eslint .",
     "lint:fix": "prettier --write \"tests/**/*.ts\"",
@@ -15,9 +17,10 @@
     "typecheck": "tsc --noEmit",
     "test:e2e:mock": "playwright test",
     "test:e2e:real": "playwright test tests-e2e/real-wallet.spec.ts",
-    "test:smoke": "./scripts/smoke-e7.sh",
+    "test:smoke": "./smoke-e8.sh",
     "smoke:e7": "bash scripts/smoke-e7.sh",
-    "qa:all": "pnpm vitest run && bash scripts/test-e5-qa.sh && bash scripts/smoke-e7.sh",
+    "smoke:e8": "bash smoke-e8.sh",
+    "qa:all": "pnpm vitest run && bash scripts/test-e5-qa.sh && bash smoke-e8.sh",
     "unit": "vitest run"
   },
   "dependencies": {
