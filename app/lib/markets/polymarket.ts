@@ -108,14 +108,33 @@ export class PolymarketClient {
    */
   private transformMarket(market: PolymarketMarket): ExternalMarket {
     // Handle both CLOB and Gamma API formats
-    const yesOutcome = market.outcomes?.find(o => o.name?.toLowerCase() === 'yes') || 
-                      market.tokens?.find(t => t.outcome?.toLowerCase() === 'yes');
-    const noOutcome = market.outcomes?.find(o => o.name?.toLowerCase() === 'no') || 
-                     market.tokens?.find(t => t.outcome?.toLowerCase() === 'no');
+    let yesOutcome, noOutcome;
+    
+    if (typeof market.outcomes === 'string') {
+      // Gamma API: outcomes is a JSON string
+      try {
+        const outcomes = JSON.parse(market.outcomes);
+        yesOutcome = outcomes.includes('Yes') ? { name: 'Yes' } : null;
+        noOutcome = outcomes.includes('No') ? { name: 'No' } : null;
+      } catch (e) {
+        // Fallback if parsing fails
+        yesOutcome = null;
+        noOutcome = null;
+      }
+    } else if (Array.isArray(market.outcomes)) {
+      // CLOB API: outcomes is an array
+      yesOutcome = market.outcomes.find(o => o.name?.toLowerCase() === 'yes');
+      noOutcome = market.outcomes.find(o => o.name?.toLowerCase() === 'no');
+    } else {
+      // Fallback
+      yesOutcome = market.tokens?.find(t => t.outcome?.toLowerCase() === 'yes');
+      noOutcome = market.tokens?.find(t => t.outcome?.toLowerCase() === 'no');
+    }
 
-    // For Gamma API, use default prices if no outcomes found
-    const yesPrice = yesOutcome ? parseFloat(yesOutcome.price?.toString() || '0') : 0.5;
-    const noPrice = noOutcome ? parseFloat(noOutcome.price?.toString() || '0') : 0.5;
+    // For Gamma API, use lastTradePrice or default prices
+    const lastTradePrice = market.lastTradePrice ? parseFloat(market.lastTradePrice) : 0.5;
+    const yesPrice = yesOutcome ? (lastTradePrice || 0.5) : 0.5;
+    const noPrice = noOutcome ? (1 - lastTradePrice || 0.5) : 0.5;
 
     return {
       platform: 'POLYMARKET',
@@ -123,8 +142,8 @@ export class PolymarketClient {
       question: market.question,
       yesPrice: yesPrice,
       noPrice: noPrice,
-      volume: market.volume ? parseFloat(market.volume) : 0,
-      liquidity: market.liquidity ? parseFloat(market.liquidity) : 0,
+      volume: market.volumeClob ? parseFloat(market.volumeClob) : (market.volume ? parseFloat(market.volume) : 0),
+      liquidity: market.liquidityClob ? parseFloat(market.liquidityClob) : (market.liquidity ? parseFloat(market.liquidity) : 0),
       endDate: market.end_date_iso || market.endTime || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Default to 30 days from now if no end date
       active: market.active,
       closed: market.closed || false,
