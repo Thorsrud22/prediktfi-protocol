@@ -1,4 +1,9 @@
-@import "tailwindcss";
+/* Solana Wallet Adapter UI styles */
+@import "@solana/wallet-adapter-react-ui/styles.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #0a0e1a;

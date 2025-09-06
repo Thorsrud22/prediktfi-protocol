@@ -1,0 +1,9 @@
+/* Solana Wallet Adapter UI styles */
+@import "@solana/wallet-adapter-react-ui/styles.css";
+
+:root {
+  --background: #0a0e1a;
+  /* ...existing code... */
+}
+
+/* ...existing code... */

@@ -1,0 +1,119 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  free
+  pro
+}
+
+enum PredictionStatus {
+  open
+  committed
+  resolved
+}
+
+enum ResolverKind {
+  price
+  url
+  text
+}
+
+enum OutcomeResult {
+  yes
+  no
+  invalid
+}
+
+enum DecidedBy {
+  agent
+  user
+}
+
+model User {
+  id        String   @id @default(cuid())
+  wallet    String?  @unique
+  email     String?  @unique
+  xHandle   String?
+  plan      Plan     @default(free)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile     Profile?
+  predictions Prediction[]
+  events      Event[]
+
+  @@map("users")
+}
+
+model Profile {
+  userId    String  @id
+  brierMean Decimal @default(0.5) @db.Decimal(4, 3)
+  binsJson  Json    @default("[]")
+  bio       String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Prediction {
+  id           String           @id @default(cuid())
+  userId       String
+  raw          String           // Original user input
+  canonical    String           // Normalized statement
+  topic        String?
+  p            Decimal          @db.Decimal(4, 3) // Probability 0.000-1.000
+  deadline     DateTime
+  resolverKind ResolverKind
+  resolverRef  String           // URL, symbol, or text reference
+  status       PredictionStatus @default(open)
+  memoSig      String?          // Solana transaction signature
+  slot         BigInt?          // Solana slot number
+  receiptPath  String?          // Path to receipt image
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outcome Outcome?
+
+  @@index([userId])
+  @@index([status])
+  @@index([deadline])
+  @@map("predictions")
+}
+
+model Outcome {
+  id           String      @id @default(cuid())
+  predictionId String      @unique
+  result       OutcomeResult
+  evidenceUrl  String?
+  decidedBy    DecidedBy
+  decidedAt    DateTime    @default(now())
+
+  prediction Prediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+
+  @@map("outcomes")
+}
+
+model Event {
+  id     String   @id @default(cuid())
+  userId String?
+  type   String   // Event type (prediction_created, memo_committed, etc.)
+  meta   Json     @default("{}")
+  ts     DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([ts])
+  @@map("events")
+}
