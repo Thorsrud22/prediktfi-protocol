@@ -1,0 +1,117 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  free
+  pro
+}
+
+enum Status {
+  open
+  committed 
+  resolved
+}
+
+enum Result {
+  yes
+  no
+  invalid
+}
+
+enum DecidedBy {
+  agent
+  user
+}
+
+enum ResolverKind {
+  price
+  url
+  text
+}
+
+model User {
+  id        String   @id @default(cuid())
+  wallet    String   @unique
+  email     String?
+  plan      Plan     @default(free)
+  createdAt DateTime @default(now())
+  
+  profile     Profile?
+  predictions Prediction[]
+  events      Event[]
+  
+  @@map("users")
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  brierMean Decimal  @default(0.5) @db.Decimal(4,3)
+  binsJson  Json     @default("[]")
+  bio       String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("profiles")
+}
+
+model Prediction {
+  id           String      @id @default(cuid())
+  userId       String
+  raw          String
+  canonical    String
+  topic        String?
+  p            Decimal     @default(0.60) @db.Decimal(4,3)
+  deadline     DateTime
+  resolverKind ResolverKind
+  resolverRef  String
+  status       Status      @default(open)
+  memoSig      String?
+  slot         BigInt?
+  receiptPath  String?
+  createdAt    DateTime    @default(now())
+  
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outcome Outcome?
+  
+  @@index([userId])
+  @@index([status])
+  @@index([deadline])
+  @@map("predictions")
+}
+
+model Outcome {
+  id           String    @id @default(cuid())
+  predictionId String    @unique
+  result       Result
+  evidenceUrl  String?
+  decidedBy    DecidedBy
+  decidedAt    DateTime  @default(now())
+  
+  prediction Prediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+  
+  @@map("outcomes")
+}
+
+model Event {
+  id     String   @id @default(cuid())
+  userId String?
+  type   String
+  meta   Json     @default("{}")
+  ts     DateTime @default(now())
+  
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([ts])
+  @@index([type])
+  @@map("events")
+}
