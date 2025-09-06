@@ -85,37 +85,37 @@ export function AdvancedInsightDisplay({ analysis }: { analysis: any }) {
 
   if (!analysis) return null;
 
-  const confidenceColor = analysis.confidence > 0.7 ? 'text-green-600' : 
-                          analysis.confidence > 0.4 ? 'text-yellow-600' : 'text-red-600';
+  const confidenceColor = analysis.confidence > 0.7 ? 'text-green-400' : 
+                          analysis.confidence > 0.4 ? 'text-yellow-400' : 'text-red-400';
 
   return (
-    <div className="bg-[--surface] border border-[--border] rounded-lg p-6">
+    <div className="bg-[color:var(--surface)] border border-[var(--border)] rounded-lg p-6">
       {/* Header with key metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="text-center p-4 bg-[--background] rounded-lg border">
-          <div className="text-2xl font-bold text-[--text]">
+        <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
+          <div className="text-2xl font-bold text-[color:var(--text)]">
             {Math.round(analysis.probability * 100)}%
           </div>
-          <div className="text-sm text-[--muted]">Probability</div>
+          <div className="text-sm text-[color:var(--muted)]">Probability</div>
         </div>
         
-        <div className="text-center p-4 bg-[--background] rounded-lg border">
+        <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
           <div className={`text-2xl font-bold ${confidenceColor}`}>
             {Math.round(analysis.confidence * 100)}%
           </div>
-          <div className="text-sm text-[--muted]">Confidence</div>
+          <div className="text-sm text-[color:var(--muted)]">Confidence</div>
         </div>
         
-        <div className="text-center p-4 bg-[--background] rounded-lg border">
-          <div className="text-2xl font-bold text-[--text]">
+        <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
+          <div className="text-2xl font-bold text-[color:var(--text)]">
             {analysis.processingTimeMs ? (analysis.processingTimeMs / 1000).toFixed(1) : 'N/A'}s
           </div>
-          <div className="text-sm text-[--muted]">Analysis Time</div>
+          <div className="text-sm text-[color:var(--muted)]">Analysis Time</div>
         </div>
       </div>
 
       {/* Tab navigation */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 rounded-lg p-1">
+      <div className="flex space-x-1 mb-6 bg-[color:var(--surface-2)] rounded-lg p-1">
         {[
           { key: 'overview', label: 'Overview' },
           { key: 'technical', label: 'Technical' },
@@ -128,8 +128,8 @@ export function AdvancedInsightDisplay({ analysis }: { analysis: any }) {
             onClick={() => setActiveTab(tab.key as any)}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               activeTab === tab.key
-                ? 'bg-white text-[--text] shadow-sm'
-                : 'text-gray-600 hover:text-[--text]'
+                ? 'bg-[color:var(--surface)] text-[color:var(--text)] shadow-sm border border-[var(--border)]'
+                : 'text-[color:var(--muted)] hover:text-[color:var(--text)]'
             }`}
           >
             {tab.label}
@@ -141,16 +141,16 @@ export function AdvancedInsightDisplay({ analysis }: { analysis: any }) {
       <div className="space-y-4">
         {activeTab === 'overview' && (
           <div>
-            <h4 className="font-semibold text-[--text] mb-3">Analysis Summary</h4>
-            <p className="text-[--muted] mb-4">{analysis.methodology}</p>
+            <h4 className="font-semibold text-[color:var(--text)] mb-3">Analysis Summary</h4>
+            <p className="text-[color:var(--muted)] mb-4">{analysis.methodology}</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h5 className="font-medium text-[--text] mb-2">Key Drivers</h5>
+                <h5 className="font-medium text-[color:var(--text)] mb-2">Key Drivers</h5>
                 <ul className="space-y-1">
                   {analysis.drivers?.map((driver: string, index: number) => (
-                    <li key={index} className="text-sm text-[--muted] flex items-start">
-                      <span className="text-[--accent] mr-2">•</span>
+                    <li key={index} className="text-sm text-[color:var(--muted)] flex items-start">
+                      <span className="text-[color:var(--accent)] mr-2">•</span>
                       {driver}
                     </li>
                   ))}
@@ -158,15 +158,15 @@ export function AdvancedInsightDisplay({ analysis }: { analysis: any }) {
               </div>
               
               <div>
-                <h5 className="font-medium text-[--text] mb-2">Data Quality</h5>
+                <h5 className="font-medium text-[color:var(--text)] mb-2">Data Quality</h5>
                 <div className="flex items-center space-x-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-[color:var(--surface-2)] rounded-full h-2">
                     <div 
-                      className="bg-green-500 h-2 rounded-full"
+                      className="bg-green-400 h-2 rounded-full"
                       style={{ width: `${(analysis.dataQuality || 0) * 100}%` }}
                     />
                   </div>
-                  <span className="text-sm text-[--muted]">
+                  <span className="text-sm text-[color:var(--muted)]">
                     {Math.round((analysis.dataQuality || 0) * 100)}%
                   </span>
                 </div>
@@ -177,20 +177,20 @@ export function AdvancedInsightDisplay({ analysis }: { analysis: any }) {
 
         {activeTab === 'technical' && analysis.technical && (
           <div>
-            <h4 className="font-semibold text-[--text] mb-3">Technical Analysis</h4>
+            <h4 className="font-semibold text-[color:var(--text)] mb-3">Technical Analysis</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-3 bg-[--background] rounded border">
-                <div className="text-sm text-[--muted]">24h Change</div>
+              <div className="p-3 bg-[color:var(--surface-2)] rounded border border-[var(--border)]">
+                <div className="text-sm text-[color:var(--muted)]">24h Change</div>
                 <div className={`text-lg font-semibold ${
-                  analysis.technical.change24h > 0 ? 'text-green-600' : 'text-red-600'
+                  analysis.technical.change24h > 0 ? 'text-green-400' : 'text-red-400'
                 }`}>
                   {analysis.technical.change24h > 0 ? '+' : ''}{analysis.technical.change24h.toFixed(2)}%
                 </div>
               </div>
               
-              <div className="p-3 bg-[--background] rounded border">
-                <div className="text-sm text-[--muted]">Trend</div>
-                <div className="text-lg font-semibold text-[--text] capitalize">
+              <div className="p-3 bg-[color:var(--surface-2)] rounded border border-[var(--border)]">
+                <div className="text-sm text-[color:var(--muted)]">Trend</div>
+                <div className="text-lg font-semibold text-[color:var(--text)] capitalize">
                   {analysis.technical.trend}
                 </div>
               </div>

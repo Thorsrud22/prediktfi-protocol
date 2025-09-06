@@ -1,147 +1,110 @@
-import { NextRequest, NextResponse } from "next/server";
-import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
-import { MEMO_PROGRAM_ID } from "../../lib/solana";
+// E8.1 Insights Pipeline - Node.js Runtime
+export const runtime = 'nodejs';
 
-// Rate limiting storage (in-memory for simplicity)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+import { NextRequest, NextResponse } from 'next/server';
+import { InsightRequestSchema } from './_schemas';
+import { checkAuthAndQuota } from './_auth';
+import { insightsCache } from './_cache';
+import { runPipeline } from './_pipeline';
 
-function checkRateLimit(key: string): { allowed: boolean; remaining: number } {
-  const now = Date.now();
-  const windowMs = 10 * 1000; // 10 seconds
-  const limit = 5; // 5 requests per window
-
-  const current = rateLimitMap.get(key);
+export async function POST(request: NextRequest) {
+  const startTime = Date.now();
   
-  if (!current || now > current.resetTime) {
-    // Reset window
-    rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
-    return { allowed: true, remaining: limit - 1 };
-  }
-  
-  if (current.count >= limit) {
-    return { allowed: false, remaining: 0 };
-  }
-  
-  current.count++;
-  return { allowed: true, remaining: limit - current.count };
-}
-
-function getClientIP(request: NextRequest): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  const ip = forwarded ? forwarded.split(",")[0] : "127.0.0.1";
-  return ip;
-}
-
-export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const signature = searchParams.get("sig");
-
-    // Validate signature parameter
-    if (!signature) {
+    // Step 1: Parse and validate request body
+    const body = await request.json();
+    const validation = InsightRequestSchema.safeParse(body);
+    
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Missing signature parameter" },
+        { 
+          error: 'Invalid request format',
+          details: validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        },
         { status: 400 }
       );
     }
-
-    // Rate limiting: 5 calls per 10 seconds per IP + signature combination
-    const clientIP = getClientIP(request);
-    const rateLimitKey = `${clientIP}:${signature}`;
-    const rateLimit = checkRateLimit(rateLimitKey);
     
-    if (!rateLimit.allowed) {
+    const insightRequest = validation.data;
+    
+    // Step 2: Check authentication and quota
+    const authResult = checkAuthAndQuota(request);
+    
+    if (!authResult.allowed) {
       return NextResponse.json(
-        { error: "Rate limit exceeded" },
+        {
+          error: authResult.error,
+          plan: authResult.plan,
+          resetTime: authResult.resetTime,
+        },
         { 
           status: 429,
           headers: {
-            "X-RateLimit-Limit": "5",
-            "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": "10",
+            'X-RateLimit-Plan': authResult.plan,
+            'X-RateLimit-Remaining': authResult.remaining?.toString() || '0',
+            'Retry-After': authResult.resetTime ? Math.ceil((authResult.resetTime - Date.now()) / 1000).toString() : '60',
           }
         }
       );
     }
-
-    // Get cluster and connection
-    const cluster = process.env.SOLANA_CLUSTER || "devnet";
-    const connection = new Connection(
-      cluster === "mainnet-beta" ? clusterApiUrl("mainnet-beta") : clusterApiUrl("devnet"),
-      "confirmed"
-    );
-
-    // Get transaction info
-    const txInfo = await connection.getTransaction(signature, {
-      commitment: "confirmed",
-      maxSupportedTransactionVersion: 0,
-    });
-
-    if (!txInfo) {
+    
+    // Step 3: Check cache first
+    const cachedResult = insightsCache.get(insightRequest);
+    if (cachedResult) {
       return NextResponse.json(
-        { error: "Transaction not found or not confirmed" },
-        { status: 409 }
+        { ...cachedResult, cached: true },
+        {
+          headers: {
+            'X-Cache': 'HIT',
+            'X-RateLimit-Plan': authResult.plan,
+            'X-RateLimit-Remaining': authResult.remaining?.toString() || 'unlimited',
+          }
+        }
       );
     }
-
-    // Find memo instruction
-    let memoInstruction = null;
-    let memoData = null;
-
-    for (const instruction of txInfo.transaction.message.compiledInstructions) {
-      const programId = txInfo.transaction.message.staticAccountKeys[instruction.programIdIndex];
-      
-      if (programId.equals(MEMO_PROGRAM_ID)) {
-        memoInstruction = instruction;
-        memoData = Buffer.from(instruction.data).toString("utf8");
-        break;
-      }
-    }
-
-    if (!memoInstruction || !memoData) {
-      return NextResponse.json(
-        { error: "No memo instruction found" },
-        { status: 422 }
-      );
-    }
-
-    // Parse memo JSON and validate
-    let memo;
-    try {
-      memo = JSON.parse(memoData);
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid memo JSON format" },
-        { status: 422 }
-      );
-    }
-
-    if (memo.kind !== "insight") {
-      return NextResponse.json(
-        { error: "Memo does not contain insight data" },
-        { status: 422 }
-      );
-    }
-
-    // Success response
-    return NextResponse.json({
-      ok: true,
-      signature,
-      memo,
-      slot: txInfo.slot,
-    }, {
+    
+    // Step 4: Run the insight pipeline
+    const result = await runPipeline(insightRequest);
+    
+    // Step 5: Cache the result
+    insightsCache.set(insightRequest, result);
+    
+    // Step 6: Return response
+    return NextResponse.json(result, {
       headers: {
-        "X-RateLimit-Limit": "5",
-        "X-RateLimit-Remaining": rateLimit.remaining.toString(),
-        "X-RateLimit-Reset": "10",
+        'X-Cache': 'MISS',
+        'X-RateLimit-Plan': authResult.plan,
+        'X-RateLimit-Remaining': authResult.remaining?.toString() || 'unlimited',
+        'X-Processing-Time': `${Date.now() - startTime}ms`,
       }
     });
-
+    
   } catch (error) {
-    console.error("Insights verification error:", error);
+    console.error('Insights API error:', error);
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: 'Internal server error',
+        message: 'Unable to process insight request at this time'
+      },
+      { 
+        status: 500,
+        headers: {
+          'X-Processing-Time': `${Date.now() - startTime}ms`,
+        }
+      }
     );
   }
+}
+
+// Keep the old GET endpoint for backward compatibility (Solana verification)
+export async function GET(request: NextRequest) {
+  return NextResponse.json(
+    { 
+      error: 'Method not supported in E8.1',
+      message: 'Use POST for insights generation. GET is deprecated.',
+      migration: 'Switch to POST /api/insights with InsightRequest body'
+    },
+    { status: 405 }
+  );
 }

@@ -45,8 +45,12 @@ const InsightForm: React.FC<InsightFormProps> = ({ onSubmit, onPredict, isLoadin
     e.preventDefault();
     if (validateForm()) {
       const formData = { question: question.trim(), topic, horizon };
-      if (onSubmit) onSubmit(formData);
-      if (onPredict) onPredict(formData);
+      // Only call onSubmit if provided, otherwise call onPredict
+      if (onSubmit) {
+        onSubmit(formData);
+      } else if (onPredict) {
+        onPredict(formData);
+      }
     }
   };
 

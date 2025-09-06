@@ -9,14 +9,14 @@
   --brand-secondary: #8B5CF6;  /* Purple */
   --brand-accent: #10B981;     /* Green accent */
   
-  /* Background System */
-  --background-primary: #0F172A;     /* Deep navy */
-  --background-secondary: #1E293B;   /* Slightly lighter navy */
-  --background-tertiary: #334155;    /* Card/surface background */
+  /* Background System - Professional palette */
+  --background-primary: #0A0F1C;     /* Deep slate */
+  --background-secondary: #0F1629;   /* Rich navy */
+  --background-tertiary: #1A202C;    /* Card/surface background */
   
-  /* Gradients */
-  --gradient-brand: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
-  --gradient-hero: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%);
+  /* Gradients - Enhanced professional gradients */
+  --gradient-brand: linear-gradient(135deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%);
+  --gradient-hero: linear-gradient(135deg, #0A0F1C 0%, #0F1629 25%, #1A202C 50%, #2D3748 75%, #1A202C 100%);
   
   /* Text Colors */
   --text-primary: #F8FAFC;      /* Pure white text */
@@ -72,6 +72,17 @@
   --transition-fast: 150ms ease-in-out;
   --transition-normal: 300ms ease-in-out;
   --transition-slow: 500ms ease-in-out;
+  
+  /* Aliases for compatibility with existing components */
+  --text: var(--text-primary);
+  --text-muted: var(--text-secondary);
+  --surface: var(--background-tertiary);
+  --surface-2: rgba(248, 250, 252, 0.05);
+  --border: var(--border-primary);
+  --accent: var(--brand-primary);
+  --accent-2: var(--brand-secondary);
+  --bg: var(--background-primary);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
 /* Prevent theme flicker by setting initial dark theme */

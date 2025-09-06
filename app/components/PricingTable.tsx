@@ -70,19 +70,19 @@ export default function PricingTable({ initialIsPro = false }: { initialIsPro?: 
 
   return (
     <>
-      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8">
         {plans.map((plan) => (
           <div
             key={plan.name}
-            className={`relative rounded-2xl border p-8 ${
-              plan.highlight
-                ? 'border-[--accent] bg-gradient-to-b from-[--accent]/5 to-transparent'
-                : 'border-[--border] bg-[--surface]'
+            className={`relative rounded-2xl border ${
+              plan.highlight 
+                ? 'border-[--accent] bg-gradient-to-b from-[--accent]/5 to-transparent pt-12 pb-8 px-8'
+                : 'border-[--border] bg-[--surface] p-8'
             }`}
           >
             {plan.highlight && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                <span className="bg-gradient-to-r from-[var(--brand-2)] to-[var(--brand-3)] text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg border-2 border-white">
                   Recommended
                 </span>
               </div>

@@ -80,12 +80,18 @@ export default function Navbar() {
       <div className="mx-auto max-w-7xl px-4 flex h-14 items-center justify-between">
         <Link
           href="/"
-          className="flex items-center hover:opacity-90 transition-opacity"
+          className="flex items-center gap-3 hover:opacity-90 transition-all duration-200 hover:scale-105"
           aria-label={SITE.name}
         >
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">
-            Pre<span className="opacity-80">di</span><span className="opacity-60">kt</span>
-          </span>
+          {/* Logo Text */}
+          <div className="flex flex-col">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent leading-tight">
+              Predikt
+            </span>
+            <span className="text-xs text-blue-300/70 font-medium tracking-wider uppercase">
+              AI Studio
+            </span>
+          </div>
         </Link>
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 sm:flex">

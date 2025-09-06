@@ -2,261 +2,267 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { timeAgo } from '../lib/time';
 
-interface LocalInsight {
-  kind: 'insight';
-  topic: string;
-  question: string;
-  horizon: string;
-  prob: number;
-  drivers: string[];
-  rationale: string;
-  model: string;
-  scenarioId: string;
-  ts: string;
-  signature?: string;
-  ref?: string;
-  creatorId?: string;
-}
-
-interface TrendingInsight {
+interface FeedInsight {
   id: string;
   question: string;
-  prob: number;
-  topic: string;
-  horizon: string;
-  ts: string;
-  verified?: boolean;
+  canonical?: string;
+  category: string;
+  probability: number;
+  p?: number;
+  confidence: number;
+  stamped: boolean;
+  status?: 'OPEN' | 'COMMITTED' | 'RESOLVED';
+  createdAt: string;
+  creator?: {
+    handle: string;
+    score: number;
+  };
+}
+
+interface FeedResponse {
+  insights: FeedInsight[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+  filters: {
+    current: string;
+    available: string[];
+  };
 }
 
 export default function FeedPage() {
-  const [localInsights, setLocalInsights] = useState<LocalInsight[]>([]);
-  const [trendingInsights, setTrendingInsights] = useState<TrendingInsight[]>([]);
+  const [feedData, setFeedData] = useState<FeedResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentFilter, setCurrentFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    // Load local insights from localStorage (FIFO 5)
+  // Load feed data from API
+  const loadFeedData = async () => {
+    setLoading(true);
     try {
-      const stored = localStorage.getItem('predikt:insights');
-      if (stored) {
-        const insights = JSON.parse(stored);
-        setLocalInsights(insights.slice(0, 5)); // Max 5
-      }
-    } catch (error) {
-      console.warn('Failed to load local insights:', error);
-    }
-
-    // Load trending insights
-    loadTrendingInsights();
-  }, []);
-
-  const loadTrendingInsights = async () => {
-    try {
-      const response = await fetch('/api/feed');
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: '20',
+        filter: currentFilter,
+        sort: 'recent',
+      });
+      
+      const response = await fetch(`/api/feed?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setTrendingInsights(data.insights || []);
+        setFeedData(data);
       } else {
-        // Fallback to demo data
-        setTrendingInsights([
-          {
-            id: '1',
-            question: 'Will Bitcoin reach $100k by end of 2025?',
-            prob: 0.75,
-            topic: 'crypto',
-            horizon: '12m',
-            ts: new Date(Date.now() - 86400000).toISOString(),
-            verified: true
-          },
-          {
-            id: '2', 
-            question: 'Will AI achieve AGI breakthrough in 2025?',
-            prob: 0.25,
-            topic: 'tech',
-            horizon: '12m',
-            ts: new Date(Date.now() - 172800000).toISOString()
-          },
-          {
-            id: '3',
-            question: 'Will Tesla stock hit $300 this quarter?',
-            prob: 0.45,
-            topic: 'stocks',
-            horizon: '3m',
-            ts: new Date(Date.now() - 259200000).toISOString()
-          }
-        ]);
+        console.error('Failed to load feed data:', response.status);
       }
     } catch (error) {
-      console.warn('Failed to load trending insights:', error);
-      // Use demo data as fallback
-      setTrendingInsights([]);
+      console.error('Failed to load feed data:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    loadFeedData();
+  }, [currentFilter, currentPage]);
+
+  const handleFilterChange = (filter: string) => {
+    setCurrentFilter(filter);
+    setCurrentPage(1); // Reset to first page when changing filter
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const timeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  };
+
   return (
-    <div className="min-h-screen bg-[--background]">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      {/* Header */}
+      <div className="bg-[#0B1426]/50 border-b border-blue-800/30">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-white">Insights Feed</h1>
+              <p className="text-blue-300 mt-1">Latest predictions from the community</p>
+            </div>
+            <Link
+              href="/studio"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Create Insight
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Filters */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[--text] mb-2">Insight Feed</h1>
-          <p className="text-gray-600">Discover trending predictions and your recent insights</p>
+          <div className="flex flex-wrap gap-2">
+            {['all', 'KOL', 'EXPERT', 'COMMUNITY', 'PREDIKT'].map((filter) => (
+              <button
+                key={filter}
+                onClick={() => handleFilterChange(filter)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentFilter === filter
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white/10 text-blue-200 hover:bg-white/20'
+                }`}
+              >
+                {filter === 'all' ? 'All' : filter}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Your Recent Insights */}
-          <div>
-            <h2 className="text-xl font-semibold text-[--text] mb-4">Your Recent</h2>
-            
-            {localInsights.length === 0 ? (
-              <div className="bg-[--surface] border border-[--border] rounded-lg p-8 text-center">
-                <div className="max-w-sm mx-auto">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p className="text-blue-300 mt-2">Loading insights...</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && feedData && feedData.insights.length === 0 && (
+          <div className="text-center py-12">
+            <svg className="w-16 h-16 mx-auto mb-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 className="text-xl font-semibold text-white mb-2">No insights found</h3>
+            <p className="text-blue-300 mb-4">
+              {currentFilter === 'all' 
+                ? 'No insights have been created yet.' 
+                : `No insights found for ${currentFilter} filter.`}
+            </p>
+            <Link
+              href="/studio"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Create First Insight
+            </Link>
+          </div>
+        )}
+
+        {/* Insights List */}
+        {!loading && feedData && feedData.insights.length > 0 && (
+          <div className="space-y-4">
+            {feedData.insights.map((insight) => (
+              <Link
+                key={insight.id}
+                href={`/i/${insight.id}`}
+                className="block bg-[color:var(--surface)] rounded-xl shadow-lg border border-[var(--border)] p-6 hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-[color:var(--text)] mb-2 line-clamp-2">
+                      {insight.canonical || insight.question}
+                    </h3>
+                    <div className="flex items-center space-x-4 text-sm text-[color:var(--muted)]">
+                      <span className="font-semibold text-blue-400">
+                        {Math.round((insight.p || insight.probability) * 100)}%
+                      </span>
+                      <span>Confidence: {Math.round(insight.confidence * 100)}%</span>
+                      <span className="capitalize">{insight.category}</span>
+                      {(insight.stamped || insight.status === 'COMMITTED' || insight.status === 'RESOLVED') && (
+                        <span className="inline-flex items-center px-2 py-1 bg-green-500/20 text-green-300 text-xs rounded-full border border-green-500/30">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          {insight.status === 'RESOLVED' ? 'Resolved' : 'Verified'}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="text-lg font-medium text-[--text] mb-2">No insights yet</h3>
-                  <p className="text-gray-600 mb-4">
-                    Create your first insight in Studio
-                  </p>
-                  <Link 
-                    href="/studio"
-                    className="inline-flex items-center px-4 py-2 bg-[--accent] text-white rounded-lg hover:bg-[--accent]/90 transition-colors"
+                  <div className="text-right ml-4">
+                    <div className="text-3xl font-bold text-blue-400 mb-1">
+                      {Math.round((insight.p || insight.probability) * 100)}%
+                    </div>
+                    <div className="text-xs text-[color:var(--muted)]">
+                      {timeAgo(insight.createdAt)}
+                    </div>
+                  </div>
+                </div>
+                
+                {insight.creator && (
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                        {insight.creator.handle.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-[color:var(--text)]">@{insight.creator.handle}</span>
+                      <span className="text-[color:var(--muted)]">•</span>
+                      <span className="text-[color:var(--muted)]">Score: {insight.creator.score.toFixed(1)}</span>
+                    </div>
+                  </div>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && feedData && feedData.pagination.pages > 1 && (
+          <div className="mt-8 flex items-center justify-center space-x-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={!feedData.pagination.hasPrev}
+              className="px-3 py-2 bg-[color:var(--surface-2)] text-[color:var(--text)] rounded-lg hover:bg-[color:var(--surface)] disabled:opacity-50 disabled:cursor-not-allowed border border-[var(--border)] transition-colors"
+            >
+              Previous
+            </button>
+            
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(5, feedData.pagination.pages) }, (_, i) => {
+                const pageNum = i + 1;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+                      currentPage === pageNum
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-[color:var(--surface-2)] text-[color:var(--text)] hover:bg-[color:var(--surface)] border border-[var(--border)]'
+                    }`}
                   >
-                    Get Started
-                  </Link>
-                  <p className="text-sm text-gray-500 mt-3">
-                    Upgrade for unlimited insights
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {localInsights.map((insight, index) => (
-                  <div key={index} className="bg-[--surface] border border-[--border] rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-medium text-[--text] line-clamp-2 flex-1 mr-4">
-                        {insight.question}
-                      </h3>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-[--accent]">
-                          {Math.round(insight.prob * 100)}%
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                      <span className="bg-gray-100 px-2 py-1 rounded text-xs capitalize">
-                        {insight.topic}
-                      </span>
-                      <span>{insight.horizon}</span>
-                      <span>•</span>
-                      <span>{timeAgo(insight.ts)}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <button className="text-sm text-gray-500 hover:text-[--accent]">
-                        Copy link
-                      </button>
-                      <span className="text-gray-300">•</span>
-                      <button className="text-sm text-gray-500 hover:text-[--accent]">
-                        Share
-                      </button>
-                      {insight.signature && (
-                        <>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-sm text-green-600 flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                            Verified
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Trending Now */}
-          <div>
-            <h2 className="text-xl font-semibold text-[--text] mb-4">Trending Now</h2>
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
             
-            {loading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-[--surface] border border-[--border] rounded-lg p-4">
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/4"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : trendingInsights.length === 0 ? (
-              <div className="bg-[--surface] border border-[--border] rounded-lg p-8 text-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <p className="text-gray-600">No trending insights available</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {trendingInsights.map((insight) => (
-                  <div key={insight.id} className="bg-[--surface] border border-[--border] rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-medium text-[--text] line-clamp-2 flex-1 mr-4">
-                        {insight.question}
-                      </h3>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-[--accent]">
-                          {Math.round(insight.prob * 100)}%
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                      <span className="bg-gray-100 px-2 py-1 rounded text-xs capitalize">
-                        {insight.topic}
-                      </span>
-                      <span>{insight.horizon}</span>
-                      <span>•</span>
-                      <span>{timeAgo(insight.ts)}</span>
-                      {insight.verified && (
-                        <>
-                          <span>•</span>
-                          <span className="text-green-600 flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                            Verified
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <button className="text-sm text-gray-500 hover:text-[--accent]">
-                        View details
-                      </button>
-                      <span className="text-gray-300">•</span>
-                      <button className="text-sm text-gray-500 hover:text-[--accent]">
-                        Share
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={!feedData.pagination.hasNext}
+              className="px-3 py-2 bg-[color:var(--surface-2)] text-[color:var(--text)] rounded-lg hover:bg-[color:var(--surface)] disabled:opacity-50 disabled:cursor-not-allowed border border-[var(--border)] transition-colors"
+            >
+              Next
+            </button>
           </div>
-        </div>
+        )}
+
+        {/* Stats */}
+        {!loading && feedData && (
+          <div className="mt-8 text-center text-sm text-blue-300">
+            Showing {feedData.insights.length} of {feedData.pagination.total} insights
+          </div>
+        )}
       </div>
     </div>
   );

@@ -13,22 +13,13 @@ interface QuotaGuardProps {
 
 export default function QuotaGuard({ children, onExhausted, className }: QuotaGuardProps) {
   const [exhausted, setExhausted] = useState(false);
-  const [quota, setQuota] = useState({ used: 0, limit: 10, remaining: 10 });
+  const [quota, setQuota] = useState({ used: 0, limit: 999999, remaining: 999999 });
 
   useEffect(() => {
-    resetIfNewDay();
-    const currentQuota = getQuota();
-    const isQuotaExhausted = isExhausted();
-    
+    // For development, always set unlimited quota
+    const currentQuota = { used: 0, limit: 999999, remaining: 999999, resetAtIso: new Date().toISOString() };
     setQuota(currentQuota);
-    setExhausted(isQuotaExhausted);
-    
-    if (isQuotaExhausted) {
-      trackClient('quota_exhausted', { limit: currentQuota.limit });
-      if (onExhausted) {
-        onExhausted();
-      }
-    }
+    setExhausted(false); // Never exhausted in development
   }, [onExhausted]);
 
   if (exhausted) {

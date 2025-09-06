@@ -1,103 +1,160 @@
-import { NextRequest, NextResponse } from 'next/server';
+/**
+ * Next.js Middleware for Security Headers, Rate Limiting & Observability
+ */
 
-// Redirect table for old paths to new studio
-const redirectMap: Record<string, string> = {
-  '/trade': '/studio',
-  '/paper': '/studio', 
-  '/markets': '/studio',
-  '/betting': '/studio',
-  '/predict': '/studio',
-  '/dashboard': '/studio',
-  '/portfolio': '/studio',
-  '/positions': '/studio',
-  '/live-trading': '/studio',
-  '/paper-trading': '/studio'
-};
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { applySecurityHeaders, rateLimiters, abuseDetector } from './lib/security/headers';
 
-export function middleware(request: NextRequest) {
+/**
+ * Get client identifier for rate limiting
+ */
+function getClientIdentifier(request: NextRequest): string {
+  // Try to get real IP from various headers (Vercel, Cloudflare, etc.)
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
+  const cfConnectingIp = request.headers.get('cf-connecting-ip');
+  
+  const ip = forwarded?.split(',')[0] || realIp || cfConnectingIp || 'unknown';
+  
+  // For authenticated requests, could use user ID instead
+  const userId = request.headers.get('x-user-id');
+  
+  return userId || ip;
+}
+
+/**
+ * Check if request should be rate limited
+ */
+function checkRateLimit(request: NextRequest, identifier: string): boolean {
   const pathname = request.nextUrl.pathname;
   
-  // Check if path needs redirect to studio
-  if (redirectMap[pathname]) {
-    console.log(`🔄 Redirecting ${pathname} → ${redirectMap[pathname]}`);
-    return NextResponse.redirect(new URL(redirectMap[pathname], request.url));
+  // Different rate limits for different endpoint types
+  if (pathname.startsWith('/api/admin')) {
+    return rateLimiters.admin.isRateLimited(identifier);
   }
   
+  if (pathname.includes('/auth') || pathname.includes('/login')) {
+    return rateLimiters.auth.isRateLimited(identifier);
+  }
+  
+  if (pathname.startsWith('/api/')) {
+    return rateLimiters.api.isRateLimited(identifier);
+  }
+  
+  return false;
+}
+
+/**
+ * Record request for rate limiting
+ */
+function recordRequest(request: NextRequest, identifier: string): void {
+  const pathname = request.nextUrl.pathname;
+  
+  if (pathname.startsWith('/api/admin')) {
+    rateLimiters.admin.recordRequest(identifier);
+  } else if (pathname.includes('/auth') || pathname.includes('/login')) {
+    rateLimiters.auth.recordRequest(identifier);
+  } else if (pathname.startsWith('/api/')) {
+    rateLimiters.api.recordRequest(identifier);
+  }
+}
+
+export function middleware(request: NextRequest) {
+  const startTime = Date.now();
+  const pathname = request.nextUrl.pathname;
+  const method = request.method;
+  const identifier = getClientIdentifier(request);
+  
+  // Skip middleware for static files and Next.js internals
+  if (
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/favicon.ico') ||
+    pathname.startsWith('/icon.svg') ||
+    pathname.includes('.')
+  ) {
+    return NextResponse.next();
+  }
+  
+  // Skip rate limiting in development
+  if (process.env.NODE_ENV !== 'development') {
+    // Check rate limiting
+    if (checkRateLimit(request, identifier)) {
+      console.log(`🚨 Rate limit exceeded for ${identifier} on ${pathname}`);
+      
+      // Log abuse event
+      abuseDetector.logAbuseEvent({
+        type: 'rate_limit',
+        identifier,
+        endpoint: pathname,
+        details: {
+          method,
+          userAgent: request.headers.get('user-agent') || 'unknown'
+        }
+      });
+      
+      return NextResponse.json(
+        { 
+          error: 'Too Many Requests',
+          message: 'Rate limit exceeded. Please try again later.',
+          retryAfter: 900 // 15 minutes
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': '900',
+            'X-RateLimit-Limit': '100',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(Date.now() + 15 * 60 * 1000)
+          }
+        }
+      );
+    }
+  }
+  
+  // Record request for rate limiting (only in production)
+  if (process.env.NODE_ENV !== 'development') {
+    recordRequest(request, identifier);
+  }
+  
+  // Create response
   const response = NextResponse.next();
   
-  // Add simple plan header for debugging
-  response.headers.set('x-plan', 'free');
+  // Apply security headers
+  applySecurityHeaders(response);
   
-  // Geofence: Block Norway (NO) on mainnet for /market and /api routes
-  const cluster = process.env.SOLANA_CLUSTER;
+  // Add observability headers
+  const duration = Date.now() - startTime;
+  response.headers.set('X-Response-Time', `${duration}ms`);
+  response.headers.set('X-Request-ID', crypto.randomUUID());
   
-  if (cluster === 'mainnet-beta' && (pathname.startsWith('/market') || pathname.startsWith('/api'))) {
-    // Check country code from various headers (in order of preference)
-    const countryCode = request.headers.get('x-vercel-ip-country') || 
-                       request.headers.get('cf-ipcountry') || 
-                       request.headers.get('x-country');
+  // Add rate limit headers
+  if (pathname.startsWith('/api/')) {
+    const limiter = pathname.startsWith('/api/admin') ? rateLimiters.admin :
+                   pathname.includes('/auth') ? rateLimiters.auth :
+                   rateLimiters.api;
     
-    if (countryCode === 'NO') {
-      return NextResponse.redirect(new URL('/blocked', request.url));
-    }
+    const remaining = limiter.getRemainingRequests(identifier);
+    response.headers.set('X-RateLimit-Remaining', String(remaining));
   }
-
-  // Check if this is an admin route
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Check if admin is enabled (using '1' instead of 'true')
-    const adminEnabled = process.env.NEXT_PUBLIC_ENABLE_ADMIN === '1';
-    
-    if (!adminEnabled) {
-      return NextResponse.rewrite(new URL('/404', request.url));
-    }
-
-    // Check for basic auth
-    const authHeader = request.headers.get('authorization');
-    const adminUser = process.env.ADMIN_USER;
-    const adminPass = process.env.ADMIN_PASS;
-
-    if (adminUser && adminPass) {
-      if (!authHeader || !authHeader.startsWith('Basic ')) {
-        return new NextResponse('Authentication required', {
-          status: 401,
-          headers: {
-            'WWW-Authenticate': 'Basic realm="Creator Hub Admin"',
-          },
-        });
-      }
-
-      const encodedCredentials = authHeader.split(' ')[1];
-      const credentials = Buffer.from(encodedCredentials, 'base64').toString();
-      const [username, password] = credentials.split(':');
-
-      if (username !== adminUser || password !== adminPass) {
-        return new NextResponse('Invalid credentials', {
-          status: 401,
-          headers: {
-            'WWW-Authenticate': 'Basic realm="Creator Hub Admin"',
-          },
-        });
-      }
-    }
+  
+  // Log request for monitoring
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`${method} ${pathname} - ${identifier} - ${duration}ms`);
   }
-
+  
   return response;
 }
 
 export const config = {
   matcher: [
-    '/admin/:path*', 
-    '/market/:path*', 
-    '/api/:path*',
-    '/trade',
-    '/paper', 
-    '/markets',
-    '/betting',
-    '/predict',
-    '/dashboard',
-    '/portfolio',
-    '/positions',
-    '/live-trading',
-    '/paper-trading'
-  ]
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };

@@ -71,20 +71,10 @@ export async function GET(request: NextRequest) {
             fontSize: '32px',
             fontWeight: 'bold'
           }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              background: 'white',
-              marginRight: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '24px'
-            }}>
-              🔮
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontSize: '36px', fontWeight: 'bold', lineHeight: '1.1' }}>Predikt</div>
+              <div style={{ fontSize: '14px', opacity: 0.8, letterSpacing: '2px', textTransform: 'uppercase' }}>AI Studio</div>
             </div>
-            Predikt
           </div>
 
           {/* Main probability display */}

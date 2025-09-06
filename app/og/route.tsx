@@ -13,13 +13,17 @@ export async function GET() {
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
-					background: '#0b0b0c',
+					background: 'linear-gradient(135deg, #0b0b0c 0%, #1e1b4b 50%, #7c3aed 100%)',
 					color: 'white',
-					fontSize: 64,
-					fontWeight: 700,
+					fontFamily: 'system-ui, -apple-system, sans-serif',
 				}}
 			>
-				Predikt
+				<div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+					<div style={{ display: 'flex', flexDirection: 'column' }}>
+						<div style={{ fontSize: '72px', fontWeight: 'bold', lineHeight: '1.1' }}>Predikt</div>
+						<div style={{ fontSize: '20px', opacity: 0.8, letterSpacing: '3px', textTransform: 'uppercase' }}>AI Studio</div>
+					</div>
+				</div>
 			</div>
 		),
 		{

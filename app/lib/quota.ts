@@ -5,7 +5,7 @@ interface QuotaData {
   limit: number;
 }
 
-const DEFAULT_FREE_LIMIT = 10;
+const DEFAULT_FREE_LIMIT = 999999; // Unlimited for development
 const QUOTA_KEY_PREFIX = 'predikt:quota:';
 
 function getTodayKey(): string {
@@ -122,4 +122,15 @@ export function resetQuotaForUpgrade(): void {
   // Clear all quota keys to reset limits after upgrade
   const keys = Object.keys(localStorage).filter(key => key.startsWith(QUOTA_KEY_PREFIX));
   keys.forEach(key => localStorage.removeItem(key));
+}
+
+export function resetQuotaForDevelopment(): void {
+  if (typeof window === 'undefined') return;
+  
+  // Clear all quota keys for development
+  const keys = Object.keys(localStorage).filter(key => key.startsWith(QUOTA_KEY_PREFIX));
+  keys.forEach(key => localStorage.removeItem(key));
+  
+  // Set unlimited quota for development
+  setLimitForTesting(999999);
 }

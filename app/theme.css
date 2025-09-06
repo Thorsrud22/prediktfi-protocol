@@ -1,16 +1,16 @@
-/* Design tokens (CSS variables). These do not change appearance yet; values mirror current look. */
+/* Design tokens (CSS variables) - Professional color palette */
 :root {
-  /* Colors */
-  --color-bg: #0a0e1a; /* background */
-  --color-fg: #e1f5fe; /* foreground */
-  --color-surface: rgba(255, 255, 255, 0.05);
-  --color-surface-hover: rgba(255, 255, 255, 0.08);
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-border-strong: rgba(255, 255, 255, 0.18);
-  --color-accent: #0ea5e9; /* sky-500 */
-  --color-success: #10b981; /* emerald-500 */
-  --color-danger: #ef4444; /* red-500 */
-  --color-ring: rgba(255, 255, 255, 0.25); /* Brighter ring for dark surfaces */
+  /* Colors - Enhanced professional palette */
+  --color-bg: #0A0F1C; /* Deep slate background */
+  --color-fg: #F8FAFC; /* Clean white foreground */
+  --color-surface: rgba(248, 250, 252, 0.03); /* Subtle surface */
+  --color-surface-hover: rgba(248, 250, 252, 0.06); /* Hover surface */
+  --color-border: rgba(148, 163, 184, 0.12); /* Refined border */
+  --color-border-strong: rgba(148, 163, 184, 0.24); /* Strong border */
+  --color-accent: #3B82F6; /* Professional blue */
+  --color-success: #10B981; /* Emerald success */
+  --color-danger: #EF4444; /* Red danger */
+  --color-ring: rgba(59, 130, 246, 0.35); /* Blue focus ring */
 
   /* Typography */
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,

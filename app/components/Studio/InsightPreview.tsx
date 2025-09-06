@@ -5,6 +5,7 @@ import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { Transaction } from "@solana/web3.js";
 import ProbabilityGauge from "./ProbabilityGauge";
 import { type Insight, type PredictResponse } from "../../lib/ai/types";
+import { type EnhancedPredictOutput } from "../../lib/ai/enhanced-kernel";
 import { timeAgo, formatHorizon } from "../../lib/time";
 import { useToast } from "../ToastProvider";
 import { buildShareUrl, buildXShareUrl } from "../../lib/share";
@@ -17,10 +18,11 @@ interface InsightPreviewProps {
     scenarioId?: string;
   };
   response: PredictResponse;
+  enhancedResponse?: EnhancedPredictOutput;
   onNewInsight: () => void;
 }
 
-function InsightPreview({ input, response, onNewInsight }: InsightPreviewProps) {
+function InsightPreview({ input, response, enhancedResponse, onNewInsight }: InsightPreviewProps) {
   const [logPending, setLogPending] = useState(false);
   const [driversExpanded, setDriversExpanded] = useState(false);
   const [rationaleExpanded, setRationaleExpanded] = useState(false);

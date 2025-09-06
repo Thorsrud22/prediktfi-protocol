@@ -120,18 +120,18 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-br from-[#0B1426] via-[#1E3A8A] to-[#5B21B6] text-slate-100`}>
-        <WalletProvider>
-          <ToastProvider>
-            <ConsentGate />
-            <Navbar />
-            <main className="flex min-h-screen flex-col">
-              <ErrorBoundary>
+        <ErrorBoundary>
+          <WalletProvider>
+            <ToastProvider>
+              <ConsentGate />
+              <Navbar />
+              <main className="flex min-h-screen flex-col">
                 {children}
-              </ErrorBoundary>
-            </main>
-            <Footer />
-          </ToastProvider>
-        </WalletProvider>
+              </main>
+              <Footer />
+            </ToastProvider>
+          </WalletProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

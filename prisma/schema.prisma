@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Creator {
+  id              String    @id @default(cuid())
+  handle          String    @unique
+  wallet          String?   @unique
+  score           Float     @default(0.0)
+  accuracy        Float     @default(0.0)
+  insightsCount   Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  brierMean       Float?
+  binsJson        String?
+  calibration     String?
+  lastScoreUpdate DateTime?
+  events          Event[]
+  insights        Insight[]
+
+  @@index([lastScoreUpdate])
+  @@map("creators")
+}
+
+model Insight {
+  id              String        @id @default(cuid())
+  creatorId       String?
+  question        String
+  category        String
+  horizon         DateTime
+  probability     Float
+  confidence      Float
+  intervalLower   Float
+  intervalUpper   Float
+  rationale       String
+  scenarios       String
+  metrics         String
+  sources         String
+  dataQuality     Float
+  modelVersion    String        @default("e8.1")
+  stamped         Boolean       @default(false)
+  txSig           String?
+  stampId         String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  canonical       String?
+  p               Decimal?
+  deadline        DateTime?
+  resolverKind    ResolverKind?
+  resolverRef     String?
+  status          InsightStatus @default(OPEN)
+  memoSig         String?
+  slot            Int?
+  externalMarkets String?
+  tradingEnabled  Boolean       @default(false)
+  marketVolume    Float?
+  lastMarketSync  DateTime?
+  events          Event[]
+  stamp           Stamp?        @relation(fields: [stampId], references: [id])
+  creator         Creator?      @relation(fields: [creatorId], references: [id])
+  outcomes        Outcome[]
+
+  @@index([createdAt])
+  @@index([category])
+  @@index([stamped])
+  @@index([creatorId])
+  @@index([status])
+  @@index([tradingEnabled])
+  @@index([lastMarketSync])
+  @@map("insights")
+}
+
+model Stamp {
+  id         String    @id @default(cuid())
+  merkleRoot String
+  chain      String    @default("solana")
+  cluster    String    @default("devnet")
+  txSig      String    @unique
+  createdAt  DateTime  @default(now())
+  insights   Insight[]
+
+  @@map("stamps")
+}
+
+model Outcome {
+  id          String        @id @default(cuid())
+  insightId   String
+  result      OutcomeResult
+  evidenceUrl String?
+  decidedBy   DecisionMaker
+  decidedAt   DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  insight     Insight       @relation(fields: [insightId], references: [id], onDelete: Cascade)
+
+  @@map("outcomes")
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  userId    String?
+  type      String
+  meta      String
+  createdAt DateTime @default(now())
+  insightId String?
+  insight   Insight? @relation(fields: [insightId], references: [id])
+  user      Creator? @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([userId])
+  @@map("events")
+}
+
+model IdempotencyKey {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  response  String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+model AIAccuracy {
+  id              String   @id @default(cuid())
+  modelVersion    String
+  category        String
+  totalPredictions Int     @default(0)
+  correctPredictions Int  @default(0)
+  accuracy        Float    @default(0.0)
+  brierScore      Float?
+  lastUpdated     DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@unique([modelVersion, category])
+  @@index([modelVersion])
+  @@index([category])
+  @@map("ai_accuracy")
+}
+
+enum ResolverKind {
+  PRICE
+  URL
+  TEXT
+}
+
+enum InsightStatus {
+  OPEN
+  COMMITTED
+  RESOLVED
+}
+
+enum OutcomeResult {
+  YES
+  NO
+  INVALID
+}
+
+enum DecisionMaker {
+  AGENT
+  USER
+}
