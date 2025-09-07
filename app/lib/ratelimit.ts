@@ -33,11 +33,27 @@ const rateLimiters = {
     limiter: Ratelimit.slidingWindow(10, '1 m'), // 10 requests per minute
     analytics: true,
   }),
+  // Advisor-specific rate limits (stricter for write operations)
+  advisor_read: new Ratelimit({
+    redis: redis || new Map(),
+    limiter: Ratelimit.slidingWindow(30, '1 m'), // 30 reads per minute
+    analytics: true,
+  }),
+  advisor_write: new Ratelimit({
+    redis: redis || new Map(),
+    limiter: Ratelimit.slidingWindow(10, '1 m'), // 10 writes per minute
+    analytics: true,
+  }),
+  alerts: new Ratelimit({
+    redis: redis || new Map(),
+    limiter: Ratelimit.slidingWindow(5, '1 m'), // 5 alert operations per minute
+    analytics: true,
+  }),
 };
 
 export interface RateLimitOptions {
   identifier?: string; // Custom identifier (defaults to IP)
-  plan?: 'free' | 'pro'; // User plan (defaults to 'free')
+  plan?: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts'; // User plan or specific limiter
   skipForDevelopment?: boolean; // Skip rate limiting in development
 }
 

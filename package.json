@@ -21,7 +21,9 @@
     "smoke:e7": "bash scripts/smoke-e7.sh",
     "smoke:e8": "bash smoke-e8.sh",
     "qa:all": "pnpm vitest run && bash scripts/test-e5-qa.sh && bash smoke-e8.sh",
-    "unit": "vitest run"
+    "unit": "vitest run",
+    "advisor:tick": "tsx scripts/cron-advisor-tick.ts",
+    "advisor:test": "tsx scripts/cron-advisor-tick.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",

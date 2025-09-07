@@ -83,7 +83,7 @@ export default function Hero() {
         </div>
 
         {/* CTAs */}
-        <div className="mt-10 flex flex-col sm:flex-row items-start gap-4">
+        <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
           <Link
             href="/studio"
             className="inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:shadow-lg transition-all"
@@ -92,7 +92,7 @@ export default function Hero() {
           </Link>
           <Link
             href="/feed"
-            className="text-sm text-slate-400 hover:text-slate-300 transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 rounded"
+            className="inline-flex items-center px-4 py-3 text-sm text-slate-400 hover:text-slate-300 transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 rounded"
           >
             View Feed
           </Link>

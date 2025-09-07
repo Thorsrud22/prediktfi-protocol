@@ -145,6 +145,99 @@ model AIAccuracy {
   @@map("ai_accuracy")
 }
 
+model AICalibration {
+  id                  String   @id @default(cuid())
+  modelVersion        String
+  category            String
+  predictedConfidence Float
+  actualOutcome       Boolean
+  timestamp           DateTime @default(now())
+  createdAt           DateTime @default(now())
+
+  @@index([modelVersion])
+  @@index([category])
+  @@index([timestamp])
+  @@map("ai_calibration")
+}
+
+// Advisor v0.1 - Monitor-only
+model Wallet {
+  id           String   @id @default(cuid())
+  address      String   @unique
+  chain        String   @default("solana")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  strategies   Strategy[]
+  alerts       AlertRule[]
+  snapshots    HoldingSnapshot[]
+
+  @@index([address])
+  @@index([chain])
+  @@map("advisor_wallets")
+}
+
+model Strategy {
+  id           String   @id @default(cuid())
+  walletId     String
+  name         String
+  kind         String   // "risk", "rebalance", "momentum"
+  configJson   String   // JSON string
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([kind])
+  @@map("advisor_strategies")
+}
+
+model AlertRule {
+  id           String   @id @default(cuid())
+  walletId     String
+  name         String
+  ruleJson     String   // JSON string
+  channel      String   // "inapp", "email", "webhook"
+  target       String?  // email or webhook URL
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  events       AlertEvent[]
+
+  @@index([walletId])
+  @@index([channel])
+  @@map("advisor_alert_rules")
+}
+
+model AlertEvent {
+  id           String   @id @default(cuid())
+  ruleId       String
+  firedAt      DateTime @default(now())
+  payloadJson  String   // JSON string
+  delivered    Boolean  @default(false)
+  deliveredAt  DateTime?
+  rule         AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([firedAt])
+  @@map("advisor_alert_events")
+}
+
+model HoldingSnapshot {
+  id           String   @id @default(cuid())
+  walletId     String
+  ts           DateTime @default(now())
+  asset        String   // mint or symbol
+  amount       String   // Decimal as string
+  valueUsd     String   // Decimal as string
+  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, ts])
+  @@index([asset])
+  @@map("advisor_holding_snapshots")
+}
+
 enum ResolverKind {
   PRICE
   URL

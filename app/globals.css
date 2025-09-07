@@ -16,6 +16,30 @@ body {
   background: linear-gradient(135deg, #0A0F1C 0%, #0F1629 25%, #1A202C 50%, #2D3748 75%, #1A202C 100%);
   background-attachment: fixed;
   min-height: 100vh;
+  /* Performance optimizations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+/* Performance optimizations for scrolling */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimize animations and transitions */
+* {
+  will-change: auto;
+}
+
+/* Reduce motion for better performance */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Container system for consistent widths */

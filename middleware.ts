@@ -128,6 +128,11 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-Response-Time', `${duration}ms`);
   response.headers.set('X-Request-ID', crypto.randomUUID());
   
+  // Add plan header for client-side detection
+  const planCookie = request.cookies.get('predikt_plan')?.value;
+  const plan = planCookie === 'pro' ? 'pro' : 'free';
+  response.headers.set('x-plan', plan);
+  
   // Add rate limit headers
   if (pathname.startsWith('/api/')) {
     const limiter = pathname.startsWith('/api/admin') ? rateLimiters.admin :

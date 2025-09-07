@@ -47,6 +47,8 @@ export default function PricingTable({ initialIsPro = false }: { initialIsPro?: 
       period: 'forever',
       features: [
         '10 insights per day',
+        'Basic Analysis (1-2s)',
+        'Advanced Analysis (10-30s)',
         'Community feed',
         'Templates'
       ],
@@ -61,6 +63,8 @@ export default function PricingTable({ initialIsPro = false }: { initialIsPro?: 
         'Unlimited insights',
         'Priority processing',
         'Advanced prompts',
+        'Ensemble Analysis ⭐',
+        'Confidence Calibration',
         'Crypto payments via Coinbase'
       ],
       cta: 'Upgrade with Crypto',

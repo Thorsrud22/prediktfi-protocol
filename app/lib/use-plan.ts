@@ -20,6 +20,15 @@ export function usePlan(): Plan {
         setPlan(planValue);
       }
     }
+    
+    // Also try to read from document.cookie as fallback
+    try {
+      if (document.cookie.includes('predikt_plan=pro')) {
+        setPlan('pro');
+      }
+    } catch (error) {
+      console.warn('Failed to read plan from cookie:', error);
+    }
   }, []);
 
   return plan;

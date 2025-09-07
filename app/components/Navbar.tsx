@@ -6,6 +6,7 @@ import { SITE } from "../config/site";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useIsPro } from "../lib/use-plan";
+import { isFeatureEnabled } from "../lib/flags";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -80,27 +81,35 @@ export default function Navbar() {
       <div className="mx-auto max-w-7xl px-4 flex h-14 items-center justify-between">
         <Link
           href="/"
-          className="flex items-center gap-3 hover:opacity-90 transition-all duration-200 hover:scale-105"
+          className="flex items-center hover:opacity-90 transition-all duration-200 hover:scale-105"
           aria-label={SITE.name}
         >
           {/* Logo Text */}
-          <div className="flex flex-col">
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent leading-tight">
+          <div className="flex flex-col items-start">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
               Predikt
             </span>
-            <span className="text-xs text-blue-300/70 font-medium tracking-wider uppercase">
-              AI Studio
+            <span className="text-xs text-blue-300/70 font-medium tracking-wider uppercase -ml-px">
+              AI STUDIO
             </span>
           </div>
         </Link>
         {/* Desktop nav */}
-        <div className="hidden items-center gap-6 sm:flex">
+        <div className="hidden items-center gap-4 sm:flex">
           <FastLink
             href="/studio"
             className="flex h-14 items-center px-3 text-sm font-semibold text-blue-100 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
           >
             Studio
           </FastLink>
+          {isFeatureEnabled('ADVISOR') && (
+            <FastLink
+              href="/advisor"
+              className="flex h-14 items-center px-3 text-sm font-semibold text-blue-100 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
+            >
+              Advisor
+            </FastLink>
+          )}
           <FastLink
             href="/feed"
             className="flex h-14 items-center px-3 text-sm font-medium text-blue-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
@@ -216,6 +225,15 @@ export default function Navbar() {
               >
                 Studio
               </FastLink>
+              {isFeatureEnabled('ADVISOR') && (
+                <FastLink
+                  href="/advisor"
+                  className="rounded-md px-2 py-2 font-semibold text-slate-100 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors"
+                  onClick={() => setOpen(false)}
+                >
+                  Advisor
+                </FastLink>
+              )}
               <FastLink
                 href="/feed"
                 className="rounded-md px-2 py-2 font-medium text-slate-300 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors"

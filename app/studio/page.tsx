@@ -13,6 +13,7 @@ import { enhancedPredict, type EnhancedPredictInput, type EnhancedPredictOutput 
 import { env } from "../lib/env";
 import { persistReferralData } from "../lib/share";
 import { getQuota, bumpQuota, isExhausted, resetIfNewDay } from "../lib/quota";
+import { useIsPro } from "../lib/use-plan";
 
 // Lazy load wallet components
 const WalletMultiButton = dynamic(
@@ -22,6 +23,8 @@ const WalletMultiButton = dynamic(
 
 function StudioContent() {
   const searchParams = useSearchParams();
+  const [isProOverride, setIsProOverride] = useState(false);
+  const isPro = useIsPro() || isProOverride;
   
   // Handle referral persistence with error boundary
   useEffect(() => {
@@ -37,7 +40,9 @@ function StudioContent() {
   const [input, setInput] = useState<InsightInput | null>(null);
   const [response, setResponse] = useState<PredictResponse | null>(null);
   const [enhancedResponse, setEnhancedResponse] = useState<EnhancedPredictOutput | null>(null);
-  const [useAdvancedAnalysis, setUseAdvancedAnalysis] = useState(true);
+  const [useAdvancedAnalysis, setUseAdvancedAnalysis] = useState(false);
+  const [useEnsembleAnalysis, setUseEnsembleAnalysis] = useState(false);
+  const [useContextualAnalysis, setUseContextualAnalysis] = useState(true);
   const [quota, setQuota] = useState({ used: 0, limit: 999999, remaining: 999999 });
   const [quotaExhausted, setQuotaExhausted] = useState(false);
 
@@ -240,7 +245,38 @@ function StudioContent() {
         setProgress({ step: 'analyzing', stepNumber: 1, totalSteps: 8, message: 'Initializing advanced research engine...' });
     
     try {
-      if (useAdvancedAnalysis) {
+      if (useEnsembleAnalysis) {
+        // Use ensemble analysis with progress callback
+        const enhancedInput: EnhancedPredictInput = {
+          topic: insightInput.topic,
+          question: insightInput.question,
+          horizon: insightInput.horizon,
+          enableEnsemble: true,
+          progressCallback: (status: string, progress: number) => {
+            setProgress({
+              step: 'analyzing',
+              stepNumber: Math.ceil(progress / 100 * 8),
+              totalSteps: 8,
+              message: status
+            });
+          }
+        };
+
+        const enhancedData = await enhancedPredict(enhancedInput);
+        setEnhancedResponse(enhancedData);
+        
+        // Convert to standard format for compatibility
+        const standardResponse: PredictResponse = {
+          prob: enhancedData.prob,
+          drivers: enhancedData.drivers,
+          rationale: enhancedData.rationale,
+          model: enhancedData.model,
+          scenarioId: enhancedData.scenarioId,
+          ts: enhancedData.ts,
+          confidence: enhancedData.confidence
+        };
+        setResponse(standardResponse);
+      } else if (useAdvancedAnalysis) {
         // Use enhanced analysis with progress callback
         const enhancedInput: EnhancedPredictInput = {
           topic: insightInput.topic,
@@ -268,6 +304,36 @@ function StudioContent() {
           model: enhancedData.model,
           scenarioId: enhancedData.scenarioId,
           ts: enhancedData.ts
+        };
+        setResponse(standardResponse);
+      } else if (useContextualAnalysis) {
+        // Use contextual analysis (new default)
+        const enhancedInput: EnhancedPredictInput = {
+          topic: insightInput.topic,
+          question: insightInput.question,
+          horizon: insightInput.horizon,
+          progressCallback: (status: string, progress: number) => {
+            setProgress({
+              step: 'analyzing',
+              stepNumber: Math.ceil(progress / 100 * 8),
+              totalSteps: 8,
+              message: status
+            });
+          }
+        };
+
+        const enhancedData = await enhancedPredict(enhancedInput);
+        setEnhancedResponse(enhancedData);
+        
+        // Convert to standard format for compatibility
+        const standardResponse: PredictResponse = {
+          prob: enhancedData.prob,
+          drivers: enhancedData.drivers,
+          rationale: enhancedData.rationale,
+          model: enhancedData.model,
+          scenarioId: enhancedData.scenarioId,
+          ts: enhancedData.ts,
+          confidence: enhancedData.confidence
         };
         setResponse(standardResponse);
       } else {
@@ -618,29 +684,129 @@ function StudioContent() {
               </div>
             )}
             
-            {/* Advanced Analysis Toggle */}
+            {/* Analysis Mode Selection */}
             <div className="mb-6 p-4 bg-[color:var(--surface)] rounded-lg border border-[var(--border)]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-[color:var(--text)] mb-1">
-                    Analysis Mode
-                  </h3>
-                  <p className="text-sm text-[color:var(--muted)]">
-                    {useAdvancedAnalysis 
-                      ? "Advanced analysis with real-time data, technical indicators, and sentiment analysis (10-30s)"
-                      : "Basic analysis with simple heuristics (1-2s)"
-                    }
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+              <h3 className="text-lg font-semibold text-[color:var(--text)] mb-3">
+                Analysis Mode
+              </h3>
+              
+              <div className="space-y-3">
+            {/* Basic Analysis */}
+            <label className="flex items-center p-3 border border-[var(--border)] rounded-lg cursor-pointer hover:bg-[color:var(--surface-2)]">
+              <input
+                type="radio"
+                name="analysisMode"
+                value="basic"
+                checked={!useAdvancedAnalysis && !useEnsembleAnalysis && !useContextualAnalysis}
+                onChange={() => {
+                  setUseAdvancedAnalysis(false);
+                  setUseEnsembleAnalysis(false);
+                  setUseContextualAnalysis(false);
+                }}
+                className="mr-3"
+              />
+              <div>
+                <div className="font-medium text-[color:var(--text)]">Basic Analysis</div>
+                <div className="text-sm text-[color:var(--muted)]">Simple heuristics (1-2s)</div>
+              </div>
+            </label>
+
+            {/* Contextual Analysis - New Default */}
+            <label className="flex items-center p-3 border border-[var(--border)] rounded-lg cursor-pointer hover:bg-[color:var(--surface-2)]">
+              <input
+                type="radio"
+                name="analysisMode"
+                value="contextual"
+                checked={useContextualAnalysis && !useAdvancedAnalysis && !useEnsembleAnalysis}
+                onChange={() => {
+                  setUseAdvancedAnalysis(false);
+                  setUseEnsembleAnalysis(false);
+                  setUseContextualAnalysis(true);
+                }}
+                className="mr-3"
+              />
+              <div>
+                <div className="font-medium text-[color:var(--text)]">Contextual Analysis ⭐</div>
+                <div className="text-sm text-[color:var(--muted)]">Smart category detection & tailored analysis (3-8s)</div>
+              </div>
+            </label>
+
+                {/* Advanced Analysis */}
+                <label className="flex items-center p-3 border border-[var(--border)] rounded-lg cursor-pointer hover:bg-[color:var(--surface-2)]">
                   <input
-                    type="checkbox"
-                    checked={useAdvancedAnalysis}
-                    onChange={(e) => setUseAdvancedAnalysis(e.target.checked)}
-                    className="sr-only peer"
+                    type="radio"
+                    name="analysisMode"
+                    value="advanced"
+                    checked={useAdvancedAnalysis && !useEnsembleAnalysis && !useContextualAnalysis}
+                    onChange={() => {
+                      setUseAdvancedAnalysis(true);
+                      setUseEnsembleAnalysis(false);
+                      setUseContextualAnalysis(false);
+                    }}
+                    className="mr-3"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  <div>
+                    <div className="font-medium text-[color:var(--text)]">Advanced Analysis</div>
+                    <div className="text-sm text-[color:var(--muted)]">Real-time data, technical indicators, sentiment analysis (10-30s)</div>
+                  </div>
                 </label>
+
+                {/* Ensemble Analysis - Pro Feature */}
+                <div className="relative">
+                  <label className={`flex items-center p-3 border border-[var(--border)] rounded-lg cursor-pointer hover:bg-[color:var(--surface-2)] ${!isPro ? 'opacity-60' : ''}`}>
+                    <input
+                      type="radio"
+                      name="analysisMode"
+                      value="ensemble"
+                    checked={useEnsembleAnalysis && !useAdvancedAnalysis && !useContextualAnalysis}
+                    onChange={() => {
+                      setUseAdvancedAnalysis(false);
+                      setUseEnsembleAnalysis(true);
+                      setUseContextualAnalysis(false);
+                    }}
+                      className="mr-3"
+                      disabled={!isPro}
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-[color:var(--text)] flex items-center gap-2">
+                        Ensemble Analysis ⭐
+                        <span className="px-2 py-1 text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full font-semibold">
+                          PRO
+                        </span>
+                      </div>
+                      <div className="text-sm text-[color:var(--muted)]">Multiple AI models with confidence calibration (15-45s)</div>
+                    </div>
+                  </label>
+                  
+                  {/* Pro Upgrade Prompt - Only show if not Pro */}
+                  {!isPro && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-white font-semibold mb-2">Pro Feature</div>
+                        <div className="space-y-2">
+                          <button 
+                            onClick={() => window.open('/pricing', '_blank')}
+                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg text-sm font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
+                          >
+                            Upgrade to Pro
+                          </button>
+                          <br />
+                          <button 
+                            onClick={() => {
+                              setIsProOverride(true);
+                              setUseEnsembleAnalysis(true);
+                              setUseAdvancedAnalysis(false);
+                              setUseContextualAnalysis(false);
+                            }}
+                            className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium hover:bg-green-600 transition-all"
+                          >
+                            🚀 Give me Pro (Dev)
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

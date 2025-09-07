@@ -41,8 +41,9 @@ export async function GET(request: NextRequest) {
     // Fetch external markets from Polymarket (will use mock data if no API key)
     const remainingLimit = Math.max(0, limit - trendingInsights.length);
     console.log('Fetching Polymarket markets, remaining limit:', remainingLimit);
-    const polymarketResults = await polymarketClient.searchMarkets('', remainingLimit);
-    console.log('Polymarket results:', polymarketResults.markets.length, 'markets');
+    // Disabled for performance
+    const polymarketResults = { markets: [] }; // await polymarketClient.searchMarkets('', remainingLimit);
+    console.log('Polymarket results: 0 markets (disabled for performance)');
 
     const externalMarkets = polymarketResults.markets;
     

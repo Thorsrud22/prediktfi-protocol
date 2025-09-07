@@ -4,15 +4,20 @@ import { AdvancedAnalysisEngine } from './advanced-analysis-engine';
 import { AIAccuracyMetrics } from './accuracy-tracker';
 import { mockAdapter } from './adapters/mock';
 import { AIAccuracyTracker, EnhancedPredictionContext } from './accuracy-tracker';
+import { EnsemblePredictor } from './ensemble-predictor';
+import { ConfidenceCalibrator } from './confidence-calibrator';
+import { CategoryClassifier } from './category-classifier';
+import { ContextualAnalyzer } from './contextual-analyzer';
 
 export interface EnhancedPredictInput extends PredictInput {
   enableAdvancedAnalysis?: boolean;
+  enableEnsemble?: boolean;
   progressCallback?: (status: string, progress: number) => void;
 }
 
 export interface EnhancedPredictOutput extends PredictOutput {
   advancedAnalysis?: AdvancedAnalysis;
-  analysisType: 'basic' | 'advanced';
+  analysisType: 'basic' | 'advanced' | 'ensemble' | 'contextual';
   processingTimeMs: number;
   aiAccuracy?: {
     category: string;
@@ -21,23 +26,47 @@ export interface EnhancedPredictOutput extends PredictOutput {
     confidenceLevel: string;
     uncertaintyFactors: string[];
   };
+  ensembleDetails?: {
+    modelsUsed: string[];
+    individualPredictions: Array<{
+      model: string;
+      probability: number;
+      confidence: number;
+      weight: number;
+    }>;
+    consensus: number;
+    disagreement: number;
+  };
+  contextualAnalysis?: {
+    category: string;
+    analysisType: string;
+    dataSources: string[];
+    marketContext: any;
+    categorySpecificInsights: any;
+    confidenceFactors: any;
+  };
 }
 
 export async function enhancedPredict(input: EnhancedPredictInput): Promise<EnhancedPredictOutput> {
   const startTime = Date.now();
   
   try {
-    // Create enhanced context with demo accuracy data for now
+    // First, classify the question to understand what we're dealing with
+    const classification = CategoryClassifier.classifyQuestion(input.question, input.topic);
+    
+    // Create enhanced context with classification data
     const enhancedContext: EnhancedPredictionContext = {
       question: input.question,
-      category: input.topic,
+      category: classification.category,
       modelVersion: 'enhanced-v1',
-      historicalAccuracy: getDemoAccuracy(input.topic),
+      historicalAccuracy: getDemoAccuracy(classification.category),
       confidenceFactors: {
-        dataQuality: 0.8,
+        dataQuality: classification.marketContext.hasRealTimeData ? 0.8 : 0.6,
         historicalPerformance: 0.7,
-        categoryExpertise: 0.6,
-        uncertaintyFactors: identifyUncertaintyFactors(input.question, input.topic)
+        categoryExpertise: classification.confidence,
+        uncertaintyFactors: classification.marketContext.volatilityLevel === 'high' ? 
+          ['High market volatility', 'Uncertain market conditions'] : 
+          ['Standard market uncertainty']
       }
     };
 
@@ -50,24 +79,17 @@ export async function enhancedPredict(input: EnhancedPredictInput): Promise<Enha
       input.progressCallback(`Loading context: ${accuracyInfo}`, 10);
     }
 
+    // Check if ensemble analysis is enabled
+    if (input.enableEnsemble) {
+      return await performEnsembleAnalysis(input, enhancedContext, classification);
+    }
+    
     // Check if advanced analysis is enabled
     if (input.enableAdvancedAnalysis && input.progressCallback) {
-      return await performAdvancedAnalysis(input, enhancedContext);
+      return await performAdvancedAnalysis(input, enhancedContext, classification);
     } else {
-      // Fallback to basic analysis with accuracy context
-      const basicResult = await mockAdapter(input);
-      return {
-        ...basicResult,
-        analysisType: 'basic',
-        processingTimeMs: Date.now() - startTime,
-        aiAccuracy: enhancedContext.historicalAccuracy ? {
-          category: enhancedContext.category,
-          historicalAccuracy: enhancedContext.historicalAccuracy.accuracy,
-          totalPredictions: enhancedContext.historicalAccuracy.totalPredictions,
-          confidenceLevel: enhancedContext.historicalAccuracy.confidenceLevel,
-          uncertaintyFactors: enhancedContext.confidenceFactors.uncertaintyFactors
-        } : undefined
-      };
+      // Perform contextual analysis (new default)
+      return await performContextualAnalysis(input, enhancedContext, classification);
     }
   } catch (error) {
     console.error('Enhanced prediction failed:', error);
@@ -82,9 +104,62 @@ export async function enhancedPredict(input: EnhancedPredictInput): Promise<Enha
   }
 }
 
+async function performEnsembleAnalysis(
+  input: EnhancedPredictInput,
+  enhancedContext: EnhancedPredictionContext,
+  classification: any
+): Promise<EnhancedPredictOutput> {
+  const startTime = Date.now();
+  const ensemblePredictor = new EnsemblePredictor();
+  
+  try {
+    if (input.progressCallback) {
+      input.progressCallback("🤖 Initializing ensemble of AI models...", 5);
+    }
+    
+    // Perform ensemble prediction
+    const ensembleResult = await ensemblePredictor.predict(input);
+    
+    if (input.progressCallback) {
+      input.progressCallback("📊 Combining predictions from multiple models...", 50);
+    }
+    
+    // Apply confidence calibration
+    const calibratedConfidence = await ConfidenceCalibrator.calibrateConfidence(
+      ensembleResult.confidence,
+      input.topic,
+      'ensemble-v1'
+    );
+    
+    if (input.progressCallback) {
+      input.progressCallback("✅ Ensemble analysis complete!", 100);
+    }
+    
+    return {
+      ...ensembleResult,
+      confidence: calibratedConfidence.calibratedConfidence,
+      analysisType: 'ensemble',
+      processingTimeMs: Date.now() - startTime,
+      aiAccuracy: enhancedContext.historicalAccuracy ? {
+        category: enhancedContext.category,
+        historicalAccuracy: enhancedContext.historicalAccuracy.accuracy,
+        totalPredictions: enhancedContext.historicalAccuracy.totalPredictions,
+        confidenceLevel: enhancedContext.historicalAccuracy.confidenceLevel,
+        uncertaintyFactors: enhancedContext.confidenceFactors.uncertaintyFactors
+      } : undefined,
+      ensembleDetails: ensembleResult.ensembleDetails
+    };
+    
+  } catch (error) {
+    console.error('Ensemble analysis failed:', error);
+    throw error;
+  }
+}
+
 async function performAdvancedAnalysis(
-  input: EnhancedPredictInput, 
-  enhancedContext: EnhancedPredictionContext
+  input: EnhancedPredictInput,
+  enhancedContext: EnhancedPredictionContext,
+  classification: any
 ): Promise<EnhancedPredictOutput> {
   const startTime = Date.now();
   const engine = new AdvancedAnalysisEngine();
@@ -298,9 +373,18 @@ function getDemoAccuracy(category: string): AIAccuracyMetrics | undefined {
       lastUpdated: new Date(),
       brierScore: 0.18
     },
-    technology: {
+    stocks: {
       modelVersion: 'enhanced-v1',
-      category: 'technology',
+      category: 'stocks',
+      accuracy: 0.68,
+      totalPredictions: 30,
+      confidenceLevel: 'medium',
+      lastUpdated: new Date(),
+      brierScore: 0.20
+    },
+    tech: {
+      modelVersion: 'enhanced-v1',
+      category: 'tech',
       accuracy: 0.85,
       totalPredictions: 20,
       confidenceLevel: 'high',
@@ -315,6 +399,24 @@ function getDemoAccuracy(category: string): AIAccuracyMetrics | undefined {
       confidenceLevel: 'medium',
       lastUpdated: new Date(),
       brierScore: 0.24
+    },
+    sports: {
+      modelVersion: 'enhanced-v1',
+      category: 'sports',
+      accuracy: 0.58,
+      totalPredictions: 18,
+      confidenceLevel: 'medium',
+      lastUpdated: new Date(),
+      brierScore: 0.26
+    },
+    general: {
+      modelVersion: 'enhanced-v1',
+      category: 'general',
+      accuracy: 0.55,
+      totalPredictions: 22,
+      confidenceLevel: 'low',
+      lastUpdated: new Date(),
+      brierScore: 0.28
     }
   };
   
@@ -337,11 +439,20 @@ function identifyUncertaintyFactors(question: string, category: string): string[
   if (category === 'crypto') {
     factors.push('Crypto markets are highly volatile');
   }
+  if (category === 'stocks') {
+    factors.push('Stock markets can be affected by external factors');
+  }
+  if (category === 'tech') {
+    factors.push('Tech developments can have unexpected breakthroughs');
+  }
   if (category === 'politics') {
     factors.push('Political events can be unpredictable');
   }
-  if (category === 'technology') {
-    factors.push('Tech developments can have unexpected breakthroughs');
+  if (category === 'sports') {
+    factors.push('Sports outcomes can be affected by injuries and form');
+  }
+  if (category === 'general') {
+    factors.push('General predictions have limited data availability');
   }
 
   // Question complexity
@@ -361,5 +472,89 @@ function generateScenarioId(input: PredictInput): string {
   const horizon = input.horizon.toLowerCase().replace(/[^a-z0-9]/g, '');
   
   return `${topic}-${question}-${horizon}-${Date.now()}`;
+}
+
+// New contextual analysis function
+async function performContextualAnalysis(
+  input: EnhancedPredictInput,
+  enhancedContext: EnhancedPredictionContext,
+  classification: any
+): Promise<EnhancedPredictOutput> {
+  const startTime = Date.now();
+
+  try {
+    if (input.progressCallback) {
+      input.progressCallback(`🔍 Analyzing ${classification.category} prediction...`, 20);
+    }
+
+    // Perform contextual analysis
+    const contextualResult = await ContextualAnalyzer.analyzeByCategory(
+      input.question,
+      input.topic,
+      input.horizon,
+      classification
+    );
+
+    if (input.progressCallback) {
+      input.progressCallback(`📊 Generating insights for ${classification.analysisType} analysis...`, 60);
+    }
+
+    // Generate rationale with category-specific insights
+    const rationale = `**${classification.category.toUpperCase()} ANALYSIS**\n\n` +
+      `**Analysis Type:** ${classification.analysisType}\n` +
+      `**Confidence:** ${(classification.confidence * 100).toFixed(0)}%\n\n` +
+      contextualResult.rationale + `\n\n` +
+      `**Data Sources:** ${contextualResult.dataSources.join(', ')}\n` +
+      `**Key Factors:** ${contextualResult.categorySpecificInsights.keyFactors.join(', ')}\n` +
+      `**Risk Factors:** ${contextualResult.categorySpecificInsights.riskFactors.join(', ')}`;
+
+    if (input.progressCallback) {
+      input.progressCallback(`✅ Contextual analysis complete!`, 100);
+    }
+
+    return {
+      prob: contextualResult.probability,
+      drivers: contextualResult.categorySpecificInsights.keyFactors.slice(0, 5),
+      rationale: rationale,
+      model: `contextual-${classification.category}-v1`,
+      scenarioId: generateScenarioId(input),
+      ts: new Date().toISOString(),
+      analysisType: 'contextual',
+      processingTimeMs: Date.now() - startTime,
+      aiAccuracy: enhancedContext.historicalAccuracy ? {
+        category: enhancedContext.category,
+        historicalAccuracy: enhancedContext.historicalAccuracy.accuracy,
+        totalPredictions: enhancedContext.historicalAccuracy.totalPredictions,
+        confidenceLevel: enhancedContext.historicalAccuracy.confidenceLevel,
+        uncertaintyFactors: enhancedContext.confidenceFactors.uncertaintyFactors
+      } : undefined,
+      contextualAnalysis: {
+        category: classification.category,
+        analysisType: classification.analysisType,
+        dataSources: contextualResult.dataSources,
+        marketContext: contextualResult.marketContext,
+        categorySpecificInsights: contextualResult.categorySpecificInsights,
+        confidenceFactors: contextualResult.confidenceFactors
+      }
+    };
+
+  } catch (error) {
+    console.error('Contextual analysis failed:', error);
+    
+    // Fallback to basic analysis
+    const basicResult = await mockAdapter(input);
+    return {
+      ...basicResult,
+      analysisType: 'basic',
+      processingTimeMs: Date.now() - startTime,
+      aiAccuracy: enhancedContext.historicalAccuracy ? {
+        category: enhancedContext.category,
+        historicalAccuracy: enhancedContext.historicalAccuracy.accuracy,
+        totalPredictions: enhancedContext.historicalAccuracy.totalPredictions,
+        confidenceLevel: enhancedContext.historicalAccuracy.confidenceLevel,
+        uncertaintyFactors: enhancedContext.confidenceFactors.uncertaintyFactors
+      } : undefined
+    };
+  }
 }
 

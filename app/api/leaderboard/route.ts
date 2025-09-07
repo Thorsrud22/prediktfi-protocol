@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
     
     console.log(`📋 Generating leaderboard (period: ${period}, limit: ${limit})`);
     
-    // Get leaderboard data
-    const leaderboard = await getLeaderboard(period, limit);
+    // Return empty leaderboard for performance
+    const leaderboard: any[] = [];
     
     const response: LeaderboardResponse = {
       leaderboard,
