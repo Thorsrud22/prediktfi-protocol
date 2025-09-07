@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { trackServer } from '../../lib/analytics';
+import { checkWalletRateLimit, getWalletIdentifier } from '../../lib/rate-limit-wallet';
 
 interface RateLimit {
   count: number;
@@ -45,6 +46,26 @@ export function checkAuthAndQuota(request: NextRequest): AuthResult {
   if (plan === 'pro') {
     trackServer('quota_check', { plan: 'pro', result: 'allowed' });
     return { allowed: true, plan: 'pro' };
+  }
+  
+  // Check wallet-based rate limiting first
+  const walletId = getWalletIdentifier(request);
+  if (walletId) {
+    const walletCheck = checkWalletRateLimit(walletId, {
+      perWalletMinWindow: 60, // 1 minute
+      perWalletDailyCap: 200, // 200 insights per day per wallet
+      perWalletBurstLimit: 20 // 20 insights per minute per wallet
+    });
+    
+    if (!walletCheck.allowed) {
+      trackServer('quota_exhausted', { plan: 'free', type: 'wallet', walletId });
+      return {
+        allowed: false,
+        plan: 'free',
+        error: walletCheck.error,
+        resetTime: walletCheck.retryAfter
+      };
+    }
   }
 
   // Development mode - unlimited quota

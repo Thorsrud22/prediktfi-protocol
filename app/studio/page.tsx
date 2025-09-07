@@ -14,6 +14,9 @@ import { env } from "../lib/env";
 import { persistReferralData } from "../lib/share";
 import { getQuota, bumpQuota, isExhausted, resetIfNewDay } from "../lib/quota";
 import { useIsPro } from "../lib/use-plan";
+import { isFeatureEnabled } from "../lib/flags";
+import { quoteCache } from "../lib/aggregators/quote-cache";
+import { getTokenMint } from "../lib/aggregators/jupiter";
 
 // Lazy load wallet components
 const WalletMultiButton = dynamic(
@@ -566,12 +569,12 @@ function StudioContent() {
             
             {/* E8.1 Progress Indicator */}
             {progress && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 animate-pulse">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-blue-900">
                     Processing Insight
                   </h3>
-                  <span className="text-sm text-blue-700">
+                  <span className="text-sm text-blue-700 font-medium">
                     Step {progress.stepNumber} of {progress.totalSteps}
                   </span>
                 </div>
@@ -1116,6 +1119,73 @@ function SaveInsightModal({ insight, onSave, onClose, saving, stamping }: SaveIn
               {stamping ? 'Stamping...' : saving ? 'Saving...' : wantToStamp ? 'Save & Stamp' : 'Save & Preview'}
             </button>
           </div>
+
+          {/* Trade This Prediction */}
+          {isFeatureEnabled('ACTIONS') && insightResponse && (
+            <div className="mt-4">
+              <button
+                onClick={async () => {
+                  // Track "Trade this" button click
+                  if (walletId) {
+                    try {
+                      await fetch('/api/analytics/track-event', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          walletId,
+                          eventType: 'click_trade_button',
+                          eventData: { insightId: insight.id }
+                        })
+                      });
+                    } catch (error) {
+                      console.error('Failed to track trade button click:', error);
+                    }
+                  }
+                  
+                  // Create intent template from prediction
+                  const template = {
+                    base: 'SOL', // Default to SOL for now
+                    quote: 'USDC',
+                    side: insightResponse.probability > 0.5 ? 'BUY' : 'SELL',
+                    sizeJson: { type: 'pct', value: 5 },
+                    rationale: `Based on Predikt analysis: ${Math.round(insightResponse.probability * 100)}% probability`,
+                    confidence: insightResponse.confidence,
+                    expectedDur: '14d'
+                  };
+                  
+                  // Prefetch quote for better UX
+                  try {
+                    const base = template.base;
+                    const quote = template.quote;
+                    const side = template.side;
+                    const sizePct = template.sizeJson.value;
+                    
+                    // Calculate trade size (5% of $1000 portfolio for prefetch)
+                    const tradeSizeUsd = 1000 * (sizePct / 100);
+                    const tradeSizeTokens = tradeSizeUsd; // Simplified for USDC
+                    
+                    const inputMint = side === 'BUY' ? getTokenMint(quote) : getTokenMint(base);
+                    const outputMint = side === 'BUY' ? getTokenMint(base) : getTokenMint(quote);
+                    
+                    // Prefetch quote in background
+                    quoteCache.prefetchQuote(inputMint, outputMint, tradeSizeTokens, 50);
+                  } catch (error) {
+                    console.warn('Failed to prefetch quote:', error);
+                  }
+                  
+                  // Encode template and redirect to actions page
+                  const encodedTemplate = btoa(JSON.stringify(template));
+                  window.location.href = `/advisor/actions?template=${encodedTemplate}`;
+                }}
+                className="w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all font-medium"
+              >
+                🚀 Trade This Prediction
+              </button>
+              <p className="text-xs text-center text-gray-500 mt-2">
+                Create a trading intent based on this analysis
+              </p>
+            </div>
+          )}
 
           {/* Pro Notice */}
           {wantToStamp && (

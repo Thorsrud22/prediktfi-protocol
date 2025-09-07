@@ -2,6 +2,8 @@
 export interface FeatureFlags {
   ADVISOR: boolean;
   ALERTS: boolean;
+  ACTIONS: boolean;
+  EMBED_INTENT: boolean;
   ENSEMBLE_ANALYSIS: boolean;
   CONTEXTUAL_ANALYSIS: boolean;
 }
@@ -16,6 +18,10 @@ export function getFeatureFlags(): FeatureFlags {
     // Advisor features - default OFF in production, ON in staging/dev
     ADVISOR: process.env.FEATURE_ADVISOR === 'true' || isDevelopment || isStaging,
     ALERTS: process.env.FEATURE_ALERTS === 'true' || isDevelopment || isStaging,
+    
+    // Actions features - STRICT: OFF in production, ON in staging/dev
+    ACTIONS: (process.env.FEATURE_ACTIONS === 'true' || isDevelopment || isStaging) && !isProduction,
+    EMBED_INTENT: (process.env.FEATURE_EMBED_INTENT === 'true' || isDevelopment || isStaging) && !isProduction,
     
     // AI features - enabled by default
     ENSEMBLE_ANALYSIS: process.env.FEATURE_ENSEMBLE !== 'false',

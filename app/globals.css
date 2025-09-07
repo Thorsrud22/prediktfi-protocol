@@ -42,6 +42,33 @@ body {
   }
 }
 
+/* Mobile-first responsive improvements */
+@media (max-width: 640px) {
+  /* Ensure minimum touch target size */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve text readability on mobile */
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  
+  /* Better spacing for mobile */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Prevent horizontal scroll */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
 /* Container system for consistent widths */
 .container-sm { max-width: var(--container-sm); margin: 0 auto; padding: 0 var(--space-md); }
 .container-md { max-width: var(--container-md); margin: 0 auto; padding: 0 var(--space-md); }

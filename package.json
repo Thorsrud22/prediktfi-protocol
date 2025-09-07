@@ -23,13 +23,20 @@
     "qa:all": "pnpm vitest run && bash scripts/test-e5-qa.sh && bash smoke-e8.sh",
     "unit": "vitest run",
     "advisor:tick": "tsx scripts/cron-advisor-tick.ts",
-    "advisor:test": "tsx scripts/cron-advisor-tick.ts"
+    "advisor:test": "tsx scripts/cron-advisor-tick.ts",
+    "p2a:test": "bash scripts/test-p2a.sh",
+    "p2a:synthetic": "tsx scripts/synthetic-p2a.ts",
+    "p2a:slo": "tsx scripts/slo-monitor.ts",
+    "p2a:monitor": "tsx scripts/cron-p2a-monitor.ts",
+    "pmf:metrics": "tsx scripts/cron-pmf-metrics.ts",
+    "test:p2a": "playwright test tests/p2a-integration.spec.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.15.0",
     "@solana/spl-memo": "^0.2.5",
+    "@solana/spl-token": "^0.4.14",
     "@solana/wallet-adapter-base": "^0.9.23",
     "@solana/wallet-adapter-phantom": "^0.9.24",
     "@solana/wallet-adapter-react": "^0.15.35",

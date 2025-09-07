@@ -170,6 +170,11 @@ model Wallet {
   strategies   Strategy[]
   alerts       AlertRule[]
   snapshots    HoldingSnapshot[]
+  // PMF Analytics
+  events       UserEvent[]
+  retention    UserRetention?
+  shares       SocialShare[]
+  intents      Intent[]
 
   @@index([address])
   @@index([chain])
@@ -236,6 +241,140 @@ model HoldingSnapshot {
   @@index([walletId, ts])
   @@index([asset])
   @@map("advisor_holding_snapshots")
+}
+
+// PMF Metrics and Analytics
+model PMFMetric {
+  id          String   @id @default(cuid())
+  metricType  String   // "click_sim_rate", "sim_sign_rate", "d7_retention", "social_sharing", "signal_following"
+  value       Float    // The actual metric value (0.0 to 1.0 for rates, count for others)
+  target      Float    // Target value for this metric
+  period      String   // "daily", "weekly", "monthly"
+  date        DateTime @default(now())
+  metadata    String?  // JSON with additional context
+  createdAt   DateTime @default(now())
+
+  @@index([metricType, date])
+  @@index([period])
+  @@map("pmf_metrics")
+}
+
+model UserEvent {
+  id          String   @id @default(cuid())
+  walletId    String
+  eventType   String   // "click_trade_button", "simulate_intent", "sign_intent", "share_receipt", "follow_signal"
+  eventData   String?  // JSON with event details
+  sessionId   String?  // Track user sessions
+  userAgent   String?  // Browser info
+  referrer    String?  // Where they came from
+  timestamp   DateTime @default(now())
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, eventType])
+  @@index([timestamp])
+  @@index([sessionId])
+  @@map("user_events")
+}
+
+model UserRetention {
+  id          String   @id @default(cuid())
+  walletId    String
+  firstAction DateTime // When they first used Actions
+  lastAction  DateTime // When they last used Actions
+  d1Active    Boolean  @default(false) // Active on day 1
+  d3Active    Boolean  @default(false) // Active on day 3
+  d7Active    Boolean  @default(false) // Active on day 7
+  d14Active   Boolean  @default(false) // Active on day 14
+  d30Active   Boolean  @default(false) // Active on day 30
+  totalActions Int     @default(0) // Total number of actions taken
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@unique([walletId])
+  @@index([firstAction])
+  @@map("user_retention")
+}
+
+model SocialShare {
+  id          String   @id @default(cuid())
+  intentId    String
+  walletId    String
+  platform    String   // "twitter", "linkedin", "facebook", "copy_trade"
+  shareUrl    String?  // The shared URL
+  receiptId   String?  // Associated receipt
+  createdAt   DateTime @default(now())
+  intent      Intent   @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([platform, createdAt])
+  @@index([intentId])
+  @@map("social_shares")
+}
+
+model Intent {
+  id           String   @id @default(cuid())
+  walletId     String
+  strategyId   String?
+  chain        String   @default("solana")
+  base         String   // "SOL" | "ETH" | "BTC" (v1)
+  quote        String   @default("USDC") // "USDC" (v1)
+  side         String   // "BUY" | "SELL"
+  sizeJson     String   // JSON: {type:"pct"|"abs", value:number, token?:string}
+  tpJson       String?  // JSON: take profit
+  slJson       String?  // JSON: stop loss
+  rationale    String?
+  confidence   Float?
+  backtestWin  Float?
+  expectedDur  String?  // "14d"
+  guardsJson   String   // JSON: {dailyLossCapPct,posLimitPct,minLiqUsd,maxSlippageBps,expiresAt}
+  venuePref    String?  @default("jupiter")
+  simOnly      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  receipts     IntentReceipt[]
+  shares       SocialShare[]
+  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, createdAt])
+  @@index([base, quote])
+  @@map("intents")
+}
+
+model IntentReceipt {
+  id           String   @id @default(cuid())
+  intentId     String
+  status       String   // simulated|executed|failed
+  txSig        String?
+  simJson      String?  // JSON: simulation results
+  execJson     String?  // JSON: execution results
+  realizedPx   Float?
+  feesUsd      Float?
+  slippageBps  Int?
+  blockTime    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  intent       Intent   @relation(fields: [intentId], references: [id], onDelete: Cascade)
+
+  @@index([intentId, createdAt])
+  @@index([status])
+  @@map("intent_receipts")
+}
+
+model SimulatorAccuracy {
+  id                    String   @id @default(cuid())
+  pair                  String   // "SOL/USDC", "ETH/USDC", etc.
+  side                  String   // "BUY" | "SELL"
+  expectedPrice         Float    // Price we expected
+  theoreticalFillPrice  Float    // Price from Jupiter quote
+  deviationBps          Float    // Deviation in basis points
+  tradeSizeUsd          Float    // Trade size in USD
+  timestamp             DateTime @default(now())
+  jupiterQuoteData      String   // JSON: Full Jupiter quote for debugging
+  
+  @@index([pair, timestamp])
+  @@index([side])
+  @@index([deviationBps])
+  @@map("simulator_accuracy")
 }
 
 enum ResolverKind {

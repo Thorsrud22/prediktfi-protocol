@@ -90,9 +90,20 @@ const InsightForm: React.FC<InsightFormProps> = ({ onSubmit, onPredict, isLoadin
               Be specific and measurable for better predictions
             </span>
           )}
-          <span className={`text-sm ${question.length > 180 ? 'text-red-500' : 'text-gray-500'}`}>
-            {question.length}/200
-          </span>
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${
+              question.length > 180 ? 'bg-red-500' : 
+              question.length > 150 ? 'bg-yellow-500' : 
+              'bg-green-500'
+            }`}></div>
+            <span className={`text-sm font-medium ${
+              question.length > 180 ? 'text-red-500' : 
+              question.length > 150 ? 'text-yellow-500' : 
+              'text-gray-500'
+            }`}>
+              {question.length}/200
+            </span>
+          </div>
         </div>
       </div>
 

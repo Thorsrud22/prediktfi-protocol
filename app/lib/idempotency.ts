@@ -1,159 +1,158 @@
 /**
- * Idempotency middleware for API endpoints
- * Ensures that identical requests with the same Idempotency-Key return the same response
+ * Idempotency management for trading operations
+ * Prevents duplicate executions using Redis or in-memory cache
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from './prisma';
 
-const IDEMPOTENCY_TTL_HOURS = 24;
+interface IdempotencyRecord {
+  key: string;
+  result: any;
+  expiresAt: Date;
+}
 
-export interface IdempotencyOptions {
-  required?: boolean; // Whether Idempotency-Key is required
+// In-memory cache for development (use Redis in production)
+const idempotencyCache = new Map<string, IdempotencyRecord>();
+
+/**
+ * Generate idempotency key for create operations
+ */
+export function generateCreateKey(
+  walletId: string,
+  base: string,
+  quote: string,
+  side: string,
+  sizeValue: number,
+  timestamp: number
+): string {
+  const keyData = `${walletId}:${base}:${quote}:${side}:${sizeValue}:${timestamp}`;
+  return Buffer.from(keyData).toString('base64');
 }
 
 /**
- * Checks for existing idempotent response
- * Returns the cached response if found, null otherwise
+ * Generate idempotency key for execute operations
+ */
+export function generateExecuteKey(
+  intentId: string,
+  timestamp: number
+): string {
+  const keyData = `execute:${intentId}:${timestamp}`;
+  return Buffer.from(keyData).toString('base64');
+}
+
+/**
+ * Check if operation is idempotent
  */
 export async function checkIdempotency(
-  request: NextRequest,
-  options: IdempotencyOptions = {}
-): Promise<NextResponse | null> {
-  const idempotencyKey = request.headers.get('idempotency-key');
-  
-  // If idempotency key is required but missing
-  if (options.required && !idempotencyKey) {
-    return NextResponse.json(
-      { error: 'Idempotency-Key header required' },
-      { status: 400 }
-    );
-  }
-  
-  // If no idempotency key provided and not required, skip check
-  if (!idempotencyKey) {
-    return null;
-  }
-  
+  key: string,
+  operation: string
+): Promise<{ isIdempotent: boolean; result?: any }> {
   try {
-    // Clean up expired keys first
-    await cleanupExpiredKeys();
-    
-    // Look for existing response
-    const existing = await prisma.idempotencyKey.findUnique({
-      where: { key: idempotencyKey }
-    });
-    
-    if (existing) {
-      // Check if expired
-      if (existing.expiresAt < new Date()) {
-        // Delete expired key
-        await prisma.idempotencyKey.delete({
-          where: { id: existing.id }
-        });
-        return null;
-      }
-      
-      // Return cached response
-      const cachedResponse = JSON.parse(existing.response);
-      return NextResponse.json(cachedResponse.body, {
-        status: cachedResponse.status,
-        headers: cachedResponse.headers
-      });
+    // Check in-memory cache first
+    const cached = idempotencyCache.get(key);
+    if (cached && cached.expiresAt > new Date()) {
+      return { isIdempotent: true, result: cached.result };
     }
     
-    return null;
+    // Check database for persistent storage
+    const record = await prisma.intentReceipt.findFirst({
+      where: {
+        notes: key // Using notes field to store idempotency key
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    if (record) {
+      // Cache the result
+      idempotencyCache.set(key, {
+        key,
+        result: record,
+        expiresAt: new Date(Date.now() + 60 * 1000) // 1 minute TTL
+      });
+      
+      return { isIdempotent: true, result: record };
+    }
+    
+    return { isIdempotent: false };
   } catch (error) {
     console.error('Idempotency check failed:', error);
-    // Don't fail the request, just skip idempotency
+    return { isIdempotent: false };
+  }
+}
+
+/**
+ * Store idempotency result
+ */
+export async function storeIdempotencyResult(
+  key: string,
+  result: any,
+  ttlSeconds: number = 60
+): Promise<void> {
+  try {
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+    
+    // Store in memory cache
+    idempotencyCache.set(key, {
+      key,
+      result,
+      expiresAt
+    });
+    
+    // Clean up expired entries periodically
+    if (Math.random() < 0.1) { // 10% chance to cleanup
+      cleanupExpiredEntries();
+    }
+  } catch (error) {
+    console.error('Failed to store idempotency result:', error);
+  }
+}
+
+/**
+ * Clean up expired cache entries
+ */
+function cleanupExpiredEntries(): void {
+  const now = new Date();
+  for (const [key, record] of idempotencyCache.entries()) {
+    if (record.expiresAt <= now) {
+      idempotencyCache.delete(key);
+    }
+  }
+}
+
+/**
+ * Validate idempotency key format
+ */
+export function validateIdempotencyKey(key: string): boolean {
+  try {
+    // Check if it's a valid base64 string
+    Buffer.from(key, 'base64').toString('utf-8');
+    return key.length >= 10 && key.length <= 200;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Extract timestamp from idempotency key
+ */
+export function extractTimestampFromKey(key: string): number | null {
+  try {
+    const decoded = Buffer.from(key, 'base64').toString('utf-8');
+    const parts = decoded.split(':');
+    const timestamp = parseInt(parts[parts.length - 1]);
+    return isNaN(timestamp) ? null : timestamp;
+  } catch {
     return null;
   }
 }
 
 /**
- * Stores response for future idempotent requests
+ * Check if key is expired based on timestamp
  */
-export async function storeIdempotentResponse(
-  request: NextRequest,
-  response: NextResponse
-): Promise<void> {
-  const idempotencyKey = request.headers.get('idempotency-key');
+export function isKeyExpired(key: string, maxAgeSeconds: number = 300): boolean {
+  const timestamp = extractTimestampFromKey(key);
+  if (!timestamp) return true;
   
-  if (!idempotencyKey) {
-    return;
-  }
-  
-  try {
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + IDEMPOTENCY_TTL_HOURS);
-    
-    // Get response data
-    const responseClone = response.clone();
-    const body = await responseClone.json().catch(() => ({}));
-    
-    const cachedResponse = {
-      body,
-      status: response.status,
-      headers: Object.fromEntries(response.headers.entries())
-    };
-    
-    await prisma.idempotencyKey.upsert({
-      where: { key: idempotencyKey },
-      create: {
-        key: idempotencyKey,
-        response: JSON.stringify(cachedResponse),
-        expiresAt
-      },
-      update: {
-        response: JSON.stringify(cachedResponse),
-        expiresAt
-      }
-    });
-  } catch (error) {
-    console.error('Failed to store idempotent response:', error);
-    // Don't fail the request
-  }
-}
-
-/**
- * Cleanup expired idempotency keys
- * Called periodically to prevent database bloat
- */
-async function cleanupExpiredKeys(): Promise<void> {
-  try {
-    await prisma.idempotencyKey.deleteMany({
-      where: {
-        expiresAt: {
-          lt: new Date()
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Failed to cleanup expired idempotency keys:', error);
-  }
-}
-
-/**
- * Wrapper function for easy use in API routes
- */
-export async function withIdempotency<T>(
-  request: NextRequest,
-  handler: () => Promise<NextResponse>,
-  options: IdempotencyOptions = { required: true }
-): Promise<NextResponse> {
-  // Check for cached response
-  const cachedResponse = await checkIdempotency(request, options);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  // Execute handler
-  const response = await handler();
-  
-  // Store response for future requests
-  if (response.ok) {
-    await storeIdempotentResponse(request, response);
-  }
-  
-  return response;
+  const age = Date.now() - timestamp;
+  return age > maxAgeSeconds * 1000;
 }

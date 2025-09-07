@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
+import crypto from 'crypto';
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,8 +38,16 @@ export async function GET(request: NextRequest) {
     // Generate SVG receipt
     const svg = generateReceiptSVG(insight);
 
-    // Set caching headers
-    const etag = `"${insight.updatedAt.getTime()}"`;
+    // Set caching headers - use content hash for proper cache invalidation
+    const contentHash = crypto.createHash('md5').update(JSON.stringify({
+      id: insight.id,
+      canonical: insight.canonical || insight.question,
+      probability: insight.p || insight.probability,
+      status: insight.status,
+      creator: insight.creator?.handle,
+      updatedAt: insight.updatedAt
+    })).digest('hex');
+    const etag = `"${contentHash}"`;
     const requestEtag = request.headers.get('if-none-match');
 
     if (requestEtag === etag) {
@@ -124,6 +133,11 @@ function generateReceiptSVG(insight: any): string {
   <!-- Date -->
   <text x="100" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#64748b">
     Created: ${new Date(insight.createdAt).toLocaleDateString()}
+  </text>
+  
+  <!-- Consent -->
+  <text x="100" y="450" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#64748b">
+    Consent: ${new Date().toLocaleString()}
   </text>
   
   <!-- QR Code placeholder -->

@@ -126,9 +126,15 @@ export default function TrendingMarkets({
     return (
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
         {[...Array(limit)].map((_, i) => (
-          <div key={i} className="bg-white/5 backdrop-blur-sm rounded-xl p-6 animate-pulse">
+          <div key={i} className="bg-white/5 backdrop-blur-sm rounded-xl p-6 animate-pulse border border-white/10">
+            <div className="absolute top-4 right-4 w-16 h-6 bg-white/20 rounded"></div>
             <div className="h-4 bg-white/10 rounded w-3/4 mb-4"></div>
-            <div className="h-3 bg-white/10 rounded w-1/2"></div>
+            <div className="h-3 bg-white/10 rounded w-1/2 mb-4"></div>
+            <div className="h-2 bg-white/10 rounded-full mb-4"></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-3 bg-white/10 rounded"></div>
+              <div className="h-3 bg-white/10 rounded"></div>
+            </div>
           </div>
         ))}
       </div>

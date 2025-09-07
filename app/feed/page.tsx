@@ -199,6 +199,26 @@ export default function FeedPage() {
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             <p className="text-blue-300 mt-2">Loading insights...</p>
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-gradient-to-br from-white/5 to-white/10 rounded-2xl border border-white/10 p-6 animate-pulse">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-white/20 rounded-lg"></div>
+                      <div className="h-4 bg-white/20 rounded w-16"></div>
+                    </div>
+                    <div className="h-6 bg-white/20 rounded w-20"></div>
+                  </div>
+                  <div className="h-4 bg-white/20 rounded w-3/4 mb-4"></div>
+                  <div className="h-4 bg-white/20 rounded w-1/2 mb-4"></div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-8 bg-white/20 rounded w-16"></div>
+                    <div className="h-4 bg-white/20 rounded w-12"></div>
+                  </div>
+                  <div className="h-2 bg-white/20 rounded-full"></div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

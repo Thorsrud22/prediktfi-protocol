@@ -9,6 +9,7 @@ import {
 } from "@solana/web3.js";
 import type { SendTransactionOptions } from "@solana/wallet-adapter-base";
 import { MEMO_PROGRAM_ID } from "./solana";
+import { sendTransactionWithRetry } from "./solana-retry";
 
 type WalletLike = {
   publicKey: PublicKey | null;
@@ -57,10 +58,16 @@ export async function sendSolWithMemo(args: {
   });
 
   const tx = new Transaction().add(transferIx, memoIx);
+  tx.feePayer = wallet.publicKey;
 
-  // Let wallet adapter set recent blockhash and fee payer inside sendTransaction
-  const signature = await wallet.sendTransaction(tx, connection, {
+  // Use retry logic with fresh blockhash for each attempt
+  const result = await sendTransactionWithRetry(connection, tx, {
     skipPreflight: false,
   });
-  return signature;
+  
+  if (!result.success) {
+    throw new Error(`Transaction failed: ${result.error}`);
+  }
+  
+  return result.signature;
 }

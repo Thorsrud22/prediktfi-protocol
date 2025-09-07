@@ -127,6 +127,12 @@ export default function Receipt({ insight, signature, slot, cluster }: ReceiptPr
               {cluster}
             </span>
           </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">Consent Given:</span>
+            <span className="text-sm text-gray-800">
+              {new Date().toLocaleString()}
+            </span>
+          </div>
         </div>
       </div>
 

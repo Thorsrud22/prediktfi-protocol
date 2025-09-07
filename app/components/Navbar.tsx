@@ -110,6 +110,14 @@ export default function Navbar() {
               Advisor
             </FastLink>
           )}
+          {isFeatureEnabled('ACTIONS') && (
+            <FastLink
+              href="/advisor/actions"
+              className="flex h-14 items-center px-3 text-sm font-semibold text-blue-100 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
+            >
+              Actions
+            </FastLink>
+          )}
           <FastLink
             href="/feed"
             className="flex h-14 items-center px-3 text-sm font-medium text-blue-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
@@ -176,16 +184,21 @@ export default function Navbar() {
           {/* Mobile hamburger */}
           <button
             type="button"
-            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-700 bg-slate-900/70 text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
+            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-700 bg-slate-900/70 text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 hover:bg-slate-800/70 transition-colors"
             aria-label="Open navigation menu"
             aria-haspopup="dialog"
             aria-expanded={open}
             onClick={() => setOpen(true)}
           >
-            <span
-              aria-hidden
-              className="block h-0.5 w-5 bg-current shadow-[0_6px_currentColor,0_-6px_currentColor]"
-            />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
         </div>
       </div>
@@ -232,6 +245,15 @@ export default function Navbar() {
                   onClick={() => setOpen(false)}
                 >
                   Advisor
+                </FastLink>
+              )}
+              {isFeatureEnabled('ACTIONS') && (
+                <FastLink
+                  href="/advisor/actions"
+                  className="rounded-md px-2 py-2 font-semibold text-slate-100 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors"
+                  onClick={() => setOpen(false)}
+                >
+                  Actions
                 </FastLink>
               )}
               <FastLink

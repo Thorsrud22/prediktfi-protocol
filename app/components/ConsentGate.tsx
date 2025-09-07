@@ -107,15 +107,21 @@ export default function ConsentGate({ forceShow = false, onConsentGiven }: Conse
         </div>
 
         <div className="space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-red-800 font-bold text-sm">
+              ⚠️ Predikt is a tool. You make the decision. No guarantees.
+            </p>
+          </div>
+          
           <div className="bg-[color:var(--surface-2)] rounded-[var(--radius)] p-4">
             <p className="text-sm text-[color:var(--text)] leading-relaxed">
               I confirm I am at least 18 years old and I accept the{" "}
               <Link 
-                href="/policy" 
+                href="/legal/terms" 
                 className="text-[color:var(--primary)] hover:underline"
                 target="_blank"
               >
-                Terms and Policy
+                Terms of Service
               </Link>
               .
             </p>

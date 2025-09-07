@@ -12,9 +12,12 @@ export default function TermsPage() {
         <h1 className="text-3xl font-bold text-[--text] mb-8">Terms of Service</h1>
         
         <div className="prose prose-gray max-w-none">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
-            <p className="text-yellow-800 font-medium">
-              ⚠️ Beta Platform - This is a testing environment for demonstration purposes.
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <p className="text-red-800 font-bold text-lg">
+              ⚠️ Predikt is a tool. You make the decision. No guarantees.
+            </p>
+            <p className="text-red-700 font-medium mt-2">
+              Beta Platform - This is a testing environment for demonstration purposes.
             </p>
           </div>
 
