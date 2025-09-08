@@ -4,33 +4,33 @@
  */
 
 :root {
-  /* Brand Colors - Core gradient from blue to purple */
-  --brand-primary: #3B82F6;    /* Blue */
-  --brand-secondary: #8B5CF6;  /* Purple */
-  --brand-accent: #10B981;     /* Green accent */
+  /* Brand Colors - Deep Blue Theme matching the image */
+  --brand-primary: #1E3A8A;    /* Deep Blue */
+  --brand-secondary: #3B82F6;  /* Bright Blue */
+  --brand-accent: #60A5FA;     /* Light Blue accent */
   
-  /* Background System - Professional palette */
-  --background-primary: #0A0F1C;     /* Deep slate */
-  --background-secondary: #0F1629;   /* Rich navy */
-  --background-tertiary: #1A202C;    /* Card/surface background */
+  /* Background System - Deep Blue Gradient */
+  --background-primary: #0F172A;     /* Very dark navy (darkest part of gradient) */
+  --background-secondary: #1E293B;   /* Dark slate blue */
+  --background-tertiary: #334155;    /* Medium slate for cards/surfaces */
   
-  /* Gradients - Enhanced professional gradients */
-  --gradient-brand: linear-gradient(135deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%);
-  --gradient-hero: linear-gradient(135deg, #0A0F1C 0%, #0F1629 25%, #1A202C 50%, #2D3748 75%, #1A202C 100%);
+  /* Gradients - Matching the image gradient */
+  --gradient-brand: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 50%, #60A5FA 100%);
+  --gradient-hero: linear-gradient(180deg, #0F172A 0%, #1E293B 25%, #334155 50%, #475569 75%, #1E293B 100%);
   
   /* Text Colors */
   --text-primary: #F8FAFC;      /* Pure white text */
   --text-secondary: #CBD5E1;    /* Muted text */
   --text-tertiary: #94A3B8;     /* Subtle text */
   
-  /* Interactive Elements */
-  --interactive-primary: #10B981;
-  --interactive-hover: #059669;
-  --interactive-focus: #0D9488;
+  /* Interactive Elements - Blue theme */
+  --interactive-primary: #3B82F6;
+  --interactive-hover: #2563EB;
+  --interactive-focus: #1D4ED8;
   
-  /* Borders and Dividers */
-  --border-primary: #334155;
-  --border-secondary: #475569;
+  /* Borders and Dividers - Matching blue theme */
+  --border-primary: #475569;
+  --border-secondary: #64748B;
   
   /* Spacing Scale */
   --space-xs: 0.25rem;    /* 4px */

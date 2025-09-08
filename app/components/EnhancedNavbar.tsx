@@ -66,12 +66,9 @@ export default function EnhancedNavbar() {
             className="flex items-center gap-3 hover:scale-105 transition-all duration-200"
           >
           {/* Logo Text */}
-          <div className="flex flex-col">
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent leading-tight">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-teal-200 to-cyan-200 bg-clip-text text-transparent leading-tight">
               Predikt
-            </span>
-            <span className="text-xs text-blue-300/70 font-medium tracking-wider uppercase">
-              AI Studio
             </span>
           </div>
           </Link>

@@ -8,27 +8,44 @@ import { prisma } from '../../../lib/prisma';
 import { polymarketClient } from '../../../lib/markets/polymarket';
 // import { kalshiClient } from '../../../lib/markets/kalshi';
 
+// Cache trending markets for 60 seconds
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 60 * 1000; // 60 seconds
+
 export async function GET(request: NextRequest) {
   try {
     // Get search params
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get('limit') || '6');
+    const cacheKey = `trending-${limit}`;
     
-    // Fetch trending insights from our database
-    const now = new Date(); // Current date
+    // Check cache first
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return NextResponse.json(cached.data);
+    }
+    
+    // Fetch trending insights from our database - optimized query
+    const now = new Date();
     const trendingInsights = await prisma.insight.findMany({
       where: {
         status: 'COMMITTED',
         deadline: {
-          gte: now // Only future predictions (comparing dates)
+          gte: now
         }
       },
       orderBy: [
-        { marketVolume: 'desc' }, // Prioritize by volume first
+        { marketVolume: 'desc' },
         { createdAt: 'desc' }
       ],
-      take: 2, // Show only 2 PREDIKT markets to make room for Polymarket
-      include: {
+      take: Math.min(limit, 6), // Limit database query
+      select: {
+        id: true,
+        question: true,
+        probability: true,
+        marketVolume: true,
+        deadline: true,
+        status: true,
         creator: {
           select: {
             handle: true,
@@ -87,10 +104,19 @@ export async function GET(request: NextRequest) {
     });
     const topMarkets = combinedMarkets.slice(0, limit);
 
-    return NextResponse.json({
+    const responseData = {
       markets: topMarkets,
       totalCount: topMarkets.length,
       timestamp: new Date().toISOString()
+    };
+
+    // Cache the response
+    cache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+      }
     });
 
   } catch (error) {

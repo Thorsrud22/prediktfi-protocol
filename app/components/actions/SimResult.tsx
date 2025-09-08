@@ -28,6 +28,14 @@ interface SimResultProps {
       confidence: string;
       sampleSize: number;
     };
+    // Enhanced slippage information
+    slippageCap?: {
+      userMaxBps: number;
+      dynamicCapBps: number;
+      appliedCapBps: number;
+      capUsedPct: number;
+      isDynamic: boolean;
+    };
   };
   historicalAccuracy?: {
     accuracy: number;
@@ -47,7 +55,8 @@ export default function SimResult({ simulation, historicalAccuracy, onClose }: S
     portfolioAfter,
     simConfidence,
     quoteTimestamp,
-    historicalAccuracy: simHistoricalAccuracy
+    historicalAccuracy: simHistoricalAccuracy,
+    slippageCap
   } = simulation;
 
   const [quoteAge, setQuoteAge] = useState(0);
@@ -140,6 +149,80 @@ export default function SimResult({ simulation, historicalAccuracy, onClose }: S
                 </span>
               </div>
             </div>
+            
+            {/* Dynamic Slippage Cap Visualization */}
+            {slippageCap && (
+              <div className="mt-4 pt-3 border-t border-[color:var(--border)]">
+                <div className="text-xs font-medium text-[color:var(--text)] mb-2">
+                  Slippage Cap Usage
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[color:var(--muted)]">Applied Cap</span>
+                    <span className="text-[color:var(--text)]">
+                      {slippageCap.appliedCapBps} bps
+                      {slippageCap.isDynamic && (
+                        <span className="ml-1 text-blue-500" title="Dynamically adjusted">
+                          ⚡
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  
+                  {/* Cap Usage Bar */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-[color:var(--muted)]">Cap Used</span>
+                      <span className="text-[color:var(--text)]">
+                        {slippageCap.capUsedPct.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          slippageCap.capUsedPct < 50 ? 'bg-green-500' :
+                          slippageCap.capUsedPct < 80 ? 'bg-yellow-500' :
+                          'bg-red-500'
+                        }`}
+                        style={{ width: `${Math.min(slippageCap.capUsedPct, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Cap Details */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-[color:var(--muted)]">User Max:</span>
+                      <span className="ml-1 text-[color:var(--text)]">
+                        {slippageCap.userMaxBps} bps
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[color:var(--muted)]">Dynamic:</span>
+                      <span className="ml-1 text-[color:var(--text)]">
+                        {slippageCap.dynamicCapBps} bps
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Trust Building Message */}
+                  <div className="text-xs text-[color:var(--muted)] mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                    <div className="flex items-center gap-1">
+                      <span className="text-blue-500">🛡️</span>
+                      <span className="font-medium text-blue-800">
+                        Smart Slippage Protection
+                      </span>
+                    </div>
+                    <div className="text-blue-700 mt-1">
+                      {slippageCap.isDynamic 
+                        ? `Dynamic cap applied based on market impact (${slippageCap.dynamicCapBps} bps)`
+                        : `Using your specified cap (${slippageCap.userMaxBps} bps)`
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Portfolio Impact */}

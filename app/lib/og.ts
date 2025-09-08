@@ -15,13 +15,13 @@ export interface OGColors {
 
 export const colors: OGColors = {
   primary: '#3b82f6',
-  secondary: '#7c3aed', 
+  secondary: '#0d9488', 
   success: '#10b981',
   warning: '#f59e0b',
   error: '#ef4444',
   text: '#ffffff',
   textMuted: 'rgba(255, 255, 255, 0.8)',
-  background: 'linear-gradient(135deg, #1e1b4b 0%, #7c3aed 50%, #2563eb 100%)',
+  background: 'linear-gradient(135deg, #1e1b4b 0%, #0d9488 50%, #2563eb 100%)',
   surface: 'rgba(255, 255, 255, 0.1)',
   border: 'rgba(255, 255, 255, 0.2)',
 };

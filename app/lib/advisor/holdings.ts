@@ -1,5 +1,5 @@
 // app/lib/advisor/holdings.ts
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Connection } from '@solana/web3.js';
 import { prisma } from '../prisma';
 
 export interface Holding {
@@ -37,6 +37,7 @@ export interface PortfolioSnapshot {
 export class HoldingsService {
   private static readonly SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
   private static readonly COINGECKO_API = 'https://api.coingecko.com/api/v3';
+  private static connection = new Connection(this.SOLANA_RPC_URL, 'confirmed');
 
   static async getPortfolioSnapshot(walletAddress: string): Promise<PortfolioSnapshot> {
     try {
@@ -57,20 +58,58 @@ export class HoldingsService {
   }
 
   private static async getTokenAccounts(walletAddress: string): Promise<any[]> {
-    // This would integrate with Solana RPC to get token accounts
-    // For now, return mock data
-    return [
-      {
-        mint: 'So11111111111111111111111111111111111111112', // SOL
-        amount: '1000000000', // 1 SOL in lamports
-        decimals: 9
-      },
-      {
-        mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-        amount: '500000000', // 500 USDC
-        decimals: 6
+    try {
+      const publicKey = new PublicKey(walletAddress);
+      const accounts = [];
+
+      // Get SOL balance
+      const solBalance = await this.connection.getBalance(publicKey);
+      if (solBalance > 0) {
+        accounts.push({
+          mint: 'So11111111111111111111111111111111111111112', // SOL
+          amount: solBalance.toString(),
+          decimals: 9
+        });
       }
-    ];
+
+      // Get SPL token accounts
+      const tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(publicKey, {
+        programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+      });
+
+      for (const account of tokenAccounts.value) {
+        const tokenInfo = account.account.data.parsed.info;
+        const tokenAmount = tokenInfo.tokenAmount;
+        
+        // Only include accounts with balance > 0
+        if (parseFloat(tokenAmount.amount) > 0) {
+          accounts.push({
+            mint: tokenInfo.mint,
+            amount: tokenAmount.amount,
+            decimals: tokenAmount.decimals
+          });
+        }
+      }
+
+      return accounts;
+    } catch (error) {
+      console.error('Error fetching token accounts:', error);
+      
+      // Fallback to mock data if RPC fails
+      console.warn('Using mock data due to RPC error');
+      return [
+        {
+          mint: 'So11111111111111111111111111111111111111112', // SOL
+          amount: '1000000000', // 1 SOL in lamports
+          decimals: 9
+        },
+        {
+          mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+          amount: '500000000', // 500 USDC
+          decimals: 6
+        }
+      ];
+    }
   }
 
   private static async enrichHoldingsWithPrices(tokenAccounts: any[]): Promise<Holding[]> {
@@ -100,39 +139,57 @@ export class HoldingsService {
   }
 
   private static async getTokenPrice(mint: string): Promise<{ symbol: string; price: number }> {
-    // Map common Solana tokens to CoinGecko IDs
-    const tokenMap: { [key: string]: string } = {
-      'So11111111111111111111111111111111111111112': 'solana', // SOL
-      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 'usd-coin', // USDC
-      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 'tether', // USDT
-      'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So': 'marinade-staked-sol', // mSOL
-      '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs': 'ethereum', // ETH (Wormhole)
+    // Map common Solana tokens to CoinGecko IDs and symbols
+    const tokenMap: { [key: string]: { coinGeckoId: string; symbol: string } } = {
+      'So11111111111111111111111111111111111111112': { coinGeckoId: 'solana', symbol: 'SOL' },
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': { coinGeckoId: 'usd-coin', symbol: 'USDC' },
+      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': { coinGeckoId: 'tether', symbol: 'USDT' },
+      'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So': { coinGeckoId: 'marinade-staked-sol', symbol: 'mSOL' },
+      '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs': { coinGeckoId: 'ethereum', symbol: 'ETH' },
+      '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E': { coinGeckoId: 'bitcoin', symbol: 'BTC' },
+      'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': { coinGeckoId: 'bonk', symbol: 'BONK' },
+      'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN': { coinGeckoId: 'jupiter-exchange-solana', symbol: 'JUP' },
     };
 
-    const coinGeckoId = tokenMap[mint];
-    if (!coinGeckoId) {
-      throw new Error(`Unknown token: ${mint}`);
+    const tokenInfo = tokenMap[mint];
+    if (!tokenInfo) {
+      // For unknown tokens, try to use the mint address as symbol and return 0 price
+      console.warn(`Unknown token: ${mint}`);
+      return {
+        symbol: mint.slice(0, 8) + '...',
+        price: 0
+      };
     }
 
     try {
       const response = await fetch(
-        `${this.COINGECKO_API}/simple/price?ids=${coinGeckoId}&vs_currencies=usd`
+        `${this.COINGECKO_API}/simple/price?ids=${tokenInfo.coinGeckoId}&vs_currencies=usd`,
+        { 
+          next: { revalidate: 300 } // Cache for 5 minutes
+        }
       );
       
       if (!response.ok) {
-        throw new Error('CoinGecko API request failed');
+        console.warn(`CoinGecko API request failed for ${tokenInfo.symbol}`);
+        return {
+          symbol: tokenInfo.symbol,
+          price: 0
+        };
       }
       
       const data = await response.json();
-      const price = data[coinGeckoId]?.usd || 0;
+      const price = data[tokenInfo.coinGeckoId]?.usd || 0;
       
       return {
-        symbol: coinGeckoId.toUpperCase(),
+        symbol: tokenInfo.symbol,
         price
       };
     } catch (error) {
-      console.error(`Error fetching price for ${coinGeckoId}:`, error);
-      throw error;
+      console.error(`Error fetching price for ${tokenInfo.symbol}:`, error);
+      return {
+        symbol: tokenInfo.symbol,
+        price: 0
+      };
     }
   }
 

@@ -12,9 +12,14 @@ import TradePanel from '../../components/actions/TradePanel';
 import IntentCard from '../../components/actions/IntentCard';
 import SimResult from '../../components/actions/SimResult';
 import AccuracyAlerts from '../../components/actions/AccuracyAlerts';
+import PnLWidget from '../../components/actions/PnLWidget';
+import InviteCodeWidget from '../../components/actions/InviteCodeWidget';
+import AggregatorFallbackBanner from '../../components/actions/AggregatorFallbackBanner';
 import { priceMonitor } from '../../lib/intents/price-monitor';
 import KillSwitchStatus from '../../components/actions/KillSwitchStatus';
 import ToSAcceptance from '../../components/actions/ToSAcceptance';
+import { AccuracyAlertBanner } from '../../components/quality/AccuracyAlertBanner';
+import { SimulateOnlyBanner } from '../../components/chaos/SimulateOnlyBanner';
 
 interface Intent {
   id: string;
@@ -261,11 +266,28 @@ export default function ActionsPage() {
               {/* Kill Switch Status */}
               <KillSwitchStatus />
 
+              {/* Aggregator Fallback Banner */}
+              <AggregatorFallbackBanner />
+
               {/* ToS Acceptance */}
               <ToSAcceptance />
 
               {/* Accuracy Alerts */}
               <AccuracyAlerts />
+
+              {/* Quality Alert Banner */}
+              <AccuracyAlertBanner className="mb-6" />
+
+              {/* Simulate-Only Banner (Chaos Testing) */}
+              <SimulateOnlyBanner className="mb-6" />
+
+              {/* P&L Widget */}
+              <PnLWidget walletId={selectedWallet} className="mb-6" />
+
+              {/* Invite Code Widget */}
+              {isFeatureEnabled('INVITE_CODES') && (
+                <InviteCodeWidget walletId={selectedWallet} className="mb-6" />
+              )}
 
               {/* Controls */}
               <div className="flex items-center justify-between mb-6">

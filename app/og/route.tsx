@@ -13,7 +13,7 @@ export async function GET() {
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
-					background: 'linear-gradient(135deg, #0b0b0c 0%, #1e1b4b 50%, #7c3aed 100%)',
+					background: 'linear-gradient(135deg, #0b0b0c 0%, #1e1b4b 50%, #0d9488 100%)',
 					color: 'white',
 					fontFamily: 'system-ui, -apple-system, sans-serif',
 				}}

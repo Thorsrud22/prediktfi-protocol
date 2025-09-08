@@ -4,6 +4,12 @@ export interface FeatureFlags {
   ALERTS: boolean;
   ACTIONS: boolean;
   EMBED_INTENT: boolean;
+  INVITE_CODES: boolean;
+  MONETIZATION: boolean;
+  PRO_TRIALS: boolean;
+  QUOTA_SYSTEM: boolean;
+  QUALITY_MONITORING: boolean;
+  CHAOS_TESTING: boolean;
   ENSEMBLE_ANALYSIS: boolean;
   CONTEXTUAL_ANALYSIS: boolean;
 }
@@ -22,6 +28,16 @@ export function getFeatureFlags(): FeatureFlags {
     // Actions features - STRICT: OFF in production, ON in staging/dev
     ACTIONS: (process.env.FEATURE_ACTIONS === 'true' || isDevelopment || isStaging) && !isProduction,
     EMBED_INTENT: (process.env.FEATURE_EMBED_INTENT === 'true' || isDevelopment || isStaging) && !isProduction,
+    INVITE_CODES: (process.env.FEATURE_INVITE_CODES === 'true' || isDevelopment || isStaging) && !isProduction,
+    
+    // Monetization features - enabled by default
+    MONETIZATION: process.env.FEATURE_MONETIZATION !== 'false',
+    PRO_TRIALS: process.env.FEATURE_PRO_TRIALS !== 'false',
+    QUOTA_SYSTEM: process.env.FEATURE_QUOTA_SYSTEM !== 'false',
+    
+    // Quality monitoring - enabled by default
+    QUALITY_MONITORING: process.env.FEATURE_QUALITY_MONITORING !== 'false',
+    CHAOS_TESTING: process.env.FEATURE_CHAOS_TESTING === 'true' || isDevelopment || isStaging,
     
     // AI features - enabled by default
     ENSEMBLE_ANALYSIS: process.env.FEATURE_ENSEMBLE !== 'false',

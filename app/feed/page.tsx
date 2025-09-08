@@ -109,8 +109,8 @@ export default function FeedPage() {
       'crypto': 'from-orange-500 to-yellow-500',
       'stocks': 'from-green-500 to-emerald-500',
       'tech': 'from-blue-500 to-cyan-500',
-      'politics': 'from-red-500 to-pink-500',
-      'sports': 'from-purple-500 to-violet-500',
+      'politics': 'from-red-500 to-orange-500',
+      'sports': 'from-teal-500 to-cyan-500',
       'general': 'from-gray-500 to-slate-500'
     };
     return colors[category.toLowerCase()] || 'from-gray-500 to-slate-500';
@@ -120,12 +120,12 @@ export default function FeedPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Enhanced Header */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-cyan-600/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-teal-600/20 to-cyan-600/20"></div>
         <div className="relative bg-[#0B1426]/80 border-b border-blue-800/30 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 py-8">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div className="flex-1">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-300 via-purple-300 to-cyan-300 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
                   Insights Feed
                 </h1>
                 <p className="text-blue-200/80 mt-2 text-lg">
@@ -152,7 +152,7 @@ export default function FeedPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   href="/studio"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -181,7 +181,7 @@ export default function FeedPage() {
                 onClick={() => handleFilterChange(filter)}
                 className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                   currentFilter === filter
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg'
                     : 'bg-white/10 text-blue-200 hover:bg-white/20 hover:scale-105'
                 }`}
               >
@@ -281,7 +281,7 @@ export default function FeedPage() {
                 {/* Probability Display */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
                       {Math.round((insight.p || insight.probability) * 100)}%
                     </div>
                     <div className="text-sm text-blue-200">
@@ -297,7 +297,7 @@ export default function FeedPage() {
                 <div className="mb-4">
                   <div className="w-full bg-white/10 rounded-full h-2">
                     <div 
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                      className="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${(insight.p || insight.probability) * 100}%` }}
                     ></div>
                   </div>
@@ -307,7 +307,7 @@ export default function FeedPage() {
                 {insight.creator && (
                   <div className="flex items-center justify-between pt-4 border-t border-white/10">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-teal-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                         {insight.creator.handle.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -350,7 +350,7 @@ export default function FeedPage() {
                     onClick={() => handlePageChange(pageNum)}
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 ${
                       currentPage === pageNum
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                        ? 'bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg'
                         : 'bg-white/10 text-blue-200 hover:bg-white/20 border border-white/20'
                     }`}
                   >

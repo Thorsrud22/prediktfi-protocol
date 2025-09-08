@@ -55,6 +55,12 @@ export async function GET(
 
 function generateEmbedHTML(intent: any, receipt: any) {
   const statusColor = getStatusColor(receipt?.status);
+  
+  // Generate OG meta tags for social sharing
+  const ogTitle = `Predikt Trade: ${intent.side} ${intent.base}/${intent.quote}`;
+  const ogDescription = `Trading intent with ${Math.round(intent.confidence * 100)}% confidence. ${intent.rationale?.substring(0, 100)}...`;
+  const ogImage = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://predikt.fi'}/api/og/intent/${intent.id}`;
+  const ogUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://predikt.fi'}/embed/intent/${intent.id}`;
   const statusIcon = getStatusIcon(receipt?.status);
   
   return `
@@ -63,7 +69,26 @@ function generateEmbedHTML(intent: any, receipt: any) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Predikt Trade ${receipt?.status || 'Created'}</title>
+  <title>${ogTitle}</title>
+  
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="${ogTitle}">
+  <meta property="og:description" content="${ogDescription}">
+  <meta property="og:image" content="${ogImage}">
+  <meta property="og:url" content="${ogUrl}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Predikt">
+  
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${ogTitle}">
+  <meta name="twitter:description" content="${ogDescription}">
+  <meta name="twitter:image" content="${ogImage}">
+  
+  <!-- Additional Meta Tags -->
+  <meta name="description" content="${ogDescription}">
+  <meta name="theme-color" content="#3B82F6">
+  
   <style>
     * {
       margin: 0;
@@ -193,6 +218,63 @@ function generateEmbedHTML(intent: any, receipt: any) {
       font-size: 10px;
       color: #9ca3af;
     }
+    
+    .share-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .share-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    
+    .share-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .share-button {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .share-button.twitter {
+      background: #1da1f2;
+      color: white;
+    }
+    
+    .share-button.twitter:hover {
+      background: #0d8bd9;
+    }
+    
+    .share-button.linkedin {
+      background: #0077b5;
+      color: white;
+    }
+    
+    .share-button.linkedin:hover {
+      background: #005885;
+    }
+    
+    .share-button.copy {
+      background: #6b7280;
+      color: white;
+    }
+    
+    .share-button.copy:hover {
+      background: #4b5563;
+    }
   </style>
 </head>
 <body>
@@ -258,6 +340,22 @@ function generateEmbedHTML(intent: any, receipt: any) {
         </div>
       </div>
     ` : ''}
+    
+    <!-- Share Section -->
+    <div class="share-section">
+      <div class="share-title">Share this trade</div>
+      <div class="share-buttons">
+        <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(ogTitle)}&url=${encodeURIComponent(ogUrl)}" target="_blank" class="share-button twitter">
+          Share on X
+        </a>
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(ogUrl)}" target="_blank" class="share-button linkedin">
+          Share on LinkedIn
+        </a>
+        <button onclick="navigator.clipboard.writeText('${ogUrl}')" class="share-button copy">
+          Copy Link
+        </button>
+      </div>
+    </div>
     
     <!-- Footer -->
     <div class="footer">

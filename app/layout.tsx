@@ -9,7 +9,7 @@ import WalletProvider from "./components/WalletProviderDev";
 import ToastProvider from "./components/ToastProvider";
 import ConsentGate from "./components/ConsentGate";
 import AttributionBoot from "./components/AttributionBoot";
-import { ErrorBoundary } from "./components/ErrorBoundary";
+import ClientErrorBoundary from "./components/ClientErrorBoundary";
 import { SITE } from "./config/site";
 import { getPlanFromRequest } from "./lib/plan";
 import { headers } from "next/headers";
@@ -119,8 +119,8 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-br from-[#0B1426] via-[#1E3A8A] to-[#5B21B6] text-slate-100`}>
-        <ErrorBoundary>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-[#0F172A] text-slate-100`}>
+        <ClientErrorBoundary>
           <WalletProvider>
             <ToastProvider>
               <ConsentGate />
@@ -131,7 +131,7 @@ export default async function RootLayout({
               <Footer />
             </ToastProvider>
           </WalletProvider>
-        </ErrorBoundary>
+        </ClientErrorBoundary>
       </body>
     </html>
   );

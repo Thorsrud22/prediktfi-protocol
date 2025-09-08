@@ -75,7 +75,7 @@ export default function EnhancedHero() {
           {/* Main Heading */}
           <h1 className="font-extrabold leading-tight text-[clamp(2.25rem,7vw,5.5rem)] text-[color:var(--text)] mb-6">
             Ask smarter.{" "}
-            <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-500 via-teal-500 to-orange-500 bg-clip-text text-transparent">
               Log insights on-chain
             </span>
             .
@@ -103,7 +103,7 @@ export default function EnhancedHero() {
           {/* Trust Indicators */}
           <div className="flex items-center gap-4 text-sm text-[color:var(--muted)]/80">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+              <div className="w-5 h-5 bg-gradient-to-r from-teal-400 to-orange-400 rounded-full flex items-center justify-center">
                 <span className="text-xs font-bold text-white">S</span>
               </div>
               <span>Powered by Solana</span>
@@ -120,7 +120,7 @@ export default function EnhancedHero() {
 
       {/* Background Elements */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 -right-32 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-32 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
       </div>
     </section>

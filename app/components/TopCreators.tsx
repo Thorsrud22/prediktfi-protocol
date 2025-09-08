@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 
 interface Creator {
@@ -14,7 +14,7 @@ interface Creator {
   badge?: string;
 }
 
-export default function TopCreators({ className = '' }: { className?: string }) {
+const TopCreators = memo(function TopCreators({ className = '' }: { className?: string }) {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +22,7 @@ export default function TopCreators({ className = '' }: { className?: string }) 
     loadTopCreators();
   }, []);
 
-  const loadTopCreators = async () => {
+  const loadTopCreators = useCallback(async () => {
     try {
       const response = await fetch('/api/leaderboard?limit=5');
       if (response.ok) {
@@ -90,23 +90,23 @@ export default function TopCreators({ className = '' }: { className?: string }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getTrendIcon = (trend: string) => {
+  const getTrendIcon = useCallback((trend: string) => {
     switch (trend) {
       case 'up': return '📈';
       case 'down': return '📉';
       default: return '➡️';
     }
-  };
+  }, []);
 
-  const getTrendColor = (trend: string) => {
+  const getTrendColor = useCallback((trend: string) => {
     switch (trend) {
       case 'up': return 'text-green-400';
       case 'down': return 'text-red-400';
       default: return 'text-gray-400';
     }
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -169,4 +169,6 @@ export default function TopCreators({ className = '' }: { className?: string }) 
       </div>
     </div>
   );
-}
+});
+
+export default TopCreators;

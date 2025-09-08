@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { StampRequestSchema, StampResponse } from './_schemas';
 import { generateMerkleRoot } from './_merkle';
 import { prisma } from '../../lib/prisma';
-import { trackServer } from '../../lib/analytics';
+import { trackServer } from '../../../lib/analytics';
 import { Connection, Keypair, Transaction, SystemProgram, PublicKey, clusterApiUrl } from '@solana/web3.js';
 
 // Simple memo program for devnet

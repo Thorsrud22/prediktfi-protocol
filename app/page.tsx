@@ -1,12 +1,13 @@
 "use client";
 
+import React, { memo } from "react";
 import Hero from "./components/Hero";
 import TrendingMarkets from "./components/TrendingMarkets";
 import ActivityFeed from "./components/ActivityFeed";
 import TopCreators from "./components/TopCreators";
 import Link from "next/link";
 
-export default function Home() {
+const Home = memo(function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -60,7 +61,7 @@ export default function Home() {
             <div className="inline-flex flex-col sm:flex-row gap-4">
               <Link
                 href="/studio"
-                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all transform hover:scale-105"
               >
                 🚀 Start Creating
               </Link>
@@ -83,7 +84,7 @@ export default function Home() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center group">
-              <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2 group-hover:scale-110 transition-transform">
+              <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-400 mb-2 group-hover:scale-110 transition-transform">
                 1,234
               </div>
               <div className="text-gray-400">Active Predictions</div>
@@ -101,7 +102,7 @@ export default function Home() {
               <div className="text-gray-400">Accuracy Rate</div>
             </div>
             <div className="text-center group">
-              <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-red-400 mb-2 group-hover:scale-110 transition-transform">
+              <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 mb-2 group-hover:scale-110 transition-transform">
                 5,678
               </div>
               <div className="text-gray-400">Active Creators</div>
@@ -127,4 +128,6 @@ export default function Home() {
       </section>
     </div>
   );
-}
+});
+
+export default Home;

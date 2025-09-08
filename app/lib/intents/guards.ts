@@ -4,6 +4,12 @@
  */
 
 import { Guards, Size } from './schema';
+import { 
+  checkAssetLossCap, 
+  checkDailyLossCap, 
+  checkRunawayDay,
+  RiskViolation 
+} from './risk-management';
 
 export interface GuardViolation {
   code: string;
@@ -200,6 +206,61 @@ export function runGuards(
       violations.push(check);
     }
   });
+  
+  return violations;
+}
+
+/**
+ * Run all guards including enhanced risk management (async)
+ */
+export async function runGuardsEnhanced(
+  walletId: string,
+  size: Size,
+  portfolio: PortfolioSnapshot,
+  marketData: MarketData,
+  guards: Guards,
+  estimatedSlippageBps: number,
+  tradeLossUsd: number = 0,
+  dailyPnL?: number,
+  estimatedImpactBps?: number
+): Promise<GuardViolation[]> {
+  const violations: GuardViolation[] = [];
+  
+  // Run standard guards
+  const standardViolations = runGuards(
+    size, 
+    portfolio, 
+    marketData, 
+    guards, 
+    estimatedSlippageBps, 
+    dailyPnL, 
+    estimatedImpactBps
+  );
+  violations.push(...standardViolations);
+  
+  // Check enhanced risk management
+  try {
+    // Check runaway day
+    const runawayCheck = await checkRunawayDay(walletId);
+    if (runawayCheck) {
+      violations.push(runawayCheck);
+    }
+    
+    // Check per-asset loss cap
+    const assetCheck = await checkAssetLossCap(walletId, size.asset || 'SOL', portfolio, tradeLossUsd);
+    if (assetCheck) {
+      violations.push(assetCheck);
+    }
+    
+    // Check global daily loss cap
+    const dailyCheck = await checkDailyLossCap(walletId, portfolio, tradeLossUsd);
+    if (dailyCheck) {
+      violations.push(dailyCheck);
+    }
+  } catch (error) {
+    console.error('Error checking enhanced risk management:', error);
+    // Don't block trading if risk management check fails
+  }
   
   return violations;
 }

@@ -17,13 +17,22 @@ export default function Navbar() {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<Element | null>(null);
 
-  // Handle scroll state for navbar border
+  // Handle scroll state for navbar border with debouncing
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 10);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     
-    window.addEventListener('scroll', handleScroll);
+    // Use passive listener for better scroll performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -75,8 +84,8 @@ export default function Navbar() {
   }, [open]);
 
   return (
-    <nav className={`sticky top-0 z-50 bg-[#0B1426]/90 backdrop-blur-md transition-all ${
-      scrolled ? 'border-b border-blue-800/40' : 'border-b border-transparent'
+    <nav className={`sticky top-0 z-50 bg-[#0F172A]/90 backdrop-blur-md transition-all ${
+      scrolled ? 'border-b border-blue-700/40' : 'border-b border-transparent'
     }`}>
       <div className="mx-auto max-w-7xl px-4 flex h-14 items-center justify-between">
         <Link
@@ -85,12 +94,9 @@ export default function Navbar() {
           aria-label={SITE.name}
         >
           {/* Logo Text */}
-          <div className="flex flex-col items-start">
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-teal-200 to-cyan-200 bg-clip-text text-transparent leading-tight">
               Predikt
-            </span>
-            <span className="text-xs text-blue-300/70 font-medium tracking-wider uppercase -ml-px">
-              AI STUDIO
             </span>
           </div>
         </Link>
@@ -136,28 +142,11 @@ export default function Navbar() {
           >
             Account
             {isPro && (
-              <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+              <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
                 PRO
               </span>
             )}
           </FastLink>
-          <a
-            href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
-            className="flex h-14 items-center px-3 text-sm font-medium text-blue-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
-            target="_blank" 
-            rel="noreferrer noopener"
-          >
-            Docs
-          </a>
-          <a
-            href="https://github.com/Thorsrud22/prediktfi-protocol"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="flex h-14 items-center px-3 text-sm font-medium text-blue-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
-            aria-label="Open GitHub in a new tab"
-          >
-            GitHub
-          </a>
         </div>
         
         {/* Right side - Upgrade and Studio buttons */}
@@ -174,7 +163,7 @@ export default function Navbar() {
             href="/studio"
             className={`inline-flex h-10 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
               isInsightPage 
-                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl" 
+                ? "bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg hover:shadow-xl" 
                 : "border border-slate-600 bg-transparent text-slate-100 hover:bg-slate-800"
             }`}
           >
@@ -282,30 +271,11 @@ export default function Navbar() {
                   </span>
                 )}
               </FastLink>
-              <a
-                href="https://github.com/Thorsrud22/prediktfi-protocol#readme"
-                className="rounded-md px-2 py-2 text-slate-300 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
-                onClick={() => setOpen(false)}
-                tabIndex={0}
-                target="_blank" rel="noreferrer noopener"
-              >
-                Docs
-              </a>
-              <a
-                href="https://github.com/Thorsrud22/prediktfi-protocol"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="rounded-md px-2 py-2 text-slate-300 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
-                tabIndex={0}
-                onClick={() => setOpen(false)}
-              >
-                GitHub
-              </a>
               <Link
                 href="/studio"
                 className={`mt-2 inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-blue-500/60 ${
                   isInsightPage 
-                    ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg" 
+                    ? "bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg" 
                     : "border border-slate-600 bg-transparent text-slate-100/80 opacity-80 hover:opacity-100"
                 }`}
                 onClick={() => setOpen(false)}

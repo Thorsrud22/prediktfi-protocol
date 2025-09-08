@@ -15,6 +15,8 @@ import { createReceipt, updateReceiptOnExecute } from '../../../lib/intents/rece
 import { killSwitchService } from '../../../lib/kill-switch';
 import { geofencingService } from '../../../lib/geofencing';
 import { checkCombinedRateLimit } from '../../../lib/rate-limit-wallet';
+import { getQuoteWithFallback, buildSwapWithFallback, FallbackResult } from '../../../lib/aggregators/fallback-service';
+import { shouldForceSimulationOnly, shouldDisableAggregator, shouldTestIdempotency } from '../../../lib/chaos/chaos-testing';
 
 export async function POST(request: NextRequest) {
   // Check if actions feature is enabled
@@ -28,6 +30,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       error: 'Trading operations are currently disabled',
       reason: killSwitchCheck.reason
+    }, { status: 503 });
+  }
+
+  // Check chaos testing - force simulation only
+  if (shouldForceSimulationOnly()) {
+    return NextResponse.json({ 
+      error: 'System in simulation-only mode for chaos testing',
+      reason: 'Chaos test active: force_simulation_only',
+      simulationOnly: true
     }, { status: 503 });
   }
 

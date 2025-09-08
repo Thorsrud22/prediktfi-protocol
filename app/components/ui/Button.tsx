@@ -5,7 +5,7 @@ import { cn } from "../../lib/utils";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "outline";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
 }
@@ -15,10 +15,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const baseClasses = "inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
     
     const variants = {
-      primary: "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:opacity-90 hover:transform hover:-translate-y-0.5 focus-visible:ring-[var(--interactive-focus)] shadow-lg hover:shadow-xl rounded-[var(--radius-md)] font-semibold",
+      primary: "bg-gradient-to-r from-blue-500 to-teal-600 text-white hover:opacity-90 hover:transform hover:-translate-y-0.5 focus-visible:ring-[var(--interactive-focus)] shadow-lg hover:shadow-xl rounded-[var(--radius-md)] font-semibold",
       secondary: "bg-[var(--background-secondary)] border border-[var(--border-primary)] text-[var(--text-primary)] hover:bg-[var(--background-tertiary)] focus-visible:ring-[var(--interactive-focus)] rounded-[var(--radius-md)]",
       ghost: "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--background-secondary)] focus-visible:ring-[var(--interactive-focus)] rounded-[var(--radius-md)]",
-      danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 rounded-[var(--radius-md)]"
+      danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 rounded-[var(--radius-md)]",
+      outline: "border border-[var(--border-primary)] text-[var(--text-primary)] hover:bg-[var(--background-secondary)] focus-visible:ring-[var(--interactive-focus)] rounded-[var(--radius-md)] bg-transparent"
     };
 
     const sizes = {

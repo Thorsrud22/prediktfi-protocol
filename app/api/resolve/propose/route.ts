@@ -5,10 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '../../../lib/prisma';
+import { prisma } from '../../lib/prisma';
 import { resolveUrlInsight, parseUrlConfig } from '../../../../lib/resolvers/url';
 import { resolveTextInsight, parseTextConfig } from '../../../../lib/resolvers/text';
-import { withRateLimit } from '../../../lib/ratelimit';
+import { withRateLimit } from '../../lib/ratelimit';
 
 const ProposeRequestSchema = z.object({
   insightId: z.string().min(1),

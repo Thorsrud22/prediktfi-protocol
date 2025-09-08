@@ -48,14 +48,14 @@ const nextConfig = {
     ];
   },
   
-  // Performance optimizations for development
-  webpack: (config, { dev }) => {
+  // Performance optimizations
+  webpack: (config, { dev, isServer }) => {
     if (dev) {
       // Exclude heavy wallet dependencies in development
       config.resolve.alias = {
         ...config.resolve.alias,
         '@solana/wallet-adapter-wallets': require.resolve('./app/lib/wallet-adapters.dev.ts'),
-        'react-native': require.resolve('./app/lib/wallet-adapters.dev.ts'), // Mock heavy packages
+        'react-native': require.resolve('./app/lib/wallet-adapters.dev.ts'),
       };
       
       // Faster dev builds
@@ -79,8 +79,42 @@ const nextConfig = {
       
       // Skip source maps in development for speed
       config.devtool = false;
+    } else {
+      // Production optimizations
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+            },
+            solana: {
+              test: /[\\/]node_modules[\\/]@solana[\\/]/,
+              name: 'solana',
+              chunks: 'all',
+              priority: 20,
+            },
+            wallet: {
+              test: /[\\/]node_modules[\\/]@solana[\\/]wallet-adapter[\\/]/,
+              name: 'wallet-adapter',
+              chunks: 'all',
+              priority: 30,
+            },
+          },
+        },
+      };
     }
+    
     return config;
+  },
+  
+  // Enable experimental features for better performance
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react', '@heroicons/react'],
   },
 };
 

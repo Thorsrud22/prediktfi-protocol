@@ -64,7 +64,7 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
 
   const getConfidenceLevel = (probability: number) => {
     if (probability >= 0.8) return { level: 'Very High', color: 'text-green-400', bg: 'bg-green-500/20', icon: '🔥' };
-    if (probability >= 0.6) return { level: 'High', color: 'text-blue-400', bg: 'bg-blue-500/20', icon: '⚡' };
+    if (probability >= 0.6) return { level: 'High', color: 'text-teal-400', bg: 'bg-teal-500/10', icon: '⚡' };
     if (probability >= 0.4) return { level: 'Medium', color: 'text-yellow-400', bg: 'bg-yellow-500/20', icon: '📊' };
     return { level: 'Low', color: 'text-red-400', bg: 'bg-red-500/20', icon: '⚠️' };
   };
@@ -100,7 +100,7 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
     if (probability >= 0.8) return 'from-green-500 to-emerald-600';
     if (probability >= 0.6) return 'from-blue-500 to-cyan-600';
     if (probability >= 0.4) return 'from-yellow-500 to-orange-600';
-    return 'from-red-500 to-pink-600';
+    return 'from-red-500 to-orange-600';
   };
 
   return (
@@ -109,13 +109,13 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
       <div className="relative overflow-hidden">
         {/* Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900" />
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-teal-600/20 to-cyan-600/20" />
         
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-500/5 to-purple-500/5 rounded-full blur-3xl animate-pulse delay-500" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-500/5 to-teal-500/5 rounded-full blur-3xl animate-pulse delay-500" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 py-20">
@@ -204,7 +204,7 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                   <span className="text-white font-medium">Deadline: {format(deadline, 'MMM dd, yyyy')}</span>
                 </div>
                 <div className="flex items-center space-x-2 bg-white/10 rounded-xl px-4 py-2">
-                  <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                   </svg>
                   <span className="text-white font-medium">Resolver: {insight.resolverKind}</span>
@@ -220,7 +220,7 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
             {insight.creator && (
               <div className="flex items-center justify-center mb-6">
                 <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-teal-500 rounded-full flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>

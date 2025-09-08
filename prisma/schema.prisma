@@ -72,6 +72,8 @@ model Insight {
   @@index([status])
   @@index([tradingEnabled])
   @@index([lastMarketSync])
+  @@index([status, deadline, marketVolume])
+  @@index([deadline])
   @@map("insights")
 }
 
@@ -175,6 +177,12 @@ model Wallet {
   retention    UserRetention?
   shares       SocialShare[]
   intents      Intent[]
+  // Risk Management
+  assetLossCaps AssetLossCap[]
+  dailyLossCaps DailyLossCap[]
+  // Subscription Management
+  subscription UserSubscription?
+  proTrials    ProTrial[]
 
   @@index([address])
   @@index([chain])
@@ -337,6 +345,9 @@ model Intent {
 
   @@index([walletId, createdAt])
   @@index([base, quote])
+  @@index([strategyId])
+  @@index([side])
+  @@index([createdAt])
   @@map("intents")
 }
 
@@ -357,6 +368,8 @@ model IntentReceipt {
 
   @@index([intentId, createdAt])
   @@index([status])
+  @@index([createdAt])
+  @@index([blockTime])
   @@map("intent_receipts")
 }
 
@@ -375,6 +388,109 @@ model SimulatorAccuracy {
   @@index([side])
   @@index([deviationBps])
   @@map("simulator_accuracy")
+}
+
+model InviteCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  usedCount   Int      @default(0)
+  maxUses     Int      @default(100)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime?
+  
+  @@index([code])
+  @@index([isActive])
+  @@map("invite_codes")
+}
+
+model AssetLossCap {
+  id              String   @id @default(cuid())
+  walletId        String
+  asset           String   // SOL, ETH, BTC, etc.
+  maxLossPct      Float    // Max loss percentage per asset (e.g., 5.0 for 5%)
+  currentLossPct  Float    @default(0.0) // Current loss percentage
+  dailyLossUsd    Float    @default(0.0) // Daily loss in USD
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  @@unique([walletId, asset])
+  @@index([walletId])
+  @@index([asset])
+  @@map("asset_loss_caps")
+}
+
+model DailyLossCap {
+  id              String   @id @default(cuid())
+  walletId        String
+  maxDailyLossPct Float    // Max daily loss percentage (e.g., 10.0 for 10%)
+  currentLossPct  Float    @default(0.0) // Current daily loss percentage
+  dailyLossUsd    Float    @default(0.0) // Daily loss in USD
+  date            DateTime @default(now()) // Date for tracking
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  @@unique([walletId, date])
+  @@index([walletId])
+  @@index([date])
+  @@map("daily_loss_caps")
+}
+
+// User subscription and quota management
+model UserSubscription {
+  id              String   @id @default(cuid())
+  walletId        String   @unique
+  tier            UserTier @default(FREE)
+  status          SubscriptionStatus @default(ACTIVE)
+  trialEndsAt     DateTime?
+  subscriptionId  String?  // Coinbase Commerce charge ID
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  quotas          UserQuota[]
+  
+  @@index([tier])
+  @@index([status])
+  @@map("user_subscriptions")
+}
+
+model UserQuota {
+  id              String   @id @default(cuid())
+  subscriptionId  String
+  quotaType       QuotaType
+  limit           Int      // Weekly limit for this quota type
+  used            Int      @default(0)
+  resetAt         DateTime // When quota resets (weekly)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  subscription    UserSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  @@unique([subscriptionId, quotaType, resetAt])
+  @@index([subscriptionId])
+  @@index([quotaType])
+  @@index([resetAt])
+  @@map("user_quotas")
+}
+
+model ProTrial {
+  id              String   @id @default(cuid())
+  walletId        String
+  triggerType     TrialTriggerType
+  triggerData     String?  // JSON with trigger details (e.g., shared receipts)
+  startsAt        DateTime @default(now())
+  endsAt          DateTime
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  @@index([walletId])
+  @@index([isActive])
+  @@index([endsAt])
+  @@map("pro_trials")
 }
 
 enum ResolverKind {
@@ -398,4 +514,29 @@ enum OutcomeResult {
 enum DecisionMaker {
   AGENT
   USER
+}
+
+enum UserTier {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  TRIAL
+  EXPIRED
+  CANCELLED
+}
+
+enum QuotaType {
+  INTENTS_WEEKLY
+  INSIGHTS_DAILY
+  QUOTES_DAILY
+}
+
+enum TrialTriggerType {
+  SHARE_RECEIPTS
+  INVITE_CODE
+  MANUAL
 }

@@ -8,6 +8,8 @@ import { useState, useEffect } from 'react';
 import { getSmartDefaults, SmartDefaults } from '../../lib/intents/smart-defaults';
 import { PMFTracker } from '../../lib/analytics/pmf-tracker';
 import { Connection } from '@solana/web3.js';
+import { QuotaIndicator } from '../monetization/QuotaIndicator';
+import { QuotaWall } from '../monetization/QuotaWall';
 
 interface TradePanelProps {
   walletId: string;
@@ -54,8 +56,10 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
   const [calculatingDefaults, setCalculatingDefaults] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [simAccuracy, setSimAccuracy] = useState<{ accuracy30d: number; accuracy7d: number; confidence: string } | null>(null);
+  const [noiseFilterWarning, setNoiseFilterWarning] = useState<string | null>(null);
 
-  // Calculate smart defaults on component mount and side change
+  // Calculate smart defaults and simulation accuracy on component mount and side change
   useEffect(() => {
     const calculateDefaults = async () => {
       if (!walletId) return;
@@ -82,8 +86,62 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
       }
     };
 
+    const fetchSimAccuracy = async () => {
+      try {
+        const response = await fetch('/api/intents/sim-accuracy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            walletId,
+            base: formData.base,
+            quote: formData.quote 
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSimAccuracy(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch simulation accuracy:', error);
+      }
+    };
+
     calculateDefaults();
-  }, [walletId, formData.side, templateData]);
+    fetchSimAccuracy();
+  }, [walletId, formData.side, formData.base, formData.quote, templateData]);
+
+  // Check noise filter when size changes
+  useEffect(() => {
+    const checkNoiseFilter = async () => {
+      if (!walletId || !smartDefaults) return;
+      
+      const sizeUsd = formData.sizeType === 'pct' 
+        ? (smartDefaults.portfolioValueUsd * formData.sizeValue / 100)
+        : formData.sizeValue;
+      
+      try {
+        const response = await fetch('/api/intents/check-noise-filter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            sizeUsd,
+            base: formData.base,
+            quote: formData.quote 
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setNoiseFilterWarning(data.shouldBlock ? data.reason : null);
+        }
+      } catch (error) {
+        console.error('Failed to check noise filter:', error);
+      }
+    };
+
+    checkNoiseFilter();
+  }, [walletId, formData.sizeValue, formData.sizeType, formData.base, formData.quote, smartDefaults]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,6 +281,49 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
             </div>
           </div>
 
+          {/* Simulation Accuracy Display */}
+          {simAccuracy && (
+            <div className={`border rounded-lg p-3 ${
+              simAccuracy.accuracy7d < 50 
+                ? 'bg-red-50 border-red-200' 
+                : simAccuracy.accuracy7d < 70 
+                ? 'bg-yellow-50 border-yellow-200'
+                : 'bg-green-50 border-green-200'
+            }`}>
+              <div className="text-sm font-medium mb-2 flex items-center gap-2">
+                <span>🎯 Simulation Accuracy</span>
+                {simAccuracy.accuracy7d < 50 && <span className="text-red-500">⚠️</span>}
+                {simAccuracy.accuracy7d >= 50 && simAccuracy.accuracy7d < 70 && <span className="text-yellow-500">⚡</span>}
+                {simAccuracy.accuracy7d >= 70 && <span className="text-green-500">✅</span>}
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-gray-600">30d accuracy:</span> 
+                  <span className={`ml-1 font-medium ${
+                    simAccuracy.accuracy30d >= 70 ? 'text-green-600' : 
+                    simAccuracy.accuracy30d >= 50 ? 'text-yellow-600' : 'text-red-600'
+                  }`}>
+                    {simAccuracy.accuracy30d.toFixed(1)}% ±{simAccuracy.confidence === 'high' ? '50' : simAccuracy.confidence === 'medium' ? '100' : '200'} bps
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600">7d accuracy:</span> 
+                  <span className={`ml-1 font-medium ${
+                    simAccuracy.accuracy7d >= 70 ? 'text-green-600' : 
+                    simAccuracy.accuracy7d >= 50 ? 'text-yellow-600' : 'text-red-600'
+                  }`}>
+                    {simAccuracy.accuracy7d.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+              {simAccuracy.accuracy7d < 50 && (
+                <div className="text-red-700 text-xs mt-2">
+                  ⚠️ Low accuracy detected. Consider waiting for better conditions.
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Smart Defaults Display */}
           {smartDefaults && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
@@ -354,6 +455,18 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
             </div>
           </div>
 
+          {/* Noise Filter Warning */}
+          {noiseFilterWarning && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-4">
+              <p className="text-red-800 font-medium text-sm">
+                🚫 Trade Blocked by Noise Filter
+              </p>
+              <p className="text-red-700 text-xs mt-1">
+                {noiseFilterWarning}
+              </p>
+            </div>
+          )}
+
           {/* TP/SL Simulation Warning */}
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4">
             <p className="text-orange-800 font-medium text-sm">
@@ -387,6 +500,22 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
             </button>
           </div>
         </form>
+
+        {/* Quota Information */}
+        <div className="mt-4 pt-4 border-t border-[color:var(--border)]">
+          <div className="space-y-2">
+            <QuotaIndicator quotaType="intents" showLabel={true} />
+            <QuotaIndicator quotaType="quotes" showLabel={true} />
+          </div>
+        </div>
+
+        {/* Quota Wall */}
+        <QuotaWall 
+          quotaType="intents" 
+          onUpgrade={() => window.open('/pricing', '_blank')}
+          onTrialStart={() => window.location.reload()}
+          className="mt-4"
+        />
 
         {/* Share Options Modal */}
         {showShareOptions && (

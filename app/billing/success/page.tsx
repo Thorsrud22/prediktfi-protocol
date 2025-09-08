@@ -3,6 +3,9 @@ import { fetchChargeByCode, isMockMode } from "../../lib/coinbase";
 import { trackServer } from "../../lib/analytics";
 import { CopyButton } from "../../components/CopyButton";
 import CheckoutCompleted from "./CheckoutCompleted";
+import { upgradeToPro } from "../../lib/subscription";
+import { getWalletIdentifier } from "../../lib/wallet";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +51,18 @@ export default async function BillingSuccessPage({ searchParams }: { searchParam
 
     // Track successful checkout completion
     trackServer('checkout_completed');
+
+    // Upgrade user to Pro in database
+    const headersList = await headers();
+    const walletId = headersList.get('x-wallet-id');
+    if (walletId) {
+      try {
+        await upgradeToPro(walletId, chargeId);
+      } catch (error) {
+        console.error('Failed to upgrade user to Pro:', error);
+        // Continue with license generation even if DB upgrade fails
+      }
+    }
 
     const license = computeFromChargeId(chargeId);
 

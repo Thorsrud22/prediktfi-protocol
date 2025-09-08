@@ -1,10 +1,49 @@
-// Development mock for wallet adapters to improve performance
-// This file prevents loading heavy wallet dependencies during development
+// Development mock for heavy wallet adapter dependencies
+// This reduces bundle size and compilation time in development
 
-export const PhantomWalletAdapter = null;
-export const SolflareWalletAdapter = null;
+export const PhantomWalletAdapter = class {
+  name = 'Phantom';
+  url = 'https://phantom.app';
+  icon = '';
+  readyState = 'NotDetected';
+  publicKey = null;
+  connecting = false;
+  connected = false;
+  
+  connect = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  disconnect = () => Promise.resolve();
+  sendTransaction = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  signTransaction = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  signAllTransactions = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  signMessage = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  
+  on = () => {};
+  off = () => {};
+  removeListener = () => {};
+  emit = () => {};
+};
 
-// Mock wallet adapters array for development
-export const wallets = [];
+export const SolflareWalletAdapter = class {
+  name = 'Solflare';
+  url = 'https://solflare.com';
+  icon = '';
+  readyState = 'NotDetected';
+  publicKey = null;
+  connecting = false;
+  connected = false;
+  
+  connect = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  disconnect = () => Promise.resolve();
+  sendTransaction = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  signTransaction = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  signAllTransactions = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  signMessage = () => Promise.reject(new Error('Development mode: Wallet disabled'));
+  
+  on = () => {};
+  off = () => {};
+  removeListener = () => {};
+  emit = () => {};
+};
 
-console.log('🚀 Development mode: Wallet adapters disabled for faster compilation');
+// Mock for react-native and other heavy dependencies
+export default {};

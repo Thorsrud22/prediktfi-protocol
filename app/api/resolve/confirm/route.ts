@@ -5,9 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '../../../lib/prisma';
+import { prisma } from '../../lib/prisma';
 import { EVENT_TYPES, createEvent } from '../../../../lib/events';
-import { withRateLimit } from '../../../lib/ratelimit';
+import { withRateLimit } from '../../lib/ratelimit';
 import { updateProfileAggregates } from '../../../../lib/score';
 
 const ConfirmRequestSchema = z.object({

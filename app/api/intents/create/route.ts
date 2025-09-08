@@ -12,6 +12,10 @@ import { validateCreateIntent } from '../../../lib/intents/schema';
 import { checkIdempotency, generateCreateKey, validateIdempotencyKey } from '../../../lib/idempotency';
 import { runGuards, hasBlockingViolations } from '../../../lib/intents/guards';
 import { checkCombinedRateLimit } from '../../../lib/rate-limit-wallet';
+import { checkNoiseFilterWithMarketData } from '../../../lib/intents/noise-filter';
+import { checkQuota, consumeQuota } from '../../../lib/subscription';
+import { getWalletIdentifier } from '../../../lib/wallet';
+import { isFeatureEnabled } from '../../../lib/flags';
 
 export async function POST(request: NextRequest) {
   // Check if actions feature is enabled
@@ -38,6 +42,23 @@ export async function POST(request: NextRequest) {
   });
   if (walletRateLimitResponse) {
     return walletRateLimitResponse;
+  }
+
+  // Check quota if quota system is enabled
+  if (isFeatureEnabled('QUOTA_SYSTEM')) {
+    const walletId = getWalletIdentifier(request);
+    if (walletId) {
+      const quotaCheck = await checkQuota(walletId, 'INTENTS_WEEKLY', 1);
+      if (!quotaCheck.allowed) {
+        return NextResponse.json({
+          error: 'Quota exceeded',
+          code: 'QUOTA_EXCEEDED',
+          message: `Weekly intent quota exceeded. You have ${quotaCheck.remaining} intents remaining. Upgrade to Pro for 30 intents per week.`,
+          resetAt: quotaCheck.resetAt,
+          remaining: quotaCheck.remaining
+        }, { status: 429 });
+      }
+    }
   }
 
   try {
@@ -77,6 +98,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         error: 'Wallet not found or no holdings' 
       }, { status: 404 });
+    }
+    
+    // Check noise filter
+    const sizeUsd = intent.sizeJson.type === 'pct' 
+      ? (walletSnapshot.totalValueUsd * intent.sizeJson.value / 100)
+      : intent.sizeJson.value;
+    
+    const noiseFilterResult = await checkNoiseFilterWithMarketData(
+      sizeUsd,
+      intent.base,
+      intent.quote
+    );
+    
+    if (noiseFilterResult.shouldBlock) {
+      return NextResponse.json({
+        error: 'Noise filter blocked',
+        reason: noiseFilterResult.reason,
+        cooldownRemaining: noiseFilterResult.cooldownRemaining
+      }, { status: 400 });
     }
     
     // Run guards (basic validation)
@@ -120,6 +160,14 @@ export async function POST(request: NextRequest) {
     
     // Store idempotency result
     await storeIdempotencyResult(idempotencyKey, { intentId: createdIntent.id });
+    
+    // Consume quota if quota system is enabled
+    if (isFeatureEnabled('QUOTA_SYSTEM')) {
+      const walletId = getWalletIdentifier(request);
+      if (walletId) {
+        await consumeQuota(walletId, 'INTENTS_WEEKLY', 1);
+      }
+    }
     
     return NextResponse.json({
       success: true,

@@ -755,25 +755,25 @@ function StudioContent() {
                 </label>
 
                 {/* Ensemble Analysis - Pro Feature */}
-                <div className="relative">
-                  <label className={`flex items-center p-3 border border-[var(--border)] rounded-lg cursor-pointer hover:bg-[color:var(--surface-2)] ${!isPro ? 'opacity-60' : ''}`}>
+                <div className={`p-3 border border-[var(--border)] rounded-lg ${!isPro ? 'bg-slate-50/5 border-slate-200/20' : 'hover:bg-[color:var(--surface-2)]'}`}>
+                  <label className={`flex items-center cursor-pointer ${!isPro ? 'opacity-75' : ''}`}>
                     <input
                       type="radio"
                       name="analysisMode"
                       value="ensemble"
-                    checked={useEnsembleAnalysis && !useAdvancedAnalysis && !useContextualAnalysis}
-                    onChange={() => {
-                      setUseAdvancedAnalysis(false);
-                      setUseEnsembleAnalysis(true);
-                      setUseContextualAnalysis(false);
-                    }}
+                      checked={useEnsembleAnalysis && !useAdvancedAnalysis && !useContextualAnalysis}
+                      onChange={() => {
+                        setUseAdvancedAnalysis(false);
+                        setUseEnsembleAnalysis(true);
+                        setUseContextualAnalysis(false);
+                      }}
                       className="mr-3"
                       disabled={!isPro}
                     />
                     <div className="flex-1">
                       <div className="font-medium text-[color:var(--text)] flex items-center gap-2">
                         Ensemble Analysis ⭐
-                        <span className="px-2 py-1 text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full font-semibold">
+                        <span className="px-2 py-1 text-xs bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full font-semibold">
                           PRO
                         </span>
                       </div>
@@ -783,29 +783,25 @@ function StudioContent() {
                   
                   {/* Pro Upgrade Prompt - Only show if not Pro */}
                   {!isPro && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-                      <div className="text-center">
-                        <div className="text-white font-semibold mb-2">Pro Feature</div>
-                        <div className="space-y-2">
-                          <button 
-                            onClick={() => window.open('/pricing', '_blank')}
-                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg text-sm font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
-                          >
-                            Upgrade to Pro
-                          </button>
-                          <br />
-                          <button 
-                            onClick={() => {
-                              setIsProOverride(true);
-                              setUseEnsembleAnalysis(true);
-                              setUseAdvancedAnalysis(false);
-                              setUseContextualAnalysis(false);
-                            }}
-                            className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium hover:bg-green-600 transition-all"
-                          >
-                            🚀 Give me Pro (Dev)
-                          </button>
-                        </div>
+                    <div className="mt-3 pt-3 border-t border-slate-200/20">
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <button 
+                          onClick={() => window.open('/pricing', '_blank')}
+                          className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl"
+                        >
+                          Upgrade to Pro
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setIsProOverride(true);
+                            setUseEnsembleAnalysis(true);
+                            setUseAdvancedAnalysis(false);
+                            setUseContextualAnalysis(false);
+                          }}
+                          className="px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-lg text-sm font-medium hover:bg-emerald-500/20 transition-all"
+                        >
+                          🚀 Give me Pro (Dev)
+                        </button>
                       </div>
                     </div>
                   )}

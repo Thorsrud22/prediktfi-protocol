@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ReceiptList from '../components/receipts/ReceiptList';
+import PnLWidget from '../components/actions/PnLWidget';
 
 interface ReceiptItem {
   id: string;
@@ -136,6 +137,47 @@ export default function ReceiptsPage() {
           <p className="text-gray-600 dark:text-gray-400">
             Real-time feed of executed trading receipts from the community
           </p>
+        </div>
+
+        {/* Copy Trade CTA Banner */}
+        <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                🚀 Copy Successful Trades
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-3">
+                See a trade you like? Click "Copy Trade" to replicate the strategy with your own risk settings.
+              </p>
+              <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Pre-filled with original strategy
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  Customize position size & risk
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                  One-click to ACTIONS
+                </span>
+              </div>
+            </div>
+            <div className="ml-6">
+              <a
+                href="/advisor/actions"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Go to ACTIONS
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* P&L Widget */}
+        <div className="mb-8">
+          <PnLWidget />
         </div>
 
         {/* Receipts List */}

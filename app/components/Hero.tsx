@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { SITE } from "../config/site";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 
-export default function Hero() {
+const Hero = memo(function Hero() {
   const [isMockMode, setIsMockMode] = useState(false);
   const [isProduction, setIsProduction] = useState(false);
 
@@ -35,11 +35,11 @@ export default function Hero() {
     setIsMockMode(hasStoredMock || process.env.NEXT_PUBLIC_MOCK_TX === '1');
   }, []);
 
-  const handleTryMockMode = () => {
+  const handleTryMockMode = useCallback(() => {
     const url = new URL(window.location.href);
     url.searchParams.set('mock', '1');
     window.location.href = url.toString();
-  };
+  }, []);
 
   return (
     <section
@@ -73,7 +73,7 @@ export default function Hero() {
         <div className="max-w-4xl">
           {/* Heading */}
           <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight text-blue-100">
-            Ask smarter. <span className="bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">Log insights on-chain</span>.
+            Ask smarter. <span className="bg-gradient-to-r from-blue-300 to-teal-300 bg-clip-text text-transparent">Log insights on-chain</span>.
           </h1>
 
           {/* Lead */}
@@ -86,7 +86,7 @@ export default function Hero() {
         <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
           <Link
             href="/studio"
-            className="inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:shadow-lg transition-all"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-teal-600 text-white font-semibold hover:shadow-lg transition-all"
           >
             Open Studio
           </Link>
@@ -108,4 +108,6 @@ export default function Hero() {
       </div>
     </section>
   );
-}
+});
+
+export default Hero;

@@ -7,7 +7,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { BarChart3, Monitor, Target, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export default function AdminDashboardHome() {
@@ -77,7 +77,7 @@ export default function AdminDashboardHome() {
             </p>
             <Link
               href="/admin-dashboard/pmf"
-              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
             >
               View PMF Analytics
             </Link>
@@ -114,7 +114,7 @@ export default function AdminDashboardHome() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
-              <Target className="h-8 w-8 text-purple-500 mr-3" />
+              <Target className="h-8 w-8 text-teal-500 mr-3" />
               <div>
                 <p className="text-sm font-medium text-gray-600">PMF Score</p>
                 <p className="text-2xl font-bold text-purple-600">Loading...</p>

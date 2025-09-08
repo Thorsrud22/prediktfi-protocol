@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { createCharge, isMockMode } from "../../../lib/coinbase";
 import { isProRequest } from "../../../lib/plan";
 import { trackServer } from "../../../lib/analytics";
+import { upgradeToPro } from "../../../lib/subscription";
+import { getWalletIdentifier } from "../../../lib/wallet";
+import { isFeatureEnabled } from "../../../lib/flags";
 
 export const runtime = "edge"; // lightweight
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if monetization is enabled
+    if (!isFeatureEnabled('MONETIZATION')) {
+      return NextResponse.json({ 
+        error: 'Monetization not enabled' 
+      }, { status: 403 });
+    }
+
     // Check if user is already Pro
     if (isProRequest(request)) {
       trackServer('already_pro_at_checkout');

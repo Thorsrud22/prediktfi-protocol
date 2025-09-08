@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 
 interface Activity {
@@ -14,7 +14,7 @@ interface Activity {
   icon: string;
 }
 
-export default function ActivityFeed({ className = '' }: { className?: string }) {
+const ActivityFeed = memo(function ActivityFeed({ className = '' }: { className?: string }) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,7 +77,7 @@ export default function ActivityFeed({ className = '' }: { className?: string })
       setLoading(false);
     }, 500);
 
-    // Simulate new activities every 10 seconds
+    // Simulate new activities every 30 seconds (reduced frequency)
     const interval = setInterval(() => {
       const newActivity: Activity = {
         id: Date.now().toString(),
@@ -91,7 +91,7 @@ export default function ActivityFeed({ className = '' }: { className?: string })
       };
       
       setActivities(prev => [newActivity, ...prev.slice(0, 4)]);
-    }, 10000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, []);
@@ -126,9 +126,7 @@ export default function ActivityFeed({ className = '' }: { className?: string })
         {activities.map((activity, index) => (
           <div 
             key={activity.id}
-            className={`flex items-start space-x-3 ${
-              index === 0 ? 'animate-slide-in' : ''
-            }`}
+            className="flex items-start space-x-3"
           >
             <span className="text-2xl">{activity.icon}</span>
             <div className="flex-1 min-w-0">
@@ -157,21 +155,8 @@ export default function ActivityFeed({ className = '' }: { className?: string })
         ))}
       </div>
 
-      <style jsx>{`
-        @keyframes slide-in {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
-        }
-      `}</style>
     </div>
   );
-}
+});
+
+export default ActivityFeed;

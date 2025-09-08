@@ -133,6 +133,14 @@ export function middleware(request: NextRequest) {
   const plan = planCookie === 'pro' ? 'pro' : 'free';
   response.headers.set('x-plan', plan);
   
+  // Add wallet identification header
+  const walletId = request.headers.get('x-wallet-id') || 
+                   request.cookies.get('wallet_id')?.value ||
+                   request.nextUrl.searchParams.get('wallet');
+  if (walletId) {
+    response.headers.set('x-wallet-id', walletId);
+  }
+  
   // Add rate limit headers
   if (pathname.startsWith('/api/')) {
     const limiter = pathname.startsWith('/api/admin') ? rateLimiters.admin :

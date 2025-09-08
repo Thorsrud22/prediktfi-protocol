@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import Link from 'next/link';
 
 interface TrendingMarket {
@@ -22,7 +22,7 @@ interface TrendingMarketsProps {
   className?: string;
 }
 
-export default function TrendingMarkets({ 
+const TrendingMarkets = memo(function TrendingMarkets({ 
   initialMarkets = [], 
   limit = 6,
   className = '' 
@@ -65,12 +65,12 @@ export default function TrendingMarkets({
       loadTrendingMarkets();
     }
     
-    // Refresh every 30 seconds
-    const interval = setInterval(loadTrendingMarkets, 30000);
+    // Refresh every 60 seconds (reduced frequency for better performance)
+    const interval = setInterval(loadTrendingMarkets, 60000);
     return () => clearInterval(interval);
   }, [limit, initialMarkets.length]);
 
-  const loadTrendingMarkets = async () => {
+  const loadTrendingMarkets = useCallback(async () => {
     try {
       const response = await fetch(`/api/markets/trending?limit=${limit}`);
       const data = await response.json();
@@ -79,27 +79,28 @@ export default function TrendingMarkets({
         setMarkets(data.markets);
         setError(null);
       } else {
-        // Use fallback data instead of showing error
+        // Show error but also provide fallback data
+        console.warn('API returned error, using fallback data');
         setMarkets(fallbackMarkets.slice(0, limit));
-        setError(null);
+        setError('Live data temporarily unavailable - showing demo markets');
       }
     } catch (err) {
       console.error('Failed to load trending markets:', err);
-      // Use fallback data instead of showing error
+      // Show error but provide fallback data for better UX
       setMarkets(fallbackMarkets.slice(0, limit));
-      setError(null);
+      setError('Connection error - showing demo markets');
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
 
-  const formatVolume = (volume: number) => {
+  const formatVolume = useCallback((volume: number) => {
     if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`;
     if (volume >= 1000) return `${(volume / 1000).toFixed(1)}K`;
     return volume.toString();
-  };
+  }, []);
 
-  const formatDeadline = (deadline: string) => {
+  const formatDeadline = useCallback((deadline: string) => {
     const date = new Date(deadline);
     const now = new Date();
     const diffMs = date.getTime() - now.getTime();
@@ -111,16 +112,16 @@ export default function TrendingMarkets({
     if (diffDays <= 7) return `Ends in ${diffDays} days`;
     if (diffDays <= 30) return `Ends in ${Math.floor(diffDays / 7)} weeks`;
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
+  }, []);
 
-  const getTypeColor = (type: string) => {
+  const getTypeColor = useCallback((type: string) => {
     switch (type) {
-      case 'PREDIKT': return 'bg-gradient-to-r from-blue-500 to-purple-500';
+      case 'PREDIKT': return 'bg-gradient-to-r from-blue-500 to-teal-500';
       case 'POLYMARKET': return 'bg-green-500';
       case 'KALSHI': return 'bg-orange-500';
       default: return 'bg-gray-500';
     }
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -143,8 +144,15 @@ export default function TrendingMarkets({
 
   if (error) {
     return (
-      <div className={`text-center py-8 ${className}`}>
-        <p className="text-red-400 mb-4">{error}</p>
+      <div className={className}>
+        <div className="mb-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+          <p className="text-orange-300 text-sm flex items-center">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            {error}
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {fallbackMarkets.slice(0, limit).map((market) => (
             <div key={market.id} className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
@@ -163,7 +171,7 @@ export default function TrendingMarkets({
                 </div>
                 <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
+                    className="h-full bg-gradient-to-r from-blue-500 to-teal-500 transition-all"
                     style={{ width: `${market.probability * 100}%` }}
                   />
                 </div>
@@ -181,12 +189,14 @@ export default function TrendingMarkets({
             </div>
           ))}
         </div>
-        <button 
-          onClick={loadTrendingMarkets}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Retry Loading Live Data
-        </button>
+        <div className="mt-4 text-center">
+          <button 
+            onClick={loadTrendingMarkets}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            Retry Loading Live Data
+          </button>
+        </div>
       </div>
     );
   }
@@ -221,7 +231,7 @@ export default function TrendingMarkets({
             </div>
             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
+                className="h-full bg-gradient-to-r from-blue-500 to-teal-500 transition-all"
                 style={{ width: `${market.probability * 100}%` }}
               />
             </div>
@@ -256,9 +266,11 @@ export default function TrendingMarkets({
           )}
 
           {/* Hover Effect */}
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
         </Link>
       ))}
     </div>
   );
-}
+});
+
+export default TrendingMarkets;

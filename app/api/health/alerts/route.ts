@@ -1,7 +1,7 @@
 // app/api/health/alerts/route.ts
 import { NextResponse } from 'next/server';
-import { prisma } from '../../../lib/prisma';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { prisma } from '../../lib/prisma';
+import { isFeatureEnabled } from '../../lib/flags';
 
 export async function GET() {
   try {
