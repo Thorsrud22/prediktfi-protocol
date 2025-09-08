@@ -15,7 +15,7 @@ import { checkCombinedRateLimit } from '../../../lib/rate-limit-wallet';
 import { checkNoiseFilterWithMarketData } from '../../../lib/intents/noise-filter';
 import { checkQuota, consumeQuota } from '../../../lib/subscription';
 import { getWalletIdentifier } from '../../../lib/wallet';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { ANALYTICS_EVENT_TYPES } from '../../../../src/server/analytics/events';
 
 export async function POST(request: NextRequest) {
   // Check if actions feature is enabled
@@ -157,6 +157,26 @@ export async function POST(request: NextRequest) {
         simOnly: intent.simOnly
       }
     });
+
+    // Send analytics event if this intent was created from a copy action
+    if (intent.sourceModelId) {
+      try {
+        await fetch(`${request.nextUrl.origin}/api/analytics/events`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': request.headers.get('cookie') || ''
+          },
+          body: JSON.stringify({
+            type: ANALYTICS_EVENT_TYPES.INTENT_CREATED_FROM_COPY,
+            modelId: intent.sourceModelId,
+            intentId: createdIntent.id
+          })
+        });
+      } catch (error) {
+        console.warn('Failed to send intent_created_from_copy analytics event:', error);
+      }
+    }
     
     // Store idempotency result
     await storeIdempotencyResult(idempotencyKey, { intentId: createdIntent.id });

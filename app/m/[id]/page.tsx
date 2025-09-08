@@ -6,10 +6,11 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import MetricPills from '../../components/models/MetricPills';
 import { CalibrationResult } from '../../../src/server/models/calibration';
+import { ANALYTICS_EVENT_TYPES } from '../../../src/server/analytics/events';
 
 interface ModelMetrics {
   total_pnl_usd: number;
@@ -36,12 +37,45 @@ export default function ModelDetailPage() {
   const [metrics, setMetrics] = useState<ModelMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewEventSent, setViewEventSent] = useState(false);
 
   useEffect(() => {
     if (!modelId) return;
     
     fetchMetrics();
-  }, [modelId]);
+    
+    // Send view event (debounced on server)
+    if (!viewEventSent) {
+      sendAnalyticsEvent({
+        type: ANALYTICS_EVENT_TYPES.MODEL_METRICS_VIEW,
+        modelId
+      });
+      setViewEventSent(true);
+    }
+  }, [modelId, viewEventSent]);
+
+  const sendAnalyticsEvent = useCallback(async (event: any) => {
+    try {
+      await fetch('/api/analytics/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      });
+    } catch (error) {
+      console.warn('Failed to send analytics event:', error);
+    }
+  }, []);
+
+  const handleCopyClick = useCallback(() => {
+    if (modelId) {
+      sendAnalyticsEvent({
+        type: ANALYTICS_EVENT_TYPES.MODEL_COPY_CLICKED,
+        modelId
+      });
+    }
+  }, [modelId, sendAnalyticsEvent]);
 
   const fetchMetrics = async () => {
     try {
@@ -117,15 +151,28 @@ export default function ModelDetailPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Model {modelId}</h1>
-          <p className="text-gray-400">
-            Last updated: {new Date(metrics.last_updated).toLocaleString()}
-          </p>
-          {metrics.processing_time_ms && (
-            <p className="text-gray-500 text-sm">
-              Processing time: {metrics.processing_time_ms}ms
-            </p>
-          )}
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Model {modelId}</h1>
+              <p className="text-gray-400">
+                Last updated: {new Date(metrics.last_updated).toLocaleString()}
+              </p>
+              {metrics.processing_time_ms && (
+                <p className="text-gray-500 text-sm">
+                  Processing time: {metrics.processing_time_ms}ms
+                </p>
+              )}
+            </div>
+            <button
+              onClick={handleCopyClick}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy Strategy
+            </button>
+          </div>
         </div>
 
         {/* Calibration Pills */}

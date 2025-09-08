@@ -540,3 +540,22 @@ enum TrialTriggerType {
   INVITE_CODE
   MANUAL
 }
+
+model AnalyticsEvent {
+  id              String   @id @default(cuid())
+  sessionId       String
+  eventType       String   // "model_metrics_view", "league_view", etc.
+  modelIdHash     String?  // Hashed modelId for privacy
+  intentId        String?  // Intent ID for intent-related events
+  timestamp       DateTime @default(now())
+  userAgent       String?
+  referer         String?
+  idempotencyKey  String   @unique
+  createdAt       DateTime @default(now())
+  
+  @@index([sessionId, eventType])
+  @@index([eventType, timestamp])
+  @@index([modelIdHash, eventType])
+  @@index([timestamp])
+  @@map("analytics_events")
+}

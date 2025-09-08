@@ -17,6 +17,7 @@ import { geofencingService } from '../../../lib/geofencing';
 import { checkCombinedRateLimit } from '../../../lib/rate-limit-wallet';
 import { getQuoteWithFallback, buildSwapWithFallback, FallbackResult } from '../../../lib/aggregators/fallback-service';
 import { shouldForceSimulationOnly, shouldDisableAggregator, shouldTestIdempotency } from '../../../lib/chaos/chaos-testing';
+import { ANALYTICS_EVENT_TYPES } from '../../../../src/server/analytics/events';
 
 export async function POST(request: NextRequest) {
   // Check if actions feature is enabled
@@ -208,6 +209,26 @@ export async function POST(request: NextRequest) {
       txSig: executionResult.txSig,
       receiptId: receipt.id 
     });
+
+    // Send analytics event if this intent was executed from a copy action
+    if (intent?.sourceModelId) {
+      try {
+        await fetch(`${request.nextUrl.origin}/api/analytics/events`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': request.headers.get('cookie') || ''
+          },
+          body: JSON.stringify({
+            type: ANALYTICS_EVENT_TYPES.INTENT_EXECUTED_FROM_COPY,
+            modelId: intent.sourceModelId,
+            intentId: intentId
+          })
+        });
+      } catch (error) {
+        console.warn('Failed to send intent_executed_from_copy analytics event:', error);
+      }
+    }
     
     return NextResponse.json({
       success: true,
