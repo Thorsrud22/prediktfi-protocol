@@ -35,31 +35,49 @@ interface WeeklyDigestData {
 }
 
 /**
- * Get date range for the previous week (Monday to Sunday)
+ * Get date range for the previous week (Monday to Sunday) in UTC
  */
 function getPreviousWeekRange(): { start: Date; end: Date } {
   const now = new Date();
-  const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const currentDay = now.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
   
-  // Calculate days to subtract to get to last Monday
+  // Calculate days to subtract to get to last Monday UTC
   const daysToLastMonday = currentDay === 0 ? 6 : currentDay - 1; // If Sunday, go back 6 days
-  const lastMonday = new Date(now);
-  lastMonday.setDate(now.getDate() - daysToLastMonday - 7); // Go back one more week
-  lastMonday.setHours(0, 0, 0, 0);
+  const lastMonday = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() - daysToLastMonday - 7, // Go back one more week
+    0, 0, 0, 0
+  ));
   
-  // Last Sunday (end of previous week)
-  const lastSunday = new Date(lastMonday);
-  lastSunday.setDate(lastMonday.getDate() + 6);
-  lastSunday.setHours(23, 59, 59, 999);
+  // Last Sunday (end of previous week) UTC
+  const lastSunday = new Date(Date.UTC(
+    lastMonday.getUTCFullYear(),
+    lastMonday.getUTCMonth(),
+    lastMonday.getUTCDate() + 6,
+    23, 59, 59, 999
+  ));
+  
   
   return { start: lastMonday, end: lastSunday };
 }
 
 /**
+ * Get date range for the last 24 hours (for testing)
+ */
+function getLast24HoursRange(): { start: Date; end: Date } {
+  const now = new Date();
+  const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  
+  
+  return { start, end: now };
+}
+
+/**
  * Aggregate analytics events for the previous week
  */
-export async function aggregateWeeklyMetrics(): Promise<WeeklyDigestData> {
-  const { start: weekStart, end: weekEnd } = getPreviousWeekRange();
+export async function aggregateWeeklyMetrics(testMode = false): Promise<WeeklyDigestData> {
+  const { start: weekStart, end: weekEnd } = testMode ? getLast24HoursRange() : getPreviousWeekRange();
   
   // Get all events for the week
   const events = await prisma.analyticsEvent.findMany({
@@ -268,11 +286,11 @@ export async function sendDigestToWebhook(digest: WeeklyDigestData): Promise<{ s
 /**
  * Generate and send weekly digest
  */
-export async function generateAndSendWeeklyDigest(): Promise<{ success: boolean; error?: string; digest?: WeeklyDigestData }> {
+export async function generateAndSendWeeklyDigest(testMode = false): Promise<{ success: boolean; error?: string; digest?: WeeklyDigestData }> {
   try {
     console.log('Generating weekly analytics digest...');
     
-    const digest = await aggregateWeeklyMetrics();
+    const digest = await aggregateWeeklyMetrics(testMode);
     console.log('Digest generated:', {
       weekStart: digest.weekStart.toISOString(),
       weekEnd: digest.weekEnd.toISOString(),

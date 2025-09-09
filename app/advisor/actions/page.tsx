@@ -81,9 +81,25 @@ export default function ActionsPage() {
   useEffect(() => {
     loadWallets();
     
-    // Check for template parameter
+    // Check for template parameter (legacy base64 format)
     const template = searchParams.get('template');
-    if (template) {
+    const sourceModelId = searchParams.get('sourceModelId');
+    
+    if (template === 'model' && sourceModelId) {
+      // Handle model copying template
+      setTemplateData({
+        sourceModelId: sourceModelId,
+        type: 'model_copy',
+        // Add default template values for model copying
+        base: 'SOL',
+        quote: 'USDC',
+        side: 'BUY',
+        sizeValue: 5, // 5% default
+        rationale: `Copying strategy from model ${sourceModelId}`
+      });
+      setShowCreateForm(true);
+    } else if (template) {
+      // Legacy base64 template format
       try {
         const decoded = JSON.parse(atob(template));
         setTemplateData(decoded);

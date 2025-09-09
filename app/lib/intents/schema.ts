@@ -37,6 +37,8 @@ export const GuardsSchema = z.object({
 export const IntentSchema = z.object({
   walletId: z.string().min(1),
   strategyId: z.string().optional(),
+  sourceModelId: z.string().optional(), // Model ID when copied from a model strategy
+  sourceModelIdHashed: z.string().optional(), // Hashed model ID for privacy-safe analytics joins
   chain: z.string().default('solana'),
   base: z.enum(SUPPORTED_BASES),
   quote: z.enum(SUPPORTED_QUOTES).default('USDC'),

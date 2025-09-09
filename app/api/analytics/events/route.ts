@@ -90,10 +90,7 @@ export async function POST(request: NextRequest) {
       const debounceStatus = await getSessionDebounceStatus(sessionId, event.type, modelId);
       
       if (debounceStatus.shouldSkip) {
-        return NextResponse.json(
-          { message: 'Event debounced', lastEventTime: debounceStatus.lastEventTime },
-          { status: 204 }
-        );
+        return new NextResponse(null, { status: 204 });
       }
     }
     
@@ -106,10 +103,7 @@ export async function POST(request: NextRequest) {
     
     if (!result.success) {
       if (result.reason === 'duplicate') {
-        return NextResponse.json(
-          { message: 'Event already recorded' },
-          { status: 204 }
-        );
+        return new NextResponse(null, { status: 204 });
       }
       
       return NextResponse.json(
@@ -118,11 +112,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create response with session cookie
-    const response = NextResponse.json(
-      { message: 'Event recorded successfully' },
-      { status: 204 }
-    );
+    // Create response with session cookie (204 No Content should have no body)
+    const response = new NextResponse(null, { status: 204 });
     
     // Set session cookie (30 days)
     response.cookies.set('analytics-session', sessionId, {

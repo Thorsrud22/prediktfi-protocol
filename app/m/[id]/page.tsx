@@ -70,10 +70,15 @@ export default function ModelDetailPage() {
 
   const handleCopyClick = useCallback(() => {
     if (modelId) {
+      // Send analytics event
       sendAnalyticsEvent({
         type: ANALYTICS_EVENT_TYPES.MODEL_COPY_CLICKED,
         modelId
       });
+      
+      // Redirect to advisor actions page with model template
+      const advisorUrl = `/advisor/actions?template=model&sourceModelId=${encodeURIComponent(modelId)}`;
+      window.location.href = advisorUrl;
     }
   }, [modelId, sendAnalyticsEvent]);
 

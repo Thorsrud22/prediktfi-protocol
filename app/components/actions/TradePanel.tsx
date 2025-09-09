@@ -34,11 +34,11 @@ interface GuardsConfig {
 
 export default function TradePanel({ walletId, templateData, onClose, onIntentCreated }: TradePanelProps) {
   const [formData, setFormData] = useState({
-    base: 'SOL', // Fixed to SOL only
-    quote: 'USDC', // Fixed to USDC only
+    base: templateData?.base || 'SOL', // Fixed to SOL only
+    quote: templateData?.quote || 'USDC', // Fixed to USDC only
     side: templateData?.side || 'BUY' as 'BUY' | 'SELL',
     sizeType: templateData?.sizeJson?.type || 'pct' as 'pct' | 'abs',
-    sizeValue: templateData?.sizeJson?.value || 3, // Conservative default
+    sizeValue: templateData?.sizeValue || templateData?.sizeJson?.value || 3, // Conservative default
     rationale: templateData?.rationale || '',
     confidence: templateData?.confidence || 0.8,
     expectedDur: templateData?.expectedDur || '14d',
@@ -182,7 +182,11 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
         expectedDur: formData.expectedDur,
         guardsJson,
         venuePref: 'jupiter',
-        simOnly: false
+        simOnly: false,
+        sourceModelId: templateData?.sourceModelId || undefined, // Track model copying
+        sourceModelIdHashed: templateData?.sourceModelId ? 
+          require('crypto').createHash('sha256').update(templateData.sourceModelId).digest('hex').slice(0, 16) 
+          : undefined
       };
 
       const idempotencyKey = `create_${walletId}_${Date.now()}`;

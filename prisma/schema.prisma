@@ -61,8 +61,8 @@ model Insight {
   marketVolume    Float?
   lastMarketSync  DateTime?
   events          Event[]
-  stamp           Stamp?        @relation(fields: [stampId], references: [id])
   creator         Creator?      @relation(fields: [creatorId], references: [id])
+  stamp           Stamp?        @relation(fields: [stampId], references: [id])
   outcomes        Outcome[]
 
   @@index([createdAt])
@@ -110,8 +110,8 @@ model Event {
   meta      String
   createdAt DateTime @default(now())
   insightId String?
-  insight   Insight? @relation(fields: [insightId], references: [id])
   user      Creator? @relation(fields: [userId], references: [id])
+  insight   Insight? @relation(fields: [insightId], references: [id])
 
   @@index([createdAt])
   @@index([type])
@@ -131,15 +131,15 @@ model IdempotencyKey {
 }
 
 model AIAccuracy {
-  id              String   @id @default(cuid())
-  modelVersion    String
-  category        String
-  totalPredictions Int     @default(0)
-  correctPredictions Int  @default(0)
-  accuracy        Float    @default(0.0)
-  brierScore      Float?
-  lastUpdated     DateTime @default(now())
-  createdAt       DateTime @default(now())
+  id                 String   @id @default(cuid())
+  modelVersion       String
+  category           String
+  totalPredictions   Int      @default(0)
+  correctPredictions Int      @default(0)
+  accuracy           Float    @default(0.0)
+  brierScore         Float?
+  lastUpdated        DateTime @default(now())
+  createdAt          DateTime @default(now())
 
   @@unique([modelVersion, category])
   @@index([modelVersion])
@@ -162,27 +162,23 @@ model AICalibration {
   @@map("ai_calibration")
 }
 
-// Advisor v0.1 - Monitor-only
 model Wallet {
-  id           String   @id @default(cuid())
-  address      String   @unique
-  chain        String   @default("solana")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  strategies   Strategy[]
-  alerts       AlertRule[]
-  snapshots    HoldingSnapshot[]
-  // PMF Analytics
-  events       UserEvent[]
-  retention    UserRetention?
-  shares       SocialShare[]
-  intents      Intent[]
-  // Risk Management
+  id            String            @id @default(cuid())
+  address       String            @unique
+  chain         String            @default("solana")
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  alerts        AlertRule[]
+  snapshots     HoldingSnapshot[]
+  strategies    Strategy[]
   assetLossCaps AssetLossCap[]
   dailyLossCaps DailyLossCap[]
-  // Subscription Management
-  subscription UserSubscription?
-  proTrials    ProTrial[]
+  intents       Intent[]
+  proTrials     ProTrial[]
+  shares        SocialShare[]
+  events        UserEvent[]
+  retention     UserRetention?
+  subscription  UserSubscription?
 
   @@index([address])
   @@index([chain])
@@ -190,15 +186,15 @@ model Wallet {
 }
 
 model Strategy {
-  id           String   @id @default(cuid())
-  walletId     String
-  name         String
-  kind         String   // "risk", "rebalance", "momentum"
-  configJson   String   // JSON string
-  enabled      Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  walletId   String
+  name       String
+  kind       String
+  configJson String
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  wallet     Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId])
   @@index([kind])
@@ -206,17 +202,17 @@ model Strategy {
 }
 
 model AlertRule {
-  id           String   @id @default(cuid())
-  walletId     String
-  name         String
-  ruleJson     String   // JSON string
-  channel      String   // "inapp", "email", "webhook"
-  target       String?  // email or webhook URL
-  enabled      Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  events       AlertEvent[]
+  id        String       @id @default(cuid())
+  walletId  String
+  name      String
+  ruleJson  String
+  channel   String
+  target    String?
+  enabled   Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  events    AlertEvent[]
+  wallet    Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId])
   @@index([channel])
@@ -224,13 +220,13 @@ model AlertRule {
 }
 
 model AlertEvent {
-  id           String   @id @default(cuid())
-  ruleId       String
-  firedAt      DateTime @default(now())
-  payloadJson  String   // JSON string
-  delivered    Boolean  @default(false)
-  deliveredAt  DateTime?
-  rule         AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  ruleId      String
+  firedAt     DateTime  @default(now())
+  payloadJson String
+  delivered   Boolean   @default(false)
+  deliveredAt DateTime?
+  rule        AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
   @@index([ruleId])
   @@index([firedAt])
@@ -238,29 +234,28 @@ model AlertEvent {
 }
 
 model HoldingSnapshot {
-  id           String   @id @default(cuid())
-  walletId     String
-  ts           DateTime @default(now())
-  asset        String   // mint or symbol
-  amount       String   // Decimal as string
-  valueUsd     String   // Decimal as string
-  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  id       String   @id @default(cuid())
+  walletId String
+  ts       DateTime @default(now())
+  asset    String
+  amount   String
+  valueUsd String
+  wallet   Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId, ts])
   @@index([asset])
   @@map("advisor_holding_snapshots")
 }
 
-// PMF Metrics and Analytics
 model PMFMetric {
-  id          String   @id @default(cuid())
-  metricType  String   // "click_sim_rate", "sim_sign_rate", "d7_retention", "social_sharing", "signal_following"
-  value       Float    // The actual metric value (0.0 to 1.0 for rates, count for others)
-  target      Float    // Target value for this metric
-  period      String   // "daily", "weekly", "monthly"
-  date        DateTime @default(now())
-  metadata    String?  // JSON with additional context
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  metricType String
+  value      Float
+  target     Float
+  period     String
+  date       DateTime @default(now())
+  metadata   String?
+  createdAt  DateTime @default(now())
 
   @@index([metricType, date])
   @@index([period])
@@ -268,15 +263,15 @@ model PMFMetric {
 }
 
 model UserEvent {
-  id          String   @id @default(cuid())
-  walletId    String
-  eventType   String   // "click_trade_button", "simulate_intent", "sign_intent", "share_receipt", "follow_signal"
-  eventData   String?  // JSON with event details
-  sessionId   String?  // Track user sessions
-  userAgent   String?  // Browser info
-  referrer    String?  // Where they came from
-  timestamp   DateTime @default(now())
-  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  walletId  String
+  eventType String
+  eventData String?
+  sessionId String?
+  userAgent String?
+  referrer  String?
+  timestamp DateTime @default(now())
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId, eventType])
   @@index([timestamp])
@@ -285,35 +280,34 @@ model UserEvent {
 }
 
 model UserRetention {
-  id          String   @id @default(cuid())
-  walletId    String
-  firstAction DateTime // When they first used Actions
-  lastAction  DateTime // When they last used Actions
-  d1Active    Boolean  @default(false) // Active on day 1
-  d3Active    Boolean  @default(false) // Active on day 3
-  d7Active    Boolean  @default(false) // Active on day 7
-  d14Active   Boolean  @default(false) // Active on day 14
-  d30Active   Boolean  @default(false) // Active on day 30
-  totalActions Int     @default(0) // Total number of actions taken
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  walletId     String   @unique
+  firstAction  DateTime
+  lastAction   DateTime
+  d1Active     Boolean  @default(false)
+  d3Active     Boolean  @default(false)
+  d7Active     Boolean  @default(false)
+  d14Active    Boolean  @default(false)
+  d30Active    Boolean  @default(false)
+  totalActions Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
-  @@unique([walletId])
   @@index([firstAction])
   @@map("user_retention")
 }
 
 model SocialShare {
-  id          String   @id @default(cuid())
-  intentId    String
-  walletId    String
-  platform    String   // "twitter", "linkedin", "facebook", "copy_trade"
-  shareUrl    String?  // The shared URL
-  receiptId   String?  // Associated receipt
-  createdAt   DateTime @default(now())
-  intent      Intent   @relation(fields: [intentId], references: [id], onDelete: Cascade)
-  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  intentId  String
+  walletId  String
+  platform  String
+  shareUrl  String?
+  receiptId String?
+  createdAt DateTime @default(now())
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  intent    Intent   @relation(fields: [intentId], references: [id], onDelete: Cascade)
 
   @@index([platform, createdAt])
   @@index([intentId])
@@ -321,50 +315,54 @@ model SocialShare {
 }
 
 model Intent {
-  id           String   @id @default(cuid())
-  walletId     String
-  strategyId   String?
-  chain        String   @default("solana")
-  base         String   // "SOL" | "ETH" | "BTC" (v1)
-  quote        String   @default("USDC") // "USDC" (v1)
-  side         String   // "BUY" | "SELL"
-  sizeJson     String   // JSON: {type:"pct"|"abs", value:number, token?:string}
-  tpJson       String?  // JSON: take profit
-  slJson       String?  // JSON: stop loss
-  rationale    String?
-  confidence   Float?
-  backtestWin  Float?
-  expectedDur  String?  // "14d"
-  guardsJson   String   // JSON: {dailyLossCapPct,posLimitPct,minLiqUsd,maxSlippageBps,expiresAt}
-  venuePref    String?  @default("jupiter")
-  simOnly      Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  receipts     IntentReceipt[]
-  shares       SocialShare[]
-  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  id            String          @id @default(cuid())
+  walletId      String
+  strategyId    String?
+  chain         String          @default("solana")
+  base          String
+  quote         String          @default("USDC")
+  side          String
+  sizeJson      String
+  tpJson        String?
+  slJson        String?
+  rationale     String?
+  confidence    Float?
+  backtestWin   Float?
+  expectedDur   String?
+  guardsJson    String
+  venuePref     String?         @default("jupiter")
+  simOnly       Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  sourceModelId String? // Model ID when copied from a model strategy
+  sourceModelIdHashed String? // Hashed model ID for privacy-safe analytics joins
+  receipts      IntentReceipt[]
+  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  shares        SocialShare[]
 
   @@index([walletId, createdAt])
   @@index([base, quote])
   @@index([strategyId])
+  @@index([sourceModelId])
+  @@index([sourceModelIdHashed])
   @@index([side])
   @@index([createdAt])
   @@map("intents")
 }
 
 model IntentReceipt {
-  id           String   @id @default(cuid())
-  intentId     String
-  status       String   // simulated|executed|failed
-  txSig        String?
-  simJson      String?  // JSON: simulation results
-  execJson     String?  // JSON: execution results
-  realizedPx   Float?
-  feesUsd      Float?
-  slippageBps  Int?
-  blockTime    DateTime?
-  notes        String?
-  createdAt    DateTime @default(now())
-  intent       Intent   @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  intentId    String
+  status      String
+  txSig       String?
+  simJson     String?
+  execJson    String?
+  realizedPx  Float?
+  feesUsd     Float?
+  slippageBps Int?
+  blockTime   DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  intent      Intent    @relation(fields: [intentId], references: [id], onDelete: Cascade)
 
   @@index([intentId, createdAt])
   @@index([status])
@@ -374,16 +372,16 @@ model IntentReceipt {
 }
 
 model SimulatorAccuracy {
-  id                    String   @id @default(cuid())
-  pair                  String   // "SOL/USDC", "ETH/USDC", etc.
-  side                  String   // "BUY" | "SELL"
-  expectedPrice         Float    // Price we expected
-  theoreticalFillPrice  Float    // Price from Jupiter quote
-  deviationBps          Float    // Deviation in basis points
-  tradeSizeUsd          Float    // Trade size in USD
-  timestamp             DateTime @default(now())
-  jupiterQuoteData      String   // JSON: Full Jupiter quote for debugging
-  
+  id                   String   @id @default(cuid())
+  pair                 String
+  side                 String
+  expectedPrice        Float
+  theoreticalFillPrice Float
+  deviationBps         Float
+  tradeSizeUsd         Float
+  timestamp            DateTime @default(now())
+  jupiterQuoteData     String
+
   @@index([pair, timestamp])
   @@index([side])
   @@index([deviationBps])
@@ -391,31 +389,31 @@ model SimulatorAccuracy {
 }
 
 model InviteCode {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  usedCount   Int      @default(0)
-  maxUses     Int      @default(100)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  expiresAt   DateTime?
-  
+  id        String    @id @default(cuid())
+  code      String    @unique
+  usedCount Int       @default(0)
+  maxUses   Int       @default(100)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
   @@index([code])
   @@index([isActive])
   @@map("invite_codes")
 }
 
 model AssetLossCap {
-  id              String   @id @default(cuid())
-  walletId        String
-  asset           String   // SOL, ETH, BTC, etc.
-  maxLossPct      Float    // Max loss percentage per asset (e.g., 5.0 for 5%)
-  currentLossPct  Float    @default(0.0) // Current loss percentage
-  dailyLossUsd    Float    @default(0.0) // Daily loss in USD
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  
+  id             String   @id @default(cuid())
+  walletId       String
+  asset          String
+  maxLossPct     Float
+  currentLossPct Float    @default(0.0)
+  dailyLossUsd   Float    @default(0.0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  wallet         Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
   @@unique([walletId, asset])
   @@index([walletId])
   @@index([asset])
@@ -425,50 +423,49 @@ model AssetLossCap {
 model DailyLossCap {
   id              String   @id @default(cuid())
   walletId        String
-  maxDailyLossPct Float    // Max daily loss percentage (e.g., 10.0 for 10%)
-  currentLossPct  Float    @default(0.0) // Current daily loss percentage
-  dailyLossUsd    Float    @default(0.0) // Daily loss in USD
-  date            DateTime @default(now()) // Date for tracking
+  maxDailyLossPct Float
+  currentLossPct  Float    @default(0.0)
+  dailyLossUsd    Float    @default(0.0)
+  date            DateTime @default(now())
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  
+
   @@unique([walletId, date])
   @@index([walletId])
   @@index([date])
   @@map("daily_loss_caps")
 }
 
-// User subscription and quota management
 model UserSubscription {
-  id              String   @id @default(cuid())
-  walletId        String   @unique
-  tier            UserTier @default(FREE)
-  status          SubscriptionStatus @default(ACTIVE)
-  trialEndsAt     DateTime?
-  subscriptionId  String?  // Coinbase Commerce charge ID
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  quotas          UserQuota[]
-  
+  id             String             @id @default(cuid())
+  walletId       String             @unique
+  tier           UserTier           @default(FREE)
+  status         SubscriptionStatus @default(ACTIVE)
+  trialEndsAt    DateTime?
+  subscriptionId String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  quotas         UserQuota[]
+  wallet         Wallet             @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
   @@index([tier])
   @@index([status])
   @@map("user_subscriptions")
 }
 
 model UserQuota {
-  id              String   @id @default(cuid())
-  subscriptionId  String
-  quotaType       QuotaType
-  limit           Int      // Weekly limit for this quota type
-  used            Int      @default(0)
-  resetAt         DateTime // When quota resets (weekly)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  subscription    UserSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  
+  id             String           @id @default(cuid())
+  subscriptionId String
+  quotaType      QuotaType
+  limit          Int
+  used           Int              @default(0)
+  resetAt        DateTime
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  subscription   UserSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
   @@unique([subscriptionId, quotaType, resetAt])
   @@index([subscriptionId])
   @@index([quotaType])
@@ -477,20 +474,39 @@ model UserQuota {
 }
 
 model ProTrial {
-  id              String   @id @default(cuid())
-  walletId        String
-  triggerType     TrialTriggerType
-  triggerData     String?  // JSON with trigger details (e.g., shared receipts)
-  startsAt        DateTime @default(now())
-  endsAt          DateTime
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  
+  id          String           @id @default(cuid())
+  walletId    String
+  triggerType TrialTriggerType
+  triggerData String?
+  startsAt    DateTime         @default(now())
+  endsAt      DateTime
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  wallet      Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
   @@index([walletId])
   @@index([isActive])
   @@index([endsAt])
   @@map("pro_trials")
+}
+
+model AnalyticsEvent {
+  id             String   @id @default(cuid())
+  sessionId      String
+  eventType      String
+  modelIdHash    String?
+  intentId       String?
+  timestamp      DateTime @default(now())
+  userAgent      String?
+  referer        String?
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+
+  @@index([sessionId, eventType])
+  @@index([eventType, timestamp])
+  @@index([modelIdHash, eventType])
+  @@index([timestamp])
+  @@map("analytics_events")
 }
 
 enum ResolverKind {
@@ -539,23 +555,4 @@ enum TrialTriggerType {
   SHARE_RECEIPTS
   INVITE_CODE
   MANUAL
-}
-
-model AnalyticsEvent {
-  id              String   @id @default(cuid())
-  sessionId       String
-  eventType       String   // "model_metrics_view", "league_view", etc.
-  modelIdHash     String?  // Hashed modelId for privacy
-  intentId        String?  // Intent ID for intent-related events
-  timestamp       DateTime @default(now())
-  userAgent       String?
-  referer         String?
-  idempotencyKey  String   @unique
-  createdAt       DateTime @default(now())
-  
-  @@index([sessionId, eventType])
-  @@index([eventType, timestamp])
-  @@index([modelIdHash, eventType])
-  @@index([timestamp])
-  @@map("analytics_events")
 }
