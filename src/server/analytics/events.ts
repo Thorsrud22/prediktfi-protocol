@@ -13,7 +13,9 @@ export const ANALYTICS_EVENT_TYPES = {
   LEAGUE_VIEW: 'league_view', 
   MODEL_COPY_CLICKED: 'model_copy_clicked',
   INTENT_CREATED_FROM_COPY: 'intent_created_from_copy',
-  INTENT_EXECUTED_FROM_COPY: 'intent_executed_from_copy'
+  INTENT_EXECUTED_FROM_COPY: 'intent_executed_from_copy',
+  CONTEXT_SHOWN: 'context_shown',
+  CONTEXT_HIDDEN: 'context_hidden'
 } as const;
 
 export type AnalyticsEventType = typeof ANALYTICS_EVENT_TYPES[keyof typeof ANALYTICS_EVENT_TYPES];
@@ -45,13 +47,25 @@ export const IntentExecutedFromCopySchema = z.object({
   intentId: z.string().min(1)
 });
 
+export const ContextShownSchema = z.object({
+  type: z.literal(ANALYTICS_EVENT_TYPES.CONTEXT_SHOWN),
+  modelIdHash: z.string().optional()
+});
+
+export const ContextHiddenSchema = z.object({
+  type: z.literal(ANALYTICS_EVENT_TYPES.CONTEXT_HIDDEN),
+  modelIdHash: z.string().optional()
+});
+
 // Union schema for all events
 export const AnalyticsEventSchema = z.discriminatedUnion('type', [
   ModelMetricsViewSchema,
   LeagueViewSchema,
   ModelCopyClickedSchema,
   IntentCreatedFromCopySchema,
-  IntentExecutedFromCopySchema
+  IntentExecutedFromCopySchema,
+  ContextShownSchema,
+  ContextHiddenSchema
 ]);
 
 export type AnalyticsEvent = z.infer<typeof AnalyticsEventSchema>;
@@ -90,11 +104,13 @@ export function generateIdempotencyKey(
 }
 
 /**
- * Check if event should be debounced (for view events)
+ * Check if event should be debounced (for view events and context events)
  */
 export function shouldDebounceEvent(eventType: AnalyticsEventType): boolean {
   return eventType === ANALYTICS_EVENT_TYPES.MODEL_METRICS_VIEW ||
-         eventType === ANALYTICS_EVENT_TYPES.LEAGUE_VIEW;
+         eventType === ANALYTICS_EVENT_TYPES.LEAGUE_VIEW ||
+         eventType === ANALYTICS_EVENT_TYPES.CONTEXT_SHOWN ||
+         eventType === ANALYTICS_EVENT_TYPES.CONTEXT_HIDDEN;
 }
 
 /**

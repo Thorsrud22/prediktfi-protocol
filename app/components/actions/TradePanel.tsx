@@ -11,6 +11,7 @@ import { Connection } from '@solana/web3.js';
 import { QuotaIndicator } from '../monetization/QuotaIndicator';
 import { QuotaWall } from '../monetization/QuotaWall';
 import MarketContext from './MarketContext';
+import { getBucket } from '../../../src/server/analytics/ab';
 
 interface TradePanelProps {
   walletId: string;
@@ -59,6 +60,21 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const [simAccuracy, setSimAccuracy] = useState<{ accuracy30d: number; accuracy7d: number; confidence: string } | null>(null);
   const [noiseFilterWarning, setNoiseFilterWarning] = useState<string | null>(null);
+  const [abBucket, setAbBucket] = useState<'A' | 'B' | null>(null);
+  const [contextEventSent, setContextEventSent] = useState(false);
+
+  // Set A/B bucket and send context events
+  useEffect(() => {
+    const bucket = getBucket(sessionId);
+    setAbBucket(bucket);
+    
+    // Send context event (shown for A, hidden for B)
+    if (!contextEventSent) {
+      const eventType = bucket === 'A' ? 'context_shown' : 'context_hidden';
+      sendAnalyticsEvent({ type: eventType });
+      setContextEventSent(true);
+    }
+  }, [sessionId, contextEventSent]);
 
   // Calculate smart defaults and simulation accuracy on component mount and side change
   useEffect(() => {
@@ -256,8 +272,8 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
             </div>
           </div>
 
-          {/* Market Context - Feature flagged */}
-          <MarketContext pair="SOL/USDC" className="mb-2" />
+          {/* Market Context - A/B tested (only show for bucket A) */}
+          {abBucket === 'A' && <MarketContext pair="SOL/USDC" className="mb-2" />}
 
           <div>
             <label className="block text-sm font-medium text-[color:var(--text)] mb-1">
