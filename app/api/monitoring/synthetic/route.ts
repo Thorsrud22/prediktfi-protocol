@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { isFeatureEnabled } from '../../lib/flags';
 
 export async function GET(request: NextRequest) {
   try {

@@ -10,6 +10,7 @@ import { PMFTracker } from '../../lib/analytics/pmf-tracker';
 import { Connection } from '@solana/web3.js';
 import { QuotaIndicator } from '../monetization/QuotaIndicator';
 import { QuotaWall } from '../monetization/QuotaWall';
+import MarketContext from './MarketContext';
 
 interface TradePanelProps {
   walletId: string;
@@ -254,6 +255,9 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
               </div>
             </div>
           </div>
+
+          {/* Market Context - Feature flagged */}
+          <MarketContext pair="SOL/USDC" className="mb-2" />
 
           <div>
             <label className="block text-sm font-medium text-[color:var(--text)] mb-1">

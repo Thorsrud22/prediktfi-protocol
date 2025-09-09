@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSubscription } from '../../../lib/subscription';
 import { getWalletIdentifier } from '../../../lib/wallet';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { isFeatureEnabled } from '../../lib/flags';
 
 export const runtime = 'edge';
 

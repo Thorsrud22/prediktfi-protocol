@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { isFeatureEnabled } from '../../lib/flags';
 
 export async function GET(request: NextRequest) {
   try {

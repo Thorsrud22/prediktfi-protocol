@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { consumeQuota } from '../../../lib/subscription';
 import { getWalletIdentifier } from '../../../lib/wallet';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { isFeatureEnabled } from '../../lib/flags';
 import { QuotaType } from '@prisma/client';
 
 export const runtime = 'edge';

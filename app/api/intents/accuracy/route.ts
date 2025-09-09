@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { isFeatureEnabled } from '../../lib/flags';
 import { getAccuracySummary, checkAccuracyAlerts } from '../../../lib/intents/accuracy';
 
 export async function GET(request: NextRequest) {

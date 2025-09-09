@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { enableChaosTest, disableChaosTest, getChaosTestResults } from '../../../lib/chaos/chaos-testing';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { isFeatureEnabled } from '../../lib/flags';
 
 export const runtime = 'edge';
 

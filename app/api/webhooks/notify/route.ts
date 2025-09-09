@@ -1,7 +1,7 @@
 // app/api/webhooks/notify/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { WebhookChannel } from '../../../lib/advisor/channels/webhook';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { isFeatureEnabled } from '../../lib/flags';
 
 export async function POST(request: NextRequest) {
   // Check if alerts feature is enabled

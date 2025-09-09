@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isFeatureEnabled } from '../../../lib/flags';
+import { isFeatureEnabled } from '../../lib/flags';
 import { prisma } from '../../../lib/prisma';
 import { checkRateLimit } from '../../../lib/ratelimit';
 import { validateCSRF } from '../../../lib/security';
