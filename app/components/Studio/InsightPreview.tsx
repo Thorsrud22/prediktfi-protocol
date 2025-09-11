@@ -8,6 +8,7 @@ import { type Insight, type PredictResponse } from "../../lib/ai/types";
 import { type EnhancedPredictOutput } from "../../lib/ai/enhanced-kernel";
 import { timeAgo, formatHorizon } from "../../lib/time";
 import { useToast } from "../ToastProvider";
+import { safeParse, safeLocalStorageGet, safeLocalStorageSet } from "../../lib/safe-fetch";
 import { buildShareUrl, buildXShareUrl } from "../../lib/share";
 
 interface InsightPreviewProps {
@@ -57,8 +58,7 @@ function InsightPreview({ input, response, enhancedResponse, onNewInsight }: Ins
     if (typeof window === "undefined") return;
     
     try {
-      const existing = localStorage.getItem("predikt:insights");
-      const insights = existing ? JSON.parse(existing) : [];
+      const insights = safeLocalStorageGet<any[]>("predikt:insights", [], 'InsightPreview-save');
       
       // Add signature if it doesn't exist (for local insights)
       const insightToSave = { ...insight };
@@ -70,7 +70,7 @@ function InsightPreview({ input, response, enhancedResponse, onNewInsight }: Ins
         insights.splice(5);
       }
       
-      localStorage.setItem("predikt:insights", JSON.stringify(insights));
+      safeLocalStorageSet("predikt:insights", insights, 'InsightPreview-save');
     } catch (error) {
       console.warn("Failed to save insight to feed:", error);
     }

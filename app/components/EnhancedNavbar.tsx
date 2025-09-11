@@ -25,29 +25,49 @@ export default function EnhancedNavbar() {
 
   // Mock wallet connection status - replace with actual wallet logic
   useEffect(() => {
+    // Ensure we're on the client side
+    if (typeof window === 'undefined') return;
+    
     // Check if wallet is connected from localStorage or wallet provider
     const checkWallet = () => {
-      // This would be replaced with actual wallet connection check
-      setWalletConnected(localStorage.getItem('wallet-connected') === 'true');
+      try {
+        // This would be replaced with actual wallet connection check
+        setWalletConnected(localStorage.getItem('wallet-connected') === 'true');
+      } catch (error) {
+        console.warn('Error checking wallet connection:', error);
+        setWalletConnected(false);
+      }
     };
     checkWallet();
   }, []);
 
   const handleWalletConnect = () => {
-    // This would be replaced with actual wallet connection logic
-    if (walletConnected) {
-      localStorage.setItem('wallet-connected', 'false');
-      setWalletConnected(false);
-    } else {
-      localStorage.setItem('wallet-connected', 'true');
-      setWalletConnected(true);
+    // Ensure we're on the client side
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // This would be replaced with actual wallet connection logic
+      if (walletConnected) {
+        localStorage.setItem('wallet-connected', 'false');
+        setWalletConnected(false);
+      } else {
+        localStorage.setItem('wallet-connected', 'true');
+        setWalletConnected(true);
+      }
+    } catch (error) {
+      console.warn('Error handling wallet connection:', error);
     }
   };
 
-  const navigation = [
+  const primaryNavigation = [
+    { name: "Feed", href: "/feed", primary: true },
     { name: "Studio", href: "/studio" },
-    { name: "Feed", href: "/feed" },
     { name: "Markets", href: "/markets" },
+  ];
+
+  const secondaryNavigation = [
+    { name: "Pricing", href: "/pricing" },
+    { name: "Account", href: "/account" },
   ];
 
   return (
@@ -74,20 +94,42 @@ export default function EnhancedNavbar() {
           </Link>
 
           {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`text-sm font-medium transition-colors duration-200 hover:text-[color:var(--text)] ${
-                  pathname === item.href
-                    ? 'text-[color:var(--text)]'
-                    : 'text-[color:var(--muted)]'
-                }`}
-              >
-                {item.name}
-              </Link>
-            ))}
+          <div className="hidden md:flex items-center gap-6">
+            {/* Primary navigation */}
+            <div className="flex items-center gap-4">
+              {primaryNavigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`text-sm font-medium transition-all duration-200 hover:text-[color:var(--text)] px-3 py-2 rounded-lg ${
+                    pathname === item.href
+                      ? 'text-[color:var(--text)] bg-blue-500/20'
+                      : item.primary 
+                        ? 'text-[color:var(--text)] font-semibold hover:bg-blue-500/10'
+                        : 'text-[color:var(--muted)] hover:bg-blue-500/10'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+            
+            {/* Secondary navigation - grouped */}
+            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-600">
+              {secondaryNavigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`text-sm font-medium transition-all duration-200 hover:text-[color:var(--text)] px-3 py-2 rounded-lg ${
+                    pathname === item.href
+                      ? 'text-[color:var(--text)] bg-blue-500/20'
+                      : 'text-[color:var(--muted)] hover:bg-blue-500/10'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Right side actions */}

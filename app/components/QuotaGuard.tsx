@@ -33,7 +33,7 @@ export default function QuotaGuard({ children, onExhausted, className }: QuotaGu
                 Daily free limit reached ({quota.limit})
               </p>
               <Link 
-                href="/pricing"
+                href="/pay"
                 className="text-[--accent] hover:text-[--accent]/80 text-sm font-medium"
               >
                 Upgrade to Pro for unlimited insights →

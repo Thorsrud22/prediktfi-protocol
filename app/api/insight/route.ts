@@ -6,13 +6,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ulid } from 'ulid';
 import { z } from 'zod';
-import { prisma } from '../../lib/prisma';
-import { normalizePrediction } from '../../../lib/normalize';
-import { generateSolanaMemo, generatePredictionHash } from '../../../lib/memo';
+import { prisma } from '@/lib/prisma';
+import { normalizePrediction } from '@/lib/normalize';
+import { generateSolanaMemo, generatePredictionHash } from '@/lib/memo';
 import { CreateInsightSchema, CreateInsightResponse } from './_schemas';
-import { EVENT_TYPES, createEvent } from '../../../lib/events';
-import { withIdempotency } from '../../../lib/idempotency';
-import { withRateLimit } from '../../../lib/ratelimit';
+import { EVENT_TYPES, createEvent } from '@/lib/events';
+import { withIdempotency } from '@/lib/idempotency';
+import { withRateLimit } from '@/lib/ratelimit';
 
 export async function POST(request: NextRequest) {
   return await withRateLimit(request, async () => {

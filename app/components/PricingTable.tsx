@@ -6,10 +6,8 @@ import { trackClient } from '../lib/analytics';
 
 async function startCheckout(): Promise<void> {
   trackClient('checkout_created');
-  const res = await fetch('/api/billing/checkout', { method: 'POST' });
-  if (!res.ok) throw new Error('checkout_failed');
-  const json = await res.json();
-  if (json?.hosted_url) window.location.href = json.hosted_url as string;
+  // Redirect to /pay page instead of API call
+  window.location.href = '/pay?plan=pro';
 }
 
 async function redeemLicense(license: string): Promise<boolean> {
@@ -65,9 +63,9 @@ export default function PricingTable({ initialIsPro = false }: { initialIsPro?: 
         'Advanced prompts',
         'Ensemble Analysis ⭐',
         'Confidence Calibration',
-        'Crypto payments via Coinbase'
+        'Crypto payments via Solana Pay'
       ],
-      cta: 'Upgrade with Crypto',
+      cta: 'Pay with Crypto',
       highlight: true
     }
   ];
@@ -116,7 +114,7 @@ export default function PricingTable({ initialIsPro = false }: { initialIsPro?: 
                         <div className="flex gap-2">
               <button
                 onClick={() => {
-                  if (plan.highlight) startCheckout().catch(() => alert('Checkout failed'));
+                  if (plan.highlight) window.location.href = '/pay';
                 }}
                 disabled={isPro}
                 aria-disabled={isPro}

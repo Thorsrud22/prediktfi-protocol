@@ -156,3 +156,35 @@ export function isKeyExpired(key: string, maxAgeSeconds: number = 300): boolean 
   const age = Date.now() - timestamp;
   return age > maxAgeSeconds * 1000;
 }
+
+/**
+ * Higher-order function for idempotency
+ */
+export async function withIdempotency<T>(
+  request: Request,
+  handler: () => Promise<T>,
+  options: { required?: boolean } = {}
+): Promise<T> {
+  const idempotencyKey = request.headers.get('idempotency-key');
+  
+  if (!idempotencyKey) {
+    if (options.required) {
+      throw new Error('Idempotency key required');
+    }
+    return await handler();
+  }
+  
+  // Check if we've already processed this request
+  const check = await checkIdempotency(idempotencyKey, 'api');
+  if (check.isIdempotent && check.result) {
+    return check.result;
+  }
+  
+  // Execute the handler
+  const result = await handler();
+  
+  // Store the result for future idempotency checks
+  await storeIdempotencyResult(idempotencyKey, result, 300); // 5 minutes TTL
+  
+  return result;
+}

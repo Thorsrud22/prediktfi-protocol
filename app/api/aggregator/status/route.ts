@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getFallbackStatus } from '../../../lib/aggregators/fallback-service';
+import { getFallbackStatus } from '@/lib/aggregators/fallback-service';
 
 export async function GET(request: NextRequest) {
   try {

@@ -24,6 +24,7 @@ model Creator {
   insights        Insight[]
 
   @@index([lastScoreUpdate])
+  @@index([score, accuracy, insightsCount]) // Composite index for leaderboard queries
   @@map("creators")
 }
 
@@ -74,6 +75,7 @@ model Insight {
   @@index([lastMarketSync])
   @@index([status, deadline, marketVolume])
   @@index([deadline])
+  @@index([createdAt, category, status]) // Composite index for feed queries
   @@map("insights")
 }
 
@@ -104,18 +106,21 @@ model Outcome {
 }
 
 model Event {
-  id        String   @id @default(cuid())
-  userId    String?
-  type      String
-  meta      String
-  createdAt DateTime @default(now())
-  insightId String?
-  user      Creator? @relation(fields: [userId], references: [id])
-  insight   Insight? @relation(fields: [insightId], references: [id])
+  id            String   @id @default(cuid())
+  userId        String?
+  type          String
+  meta          String
+  createdAt     DateTime @default(now())
+  insightId     String?
+  experimentKey String?  // A/B test experiment key
+  variant       String?  // A/B test variant (A, B, etc.)
+  user          Creator? @relation(fields: [userId], references: [id])
+  insight       Insight? @relation(fields: [insightId], references: [id])
 
   @@index([createdAt])
   @@index([type])
   @@index([userId])
+  @@index([experimentKey, variant])
   @@map("events")
 }
 
@@ -444,6 +449,7 @@ model UserSubscription {
   tier           UserTier           @default(FREE)
   status         SubscriptionStatus @default(ACTIVE)
   trialEndsAt    DateTime?
+  planExpiresAt  DateTime?
   subscriptionId String?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
@@ -509,6 +515,64 @@ model AnalyticsEvent {
   @@map("analytics_events")
 }
 
+model CreatorDaily {
+  id            String   @id @default(cuid())
+  creatorId     String
+  day           DateTime
+  maturedN      Int
+  brierMean     Float    // matured-only, winsorize brukt i input
+  retStd30d     Float?
+  notional30d   Float    // USDC
+  accuracy      Float    // 1 - brierMean (clamp)
+  consistency   Float    // 1/(1+retStd30d)
+  volumeScore   Float
+  recencyScore  Float
+  score         Float    // W*komponenter
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([creatorId, day])
+  @@index([creatorId, day])
+  @@index([day, score]) // For leaderboard queries
+  @@map("creator_daily")
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  userId      String
+  plan        String        // 'starter' | 'pro'
+  reference   String        @unique
+  amountUsd   Float
+  token       String        // 'USDC' | 'SOL'
+  status      InvoiceStatus @default(PENDING)
+  txSig       String?
+  createdAt   DateTime      @default(now())
+  paidAt      DateTime?
+  expiresAt   DateTime
+
+  @@index([userId])
+  @@index([reference])
+  @@index([status])
+  @@index([createdAt])
+  @@map("invoices")
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  userId      String
+  plan        String   // 'starter' | 'pro'
+  token       String   // 'USDC' | 'SOL'
+  amountUsd   Float
+  txSig       String   @unique
+  chain       String   @default("solana")
+  receivedAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([txSig])
+  @@index([receivedAt])
+  @@map("payments")
+}
+
 enum ResolverKind {
   PRICE
   URL
@@ -555,4 +619,10 @@ enum TrialTriggerType {
   SHARE_RECEIPTS
   INVITE_CODE
   MANUAL
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  EXPIRED
 }

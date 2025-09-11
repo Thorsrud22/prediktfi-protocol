@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { LeaderboardResponse } from '../api/leaderboard/route';
 import Link from 'next/link';
+import ScoreTooltip from '../components/ScoreTooltip';
 
 export const metadata: Metadata = {
   title: 'Leaderboard | PrediktFi',
@@ -72,6 +73,53 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
     if (score >= 0.6) return 'text-blue-600';
     if (score >= 0.4) return 'text-yellow-600';
     return 'text-red-600';
+  };
+  
+  const getTrendIcon = (trend?: 'up' | 'down' | 'flat') => {
+    if (trend === 'up') return <span className="text-green-500">↗️</span>;
+    if (trend === 'down') return <span className="text-red-500">↘️</span>;
+    if (trend === 'flat') return <span className="text-gray-500">→</span>;
+    return null;
+  };
+  
+  const getPerformanceBadge = (score: number, isProvisional: boolean) => {
+    if (isProvisional) {
+      return (
+        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+          Provisional
+        </span>
+      );
+    }
+    
+    if (score >= 0.9) {
+      return (
+        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+          Excellent
+        </span>
+      );
+    }
+    
+    if (score >= 0.7) {
+      return (
+        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+          Good
+        </span>
+      );
+    }
+    
+    if (score >= 0.5) {
+      return (
+        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+          Fair
+        </span>
+      );
+    }
+    
+    return (
+      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+        Needs Improvement
+      </span>
+    );
   };
   
   return (
@@ -188,19 +236,69 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
                               {creator.handle.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <Link 
-                            href={`/creator/${creator.handle}`}
-                            className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
-                          >
-                            {creator.handle}
-                          </Link>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <Link 
+                                href={`/creator/${creator.handle || creator.id}`}
+                                className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                                prefetch={true}
+                                onClick={() => {
+                                  // Track analytics event
+                                  if (typeof window !== 'undefined') {
+                                    fetch('/api/analytics', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        event: 'creator_profile_nav_from_leaderboard',
+                                        properties: { 
+                                          ts: Date.now(), 
+                                          path: window.location.pathname,
+                                          creator_handle: creator.handle,
+                                          creator_rank: creator.rank,
+                                          period: selectedPeriod
+                                        },
+                                        timestamp: new Date().toISOString(),
+                                      }),
+                                    }).catch(error => console.error('Failed to track event:', error));
+                                  }
+                                }}
+                              >
+                                {creator.handle}
+                              </Link>
+                              {getTrendIcon(creator.trend)}
+                            </div>
+                            <div className="mt-1">
+                              {getPerformanceBadge(creator.score, creator.isProvisional)}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-bold ${getScoreColor(creator.score)}`}>
-                          {creator.score.toFixed(3)}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1">
+                            <span className={`text-sm font-bold ${getScoreColor(creator.score)}`}>
+                              {(creator.score * 100).toFixed(1)}%
+                            </span>
+                            <ScoreTooltip
+                              score={creator.score}
+                              accuracy={creator.accuracy}
+                              totalInsights={creator.totalInsights}
+                              resolvedInsights={creator.resolvedInsights}
+                              averageBrier={creator.averageBrier}
+                              isProvisional={creator.isProvisional}
+                            />
+                          </div>
+                          {creator.change !== undefined && Math.abs(creator.change) > 0.01 && (
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              creator.change > 0 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {creator.change > 0 ? '+' : ''}{(creator.change * 100).toFixed(1)}%
+                            </span>
+                          )}
+                        </div>
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap">

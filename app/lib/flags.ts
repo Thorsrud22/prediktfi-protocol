@@ -4,6 +4,7 @@ export interface FeatureFlags {
   ALERTS: boolean;
   ACTIONS: boolean;
   EMBED_INTENT: boolean;
+  SIGNALS: boolean;
   INVITE_CODES: boolean;
   MONETIZATION: boolean;
   PRO_TRIALS: boolean;
@@ -17,7 +18,7 @@ export interface FeatureFlags {
 export function getFeatureFlags(): FeatureFlags {
   // Environment-based feature flags
   const isDevelopment = process.env.NODE_ENV === 'development';
-  const isStaging = process.env.NODE_ENV === 'staging';
+  const isStaging = process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'staging';
   const isProduction = process.env.NODE_ENV === 'production';
   
   return {
@@ -28,6 +29,10 @@ export function getFeatureFlags(): FeatureFlags {
     // Actions features - STRICT: OFF in production, ON in staging/dev
     ACTIONS: (process.env.FEATURE_ACTIONS === 'true' || isDevelopment || isStaging) && !isProduction,
     EMBED_INTENT: (process.env.FEATURE_EMBED_INTENT === 'true' || isDevelopment || isStaging) && !isProduction,
+    
+    // Signals API - controlled rollout in production
+    SIGNALS: process.env.SIGNALS === 'on' || isDevelopment || isStaging,
+    
     INVITE_CODES: (process.env.FEATURE_INVITE_CODES === 'true' || isDevelopment || isStaging) && !isProduction,
     
     // Monetization features - enabled by default
@@ -76,4 +81,40 @@ function hashString(str: string): number {
     hash = hash & hash; // Convert to 32-bit integer
   }
   return Math.abs(hash);
+}
+
+/**
+ * Check if signals API should be enabled for this request
+ * Uses IP-based rollout for anonymous users
+ */
+export function shouldEnableSignals(clientIp?: string): boolean {
+  const flags = getFeatureFlags();
+  
+  if (!flags.SIGNALS) {
+    return false;
+  }
+  
+  // Always enabled in development/staging
+  if (process.env.NODE_ENV !== 'production') {
+    return true;
+  }
+  
+  // Get rollout percentage from environment (default 0%)
+  const rolloutPercent = parseInt(process.env.ROLLOUT_PERCENT || '0');
+  
+  if (rolloutPercent >= 100) {
+    return true;
+  }
+  
+  if (rolloutPercent <= 0) {
+    return false;
+  }
+  
+  // Use IP address for consistent rollout
+  if (!clientIp) {
+    return false;
+  }
+  
+  const hash = hashString(clientIp);
+  return (hash % 100) < rolloutPercent;
 }

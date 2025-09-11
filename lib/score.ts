@@ -370,36 +370,95 @@ export async function getLeaderboard(
   resolvedInsights: number;
   averageBrier: number;
   rank: number;
+  isProvisional: boolean;
+  trend?: 'up' | 'down' | 'flat';
 }>> {
-  console.log(`📋 Generating leaderboard (period: ${period}, limit: ${limit})`);
+  const startTime = Date.now();
   
+  // For 90d period, use CreatorDaily data for better performance
+  if (period === '90d') {
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
+    // Get latest daily records for all creators
+    const dailyRecords = await prisma.creatorDaily.findMany({
+      where: {
+        day: {
+          gte: ninetyDaysAgo
+        }
+      },
+      orderBy: {
+        score: 'desc'
+      },
+      take: limit * 2, // Get more to filter out creators with no recent activity
+      distinct: ['creatorId']
+    });
+    
+    // Get creator details for the top records
+    const creatorIds = dailyRecords.map(record => record.creatorId);
+    const creators = await prisma.creator.findMany({
+      where: {
+        id: { in: creatorIds }
+      },
+      select: {
+        id: true,
+        handle: true,
+        score: true,
+        accuracy: true,
+        insightsCount: true,
+        brierMean: true
+      }
+    });
+    
+    const creatorMap = new Map(creators.map(c => [c.id, c]));
+    
+    const leaderboard = dailyRecords
+      .filter(record => creatorMap.has(record.creatorId))
+      .slice(0, limit)
+      .map((record, index) => {
+        const creator = creatorMap.get(record.creatorId)!;
+        return {
+          id: creator.id,
+          handle: creator.handle,
+          score: record.score,
+          accuracy: record.accuracy,
+          totalInsights: record.maturedN,
+          resolvedInsights: record.maturedN,
+          averageBrier: record.brierMean,
+          rank: index + 1,
+          isProvisional: record.maturedN < 50
+        };
+      });
+    
+    const processingTime = Date.now() - startTime;
+    console.log(`✅ 90d Leaderboard generated in ${processingTime}ms with ${leaderboard.length} creators`);
+    
+    return leaderboard;
+  }
+  
+  // For 'all' period, use optimized query
   const creators = await prisma.creator.findMany({
     where: {
+      score: { gt: 0 }, // Only creators with scores
       insights: {
         some: {
-          status: 'RESOLVED',
-          ...(period === '90d' && {
-            createdAt: {
-              gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-            }
-          })
+          status: 'RESOLVED'
         }
       }
     },
-    include: {
-      insights: {
-        where: {
-          status: 'RESOLVED',
-          ...(period === '90d' && {
-            createdAt: {
-              gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+    select: {
+      id: true,
+      handle: true,
+      score: true,
+      accuracy: true,
+      insightsCount: true,
+      brierMean: true,
+      _count: {
+        select: {
+          insights: {
+            where: {
+              status: 'RESOLVED'
             }
-          })
-        },
-        include: {
-          outcomes: {
-            orderBy: { decidedAt: 'desc' },
-            take: 1
           }
         }
       }
@@ -410,33 +469,20 @@ export async function getLeaderboard(
     take: limit
   });
   
-  const leaderboard = creators.map((creator, index) => {
-    const validInsights = creator.insights.filter(insight => 
-      insight.outcomes.length > 0 && 
-      insight.outcomes[0].result !== 'INVALID' &&
-      insight.p !== null
-    );
-    
-    const predictions = validInsights.map(insight => ({
-      predicted: typeof insight.p === 'number' ? insight.p : insight.p!.toNumber(),
-      actual: insight.outcomes[0].result as 'YES' | 'NO' | 'INVALID'
-    }));
-    
-    const metrics = calculateBrierMetrics(predictions);
-    
-    return {
-      id: creator.id,
-      handle: creator.handle,
-      score: creator.score,
-      accuracy: creator.accuracy,
-      totalInsights: creator.insights.length,
-      resolvedInsights: validInsights.length,
-      averageBrier: metrics.score,
-      rank: index + 1
-    };
-  });
+  const leaderboard = creators.map((creator, index) => ({
+    id: creator.id,
+    handle: creator.handle,
+    score: creator.score,
+    accuracy: creator.accuracy,
+    totalInsights: creator.insightsCount,
+    resolvedInsights: creator._count.insights,
+    averageBrier: creator.brierMean || 0,
+    rank: index + 1,
+    isProvisional: creator._count.insights < 50
+  }));
   
-  console.log(`✅ Generated leaderboard with ${leaderboard.length} creators`);
+  const processingTime = Date.now() - startTime;
+  console.log(`✅ All-time Leaderboard generated in ${processingTime}ms with ${leaderboard.length} creators`);
   
   return leaderboard;
 }

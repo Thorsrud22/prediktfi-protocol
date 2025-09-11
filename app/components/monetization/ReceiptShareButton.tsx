@@ -34,7 +34,8 @@ export function ReceiptShareButton({
 
     setLoading(true);
     try {
-      const walletId = getWalletIdentifier();
+      // For client-side, we need to get wallet ID differently
+      const walletId = localStorage.getItem('wallet_id') || '';
       if (walletId) {
         // Track the share for trial eligibility
         await trackReceiptShare(walletId, intentId, platform);

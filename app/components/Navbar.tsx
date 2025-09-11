@@ -7,15 +7,24 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useIsPro } from "../lib/use-plan";
 import { isFeatureEnabled } from "../lib/flags";
+import { useWalletAuth } from "../lib/useWalletAuth";
+import { HeaderConnectButton } from "./HeaderConnectButton";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const isInsightPage = pathname.startsWith('/i/');
   const isPro = useIsPro();
+  const { isAuthenticated, wallet, connectAndAuthenticate, signOut, isLoading } = useWalletAuth();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<Element | null>(null);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Handle scroll state for navbar border with debouncing
   useEffect(() => {
@@ -100,60 +109,104 @@ export default function Navbar() {
             </span>
           </div>
         </Link>
-        {/* Desktop nav */}
-        <div className="hidden items-center gap-4 sm:flex">
-          <FastLink
-            href="/studio"
-            className="flex h-14 items-center px-3 text-sm font-semibold text-blue-100 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
-          >
-            Studio
-          </FastLink>
-          {isFeatureEnabled('ADVISOR') && (
-            <FastLink
-              href="/advisor"
-              className="flex h-14 items-center px-3 text-sm font-semibold text-blue-100 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
-            >
-              Advisor
-            </FastLink>
-          )}
-          {isFeatureEnabled('ACTIONS') && (
-            <FastLink
-              href="/advisor/actions"
-              className="flex h-14 items-center px-3 text-sm font-semibold text-blue-100 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
-            >
-              Actions
-            </FastLink>
-          )}
+        {/* Desktop nav - Primary navigation */}
+        <div className="hidden items-center gap-6 sm:flex">
+          {/* Primary navigation - Feed as hero */}
           <FastLink
             href="/feed"
-            className="flex h-14 items-center px-3 text-sm font-medium text-blue-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
+            className={`flex h-14 items-center px-4 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+              pathname === '/feed' 
+                ? 'text-white bg-blue-500/20 rounded-lg' 
+                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+            }`}
           >
             Feed
           </FastLink>
+          
+          {/* Core functionality */}
           <FastLink
-            href="/pricing"
-            className="flex h-14 items-center px-3 text-sm font-medium text-blue-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
+            href="/studio"
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+              pathname === '/studio' 
+                ? 'text-white bg-blue-500/20 rounded-lg' 
+                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+            }`}
           >
-            Pricing
+            Studio
           </FastLink>
-          <FastLink
-            href="/account"
-            className="flex h-14 items-center gap-1.5 px-3 text-sm font-medium text-blue-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-colors"
-          >
-            Account
-            {isPro && (
-              <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                PRO
-              </span>
+          
+          {/* Secondary navigation - grouped */}
+          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-600">
+            {isFeatureEnabled('ADVISOR') && (
+              <FastLink
+                href="/advisor"
+                className={`flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+                  pathname === '/advisor' 
+                    ? 'text-white bg-blue-500/20 rounded-lg' 
+                    : 'text-blue-200 hover:text-white hover:bg-blue-500/10 rounded-lg'
+                }`}
+              >
+                Advisor
+              </FastLink>
             )}
-          </FastLink>
+            {isFeatureEnabled('ACTIONS') && (
+              <FastLink
+                href="/advisor/actions"
+                className={`flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+                  pathname === '/advisor/actions' 
+                    ? 'text-white bg-blue-500/20 rounded-lg' 
+                    : 'text-blue-200 hover:text-white hover:bg-blue-500/10 rounded-lg'
+                }`}
+              >
+                Actions
+              </FastLink>
+            )}
+            <FastLink
+              href="/pricing"
+              className={`flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+                pathname === '/pricing' 
+                  ? 'text-white bg-blue-500/20 rounded-lg' 
+                  : 'text-blue-200 hover:text-white hover:bg-blue-500/10 rounded-lg'
+              }`}
+            >
+              Pricing
+            </FastLink>
+            <FastLink
+              href="/account"
+              className={`flex h-14 items-center gap-1.5 px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+                pathname === '/account' 
+                  ? 'text-white bg-blue-500/20 rounded-lg' 
+                  : 'text-blue-200 hover:text-white hover:bg-blue-500/10 rounded-lg'
+              }`}
+            >
+              Account
+              {isPro && (
+                <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  PRO
+                </span>
+              )}
+            </FastLink>
+            {mounted && isPro && (
+              <FastLink
+                href="/account/billing"
+                className={`flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+                  pathname === '/account/billing' 
+                    ? 'text-white bg-blue-500/20 rounded-lg' 
+                    : 'text-blue-200 hover:text-white hover:bg-blue-500/10 rounded-lg'
+                }`}
+              >
+                Billing
+              </FastLink>
+            )}
+          </div>
         </div>
         
-        {/* Right side - Upgrade and Studio buttons */}
+        {/* Right side - Wallet auth, Upgrade and Studio buttons */}
         <div className="flex items-center gap-3">
-          {!isPro && (
+          {mounted && <HeaderConnectButton />}
+          {mounted && !isPro && (
             <Link
-              href="/pricing"
+              href="/pay"
               className="hidden sm:inline-flex h-10 items-center justify-center rounded-full px-4 py-2 text-sm font-medium bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition-all focus-visible:ring-2 focus-visible:ring-emerald-400/50"
             >
               Upgrade
@@ -220,57 +273,113 @@ export default function Navbar() {
               </button>
             </div>
             <nav className="flex flex-col gap-3">
-              <FastLink
-                href="/studio"
-                className="rounded-md px-2 py-2 font-semibold text-slate-100 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors"
-                onClick={() => setOpen(false)}
-              >
-                Studio
-              </FastLink>
-              {isFeatureEnabled('ADVISOR') && (
+              {/* Primary navigation */}
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Main</div>
                 <FastLink
-                  href="/advisor"
-                  className="rounded-md px-2 py-2 font-semibold text-slate-100 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors"
+                  href="/feed"
+                  className={`rounded-md px-3 py-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
+                    pathname === '/feed' 
+                      ? 'text-white bg-blue-500/20' 
+                      : 'text-slate-100 hover:bg-slate-800/70'
+                  }`}
                   onClick={() => setOpen(false)}
                 >
-                  Advisor
+                  Feed
                 </FastLink>
-              )}
-              {isFeatureEnabled('ACTIONS') && (
                 <FastLink
-                  href="/advisor/actions"
-                  className="rounded-md px-2 py-2 font-semibold text-slate-100 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors"
+                  href="/studio"
+                  className={`rounded-md px-3 py-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
+                    pathname === '/studio' 
+                      ? 'text-white bg-blue-500/20' 
+                      : 'text-slate-100 hover:bg-slate-800/70'
+                  }`}
                   onClick={() => setOpen(false)}
                 >
-                  Actions
+                  Studio
                 </FastLink>
-              )}
-              <FastLink
-                href="/feed"
-                className="rounded-md px-2 py-2 font-medium text-slate-300 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors"
-                onClick={() => setOpen(false)}
-              >
-                Feed
-              </FastLink>
-              <FastLink
-                href="/pricing"
-                className="rounded-md px-2 py-2 font-medium text-slate-300 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors"
-                onClick={() => setOpen(false)}
-              >
-                Pricing
-              </FastLink>
-              <FastLink
-                href="/account"
-                className="rounded-md px-2 py-2 font-medium text-slate-300 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors flex items-center gap-2"
-                onClick={() => setOpen(false)}
-              >
-                Account
-                {isPro && (
-                  <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#F7931E] px-1.5 py-0.5 text-[10px] font-medium text-white">
-                    PRO
-                  </span>
+              </div>
+              
+              {/* Secondary navigation */}
+              {/* Wallet Authentication */}
+              <div className="space-y-2 mb-4">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Wallet</div>
+                <div className="w-full">
+                  <div className="w-full">
+                    <HeaderConnectButton />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">More</div>
+                {isFeatureEnabled('ADVISOR') && (
+                  <FastLink
+                    href="/advisor"
+                    className={`rounded-md px-3 py-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
+                      pathname === '/advisor' 
+                        ? 'text-white bg-blue-500/20' 
+                        : 'text-slate-300 hover:bg-slate-800/70'
+                    }`}
+                    onClick={() => setOpen(false)}
+                  >
+                    Advisor
+                  </FastLink>
                 )}
-              </FastLink>
+                {isFeatureEnabled('ACTIONS') && (
+                  <FastLink
+                    href="/advisor/actions"
+                    className={`rounded-md px-3 py-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
+                      pathname === '/advisor/actions' 
+                        ? 'text-white bg-blue-500/20' 
+                        : 'text-slate-300 hover:bg-slate-800/70'
+                    }`}
+                    onClick={() => setOpen(false)}
+                  >
+                    Actions
+                  </FastLink>
+                )}
+                <FastLink
+                  href="/pricing"
+                  className={`rounded-md px-3 py-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
+                    pathname === '/pricing' 
+                      ? 'text-white bg-blue-500/20' 
+                      : 'text-slate-300 hover:bg-slate-800/70'
+                  }`}
+                  onClick={() => setOpen(false)}
+                >
+                  Pricing
+                </FastLink>
+                <FastLink
+                  href="/account"
+                  className={`rounded-md px-3 py-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 flex items-center gap-2 ${
+                    pathname === '/account' 
+                      ? 'text-white bg-blue-500/20' 
+                      : 'text-slate-300 hover:bg-slate-800/70'
+                  }`}
+                  onClick={() => setOpen(false)}
+                >
+                  Account
+                  {isPro && (
+                    <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#F7931E] px-1.5 py-0.5 text-[10px] font-medium text-white">
+                      PRO
+                    </span>
+                  )}
+                </FastLink>
+                {mounted && isPro && (
+                  <FastLink
+                    href="/account/billing"
+                    className={`rounded-md px-3 py-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
+                      pathname === '/account/billing' 
+                        ? 'text-white bg-blue-500/20' 
+                        : 'text-slate-300 hover:bg-slate-800/70'
+                    }`}
+                    onClick={() => setOpen(false)}
+                  >
+                    Billing
+                  </FastLink>
+                )}
+              </div>
               <Link
                 href="/studio"
                 className={`mt-2 inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-blue-500/60 ${

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { safeParse, safeLocalStorageGet, safeLocalStorageSet } from "../lib/safe-fetch";
 
 import InsightForm from "../components/Studio/InsightForm";
 import InsightPreview from "../components/Studio/InsightPreview";
@@ -18,6 +19,12 @@ import { isFeatureEnabled } from "../lib/flags";
 import { quoteCache } from "../lib/aggregators/quote-cache";
 import { getTokenMint } from "../lib/aggregators/jupiter";
 
+// Safe JSON parser to avoid console SyntaxError overlays in dev
+function parseJsonOr<T>(input: string | null, fallback: T, context = 'unknown'): T {
+  const result = safeParse<T>(input);
+  return result ?? fallback;
+}
+
 // Lazy load wallet components
 const WalletMultiButton = dynamic(
   () => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
@@ -28,6 +35,47 @@ function StudioContent() {
   const searchParams = useSearchParams();
   const [isProOverride, setIsProOverride] = useState(false);
   const isPro = useIsPro() || isProOverride;
+
+  // Clear corrupted localStorage on mount and add global error handler
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Add global error handler for unhandled JSON.parse errors
+      const handleError = (event: ErrorEvent) => {
+        if (event.message && event.message.includes('JSON.parse')) {
+          console.warn('[GLOBAL] Caught JSON.parse error:', event.message);
+          event.preventDefault(); // Prevent the error overlay
+          return true;
+        }
+      };
+      window.addEventListener('error', handleError);
+
+      // Clear corrupted localStorage
+      try {
+        const stored = localStorage.getItem("predikt:insights");
+        if (stored && stored.trim()) {
+          JSON.parse(stored);
+        }
+      } catch (error) {
+        console.warn("[CLEANUP] Clearing corrupted localStorage insights:", error);
+        localStorage.removeItem("predikt:insights");
+        // Also clear other potentially corrupted keys
+        const keysToCheck = ['predikt:ref', 'predikt:creatorId', 'market-context-visible'];
+        keysToCheck.forEach(key => {
+          const val = localStorage.getItem(key);
+          if (val && (val.includes('{') || val.includes('['))) {
+            try {
+              JSON.parse(val);
+            } catch {
+              console.warn(`[CLEANUP] Clearing corrupted ${key}:`, val);
+              localStorage.removeItem(key);
+            }
+          }
+        });
+      }
+
+      return () => window.removeEventListener('error', handleError);
+    }
+  }, []);
   
   // Handle referral persistence with error boundary
   useEffect(() => {
@@ -214,13 +262,12 @@ function StudioContent() {
           };
 
           // Add attribution if available
-          const ref = localStorage.getItem("predikt:ref");
-          const creatorId = localStorage.getItem("predikt:creatorId");
+          const ref = safeLocalStorageGet("predikt:ref", null, 'studio-attribution');
+          const creatorId = safeLocalStorageGet("predikt:creatorId", null, 'studio-attribution');
           if (ref) insight.ref = ref;
           if (creatorId) insight.creatorId = creatorId;
 
-          const existing = localStorage.getItem("predikt:insights");
-          const insights = existing ? JSON.parse(existing) : [];
+          const insights = safeLocalStorageGet<any[]>("predikt:insights", [], 'studio-save-insights');
           insights.unshift(insight);
           
           // Keep only last 5
@@ -228,7 +275,7 @@ function StudioContent() {
             insights.splice(5);
           }
           
-          localStorage.setItem("predikt:insights", JSON.stringify(insights));
+          safeLocalStorageSet("predikt:insights", insights, 'studio-save-insights');
         } catch (error) {
           console.warn("Failed to save insight to feed:", error);
         }
@@ -1204,9 +1251,9 @@ function RecentInsightsFeed() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        const stored = localStorage.getItem("predikt:insights");
-        if (stored) {
-          setInsights(JSON.parse(stored));
+        const parsed = safeLocalStorageGet<any[]>("predikt:insights", [], 'studio-recent-insights');
+        if (parsed.length > 0) {
+          setInsights(parsed);
         }
       } catch (error) {
         console.warn("Failed to load insights from localStorage:", error);

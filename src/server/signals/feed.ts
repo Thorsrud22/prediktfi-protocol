@@ -3,6 +3,21 @@
  * Provides lightweight market context data with caching and timeouts
  */
 
+import { setGlobalDispatcher, Agent } from 'undici';
+import { fetchPolymarket } from '../../lib/adapters/polymarket';
+import { fetchFearGreed } from '../../lib/adapters/fearGreed';
+import { fetchFunding } from '../../lib/adapters/funding';
+import { etagStore } from '../../lib/cache/etagStore';
+import { telemetry } from '../../lib/telemetry';
+import { getStaleButServeable } from '../../lib/cache/signalsL2';
+
+// Set up undici keep-alive agent for better performance
+setGlobalDispatcher(new Agent({ 
+  keepAlive: true, 
+  keepAliveTimeout: 10_000, 
+  connections: 100 
+}));
+
 export interface MarketSignal {
   type: 'polymarket' | 'fear_greed' | 'trend' | 'funding' | 'sentiment';
   label: string;
@@ -28,6 +43,31 @@ const CACHE_TTL_MS = 180 * 1000; // 3 minutes
 const REQUEST_TIMEOUT_MS = 800; // Per source timeout
 const TOTAL_BUDGET_MS = 1200; // Total budget
 
+// Circuit breaker states per source
+interface CircuitBreakerState {
+  state: 'closed' | 'open' | 'half-open';
+  failEma: number;
+  windowN: number;
+  openedAt?: number;
+  backoffMs?: number;
+  lastOkTs?: string;
+}
+
+const circuitBreakers = new Map<string, CircuitBreakerState>();
+
+// Initialize circuit breakers for known sources
+const SOURCES = ['polymarket', 'fear_greed', 'funding'];
+
+SOURCES.forEach(source => {
+  if (!circuitBreakers.has(source)) {
+    circuitBreakers.set(source, {
+      state: 'closed',
+      failEma: 0,
+      windowN: 0
+    });
+  }
+});
+
 /**
  * Creates a timeout promise that rejects after specified ms
  */
@@ -51,75 +91,95 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
 }
 
 /**
- * Get Fear & Greed Index (mock implementation)
+ * Update circuit breaker state for a source
  */
-async function getFearGreedSignal(): Promise<MarketSignal | null> {
-  try {
-    // Mock implementation - replace with real API
-    const mockValue = 45 + Math.floor(Math.random() * 30); // 45-75 range
-    const label = mockValue > 60 ? 'Greed' : mockValue < 40 ? 'Fear' : 'Neutral';
-    
-    return {
-      type: 'fear_greed',
-      label: `${label} (${mockValue})`,
-      value: mockValue,
-      ts: new Date().toISOString()
-    };
-  } catch (error) {
-    console.warn('Fear & Greed signal failed:', error);
-    return null;
+function updateCircuitBreaker(source: string, success: boolean, elapsedMs: number): void {
+  const breaker = circuitBreakers.get(source);
+  if (!breaker) return;
+
+  const now = Date.now();
+  const windowSize = 120000; // 2 minutes
+  const failureThreshold = 0.5;
+  const minWindowSize = 10;
+
+  // Update failure EMA (exponential moving average)
+  const alpha = 0.1; // Smoothing factor
+  const failure = success ? 0 : 1;
+  breaker.failEma = alpha * failure + (1 - alpha) * breaker.failEma;
+
+  // Update window count
+  breaker.windowN++;
+
+  // Reset window if too old
+  if (breaker.openedAt && (now - breaker.openedAt) > windowSize) {
+    breaker.windowN = 1;
+    breaker.openedAt = now;
+  }
+
+  // State transitions
+  switch (breaker.state) {
+    case 'closed':
+      if (breaker.failEma > failureThreshold && breaker.windowN >= minWindowSize) {
+        breaker.state = 'open';
+        breaker.openedAt = now;
+        breaker.backoffMs = 500; // Start with 500ms backoff
+        console.log(`Circuit breaker OPENED for ${source} (failEma: ${breaker.failEma.toFixed(3)}, windowN: ${breaker.windowN})`);
+      }
+      break;
+
+    case 'open':
+      // Check if we should move to half-open
+      if (breaker.openedAt && (now - breaker.openedAt) > 60000) { // 60s cooldown
+        breaker.state = 'half-open';
+        breaker.windowN = 0;
+        console.log(`Circuit breaker HALF-OPEN for ${source}`);
+      }
+      break;
+
+    case 'half-open':
+      if (success) {
+        breaker.state = 'closed';
+        breaker.failEma = 0;
+        breaker.windowN = 0;
+        breaker.lastOkTs = new Date().toISOString();
+        console.log(`Circuit breaker CLOSED for ${source}`);
+      } else {
+        // Exponential backoff: 0.5s -> 1s -> 2s -> 4s -> 8s (max)
+        breaker.state = 'open';
+        breaker.backoffMs = Math.min((breaker.backoffMs || 500) * 2, 8000);
+        breaker.openedAt = now;
+        console.log(`Circuit breaker RE-OPENED for ${source} (backoff: ${breaker.backoffMs}ms)`);
+      }
+      break;
   }
 }
 
 /**
- * Get funding rate trend (mock implementation)
+ * Check if circuit breaker allows request for source
  */
-async function getFundingSignal(): Promise<MarketSignal | null> {
-  try {
-    // Mock implementation - replace with real funding rate API
-    const directions = ['up', 'down', 'neutral'] as const;
-    const direction = directions[Math.floor(Math.random() * directions.length)];
-    const symbols = ['SOL', 'ETH', 'BTC'];
-    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
-    
-    const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
-    
-    return {
-      type: 'funding',
-      label: `${symbol} funding ${arrow}`,
-      direction,
-      ts: new Date().toISOString()
-    };
-  } catch (error) {
-    console.warn('Funding signal failed:', error);
-    return null;
-  }
+function isCircuitBreakerOpen(source: string): boolean {
+  const breaker = circuitBreakers.get(source);
+  return breaker?.state === 'open';
 }
 
 /**
- * Get Polymarket prediction (mock implementation)
+ * Get circuit breaker state for monitoring
  */
-async function getPolymarketSignal(): Promise<MarketSignal | null> {
-  try {
-    // Mock implementation - replace with real Polymarket API
-    const predictions = [
-      { label: 'ETH > $4000 by Q4', prob: 0.62 },
-      { label: 'SOL > $300 by EOY', prob: 0.45 },
-      { label: 'BTC new ATH Q1', prob: 0.38 }
-    ];
-    
-    const prediction = predictions[Math.floor(Math.random() * predictions.length)];
-    
-    return {
-      type: 'polymarket',
-      label: prediction.label,
-      prob: prediction.prob,
-      ts: new Date().toISOString()
-    };
-  } catch (error) {
-    console.warn('Polymarket signal failed:', error);
-    return null;
-  }
+function getCircuitBreakerState(source: string): CircuitBreakerState | undefined {
+  return circuitBreakers.get(source);
+}
+
+/**
+ * Create adapter context for external API calls
+ */
+function createAdapterCtx(now: Date, timeoutMs: number) {
+  return {
+    now,
+    timeoutMs,
+    etagStore,
+    fetchImpl: fetch,
+    telemetry
+  };
 }
 
 /**
@@ -127,36 +187,75 @@ async function getPolymarketSignal(): Promise<MarketSignal | null> {
  */
 async function fetchSignals(): Promise<MarketSignal[]> {
   const startTime = Date.now();
+  const now = new Date();
   const signals: MarketSignal[] = [];
   
-  // Fetch signals in parallel with individual timeouts
-  const signalPromises = [
-    getFearGreedSignal(),
-    getFundingSignal(),
-    getPolymarketSignal()
-  ].map(promise => 
-    Promise.race([
-      promise,
-      createTimeout(REQUEST_TIMEOUT_MS)
-    ]).catch(() => null) // Convert errors to null
-  );
+  // Create adapter context
+  const ctx = createAdapterCtx(now, REQUEST_TIMEOUT_MS);
+  
+  // Map sources to their fetch functions
+  const sourceMap = [
+    { name: 'fear_greed', fetch: () => fetchFearGreed(ctx) },
+    { name: 'funding', fetch: () => fetchFunding(ctx) },
+    { name: 'polymarket', fetch: () => fetchPolymarket(ctx) }
+  ];
+  
+  // Check circuit breakers and prepare promises
+  const adapterPromises = sourceMap.map(async ({ name, fetch }) => {
+    // Check if circuit breaker is open
+    if (isCircuitBreakerOpen(name)) {
+      console.log(`Circuit breaker OPEN for ${name}, skipping request`);
+      return { items: [], ok: false, timedOut: false, source: name, circuitBreakerOpen: true };
+    }
+    
+    const sourceStartTime = Date.now();
+    try {
+      const result = await Promise.race([
+        fetch(),
+        createTimeout(REQUEST_TIMEOUT_MS)
+      ]);
+      
+      const elapsed = Date.now() - sourceStartTime;
+      const success = result.ok && !result.timedOut;
+      
+      // Update circuit breaker
+      updateCircuitBreaker(name, success, elapsed);
+      
+      return { ...result, source: name, elapsed };
+    } catch (error) {
+      const elapsed = Date.now() - sourceStartTime;
+      updateCircuitBreaker(name, false, elapsed);
+      return { items: [], ok: false, timedOut: true, source: name, error };
+    }
+  });
   
   try {
     // Wait for all signals with total budget timeout
     const results = await Promise.race([
-      Promise.all(signalPromises),
+      Promise.allSettled(adapterPromises),
       createTimeout(TOTAL_BUDGET_MS)
     ]);
     
-    // Filter out null results and limit to 5 items
-    for (const signal of results) {
-      if (signal && signals.length < 5) {
-        signals.push(signal);
+    // Process results and collect signals
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value.ok) {
+        for (const signal of result.value.items) {
+          if (signals.length < 5) {
+            signals.push(signal);
+          }
+        }
       }
     }
     
     const elapsed = Date.now() - startTime;
     console.log(`Signals fetch completed in ${elapsed}ms, got ${signals.length} signals`);
+    
+    // Log telemetry for monitoring
+    const metrics = telemetry.getAllMetrics();
+    for (const [source, data] of Object.entries(metrics)) {
+      const breaker = getCircuitBreakerState(source);
+      console.log(`${source}: success_rate=${data.success_rate.toFixed(2)}, p95_ms=${data.p95_ms}ms, breaker=${breaker?.state || 'unknown'}`);
+    }
     
   } catch (error) {
     console.warn('Signals fetch timeout or error:', error);
@@ -176,6 +275,27 @@ export async function getMarketSignals(pair?: string): Promise<SignalsFeedData> 
   const cached = cache.get(cacheKey);
   if (cached && now < cached.expiresAt) {
     return cached.data;
+  }
+  
+  // Check if any circuit breakers are open
+  const hasOpenBreakers = SOURCES.some(source => isCircuitBreakerOpen(source));
+  
+  if (hasOpenBreakers) {
+    console.log('Circuit breakers open, attempting to serve stale data');
+    
+    // Try to get stale data from L2 cache
+    const stale = getStaleButServeable(now);
+    if (stale) {
+      console.log('Serving stale data due to circuit breaker');
+      return stale.payload;
+    }
+    
+    // If no stale data available, return empty but don't cache it
+    console.log('No stale data available, returning empty signals');
+    return {
+      items: [],
+      updatedAt: new Date().toISOString()
+    };
   }
   
   // Fetch fresh data
@@ -199,4 +319,29 @@ export async function getMarketSignals(pair?: string): Promise<SignalsFeedData> 
  */
 export function clearSignalsCache(): void {
   cache.clear();
+}
+
+/**
+ * Get circuit breaker state for monitoring
+ */
+export function getCircuitBreakerStates(): Record<string, CircuitBreakerState> {
+  const states: Record<string, CircuitBreakerState> = {};
+  for (const [source, state] of circuitBreakers) {
+    states[source] = { ...state };
+  }
+  return states;
+}
+
+/**
+ * Reset circuit breaker for a source (useful for testing)
+ */
+export function resetCircuitBreaker(source: string): void {
+  const breaker = circuitBreakers.get(source);
+  if (breaker) {
+    breaker.state = 'closed';
+    breaker.failEma = 0;
+    breaker.windowN = 0;
+    breaker.openedAt = undefined;
+    breaker.backoffMs = undefined;
+  }
 }

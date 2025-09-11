@@ -6,6 +6,7 @@ import { markets } from "../lib/markets";
 import MarketCard from "../components/MarketCard";
 import CategoryBar from "../components/CategoryBar";
 import { MarketCardSkeleton } from "../components/MarketCardSkeleton";
+import { safeParse } from "../lib/safe-fetch";
 
 type SortOption = "ending-soon" | "most-volume";
 
@@ -31,9 +32,11 @@ function MarketsContent() {
         // Fall back to sessionStorage
         const saved = sessionStorage.getItem("predikt-ui-markets");
         if (saved) {
-          const { search, category } = JSON.parse(saved);
-          if (search) setSearchQuery(search);
-          if (category) setSelectedCategory(category);
+          const parsed = safeParse<{ search?: string; category?: string }>(saved);
+          if (parsed) {
+            if (parsed.search) setSearchQuery(parsed.search);
+            if (parsed.category) setSelectedCategory(parsed.category);
+          }
         }
       }
     } catch (error) {

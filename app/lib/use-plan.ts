@@ -10,8 +10,11 @@ export type Plan = "free" | "pro";
  */
 export function usePlan(): Plan {
   const [plan, setPlan] = useState<Plan>("free");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    
     // Try to read from a meta tag that we can set server-side
     const metaTag = document.querySelector('meta[name="x-plan"]');
     if (metaTag) {
@@ -30,6 +33,11 @@ export function usePlan(): Plan {
       console.warn('Failed to read plan from cookie:', error);
     }
   }, []);
+
+  // Return "free" during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return "free";
+  }
 
   return plan;
 }

@@ -5,13 +5,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getSmartDefaults, SmartDefaults } from '../../lib/intents/smart-defaults';
+import { getSmartDefaults, SmartDefaults, WalletSnapshot } from '../../lib/intents/smart-defaults';
 import { PMFTracker } from '../../lib/analytics/pmf-tracker';
 import { Connection } from '@solana/web3.js';
 import { QuotaIndicator } from '../monetization/QuotaIndicator';
 import { QuotaWall } from '../monetization/QuotaWall';
 import MarketContext from './MarketContext';
+import CopyCta from '../trade/CopyCta';
 import { getBucket } from '../../../src/server/analytics/ab';
+import { getExperimentBucket } from '../../../src/lib/ab/ab-utils';
 
 interface TradePanelProps {
   walletId: string;
@@ -62,11 +64,29 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
   const [noiseFilterWarning, setNoiseFilterWarning] = useState<string | null>(null);
   const [abBucket, setAbBucket] = useState<'A' | 'B' | null>(null);
   const [contextEventSent, setContextEventSent] = useState(false);
+  const [ctaVariant, setCtaVariant] = useState<'primary_above' | 'inline_below'>('primary_above');
+
+  // Send analytics event helper
+  const sendAnalyticsEvent = async (event: { type: string; modelIdHashed?: string; variant?: string; experiment?: string }) => {
+    try {
+      await fetch('/api/analytics/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(event)
+      });
+    } catch (error) {
+      console.warn('Failed to send analytics event:', error);
+    }
+  };
 
   // Set A/B bucket and send context events
   useEffect(() => {
     const bucket = getBucket(sessionId);
     setAbBucket(bucket);
+    
+    // Set CTA variant based on experiment bucket
+    const ctaBucket = getExperimentBucket(sessionId, 'cta_copy_v1');
+    setCtaVariant(ctaBucket === 'A' ? 'primary_above' : 'inline_below');
     
     // Send context event (shown for A, hidden for B)
     if (!contextEventSent) {
@@ -84,7 +104,15 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
       setCalculatingDefaults(true);
       try {
         const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com');
-        const defaults = await getSmartDefaults(walletId, formData.side, connection);
+        // Create a mock wallet snapshot for now
+        const walletSnapshot: WalletSnapshot = {
+          totalValueUsd: 10000, // Mock portfolio value
+          holdings: [
+            { asset: 'SOL', amount: 10, valueUsd: 2000 },
+            { asset: 'USDC', amount: 8000, valueUsd: 8000 }
+          ]
+        };
+        const defaults = await getSmartDefaults(walletSnapshot, formData.side, formData.base, formData.quote);
         setSmartDefaults(defaults);
         
         // Apply smart defaults to form if no template data
@@ -275,6 +303,23 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
           {/* Market Context - A/B tested (only show for bucket A) */}
           {abBucket === 'A' && <MarketContext pair="SOL/USDC" className="mb-2" />}
 
+          {/* Copy CTA - A/B tested */}
+          {templateData?.sourceModelId && (
+            <CopyCta
+              modelIdHashed={templateData.sourceModelId}
+              variant={ctaVariant}
+              onClick={() => {
+                // Send copy clicked event with experiment metadata
+                sendAnalyticsEvent({
+                  type: 'model_copy_clicked',
+                  modelIdHashed: templateData.sourceModelId,
+                  variant: ctaVariant,
+                  experiment: 'cta_copy_v1'
+                });
+              }}
+            />
+          )}
+
           <div>
             <label className="block text-sm font-medium text-[color:var(--text)] mb-1">
               Side
@@ -352,13 +397,13 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
           {smartDefaults && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <div className="text-sm font-medium text-green-900 mb-2">Smart Sizing</div>
-              <div className="text-xs text-green-700 mb-2">{smartDefaults.rationale}</div>
+              <div className="text-xs text-green-700 mb-2">Based on your portfolio size and risk profile</div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <span className="text-green-600">Recommended:</span> {smartDefaults.recommendedSizePct}% (${smartDefaults.recommendedSizeUsd.toFixed(0)})
                 </div>
                 <div>
-                  <span className="text-green-600">Max Safe:</span> {smartDefaults.maxSafeSizePct}% (${smartDefaults.maxSafeSizeUsd.toFixed(0)})
+                  <span className="text-green-600">Max Safe:</span> {smartDefaults.maxPositionPct}% (${(smartDefaults.portfolioValueUsd * smartDefaults.maxPositionPct / 100).toFixed(0)})
                 </div>
               </div>
             </div>
@@ -398,7 +443,7 @@ export default function TradePanel({ walletId, templateData, onClose, onIntentCr
                   {[
                     { label: 'Conservative', pct: 2, color: 'bg-green-100 text-green-800' },
                     { label: 'Moderate', pct: smartDefaults.recommendedSizePct, color: 'bg-blue-100 text-blue-800' },
-                    { label: 'Aggressive', pct: Math.min(smartDefaults.maxSafeSizePct, 8), color: 'bg-orange-100 text-orange-800' }
+                    { label: 'Aggressive', pct: Math.min(smartDefaults.maxPositionPct, 8), color: 'bg-orange-100 text-orange-800' }
                   ].map((suggestion) => (
                     <button
                       key={suggestion.label}

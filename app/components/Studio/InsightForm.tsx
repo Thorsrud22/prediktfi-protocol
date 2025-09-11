@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { TOPICS, HORIZONS } from '../../lib/ai/types';
 
 interface InsightFormProps {
@@ -15,6 +15,13 @@ const InsightForm: React.FC<InsightFormProps> = ({ onSubmit, onPredict, isLoadin
   const [topic, setTopic] = useState('');
   const [horizon, setHorizon] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Auto-fill time horizon to 30d if empty
+  useEffect(() => {
+    if (!horizon) {
+      setHorizon('30d');
+    }
+  }, [horizon]);
 
   const isFormLoading = isLoading || loading;
 
@@ -119,6 +126,14 @@ const InsightForm: React.FC<InsightFormProps> = ({ onSubmit, onPredict, isLoadin
             if (errors.topic) {
               setErrors(prev => ({ ...prev, topic: '' }));
             }
+            
+            // Track category selection
+            if (e.target.value) {
+              trackEvent('studio_category_autofill_used', {
+                category: e.target.value,
+                timestamp: Date.now()
+              });
+            }
           }}
           className={`w-full px-3 py-2 border rounded-lg bg-[--surface] text-[--text] focus:outline-none focus:ring-2 focus:ring-[--accent] ${
             errors.topic ? 'border-red-500' : 'border-[--border]'
@@ -178,5 +193,27 @@ const InsightForm: React.FC<InsightFormProps> = ({ onSubmit, onPredict, isLoadin
     </form>
   );
 };
+
+/**
+ * Track analytics event
+ */
+function trackEvent(eventName: string, properties: Record<string, any>) {
+  if (typeof window === 'undefined') return;
+
+  // Send to analytics
+  fetch('/api/analytics', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      event: eventName,
+      properties,
+      timestamp: new Date().toISOString(),
+    }),
+  }).catch(error => {
+    console.error('Failed to track event:', error);
+  });
+}
 
 export default InsightForm;

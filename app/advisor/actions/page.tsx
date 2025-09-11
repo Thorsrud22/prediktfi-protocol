@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { isFeatureEnabled } from '../../lib/flags';
+import { safeParse } from '../../lib/safe-fetch';
 import TradePanel from '../../components/actions/TradePanel';
 import IntentCard from '../../components/actions/IntentCard';
 import SimResult from '../../components/actions/SimResult';
@@ -101,9 +102,11 @@ export default function ActionsPage() {
     } else if (template) {
       // Legacy base64 template format
       try {
-        const decoded = JSON.parse(atob(template));
-        setTemplateData(decoded);
-        setShowCreateForm(true);
+        const decoded = safeParse(atob(template));
+        if (decoded) {
+          setTemplateData(decoded);
+          setShowCreateForm(true);
+        }
       } catch (error) {
         console.error('Failed to decode template:', error);
       }
@@ -302,7 +305,9 @@ export default function ActionsPage() {
 
               {/* Invite Code Widget */}
               {isFeatureEnabled('INVITE_CODES') && (
-                <InviteCodeWidget walletId={selectedWallet} className="mb-6" />
+                <div className="mb-6">
+                  <InviteCodeWidget walletId={selectedWallet} />
+                </div>
               )}
 
               {/* Controls */}

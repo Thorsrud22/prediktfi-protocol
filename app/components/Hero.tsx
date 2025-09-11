@@ -80,6 +80,15 @@ const Hero = memo(function Hero() {
           <p className="mt-6 max-w-2xl text-lg text-blue-200/90">
             Predikt is an AI-first prediction studio. Ask a question, get a probability with rationale, and stamp it on Solana.
           </p>
+          
+          {/* How it works */}
+          <div className="mt-4 text-sm text-blue-300/80">
+            <p>
+              <strong>Sign</strong> with your Solana wallet (no email needed) • 
+              <strong>Pay</strong> in USDC or SOL (funds go directly to our on-chain wallet) • 
+              <strong>Unlock</strong> Pro instantly—verifiable on chain
+            </p>
+          </div>
         </div>
 
         {/* CTAs */}

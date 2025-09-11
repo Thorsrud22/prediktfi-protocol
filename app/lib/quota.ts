@@ -25,7 +25,8 @@ function getStoredQuota(): QuotaData | null {
   
   try {
     return JSON.parse(stored);
-  } catch {
+  } catch (error) {
+    console.warn('[Quota] Failed to parse stored quota data:', error);
     return null;
   }
 }

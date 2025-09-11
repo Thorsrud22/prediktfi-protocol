@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { loadSignalsClient, safeLocalStorageGet, safeLocalStorageSet, safeParse } from '../../lib/safe-fetch';
 
 interface MarketSignal {
   type: 'polymarket' | 'fear_greed' | 'trend' | 'funding' | 'sentiment';
@@ -76,13 +77,20 @@ function SignalItem({ signal }: { signal: MarketSignal }) {
 export default function MarketContext({ pair, className = '' }: MarketContextProps) {
   const [signalsData, setSignalsData] = useState<SignalsFeedData | null>(null);
   const [isVisible, setIsVisible] = useState(true);
-  const [lastFetch, setLastFetch] = useState<string>('');
+  const [cachedSignals, setCachedSignals] = useState<{ etag?: string; payload?: any }>({});
 
-  // Load visibility preference from localStorage
+  // Load visibility preference and cached signals from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('market-context-visible');
-    if (saved !== null) {
-      setIsVisible(JSON.parse(saved));
+    const visible = safeLocalStorageGet('market-context-visible', true, 'MarketContext');
+    setIsVisible(visible);
+
+    // Load cached signals data
+    const cached = safeParse<{ etag?: string; payload?: any }>(localStorage.getItem('signalsCache'));
+    if (cached) {
+      setCachedSignals(cached);
+      if (cached.payload) {
+        setSignalsData(cached.payload);
+      }
     }
   }, []);
 
@@ -90,43 +98,26 @@ export default function MarketContext({ pair, className = '' }: MarketContextPro
   const toggleVisibility = () => {
     const newVisible = !isVisible;
     setIsVisible(newVisible);
-    localStorage.setItem('market-context-visible', JSON.stringify(newVisible));
+    safeLocalStorageSet('market-context-visible', newVisible, 'MarketContext');
   };
 
-  // Fetch signals data
+  // Fetch signals data with robust error handling
   useEffect(() => {
     if (!isVisible) return;
 
     const fetchSignals = async () => {
       try {
-        const url = pair 
-          ? `/api/public/signals?pair=${encodeURIComponent(pair)}`
-          : '/api/public/signals';
+        // Use the new safe signals client
+        const data = await loadSignalsClient();
         
-        const headers: HeadersInit = {};
-        if (lastFetch) {
-          headers['If-None-Match'] = lastFetch;
-        }
-
-        const response = await fetch(url, { headers });
-        
-        if (response.status === 304) {
-          // Data unchanged, no need to update
-          return;
-        }
-
-        if (response.ok) {
-          const data = await response.json();
+        if (data) {
           setSignalsData(data);
-          
-          // Store ETag for next request
-          const etag = response.headers.get('ETag');
-          if (etag) {
-            setLastFetch(etag);
-          }
+          console.log('[MarketContext] Signals updated successfully');
+        } else {
+          console.log('[MarketContext] No signals data available');
         }
       } catch (error) {
-        console.warn('Failed to fetch market signals:', error);
+        console.warn('[MarketContext] Unexpected error fetching signals:', error);
         // Silently fail - don't show errors to user
       }
     };
@@ -136,7 +127,7 @@ export default function MarketContext({ pair, className = '' }: MarketContextPro
     // Refresh every 2 minutes
     const interval = setInterval(fetchSignals, 2 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [isVisible, pair, lastFetch]);
+  }, [isVisible, pair]);
 
   // Don't render if not visible or no data
   if (!isVisible || !signalsData || signalsData.items.length === 0) {

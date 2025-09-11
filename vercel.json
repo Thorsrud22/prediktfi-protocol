@@ -5,6 +5,10 @@
       "schedule": "*/10 * * * *"
     },
     {
+      "path": "/api/ops/guard",
+      "schedule": "*/10 * * * *"
+    },
+    {
       "path": "/api/cron/pmf-metrics",
       "schedule": "0 1 * * *"
     },
@@ -15,6 +19,25 @@
     {
       "path": "/api/cron/recompute-scores", 
       "schedule": "20 0 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-digest",
+      "schedule": "0 9 * * 1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/og/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800"
+        },
+        {
+          "key": "Vary",
+          "value": "Accept-Encoding, User-Agent"
+        }
+      ]
     }
   ]
 }

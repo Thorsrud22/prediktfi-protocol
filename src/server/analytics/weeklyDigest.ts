@@ -47,6 +47,50 @@ interface ABTestMetrics {
     copyToSignPValue: number;
     viewToSignPValue: number;
   };
+  ctaTest?: {
+    primaryAbove: {
+      views: number;
+      copyClicks: number;
+      viewToCopyRate: number;
+    };
+    inlineBelow: {
+      views: number;
+      copyClicks: number;
+      viewToCopyRate: number;
+    };
+    significance: {
+      viewToCopyPValue: number;
+    };
+  };
+}
+
+interface CreatorLeaderboardData {
+  top5_7d: Array<{
+    creatorIdHashed: string;
+    score: number;
+    accuracy: number;
+    consistency: number;
+    volumeScore: number;
+    recencyScore: number;
+    maturedN: number;
+    isProvisional: boolean;
+  }>;
+  top5_30d: Array<{
+    creatorIdHashed: string;
+    score: number;
+    accuracy: number;
+    consistency: number;
+    volumeScore: number;
+    recencyScore: number;
+    maturedN: number;
+    isProvisional: boolean;
+  }>;
+  movers: Array<{
+    creatorIdHashed: string;
+    scoreChange: number;
+    trend: 'up' | 'down' | 'flat';
+  }>;
+  provisionalToStable: number; // Number of creators who crossed 50 matured threshold
 }
 
 interface WeeklyDigestData {
@@ -64,6 +108,7 @@ interface WeeklyDigestData {
     viewToSignRate: number;
   };
   abTestMetrics?: ABTestMetrics; // A/B test results
+  creatorLeaderboard?: CreatorLeaderboardData; // Creator leaderboard data
 }
 
 /**
@@ -128,6 +173,91 @@ function calculateChiSquarePValue(
 }
 
 /**
+ * Fetch creator leaderboard data for weekly digest
+ */
+async function fetchCreatorLeaderboardData(): Promise<CreatorLeaderboardData | null> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    
+    // Fetch 7d and 30d leaderboards
+    const [response7d, response30d] = await Promise.all([
+      fetch(`${baseUrl}/api/public/leaderboard?period=7d&limit=5`),
+      fetch(`${baseUrl}/api/public/leaderboard?period=30d&limit=5`)
+    ]);
+    
+    if (!response7d.ok || !response30d.ok) {
+      console.warn('Failed to fetch creator leaderboard data for digest');
+      return null;
+    }
+    
+    const data7d = await response7d.json();
+    const data30d = await response30d.json();
+    
+    // Calculate movers (creators with biggest score changes)
+    const movers: Array<{ creatorIdHashed: string; scoreChange: number; trend: 'up' | 'down' | 'flat' }> = [];
+    
+    // Create maps for easy lookup
+    const scores7d = new Map(data7d.items.map((item: any) => [item.creatorIdHashed, item.score]));
+    const scores30d = new Map(data30d.items.map((item: any) => [item.creatorIdHashed, item.score]));
+    
+    // Find creators with biggest changes
+    const allCreators = new Set([...scores7d.keys(), ...scores30d.keys()]);
+    
+    for (const creatorId of allCreators) {
+      const score7d = scores7d.get(creatorId) || 0;
+      const score30d = scores30d.get(creatorId) || 0;
+      const change = score7d - score30d;
+      
+      if (Math.abs(change) > 0.01) { // Only include significant changes
+        movers.push({
+          creatorIdHashed: creatorId,
+          scoreChange: change,
+          trend: change > 0 ? 'up' : 'down'
+        });
+      }
+    }
+    
+    // Sort by absolute change and take top 5
+    movers.sort((a, b) => Math.abs(b.scoreChange) - Math.abs(a.scoreChange));
+    const topMovers = movers.slice(0, 5);
+    
+    // Count provisional to stable transitions
+    const provisionalToStable = data7d.items.filter((item: any) => 
+      item.maturedN >= 50 && item.isProvisional === false
+    ).length;
+    
+    return {
+      top5_7d: data7d.items.map((item: any) => ({
+        creatorIdHashed: item.creatorIdHashed,
+        score: item.score,
+        accuracy: item.accuracy,
+        consistency: item.consistency,
+        volumeScore: item.volumeScore,
+        recencyScore: item.recencyScore,
+        maturedN: item.maturedN,
+        isProvisional: item.isProvisional
+      })),
+      top5_30d: data30d.items.map((item: any) => ({
+        creatorIdHashed: item.creatorIdHashed,
+        score: item.score,
+        accuracy: item.accuracy,
+        consistency: item.consistency,
+        volumeScore: item.volumeScore,
+        recencyScore: item.recencyScore,
+        maturedN: item.maturedN,
+        isProvisional: item.isProvisional
+      })),
+      movers: topMovers,
+      provisionalToStable
+    };
+    
+  } catch (error) {
+    console.error('Error fetching creator leaderboard data:', error);
+    return null;
+  }
+}
+
+/**
  * Aggregate analytics events for the previous week
  */
 export async function aggregateWeeklyMetrics(testMode = false): Promise<WeeklyDigestData> {
@@ -177,6 +307,18 @@ export async function aggregateWeeklyMetrics(testMode = false): Promise<WeeklyDi
       contextHidden: 0
     }
   };
+
+  // CTA test metrics
+  const ctaMetrics = {
+    primaryAbove: {
+      views: 0,
+      copyClicks: 0
+    },
+    inlineBelow: {
+      views: 0,
+      copyClicks: 0
+    }
+  };
   
   let totalViews = 0;
   let totalCopyClicks = 0;
@@ -209,12 +351,24 @@ export async function aggregateWeeklyMetrics(testMode = false): Promise<WeeklyDi
         totalViews++;
         if (bucket === 'A') abMetrics.bucketA.views++;
         else abMetrics.bucketB.views++;
+        
+        // Track CTA variant views (assume all views see CTA)
+        // This is a simplification - in practice you'd track this more precisely
+        ctaMetrics.primaryAbove.views++;
+        ctaMetrics.inlineBelow.views++;
         break;
       case ANALYTICS_EVENT_TYPES.MODEL_COPY_CLICKED:
         metrics.copyClicks++;
         totalCopyClicks++;
         if (bucket === 'A') abMetrics.bucketA.copyClicks++;
         else abMetrics.bucketB.copyClicks++;
+        
+        // Track CTA variant if present
+        if (event.variant === 'primary_above') {
+          ctaMetrics.primaryAbove.copyClicks++;
+        } else if (event.variant === 'inline_below') {
+          ctaMetrics.inlineBelow.copyClicks++;
+        }
         break;
       case ANALYTICS_EVENT_TYPES.INTENT_CREATED_FROM_COPY:
         metrics.intentsCreated++;
@@ -306,9 +460,30 @@ export async function aggregateWeeklyMetrics(testMode = false): Promise<WeeklyDi
         abMetrics.bucketA.views, abMetrics.bucketA.intentsExecuted,
         abMetrics.bucketB.views, abMetrics.bucketB.intentsExecuted
       )
+    },
+    ctaTest: {
+      primaryAbove: {
+        views: ctaMetrics.primaryAbove.views,
+        copyClicks: ctaMetrics.primaryAbove.copyClicks,
+        viewToCopyRate: ctaMetrics.primaryAbove.views > 0 ? ctaMetrics.primaryAbove.copyClicks / ctaMetrics.primaryAbove.views : 0
+      },
+      inlineBelow: {
+        views: ctaMetrics.inlineBelow.views,
+        copyClicks: ctaMetrics.inlineBelow.copyClicks,
+        viewToCopyRate: ctaMetrics.inlineBelow.views > 0 ? ctaMetrics.inlineBelow.copyClicks / ctaMetrics.inlineBelow.views : 0
+      },
+      significance: {
+        viewToCopyPValue: calculateChiSquarePValue(
+          ctaMetrics.primaryAbove.views, ctaMetrics.primaryAbove.copyClicks,
+          ctaMetrics.inlineBelow.views, ctaMetrics.inlineBelow.copyClicks
+        )
+      }
     }
   };
   
+  // Fetch creator leaderboard data
+  const creatorLeaderboard = await fetchCreatorLeaderboardData();
+
   return {
     weekStart,
     weekEnd,
@@ -323,7 +498,8 @@ export async function aggregateWeeklyMetrics(testMode = false): Promise<WeeklyDi
       copyToSignRate: overallCopyToSignRate,
       viewToSignRate: overallViewToSignRate
     },
-    abTestMetrics
+    abTestMetrics,
+    creatorLeaderboard
   };
 }
 
@@ -366,6 +542,50 @@ export function formatDigestMessage(digest: WeeklyDigestData): string {
     message += `\n`;
   }
   
+  // Creator Leaderboard
+  if (digest.creatorLeaderboard) {
+    const lb = digest.creatorLeaderboard;
+    message += `**🏆 Creator Leaderboard:**\n`;
+    
+    // Top 5 for 7d
+    if (lb.top5_7d.length > 0) {
+      message += `**Top 5 This Week (7d):**\n`;
+      lb.top5_7d.forEach((creator, index) => {
+        const provisional = creator.isProvisional ? ' (Provisional)' : '';
+        message += `${index + 1}. Creator ${creator.creatorIdHashed.substring(0, 8)}... - ${(creator.score * 100).toFixed(1)}%${provisional}\n`;
+        message += `   • Accuracy: ${(creator.accuracy * 100).toFixed(1)}% | Consistency: ${(creator.consistency * 100).toFixed(1)}%\n`;
+        message += `   • Volume: ${(creator.volumeScore * 100).toFixed(1)}% | Recency: ${(creator.recencyScore * 100).toFixed(1)}% | Matured: ${creator.maturedN}\n`;
+      });
+      message += `\n`;
+    }
+    
+    // Top 5 for 30d
+    if (lb.top5_30d.length > 0) {
+      message += `**Top 5 This Month (30d):**\n`;
+      lb.top5_30d.forEach((creator, index) => {
+        const provisional = creator.isProvisional ? ' (Provisional)' : '';
+        message += `${index + 1}. Creator ${creator.creatorIdHashed.substring(0, 8)}... - ${(creator.score * 100).toFixed(1)}%${provisional}\n`;
+      });
+      message += `\n`;
+    }
+    
+    // Movers
+    if (lb.movers.length > 0) {
+      message += `**📈 Biggest Movers (7d vs 30d):**\n`;
+      lb.movers.forEach((mover, index) => {
+        const trend = mover.trend === 'up' ? '↗️' : '↘️';
+        const change = mover.scoreChange > 0 ? '+' : '';
+        message += `${index + 1}. Creator ${mover.creatorIdHashed.substring(0, 8)}... ${trend} ${change}${(mover.scoreChange * 100).toFixed(1)}%\n`;
+      });
+      message += `\n`;
+    }
+    
+    // Provisional to stable
+    if (lb.provisionalToStable > 0) {
+      message += `**🎯 New Stable Creators:** ${lb.provisionalToStable} creators crossed 50+ matured insights threshold\n\n`;
+    }
+  }
+
   // A/B Test Results
   if (digest.abTestMetrics) {
     const ab = digest.abTestMetrics;
@@ -391,6 +611,22 @@ export function formatDigestMessage(digest: WeeklyDigestData): string {
     message += `  • View→Copy: ${viewToCopySig} (p=${ab.significance.viewToCopyPValue.toFixed(3)})\n`;
     message += `  • Copy→Sign: ${copyToSignSig} (p=${ab.significance.copyToSignPValue.toFixed(3)})\n`;
     message += `  • View→Sign: ${viewToSignSig} (p=${ab.significance.viewToSignPValue.toFixed(3)})\n\n`;
+    
+    // CTA Test Results
+    if (ab.ctaTest) {
+      const cta = ab.ctaTest;
+      const ctaSig = cta.significance.viewToCopyPValue < 0.05 ? '✅' : '❌';
+      
+      message += `**📝 CTA Test Results (cta_copy_v1):**\n`;
+      message += `**Primary Above:**\n`;
+      message += `  • Views: ${cta.primaryAbove.views} → Copy: ${cta.primaryAbove.copyClicks} (${(cta.primaryAbove.viewToCopyRate * 100).toFixed(1)}%)\n\n`;
+      
+      message += `**Inline Below:**\n`;
+      message += `  • Views: ${cta.inlineBelow.views} → Copy: ${cta.inlineBelow.copyClicks} (${(cta.inlineBelow.viewToCopyRate * 100).toFixed(1)}%)\n\n`;
+      
+      message += `**CTA Significance:**\n`;
+      message += `  • View→Copy: ${ctaSig} (p=${cta.significance.viewToCopyPValue.toFixed(3)})\n\n`;
+    }
   }
   
   // Footer

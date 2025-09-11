@@ -1,0 +1,11 @@
+{
+  "a": 1.0000208021708628,
+  "b": -0.00004055064732525606,
+  "metadata": {
+    "trainedAt": "2025-09-09T19:07:38.556Z",
+    "holdoutSamples": 100,
+    "originalBrierScore": 0.23359279867471258,
+    "calibratedBrierScore": 0.2335918796286418,
+    "improvement": 9.190460707741988e-7
+  }
+}

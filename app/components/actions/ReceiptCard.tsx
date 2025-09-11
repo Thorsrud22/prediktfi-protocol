@@ -29,7 +29,13 @@ export default function ReceiptCard({ receipt, walletId, onShare, onViewExplorer
 
   const parseSimData = () => {
     try {
-      return receipt.simJson ? JSON.parse(receipt.simJson) : {};
+      if (!receipt.simJson) return {};
+      try {
+        return JSON.parse(receipt.simJson);
+      } catch (error) {
+        console.warn('[ReceiptCard] Invalid simJson data:', error);
+        return {};
+      }
     } catch {
       return {};
     }

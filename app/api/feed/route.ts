@@ -3,8 +3,8 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { FeedQuerySchema, FeedResponse, FeedInsight } from './_schemas';
-import { prisma } from '../../lib/prisma';
-import { trackServer } from '../../lib/analytics';
+import { prisma } from '@/lib/prisma';
+import { trackServer } from '@/lib/analytics';
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now();

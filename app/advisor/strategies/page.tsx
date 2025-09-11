@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { safeParse } from '../../lib/safe-fetch';
 // import { isFeatureEnabled } from '../../lib/flags';
 
 interface Strategy {
@@ -66,8 +67,9 @@ export default function StrategiesPage() {
     try {
       // In a real app, this would fetch from an API
       const connectedWallets = localStorage.getItem('predikt:connectedWallets');
-      if (connectedWallets) {
-        setWallets(JSON.parse(connectedWallets));
+      const parsed = safeParse<any[]>(connectedWallets);
+      if (parsed) {
+        setWallets(parsed);
       }
     } catch (error) {
       console.error('Error loading wallets:', error);

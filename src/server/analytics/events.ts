@@ -32,19 +32,25 @@ export const LeagueViewSchema = z.object({
 
 export const ModelCopyClickedSchema = z.object({
   type: z.literal(ANALYTICS_EVENT_TYPES.MODEL_COPY_CLICKED),
-  modelId: z.string().min(1)
+  modelId: z.string().min(1),
+  variant: z.string().optional(),
+  experiment: z.string().optional()
 });
 
 export const IntentCreatedFromCopySchema = z.object({
   type: z.literal(ANALYTICS_EVENT_TYPES.INTENT_CREATED_FROM_COPY),
   modelId: z.string().min(1),
-  intentId: z.string().min(1)
+  intentId: z.string().min(1),
+  variant: z.string().optional(),
+  experiment: z.string().optional()
 });
 
 export const IntentExecutedFromCopySchema = z.object({
   type: z.literal(ANALYTICS_EVENT_TYPES.INTENT_EXECUTED_FROM_COPY),
   modelId: z.string().min(1),
-  intentId: z.string().min(1)
+  intentId: z.string().min(1),
+  variant: z.string().optional(),
+  experiment: z.string().optional()
 });
 
 export const ContextShownSchema = z.object({

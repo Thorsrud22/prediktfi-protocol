@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
+import { validateCreatorHandle } from '../../../lib/url-validation';
 import { calculateBrierMetrics, calculateCalibrationBins, type CalibrationBin } from '../../../../lib/score';
 
 export interface ProfileResponse {
@@ -57,10 +58,21 @@ export async function GET(
         { status: 400 }
       );
     }
+
+    // Validate handle format
+    const handleValidation = validateCreatorHandle(handle);
+    if (!handleValidation.isValid) {
+      return NextResponse.json(
+        { error: handleValidation.error },
+        { status: 400 }
+      );
+    }
+
+    const decodedHandle = handleValidation.sanitized!;
     
-    // Find creator by handle
-    const creator = await prisma.creator.findUnique({
-      where: { handle: handle },
+    // Try to find creator by handle first, then by hashed id
+    let creator = await prisma.creator.findUnique({
+      where: { handle: decodedHandle },
       include: {
         insights: {
           include: {
@@ -74,6 +86,25 @@ export async function GET(
         }
       }
     });
+    
+    // If not found by handle, try to find by hashed id
+    if (!creator) {
+      creator = await prisma.creator.findUnique({
+        where: { id: decodedHandle },
+        include: {
+          insights: {
+            include: {
+              outcomes: {
+                orderBy: { decidedAt: 'desc' },
+                take: 1
+              }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 20 // Get last 20 insights for recent activity
+          }
+        }
+      });
+    }
     
     if (!creator) {
       return NextResponse.json(
@@ -149,7 +180,7 @@ export async function GET(
       return {
         id: insight.id,
         question: insight.question,
-        probability: typeof insight.probability === 'number' ? insight.probability : insight.probability.toNumber(),
+        probability: typeof insight.probability === 'number' ? insight.probability : Number(insight.probability),
         status: insight.status,
         outcome: insight.outcomes.length > 0 ? insight.outcomes[0].result as 'YES' | 'NO' | 'INVALID' : undefined,
         brierScore,

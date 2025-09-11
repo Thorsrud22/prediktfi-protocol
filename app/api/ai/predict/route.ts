@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { predict, PredictInput } from '../../../lib/ai/kernel';
-import { rateLimitOrThrow } from '../../../lib/rate';
+import { predict, PredictInput } from '@/lib/ai/kernel';
+import { rateLimitOrThrow } from '@/lib/rate';
 
 function validatePredictInput(body: any): { isValid: boolean; input?: PredictInput; error?: string } {
   if (!body || typeof body !== 'object') {

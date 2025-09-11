@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import Link from 'next/link';
+import { useTopCreators } from '../../src/lib/topCreatorsClient';
+import { SkeletonCard } from './ui/Skeleton';
 
 interface TrendingMarket {
   id: string;
@@ -11,6 +13,7 @@ interface TrendingMarket {
   volume: number;
   deadline: string;
   creator: string;
+  creatorId?: string;
   creatorScore: number;
   status: string;
   url: string;
@@ -27,6 +30,7 @@ const TrendingMarkets = memo(function TrendingMarkets({
   limit = 6,
   className = '' 
 }: TrendingMarketsProps) {
+  const { getTopCreatorBadge } = useTopCreators();
   // Fallback data if API fails
   const fallbackMarkets: TrendingMarket[] = [
     {
@@ -37,6 +41,7 @@ const TrendingMarkets = memo(function TrendingMarkets({
       volume: 50000,
       deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       creator: 'predikt_ai',
+      creatorId: 'creator-1',
       creatorScore: 4.8,
       status: 'ACTIVE',
       url: '/studio'
@@ -49,6 +54,7 @@ const TrendingMarkets = memo(function TrendingMarkets({
       volume: 125000,
       deadline: '2024-12-31T23:59:59Z',
       creator: 'polymarket',
+      creatorId: 'creator-2',
       creatorScore: 0,
       status: 'ACTIVE',
       url: 'https://polymarket.com'
@@ -127,16 +133,7 @@ const TrendingMarkets = memo(function TrendingMarkets({
     return (
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
         {[...Array(limit)].map((_, i) => (
-          <div key={i} className="bg-white/5 backdrop-blur-sm rounded-xl p-6 animate-pulse border border-white/10">
-            <div className="absolute top-4 right-4 w-16 h-6 bg-white/20 rounded"></div>
-            <div className="h-4 bg-white/10 rounded w-3/4 mb-4"></div>
-            <div className="h-3 bg-white/10 rounded w-1/2 mb-4"></div>
-            <div className="h-2 bg-white/10 rounded-full mb-4"></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="h-3 bg-white/10 rounded"></div>
-              <div className="h-3 bg-white/10 rounded"></div>
-            </div>
-          </div>
+          <SkeletonCard key={i} />
         ))}
       </div>
     );
@@ -253,9 +250,16 @@ const TrendingMarkets = memo(function TrendingMarkets({
           {market.type === 'PREDIKT' && (
             <div className="mt-4 pt-4 border-t border-white/10">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">
-                  by <span className="text-white">@{market.creator}</span>
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">
+                    by <span className="text-white">@{market.creator}</span>
+                  </span>
+                  {market.creatorId && getTopCreatorBadge(market.creatorId) && (
+                    <span className="text-xs bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-2 py-1 rounded-full font-medium">
+                      {getTopCreatorBadge(market.creatorId)}
+                    </span>
+                  )}
+                </div>
                 {market.creatorScore > 0 && (
                   <span className="text-yellow-400">
                     ⭐ {market.creatorScore.toFixed(1)}

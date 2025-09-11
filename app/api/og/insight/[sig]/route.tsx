@@ -1,16 +1,34 @@
 import { ImageResponse } from '@vercel/og';
 import { NextRequest } from 'next/server';
 import { colors, getCacheHeaders, truncateText, getProbabilityColor, getVerificationBadgeStyles, getWordmarkStyles, createCircularGaugePath } from '../../../../lib/og';
+import { checkRateLimit } from '../../../../lib/ratelimit';
+import { validateSignature, createSafeETag, sanitizeForDisplay } from '../../../../lib/url-validation';
 
 export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
   try {
+    // Apply rate limiting for OG endpoint
+    const rateLimitResponse = await checkRateLimit(request, {
+      plan: 'free', // Use free plan rate limiter for unauthenticated requests
+      skipForDevelopment: true
+    });
+    
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const url = new URL(request.url);
     const sig = url.pathname.split('/').pop(); // Extract sig from path
     
     if (!sig) {
       return new Response('Missing signature parameter', { status: 400 });
+    }
+
+    // Validate signature format
+    const sigValidation = validateSignature(sig);
+    if (!sigValidation.isValid) {
+      return new Response(sigValidation.error || 'Invalid signature format', { status: 400 });
     }
 
     // Fetch insight data with timeout
@@ -22,7 +40,7 @@ export async function GET(request: NextRequest) {
     
     try {
       const baseUrl = request.url.includes('localhost') ? 'http://localhost:3000' : 'https://predikt.fi';
-      const response = await fetch(`${baseUrl}/api/insights?sig=${encodeURIComponent(sig)}`, {
+      const response = await fetch(`${baseUrl}/api/insights?sig=${encodeURIComponent(sigValidation.sanitized!)}`, {
         signal: controller.signal,
         headers: {
           'User-Agent': 'PrediktFi-OG/1.0',
@@ -148,13 +166,18 @@ export async function GET(request: NextRequest) {
         {
           width: 1200,
           height: 630,
+        headers: {
+          ...getCacheHeaders(),
+          'ETag': createSafeETag(`${sigValidation.sanitized}-unverified`, 'og-insight'),
+          'Vary': 'Accept-Encoding, User-Agent',
+        },
         }
       );
     }
 
     // Extract and validate insight data
-    const title = truncateText(insight?.question || 'Untitled Insight', 80);
-    const rationale = truncateText(insight?.model || 'AI Prediction Insight', 200);
+    const title = sanitizeForDisplay(insight?.question || 'Untitled Insight', 80);
+    const rationale = sanitizeForDisplay(insight?.model || 'AI Prediction Insight', 200);
     const probability = Math.round((insight?.prob || 0) * 100);
     
     // Calculate circular gauge properties
@@ -336,7 +359,11 @@ export async function GET(request: NextRequest) {
       {
         width: 1200,
         height: 630,
-        headers: getCacheHeaders(),
+        headers: {
+          ...getCacheHeaders(),
+          'ETag': createSafeETag(`${sigValidation.sanitized}-${verified ? 'verified' : 'unverified'}`, 'og-insight'),
+          'Vary': 'Accept-Encoding, User-Agent',
+        },
       }
     );
   } catch (error) {
@@ -377,6 +404,11 @@ export async function GET(request: NextRequest) {
       {
         width: 1200,
         height: 630,
+        headers: {
+          'Cache-Control': 'public, max-age=300, s-maxage=300',
+          'ETag': createSafeETag('error', 'og'),
+          'Vary': 'Accept-Encoding, User-Agent',
+        },
       }
     );
   }

@@ -99,4 +99,5 @@ const CardFooter = forwardRef<
 ));
 CardFooter.displayName = "CardFooter";
 
-export { Card as default, CardHeader, CardTitle, CardDescription, CardContent, CardFooter };
+export default Card;
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter };

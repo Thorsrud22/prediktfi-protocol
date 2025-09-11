@@ -1,0 +1,152 @@
+{
+  "modelId": "v1",
+  "evaluationDate": "2025-09-09T18:59:49.973Z",
+  "samples": 50,
+  "metrics": {
+    "brierScore": 0.2554703502533841,
+    "logLoss": 0.7041100211954598,
+    "accuracy": 0.46,
+    "reliability": 0.010000800471159716,
+    "resolution": 0,
+    "uncertainty": 0.24840000000000004
+  },
+  "calibration": {
+    "originalBrier": 0.24675555521370382,
+    "calibratedBrier": 0.24909290788006463,
+    "improvement": -0.0023373526663608146
+  },
+  "reliabilityBins": [
+    {
+      "bin": 0,
+      "binStart": 0,
+      "binEnd": 0.1,
+      "count": 0,
+      "meanPrediction": 0,
+      "meanOutcome": 0,
+      "wilsonCI": [
+        0,
+        0
+      ]
+    },
+    {
+      "bin": 1,
+      "binStart": 0.1,
+      "binEnd": 0.2,
+      "count": 0,
+      "meanPrediction": 0,
+      "meanOutcome": 0,
+      "wilsonCI": [
+        0,
+        0
+      ]
+    },
+    {
+      "bin": 2,
+      "binStart": 0.2,
+      "binEnd": 0.30000000000000004,
+      "count": 0,
+      "meanPrediction": 0,
+      "meanOutcome": 0,
+      "wilsonCI": [
+        0,
+        0
+      ]
+    },
+    {
+      "bin": 3,
+      "binStart": 0.30000000000000004,
+      "binEnd": 0.4,
+      "count": 0,
+      "meanPrediction": 0,
+      "meanOutcome": 0,
+      "wilsonCI": [
+        0,
+        0
+      ]
+    },
+    {
+      "bin": 4,
+      "binStart": 0.4,
+      "binEnd": 0.5,
+      "count": 0,
+      "meanPrediction": 0,
+      "meanOutcome": 0,
+      "wilsonCI": [
+        0,
+        0
+      ]
+    },
+    {
+      "bin": 5,
+      "binStart": 0.5,
+      "binEnd": 0.6000000000000001,
+      "count": 50,
+      "meanPrediction": 0.5597533059405453,
+      "meanOutcome": 0.46,
+      "wilsonCI": [
+        0.3296943460178263,
+        0.5960136567161192
+      ]
+    },
+    {
+      "bin": 6,
+      "binStart": 0.6000000000000001,
+      "binEnd": 0.7000000000000001,
+      "count": 0,
+      "meanPrediction": 0,
+      "meanOutcome": 0,
+      "wilsonCI": [
+        0,
+        0
+      ]
+    },
+    {
+      "bin": 7,
+      "binStart": 0.7000000000000001,
+      "binEnd": 0.8,
+      "count": 0,
+      "meanPrediction": 0,
+      "meanOutcome": 0,
+      "wilsonCI": [
+        0,
+        0
+      ]
+    },
+    {
+      "bin": 8,
+      "binStart": 0.8,
+      "binEnd": 0.9,
+      "count": 0,
+      "meanPrediction": 0,
+      "meanOutcome": 0,
+      "wilsonCI": [
+        0,
+        0
+      ]
+    },
+    {
+      "bin": 9,
+      "binStart": 0.9,
+      "binEnd": 1,
+      "count": 0,
+      "meanPrediction": 0,
+      "meanOutcome": 0,
+      "wilsonCI": [
+        0,
+        0
+      ]
+    }
+  ],
+  "modelMetadata": {
+    "trainedAt": "2025-09-09T18:58:08.468Z",
+    "trainingSamples": 100,
+    "convergenceIterations": 0
+  },
+  "plattMetadata": {
+    "trainedAt": "2025-09-09T18:58:08.502Z",
+    "holdoutSamples": 20,
+    "originalBrierScore": 0.24675555521370382,
+    "calibratedBrierScore": 0.24909290788006463,
+    "improvement": -0.0023373526663608146
+  }
+}

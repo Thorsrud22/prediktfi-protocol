@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
+import { SkeletonActivityItem } from './ui/Skeleton';
 
 interface Activity {
   id: string;
@@ -102,10 +103,7 @@ const ActivityFeed = memo(function ActivityFeed({ className = '' }: { className?
         <h3 className="text-xl font-bold text-white mb-4">🔥 Live Activity</h3>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="h-4 bg-white/10 rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-white/10 rounded w-1/2"></div>
-            </div>
+            <SkeletonActivityItem key={i} />
           ))}
         </div>
       </div>

@@ -6,6 +6,7 @@ import { InsightRequestSchema } from './_schemas';
 import { checkAuthAndQuota } from './_auth';
 import { insightsCache } from './_cache';
 import { runPipeline } from './_pipeline';
+import { checkAntiGaming, logAntiGamingViolation, getAntiGamingStatus } from '../../lib/anti-gaming';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -48,7 +49,50 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Step 3: Check cache first
+    // Step 3: Check anti-gaming measures
+    const walletId = request.headers.get('x-wallet-id') || 
+                    request.cookies.get('wallet_id')?.value ||
+                    request.nextUrl.searchParams.get('wallet');
+    
+    if (walletId) {
+      const antiGamingCheck = await checkAntiGaming({
+        walletId,
+        question: insightRequest.question,
+        probability: 0.5, // Default probability for anti-gaming check
+        category: insightRequest.category,
+        timestamp: new Date()
+      });
+      
+      if (!antiGamingCheck.allowed) {
+        // Log the violation
+        await logAntiGamingViolation(walletId, antiGamingCheck.reason || 'Unknown violation', {
+          walletId,
+          question: insightRequest.question,
+          probability: 0.5, // Default probability for logging
+          category: insightRequest.category,
+          timestamp: new Date()
+        });
+        
+        return NextResponse.json(
+          {
+            error: 'Anti-gaming violation',
+            message: antiGamingCheck.reason,
+            cooldownUntil: antiGamingCheck.cooldownUntil?.toISOString(),
+            violations: antiGamingCheck.violations
+          },
+          { 
+            status: 429,
+            headers: {
+              'X-RateLimit-Plan': authResult.plan,
+              'Retry-After': antiGamingCheck.cooldownUntil ? 
+                Math.ceil((antiGamingCheck.cooldownUntil.getTime() - Date.now()) / 1000).toString() : '60',
+            }
+          }
+        );
+      }
+    }
+    
+    // Step 4: Check cache first
     const cachedResult = insightsCache.get(insightRequest);
     if (cachedResult) {
       return NextResponse.json(
@@ -63,13 +107,13 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Step 4: Run the insight pipeline
+    // Step 5: Run the insight pipeline
     const result = await runPipeline(insightRequest);
     
-    // Step 5: Cache the result
+    // Step 6: Cache the result
     insightsCache.set(insightRequest, result);
     
-    // Step 6: Return response
+    // Step 7: Return response
     return NextResponse.json(result, {
       headers: {
         'X-Cache': 'MISS',

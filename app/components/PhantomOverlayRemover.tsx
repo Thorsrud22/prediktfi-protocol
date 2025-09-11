@@ -3,11 +3,6 @@
 import { useEffect } from 'react';
 
 export default function PhantomOverlayRemover() {
-  "use client";
-
-import { useEffect } from 'react';
-
-export default function PhantomOverlayRemover() {
   useEffect(() => {
     const removePhantomOverlay = () => {
       // Common selectors for Phantom wallet overlays
@@ -88,7 +83,4 @@ export default function PhantomOverlayRemover() {
   }, []);
 
   return null; // This component doesn't render anything
-}
-
-  return null;
 }

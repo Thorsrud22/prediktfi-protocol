@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
 export const runtime = 'nodejs';
+
+const prisma = new PrismaClient();
 
 // Handle all HTTP methods gracefully
 export async function POST(request: NextRequest) {
@@ -33,6 +36,33 @@ async function handleAnalytics(request: NextRequest) {
       }
     } catch {
       // Malformed JSON - continue with empty payload
+    }
+
+    // Extract experiment data if present
+    const { event, properties, timestamp } = payload as {
+      event?: string;
+      properties?: Record<string, any>;
+      timestamp?: string;
+    };
+
+    // Store event in database if it's a tracked event
+    if (event && properties) {
+      try {
+        await prisma.event.create({
+          data: {
+            type: event,
+            meta: JSON.stringify(properties),
+            experimentKey: properties.experimentKey || null,
+            variant: properties.variant || null,
+            insightId: properties.insightId || null,
+            userId: properties.userId || null,
+            createdAt: timestamp ? new Date(timestamp) : new Date(),
+          },
+        });
+      } catch (dbError) {
+        // Log but don't fail - analytics should be resilient
+        console.error('Failed to store event in database:', dbError);
+      }
     }
 
     // Log structured analytics event for external consumption

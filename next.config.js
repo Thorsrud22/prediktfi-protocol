@@ -51,10 +51,9 @@ const nextConfig = {
   // Performance optimizations
   webpack: (config, { dev, isServer }) => {
     if (dev) {
-      // Exclude heavy wallet dependencies in development
+      // Only alias react-native to prevent build issues
       config.resolve.alias = {
         ...config.resolve.alias,
-        '@solana/wallet-adapter-wallets': require.resolve('./app/lib/wallet-adapters.dev.ts'),
         'react-native': require.resolve('./app/lib/wallet-adapters.dev.ts'),
       };
       

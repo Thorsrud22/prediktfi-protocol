@@ -55,12 +55,17 @@ export default function FeedPage() {
       });
       
       const response = await fetch(`/api/feed?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        setFeedData(data);
-      } else {
+      if (!response.ok) {
         console.error('Failed to load feed data:', response.status);
+        return;
       }
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        console.error('Feed returned non-JSON content-type:', contentType);
+        return;
+      }
+      const data = await response.json();
+      setFeedData(data);
     } catch (error) {
       console.error('Failed to load feed data:', error);
     } finally {
@@ -229,17 +234,49 @@ export default function FeedPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <h3 className="text-xl font-semibold text-white mb-2">No insights found</h3>
-            <p className="text-blue-300 mb-4">
+            <p className="text-blue-300 mb-6">
               {currentFilter === 'all' 
                 ? 'No insights have been created yet.' 
                 : `No insights found for ${currentFilter} filter.`}
             </p>
-            <Link
-              href="/studio"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Create First Insight
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link
+                href="/studio"
+                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Create First Insight
+              </Link>
+              <Link
+                href="/leaderboard"
+                className="inline-flex items-center px-6 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors font-medium"
+              >
+                View Leaderboard
+              </Link>
+            </div>
+            
+            {/* Dev-only seed button */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/dev/seed-demo-data', { method: 'POST' });
+                      if (response.ok) {
+                        window.location.reload();
+                      } else {
+                        console.error('Failed to seed demo data');
+                      }
+                    } catch (error) {
+                      console.error('Error seeding demo data:', error);
+                    }
+                  }}
+                  className="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium"
+                >
+                  🌱 Seed Demo Data
+                </button>
+                <p className="text-xs text-gray-400 mt-2">Development only</p>
+              </div>
+            )}
           </div>
         )}
 

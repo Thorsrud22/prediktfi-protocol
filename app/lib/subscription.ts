@@ -28,6 +28,7 @@ export interface UserSubscriptionInfo {
   isPro: boolean;
   isTrial: boolean;
   trialEndsAt?: Date;
+  planExpiresAt?: Date;
   quotas: {
     intentsWeekly: { used: number; limit: number; remaining: number };
     insightsDaily: { used: number; limit: number; remaining: number };
@@ -92,11 +93,26 @@ export async function getUserSubscription(walletId: string): Promise<UserSubscri
   // Get current quotas
   const quotas = await getCurrentQuotas(subscription.id, effectiveTier);
 
+  // Check if plan has expired (for paid plans)
+  const planExpiresAt = subscription.planExpiresAt;
+  const isPlanExpired = planExpiresAt ? new Date() > planExpiresAt : false;
+  
+  // If plan expired, downgrade to free
+  if (isPlanExpired && subscription.tier === 'PRO') {
+    await prisma.userSubscription.update({
+      where: { id: subscription.id },
+      data: { tier: 'FREE' },
+    });
+    effectiveTier = 'FREE';
+    isPro = false;
+  }
+
   return {
     tier: effectiveTier,
     isPro,
     isTrial,
     trialEndsAt: activeTrial?.endsAt,
+    planExpiresAt,
     quotas,
   };
 }
@@ -154,20 +170,25 @@ export async function consumeQuota(
  */
 export async function upgradeToPro(
   walletId: string,
-  subscriptionId?: string
+  subscriptionId?: string,
+  planExpiresAt?: Date
 ): Promise<void> {
+  const expiresAt = planExpiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+
   await prisma.userSubscription.upsert({
     where: { walletId },
     update: {
       tier: 'PRO',
       status: 'ACTIVE',
       subscriptionId,
+      planExpiresAt: expiresAt,
     },
     create: {
       walletId,
       tier: 'PRO',
       status: 'ACTIVE',
       subscriptionId,
+      planExpiresAt: expiresAt,
       quotas: {
         create: [
           {

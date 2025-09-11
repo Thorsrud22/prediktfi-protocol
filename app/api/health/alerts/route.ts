@@ -1,7 +1,9 @@
 // app/api/health/alerts/route.ts
 import { NextResponse } from 'next/server';
-import { prisma } from '../../lib/prisma';
-import { isFeatureEnabled } from '../../lib/flags';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+import { isFeatureEnabled } from '../../../lib/flags';
 
 export async function GET() {
   try {
@@ -20,7 +22,7 @@ export async function GET() {
       metrics: {
         active_rules: 0,
         pending_alerts: 0,
-        last_evaluation: null
+        last_evaluation: null as string | null
       }
     };
 

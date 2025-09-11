@@ -84,6 +84,26 @@ export default function InsightCard({ insight, showCreator = true, creator }: In
                 <Link 
                   href={`/creator/${creator.handle}`}
                   className="font-medium hover:text-blue-600 transition-colors"
+                  prefetch={true}
+                  onClick={() => {
+                    // Track analytics event
+                    if (typeof window !== 'undefined') {
+                      fetch('/api/analytics', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          event: 'creator_profile_nav_from_feed',
+                          properties: { 
+                            ts: Date.now(), 
+                            path: window.location.pathname,
+                            creator_handle: creator.handle,
+                            insight_id: insight.id
+                          },
+                          timestamp: new Date().toISOString(),
+                        }),
+                      }).catch(error => console.error('Failed to track event:', error));
+                    }
+                  }}
                 >
                   {creator.handle}
                 </Link>

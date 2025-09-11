@@ -2,64 +2,109 @@
  * Public Market Signals API
  * GET /api/public/signals
  * 
- * Returns cached market context signals with ETag support
+ * Returns cached market context signals with L2 cache, SWR, and ETag support
+ * Optimized for early 304 returns and lazy imports
+ * Supports gradual rollout based on IP address
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getMarketSignals } from '../../../../src/server/signals/feed';
-import crypto from 'crypto';
+export const runtime = "nodejs";
 
-export async function GET(request: NextRequest) {
-  try {
-    // Check feature flag
-    const signalsEnabled = process.env.SIGNALS === 'on' || process.env.NODE_ENV === 'development';
-    if (!signalsEnabled) {
-      return NextResponse.json({ items: [], updatedAt: new Date().toISOString() });
-    }
+import { NextResponse } from 'next/server';
+import { getFresh, getStaleButServeable, getOrRefresh } from '@/lib/cache/signalsL2';
+import { shouldEnableSignals } from '@/lib/flags';
 
-    // Get optional pair parameter
-    const { searchParams } = new URL(request.url);
-    const pair = searchParams.get('pair') || undefined;
+type Entry = { etag: string; payload: any; ts: number };
 
-    // Fetch signals data
-    const signalsData = await getMarketSignals(pair);
-    
-    // Generate ETag based on content
-    const contentHash = crypto
-      .createHash('sha256')
-      .update(JSON.stringify(signalsData))
-      .digest('hex')
-      .slice(0, 16);
-    
-    const etag = `"${contentHash}"`;
-    
-    // Check If-None-Match header
-    const ifNoneMatch = request.headers.get('if-none-match');
-    if (ifNoneMatch === etag) {
-      return new NextResponse(null, { 
+async function refresher(): Promise<Entry> {
+  const { getMarketSignals } = await import('@/server/signals/feed');
+  const { makeEtag } = await import('@/lib/etag');
+  const payload = await getMarketSignals();
+  const etag = makeEtag(payload);
+  return { etag, payload, ts: Date.now() };
+}
+
+export async function GET(req: Request) {
+  const now = Date.now();
+  
+  // Extract client IP for rollout check
+  const forwarded = req.headers.get('x-forwarded-for');
+  const realIp = req.headers.get('x-real-ip');
+  const cfConnectingIp = req.headers.get('cf-connecting-ip');
+  const clientIp = forwarded?.split(',')[0] || realIp || cfConnectingIp || 'unknown';
+  
+  // Check if signals API is enabled for this client
+  if (!shouldEnableSignals(clientIp)) {
+    return NextResponse.json(
+      { error: 'Signals API not available' },
+      { 
+        status: 503,
+        headers: {
+          'X-Rollout-Status': 'disabled',
+          'Retry-After': '3600' // 1 hour
+        }
+      }
+    );
+  }
+  
+  // Normalize ETag format - remove W/ and quotes before comparison
+  const raw = req.headers.get("if-none-match");
+  const inm = raw?.replace(/^W\/"?|"?$/g, ""); // W/"abc" → abc
+  const fresh = getFresh(now);
+
+  // 1) 304 – ingen arbeid, ingen imports utover det som er i denne fila
+  if (fresh) {
+    const current = fresh.etag.replace(/^W\/"?|"?$/g, "");
+    if (inm && inm === current) {
+      return new Response(null, {
         status: 304,
         headers: {
-          'ETag': etag,
-          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+          ETag: fresh.etag,
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120, max-age=0, must-revalidate",
+          "X-Cache": "HIT-304",
+          "X-Rollout-Status": "enabled",
+          "X-Rollout-Percent": process.env.ROLLOUT_PERCENT || '0'
         }
       });
     }
+  }
 
-    // Return fresh data with ETag
-    return NextResponse.json(signalsData, {
+  // 2) HIT – server umiddelbart
+  if (fresh) {
+    return NextResponse.json(fresh.payload, {
       headers: {
-        'ETag': etag,
-        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+        ETag: fresh.etag,
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120, max-age=0, must-revalidate",
+        "X-Cache": "HIT",
+        "X-Rollout-Status": "enabled",
+        "X-Rollout-Percent": process.env.ROLLOUT_PERCENT || '0'
       }
     });
+  }
 
-  } catch (error) {
-    console.error('Signals API error:', error);
-    
-    // Return empty data on error (non-blocking)
-    return NextResponse.json({ 
-      items: [], 
-      updatedAt: new Date().toISOString() 
+  // 3) STALE – server raskt, trigge refresh i bakgrunnen (ikke await)
+  const stale = getStaleButServeable(now);
+  if (stale) {
+    void getOrRefresh("signals", refresher);
+    return NextResponse.json(stale.payload, {
+      headers: {
+        ETag: stale.etag,
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120, max-age=0, must-revalidate",
+        "X-Cache": "STALE",
+        "X-Rollout-Status": "enabled",
+        "X-Rollout-Percent": process.env.ROLLOUT_PERCENT || '0'
+      }
     });
   }
+
+  // 4) MISS – eneste blocking refresh
+  const entry = await getOrRefresh("signals", refresher);
+  return NextResponse.json(entry.payload, {
+    headers: {
+      ETag: entry.etag,
+      "Cache-Control": "public, max-age=0, must-revalidate, stale-while-revalidate=120",
+      "X-Cache": "MISS",
+      "X-Rollout-Status": "enabled",
+      "X-Rollout-Percent": process.env.ROLLOUT_PERCENT || '0'
+    }
+  });
 }
