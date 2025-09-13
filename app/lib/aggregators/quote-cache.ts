@@ -51,7 +51,7 @@ class QuoteCache {
     // Fetch fresh quote
     console.log(`🌐 Fetching fresh quote for ${pair}`);
     const quoteStartTime = Date.now();
-    const quote = await getQuote(inputMint, outputMint, inputAmount, slippageBps);
+    const quote = await getQuote(inputMint, outputMint, inputAmount.toString(), slippageBps);
     const quoteDuration = Date.now() - quoteStartTime;
     latencyMonitor.recordMetric('quote', quoteDuration, true);
     
@@ -111,7 +111,7 @@ class QuoteCache {
     }
 
     try {
-      const newQuote = await getQuote(inputMint, outputMint, inputAmount, 50);
+      const newQuote = await getQuote(inputMint, outputMint, inputAmount.toString(), 50);
       const oldPrice = parseFloat(cached.quote.outAmount) / parseFloat(cached.quote.inAmount);
       const newPrice = parseFloat(newQuote.outAmount) / parseFloat(newQuote.inAmount);
       

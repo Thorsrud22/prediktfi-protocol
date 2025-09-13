@@ -3,7 +3,6 @@ import {
   SentimentAnalysis, 
   FundamentalAnalysis, 
   DataSource,
-  MacroAnalysis 
 } from './enhanced-types';
 
 export class EnhancedDataService {
@@ -35,12 +34,16 @@ export class EnhancedDataService {
         price: priceData.price,
         volume24h: volumeData.volume24h,
         change24h: priceData.change24h,
+        change7d: 0, // Not available in current data source
+        change30d: 0, // Not available in current data source
         rsi: indicators.rsi,
-        macd: indicators.macd,
-        bollingerBands: indicators.bollingerBands,
-        movingAverages: indicators.movingAverages,
-        supportLevels: indicators.supportLevels,
-        resistanceLevels: indicators.resistanceLevels,
+        movingAverages: {
+          ma7: indicators.movingAverages?.sma20 || null,
+          ma30: indicators.movingAverages?.sma50 || null,
+          ma200: indicators.movingAverages?.sma200 || null
+        },
+        support: indicators.supportLevels?.[0] || null,
+        resistance: indicators.resistanceLevels?.[0] || null,
         trend: this.calculateTrend(indicators),
         volatility: this.calculateVolatility(priceData, indicators)
       };
@@ -77,11 +80,9 @@ export class EnhancedDataService {
 
       const sentiment: SentimentAnalysis = {
         fearGreedIndex: fearGreed.value,
-        newsSentiment: newsSentiment.score,
-        socialSentiment: socialSentiment.score,
-        overallSentiment: this.calculateOverallSentiment(fearGreed, newsSentiment, socialSentiment),
-        confidence: this.calculateSentimentConfidence(fearGreed, newsSentiment, socialSentiment),
-        sources: [fearGreed.source, newsSentiment.source, socialSentiment.source]
+        newsScore: newsSentiment.score,
+        socialScore: socialSentiment.score,
+        overallSentiment: this.calculateOverallSentiment(fearGreed, newsSentiment, socialSentiment)
       };
 
       const source: DataSource = {
@@ -120,14 +121,7 @@ export class EnhancedDataService {
         circulatingSupply: marketData.circulatingSupply,
         maxSupply: marketData.maxSupply,
         dominance: marketData.dominance,
-        correlationBTC: marketData.correlationBTC,
-        networkValue: onChainData.networkValue,
-        activeAddresses: onChainData.activeAddresses,
-        transactionCount: onChainData.transactionCount,
-        hashRate: onChainData.hashRate,
-        stakingRatio: onChainData.stakingRatio,
-        inflationRate: onChainData.inflationRate,
-        macroEnvironment: macroData
+        correlationBTC: marketData.correlationBTC
       };
 
       const source: DataSource = {
@@ -303,7 +297,7 @@ export class EnhancedDataService {
     return Math.min(1, (priceChange / 10) + (bbWidth * 100));
   }
 
-  private calculateOverallSentiment(fearGreed: any, news: any, social: any): number {
+  private calculateOverallSentiment(fearGreed: any, news: any, social: any): 'fear' | 'greed' | 'neutral' {
     // Weighted average of sentiment sources
     const weights = { fearGreed: 0.4, news: 0.4, social: 0.2 };
     
@@ -311,9 +305,13 @@ export class EnhancedDataService {
     const newsScore = news.score;
     const socialScore = social.score;
     
-    return (fearGreedScore * weights.fearGreed + 
-            newsScore * weights.news + 
-            socialScore * weights.social);
+    const score = (fearGreedScore * weights.fearGreed + 
+                   newsScore * weights.news + 
+                   socialScore * weights.social);
+    
+    if (score > 0.2) return 'greed';
+    if (score < -0.2) return 'fear';
+    return 'neutral';
   }
 
   private calculateSentimentConfidence(fearGreed: any, news: any, social: any): number {

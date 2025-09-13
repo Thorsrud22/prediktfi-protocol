@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
     // Generate nonce
     const nonce = ulid();
-    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+    const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes - more forgiving
 
     // Store nonce
     storeNonce(wallet, nonce, expiresAt);

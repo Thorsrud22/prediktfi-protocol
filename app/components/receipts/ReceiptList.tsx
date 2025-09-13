@@ -36,7 +36,7 @@ export default function ReceiptList({
   };
 
   const formatDate = (ts: string) => {
-    return new Date(ts).toLocaleString('no-NO', {
+    return new Date(ts).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

@@ -107,20 +107,19 @@ export class EnsemblePredictor {
       
       // Apply confidence calibration
       const calibratedConfidence = await ConfidenceCalibrator.calibrateConfidence(
-        ensembleResult.confidence,
+        ensembleResult.prob,
         input.topic,
         'ensemble-v1'
       );
 
       return {
         ...ensembleResult,
-        confidence: calibratedConfidence.calibratedConfidence,
         ensembleDetails: {
           modelsUsed: successfulPredictions.map(p => p.model),
           individualPredictions: successfulPredictions.map(p => ({
             model: p.model,
             probability: p.prediction.prob,
-            confidence: p.prediction.confidence,
+            confidence: 0.5, // Default confidence since PredictOutput doesn't have it
             weight: p.weight
           })),
           consensus: this.calculateConsensus(successfulPredictions),
@@ -140,7 +139,7 @@ export class EnsemblePredictor {
           individualPredictions: [{
             model: 'fallback',
             probability: fallbackResult.prob,
-            confidence: fallbackResult.confidence,
+            confidence: 0.5, // Default confidence since PredictOutput doesn't have it
             weight: 1.0
           }],
           consensus: 1.0,
@@ -175,7 +174,6 @@ export class EnsemblePredictor {
     // Weighted average of probabilities
     let totalWeight = 0;
     let weightedProbability = 0;
-    let weightedConfidence = 0;
     
     const drivers: string[] = [];
     const rationales: string[] = [];
@@ -185,7 +183,7 @@ export class EnsemblePredictor {
       totalWeight += adjustedWeight;
       
       weightedProbability += prediction.prob * adjustedWeight;
-      weightedConfidence += prediction.confidence * adjustedWeight;
+      // Note: PredictOutput doesn't have confidence, using default
       
       // Collect drivers and rationales
       if (prediction.drivers) {
@@ -197,7 +195,7 @@ export class EnsemblePredictor {
     });
 
     const finalProbability = weightedProbability / totalWeight;
-    const finalConfidence = weightedConfidence / totalWeight;
+    const finalConfidence = 0.5; // Default confidence since PredictOutput doesn't have it
 
     // Generate ensemble rationale
     const ensembleRationale = this.generateEnsembleRationale(
@@ -208,7 +206,6 @@ export class EnsemblePredictor {
 
     return {
       prob: Math.max(0.05, Math.min(0.95, finalProbability)),
-      confidence: Math.max(0.1, Math.min(0.95, finalConfidence)),
       drivers: [...new Set(drivers)].slice(0, 5), // Remove duplicates, limit to 5
       rationale: ensembleRationale,
       model: 'ensemble-v1',

@@ -266,12 +266,9 @@ export default function AlertsPage() {
                 <p className="text-[color:var(--muted)] mb-4">
                   No wallets connected. Please connect a wallet first.
                 </p>
-                <a
-                  href="/advisor"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                >
-                  Connect Wallet
-                </a>
+                <p className="text-sm text-[color:var(--muted)]">
+                  Connect via header to continue
+                </p>
               </div>
             ) : (
               <select

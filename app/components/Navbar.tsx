@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 import { useIsPro } from "../lib/use-plan";
 import { isFeatureEnabled } from "../lib/flags";
 import { useWalletAuth } from "../lib/useWalletAuth";
-import { HeaderConnectButton } from "./HeaderConnectButton";
+import HeaderConnectButton from "./HeaderConnectButton";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);

@@ -95,9 +95,9 @@ export default function ProposalSection({ insightId, resolverKind }: ProposalSec
         throw new Error(errorData.error || 'Failed to confirm proposal');
       }
       
-      const result = await response.json();
+      const responseData = await response.json();
       
-      if (result.success) {
+      if (responseData.success) {
         // Refresh the page to show the resolved status
         window.location.reload();
       }

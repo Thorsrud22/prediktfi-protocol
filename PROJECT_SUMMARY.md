@@ -324,7 +324,7 @@ Lighthouse Score: 98/100 (Performance)
 ### **Environment Setup**
 ```yaml
 Development:
-  URL: http://localhost:3001
+  URL: http://localhost:3000
   Network: Solana Devnet
   Features: Hot reload, Mock transactions, Debug tools
   

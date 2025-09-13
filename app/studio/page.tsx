@@ -5,11 +5,14 @@ import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { safeParse, safeLocalStorageGet, safeLocalStorageSet } from "../lib/safe-fetch";
+import { fmt, fmtPct } from "../lib/num";
 
 import InsightForm from "../components/Studio/InsightForm";
 import InsightPreview from "../components/Studio/InsightPreview";
 import QuotaGuard from "../components/QuotaGuard";
+import TradeButton from "../components/TradeButton";
 import { type InsightInput, type PredictResponse } from "../lib/ai/types";
+import type { InsightResponse } from '@/app/types/insight';
 import { enhancedPredict, type EnhancedPredictInput, type EnhancedPredictOutput } from "../lib/ai/enhanced-kernel";
 import { env } from "../lib/env";
 import { persistReferralData } from "../lib/share";
@@ -25,11 +28,7 @@ function parseJsonOr<T>(input: string | null, fallback: T, context = 'unknown'):
   return result ?? fallback;
 }
 
-// Lazy load wallet components
-const WalletMultiButton = dynamic(
-  () => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
-  { ssr: false }
-);
+// Wallet connection handled by header
 
 function StudioContent() {
   const searchParams = useSearchParams();
@@ -323,7 +322,7 @@ function StudioContent() {
           model: enhancedData.model,
           scenarioId: enhancedData.scenarioId,
           ts: enhancedData.ts,
-          confidence: enhancedData.confidence
+          // confidence: enhancedData.confidence // Removed - not part of PredictResponse type
         };
         setResponse(standardResponse);
       } else if (useAdvancedAnalysis) {
@@ -383,7 +382,7 @@ function StudioContent() {
           model: enhancedData.model,
           scenarioId: enhancedData.scenarioId,
           ts: enhancedData.ts,
-          confidence: enhancedData.confidence
+          // confidence: enhancedData.confidence // Removed - not part of PredictResponse type
         };
         setResponse(standardResponse);
       } else {
@@ -443,23 +442,56 @@ function StudioContent() {
     setSaving(true);
     
     try {
-      const response = await fetch('/api/insight', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: input.question,
-          category: input.topic,
-          horizon: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          creatorHandle: 'anonymous', // In real app, get from user auth
-        }),
-      });
+      const payload = {
+        question: input.question,
+        category: input.topic,
+        horizon: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        creatorHandle: 'anonymous', // In real app, get from user auth
+      };
 
-      if (!response.ok) {
-        throw new Error(`Save failed: ${response.status}`);
+      const res = await fetch('/api/insight', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      // Try to read json, otherwise text, before we decide
+      let body: any = null
+      try { body = await res.clone().json() } catch { try { body = await res.text() } catch {} }
+
+      if (!res.ok) {
+        const serverMsg =
+          (body && typeof body === 'object' && (body.error || body.message)) ||
+          (typeof body === 'string' ? body.slice(0, 300) : '') ||
+          'Unknown error'
+        // Don't throw hard error (dev-overlay), but give useful message:
+        console.warn('[SaveError]', res.status, serverMsg)
+        // TODO: replace with your toast solution if you have one:
+        alert(`Save failed (${res.status}): ${serverMsg}`)
+        return
       }
 
-      const savedInsight = await response.json();
+      // Success: 'body' is already our data
+      const savedInsight = body
       setSavedInsightId(savedInsight.id);
+      
+      // Clean up URL - remove any draft banner/params and push clean URL
+      if (typeof window !== 'undefined') {
+        const currentUrl = new URL(window.location.href);
+        const hasDraftParams = currentUrl.searchParams.has('draft') || 
+                              currentUrl.searchParams.has('banner') ||
+                              currentUrl.searchParams.has('intent');
+        
+        if (hasDraftParams) {
+          // Remove draft-related parameters
+          currentUrl.searchParams.delete('draft');
+          currentUrl.searchParams.delete('banner');
+          currentUrl.searchParams.delete('intent');
+          
+          // Push clean URL to history
+          window.history.pushState({}, '', currentUrl.pathname + currentUrl.search);
+        }
+      }
       
       // If user wants to stamp on chain
       if (stampOnChain) {
@@ -495,7 +527,17 @@ function StudioContent() {
       });
 
       if (!response.ok) {
-        throw new Error(`Stamp failed: ${response.status}`);
+        // Handle stamping errors gracefully
+        let errorMessage = `Stamp failed: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // Use default error message if JSON parsing fails
+        }
+        throw new Error(errorMessage);
       }
 
       const stampResult = await response.json();
@@ -531,26 +573,7 @@ function StudioContent() {
                 </span>
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-blue-200/80">
-                Cluster: <span className="font-mono text-blue-300">{env.cluster}</span>
-              </span>
-              <div>
-                <WalletMultiButton 
-                  style={{
-                    background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
-                    color: '#F8FAFC',
-                    border: 'none',
-                    fontWeight: '500',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '0.5rem',
-                    fontSize: '0.875rem',
-                    height: '40px',
-                    transition: 'all 150ms ease-in-out',
-                  }}
-                />
-              </div>
-            </div>
+{/* Removed devnet banner - wallet connection handled by header */}
           </div>
         </div>
       </div>
@@ -928,7 +951,7 @@ function StudioContent() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                   <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
                     <div className="text-lg font-semibold text-[color:var(--text)]">
-                      {insightResponse.metrics.rsi?.toFixed(1) || 'N/A'}
+                      {fmt(insightResponse.metrics.rsi, 1)}
                     </div>
                     <div className="text-sm text-[color:var(--muted)]">RSI</div>
                   </div>
@@ -940,7 +963,7 @@ function StudioContent() {
                   </div>
                   <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
                     <div className="text-lg font-semibold text-[color:var(--text)]">
-                      {insightResponse.metrics.sentiment?.toFixed(2) || '0.00'}
+                      {fmt(insightResponse.metrics.sentiment, 2)}
                     </div>
                     <div className="text-sm text-[color:var(--muted)]">Sentiment</div>
                   </div>
@@ -1049,42 +1072,38 @@ function StudioContent() {
       </div>
 
       {/* Save Modal */}
-      {saveModalOpen && input && insightResponse && (
-        <SaveInsightModal
-          insight={{
-            question: input.question,
-            category: input.topic,
-            probability: insightResponse.probability,
-            confidence: insightResponse.confidence,
-          }}
-          onSave={handleSaveInsight}
-          onClose={() => setSaveModalOpen(false)}
-          saving={saving}
-          stamping={stamping}
-        />
-      )}
+      <SaveInsightModal
+        open={saveModalOpen}
+        onClose={() => setSaveModalOpen(false)}
+        insight={insightResponse}
+        onSave={handleSaveInsight}
+        saving={saving}
+        stamping={stamping}
+        isPro={isPro}
+      />
     </div>
   );
 }
 
 interface SaveInsightModalProps {
-  insight: {
-    question: string;
-    category: string;
-    probability: number;
-    confidence: number;
-  };
-  onSave: (stampOnChain: boolean) => void;
+  open: boolean;
   onClose: () => void;
+  insight: InsightResponse | null;
+  onSave: (stampOnChain: boolean) => void;
   saving: boolean;
   stamping: boolean;
+  isPro: boolean; // <-- Legg til denne linjen
 }
 
-function SaveInsightModal({ insight, onSave, onClose, saving, stamping }: SaveInsightModalProps) {
+function SaveInsightModal({ open, onClose, insight, onSave, saving, stamping, isPro }: SaveInsightModalProps) {
   const [wantToStamp, setWantToStamp] = useState(false);
   
-  const probabilityPercent = Math.round(insight.probability * 100);
-  const confidencePercent = Math.round(insight.confidence * 100);
+  if (!open) return null;
+  
+  const hasInsight = Boolean(insight);
+  const metrics = insight?.metrics ?? {};
+  const probabilityPercent = insight?.probability ? Math.round(insight.probability * 100) : 0;
+  const confidencePercent = insight?.confidence ? Math.round(insight.confidence * 100) : 0;
   
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -1111,14 +1130,18 @@ function SaveInsightModal({ insight, onSave, onClose, saving, stamping }: SaveIn
           <div className="mb-6">
             <h3 className="font-medium text-[color:var(--text)] mb-2">Insight Summary</h3>
             <div className="bg-[color:var(--surface-2)] rounded-lg p-4 border border-[var(--border)]">
-              <p className="text-sm text-[color:var(--muted)] mb-2">{insight.question}</p>
-              <div className="flex items-center space-x-4 text-sm">
-                <span className="font-semibold text-blue-600">{probabilityPercent}%</span>
-                <span className="text-[color:var(--muted)]">•</span>
-                <span className="text-[color:var(--text)]">Confidence: {confidencePercent}%</span>
-                <span className="text-[color:var(--muted)]">•</span>
-                <span className="capitalize text-[color:var(--text)]">{insight.category}</span>
-              </div>
+              {hasInsight ? (
+                <>
+                  <p className="text-sm text-[color:var(--muted)] mb-2">{insight?.rationale?.split('\n')[0] || 'No question available'}</p>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <span className="font-semibold text-blue-600">{probabilityPercent}%</span>
+                    <span className="text-[color:var(--muted)]">•</span>
+                    <span className="text-[color:var(--text)]">Confidence: {confidencePercent}%</span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-[color:var(--muted)] text-center py-4">Generate an insight first to enable preview.</p>
+              )}
             </div>
           </div>
 
@@ -1130,15 +1153,24 @@ function SaveInsightModal({ insight, onSave, onClose, saving, stamping }: SaveIn
                 id="stampOnChain"
                 checked={wantToStamp}
                 onChange={(e) => setWantToStamp(e.target.checked)}
-                disabled={saving || stamping}
+                disabled={saving || stamping || (process.env.NEXT_PUBLIC_SOLANA_CLUSTER !== 'mainnet') || !isPro}
                 className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
               />
               <div className="flex-1">
                 <label htmlFor="stampOnChain" className="text-sm font-medium text-[color:var(--text)]">
                   Stamp on Solana blockchain
+                  {((process.env.NEXT_PUBLIC_SOLANA_CLUSTER !== 'mainnet') || !isPro) && (
+                    <span className="ml-2 text-xs text-gray-500">(Pro/mainnet only)</span>
+                  )}
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
-                  Creates an immutable record of your prediction on Solana devnet. 
+                  {(process.env.NEXT_PUBLIC_SOLANA_CLUSTER !== 'mainnet') ? (
+                    'Stamping is disabled in development. Available on mainnet with Pro plan.'
+                  ) : !isPro ? (
+                    'Upgrade to Pro to stamp predictions on Solana blockchain.'
+                  ) : (
+                    'Creates an immutable record of your prediction on Solana blockchain.'
+                  )}
                   <span className="text-orange-600 font-medium"> Pro feature</span>
                 </p>
               </div>
@@ -1149,84 +1181,58 @@ function SaveInsightModal({ insight, onSave, onClose, saving, stamping }: SaveIn
           <div className="flex space-x-3">
             <button
               onClick={() => onSave(false)}
-              disabled={saving || stamping}
+              disabled={saving || stamping || !hasInsight}
               className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save Only'}
             </button>
             <button
               onClick={() => onSave(wantToStamp)}
-              disabled={saving || stamping}
+              disabled={saving || stamping || !hasInsight}
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={wantToStamp && ((process.env.NEXT_PUBLIC_SOLANA_CLUSTER !== 'mainnet') || !isPro) ? 
+                'Stamping is available on mainnet with Pro plan.' : undefined}
             >
               {stamping ? 'Stamping...' : saving ? 'Saving...' : wantToStamp ? 'Save & Stamp' : 'Save & Preview'}
             </button>
           </div>
 
           {/* Trade This Prediction */}
-          {isFeatureEnabled('ACTIONS') && insightResponse && (
+          {(isFeatureEnabled('ACTIONS') && hasInsight) && (
             <div className="mt-4">
-              <button
-                onClick={async () => {
-                  // Track "Trade this" button click
-                  if (walletId) {
-                    try {
-                      await fetch('/api/analytics/track-event', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          walletId,
-                          eventType: 'click_trade_button',
-                          eventData: { insightId: insight.id }
-                        })
-                      });
-                    } catch (error) {
-                      console.error('Failed to track trade button click:', error);
-                    }
-                  }
-                  
-                  // Create intent template from prediction
-                  const template = {
-                    base: 'SOL', // Default to SOL for now
-                    quote: 'USDC',
-                    side: insightResponse.probability > 0.5 ? 'BUY' : 'SELL',
-                    sizeJson: { type: 'pct', value: 5 },
-                    rationale: `Based on Predikt analysis: ${Math.round(insightResponse.probability * 100)}% probability`,
-                    confidence: insightResponse.confidence,
-                    expectedDur: '14d'
-                  };
-                  
-                  // Prefetch quote for better UX
-                  try {
-                    const base = template.base;
-                    const quote = template.quote;
-                    const side = template.side;
-                    const sizePct = template.sizeJson.value;
-                    
-                    // Calculate trade size (5% of $1000 portfolio for prefetch)
-                    const tradeSizeUsd = 1000 * (sizePct / 100);
-                    const tradeSizeTokens = tradeSizeUsd; // Simplified for USDC
-                    
-                    const inputMint = side === 'BUY' ? getTokenMint(quote) : getTokenMint(base);
-                    const outputMint = side === 'BUY' ? getTokenMint(base) : getTokenMint(quote);
-                    
-                    // Prefetch quote in background
-                    quoteCache.prefetchQuote(inputMint, outputMint, tradeSizeTokens, 50);
-                  } catch (error) {
-                    console.warn('Failed to prefetch quote:', error);
-                  }
-                  
-                  // Encode template and redirect to actions page
-                  const encodedTemplate = btoa(JSON.stringify(template));
-                  window.location.href = `/advisor/actions?template=${encodedTemplate}`;
-                }}
+              <TradeButton
+                insight={insight ? {
+                  probability: insight.probability || 0.5,
+                  confidence: insight.confidence || 0.5,
+                  rationale: insight.rationale || '',
+                  scenarios: insight.scenarios,
+                  p: insight.probability,
+                  reasoning: insight.rationale,
+                  analysis: insight.metrics
+                } : null}
                 className="w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all font-medium"
+                title="Connect wallet and view trading actions"
               >
                 🚀 Trade This Prediction
-              </button>
+              </TradeButton>
               <p className="text-xs text-center text-gray-500 mt-2">
-                Create a trading intent based on this analysis
+                View trading opportunities dashboard
               </p>
+            </div>
+          )}
+          
+          {/* When insight missing, show disabled button + hint */}
+          {(isFeatureEnabled('ACTIONS') && !hasInsight) && (
+            <div className="mt-4">
+              <TradeButton 
+                disabled 
+                className="w-full px-4 py-2 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed font-medium"
+              >
+                🚀 Trade This Prediction
+              </TradeButton>
+              <div className="text-xs text-center text-[color:var(--muted)] mt-2">
+                Generate an insight first to enable trading.
+              </div>
             </div>
           )}
 

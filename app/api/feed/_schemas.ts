@@ -1,10 +1,17 @@
 import { z } from 'zod';
 
 export const FeedQuerySchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(50).default(20),
-  filter: z.enum(['all', 'KOL', 'EXPERT', 'COMMUNITY', 'PREDIKT']).default('all'),
-  sort: z.enum(['recent', 'trending']).default('recent'),
+  // Legacy parameters for backward compatibility
+  page: z.coerce.number().min(1).catch(1),
+  filter: z.string().catch('all'),
+  
+  // New parameters as requested
+  category: z.string().catch('all'),
+  q: z.string().catch(''),
+  cursor: z.string().catch(''),
+  limit: z.coerce.number().min(1).max(50).catch(20),
+  sort: z.string().catch('recent'),
+  timeframe: z.string().catch('30d'),
 });
 
 export type FeedQuery = z.infer<typeof FeedQuerySchema>;
@@ -37,4 +44,10 @@ export interface FeedResponse {
     current: string;
     available: string[];
   };
+  // New fields for enhanced API
+  nextCursor: string | null;
+  query: string;
+  category: string;
+  sort: string;
+  timeframe: string;
 }

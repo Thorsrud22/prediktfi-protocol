@@ -33,7 +33,7 @@ class SyntheticTester {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+    this.baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   }
 
   async runAllTests(): Promise<SyntheticTestResult[]> {

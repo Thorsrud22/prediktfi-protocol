@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '../ui/Button';
 import { trackReceiptShare } from '../../lib/trial';
-import { getWalletIdentifier } from '../../lib/wallet';
+import { getWalletIdentifier } from '../../lib/rate-limit-wallet';
 import { isFeatureEnabled } from '../../lib/flags';
 import { useToast } from '../ToastProvider';
 

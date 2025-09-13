@@ -237,7 +237,7 @@ export class AlertsEngine {
       });
 
       // Send notification via appropriate channel
-      const channel = this.channels[rule.channel];
+      const channel = this.channels[rule.channel as keyof typeof this.channels];
       if (channel) {
         const success = await channel.send({
           target: rule.target,

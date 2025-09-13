@@ -49,7 +49,7 @@ export async function safeFetchJSON<T>(input: RequestInfo | URL, init?: RequestI
   const status = res.status;
   const etag = res.headers.get('ETag') ?? undefined;
 
-  // 304/204 → ingen body å parse
+  // 304/204 → no body to parse
   if (status === 304 || status === 204) return { data: null, etag, status };
 
   const ct = res.headers.get('content-type') || '';

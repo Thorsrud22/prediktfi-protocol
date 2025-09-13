@@ -111,9 +111,37 @@ export class AdvancedAnalysisEngine {
         probability: overallProbability,
         confidence: confidence,
         scenarios: scenarios,
-        technical: technicalResult.data,
-        sentiment: sentimentResult.data,
-        fundamental: fundamentalResult.data,
+        technical: technicalResult.data || {
+          price: 0,
+          volume24h: 0,
+          change24h: 0,
+          change7d: 0,
+          change30d: 0,
+          volatility: 0,
+          support: null,
+          resistance: null,
+          trend: 'neutral' as const,
+          rsi: null,
+          movingAverages: {
+            ma7: null,
+            ma30: null,
+            ma200: null
+          }
+        },
+        sentiment: sentimentResult.data || {
+          fearGreedIndex: null,
+          newsScore: null,
+          socialScore: null,
+          overallSentiment: 'neutral' as const
+        },
+        fundamental: fundamentalResult.data || {
+          marketCap: null,
+          volume24h: 0,
+          circulatingSupply: null,
+          maxSupply: null,
+          dominance: null,
+          correlationBTC: null
+        },
         risks: risks,
         dataSources: [technicalResult.source, sentimentResult.source, fundamentalResult.source],
         methodology: this.generateMethodology(technicalScore, sentimentScore, fundamentalScore),
@@ -126,7 +154,7 @@ export class AdvancedAnalysisEngine {
 
     } catch (error) {
       console.error('Advanced analysis failed:', error);
-      throw new Error('Analysis failed: ' + error.message);
+      throw new Error('Analysis failed: ' + (error instanceof Error ? error.message : String(error)));
     }
   }
 
@@ -137,17 +165,21 @@ export class AdvancedAnalysisEngine {
     let score = 0.5; // Base score
 
     // RSI Analysis
-    if (technical.rsi < 30) score += 0.1; // Oversold - bullish
-    else if (technical.rsi > 70) score -= 0.1; // Overbought - bearish
-    else if (technical.rsi > 40 && technical.rsi < 60) score += 0.05; // Neutral - stable
+    if (technical.rsi !== null) {
+      if (technical.rsi < 30) score += 0.1; // Oversold - bullish
+      else if (technical.rsi > 70) score -= 0.1; // Overbought - bearish
+      else if (technical.rsi > 40 && technical.rsi < 60) score += 0.05; // Neutral - stable
+    }
 
-    // MACD Analysis
-    if (technical.macd.value > technical.macd.signal) score += 0.1; // Bullish crossover
-    else if (technical.macd.value < technical.macd.signal) score -= 0.1; // Bearish crossover
+    // MACD Analysis - not available in current interface
+    // if (technical.macd.value > technical.macd.signal) score += 0.1; // Bullish crossover
+    // else if (technical.macd.value < technical.macd.signal) score -= 0.1; // Bearish crossover
 
     // Moving Averages
-    if (technical.movingAverages.sma20 > technical.movingAverages.sma50) score += 0.1;
-    else if (technical.movingAverages.sma20 < technical.movingAverages.sma50) score -= 0.1;
+    if (technical.movingAverages.ma7 !== null && technical.movingAverages.ma30 !== null) {
+      if (technical.movingAverages.ma7 > technical.movingAverages.ma30) score += 0.1;
+      else if (technical.movingAverages.ma7 < technical.movingAverages.ma30) score -= 0.1;
+    }
 
     // Trend Analysis
     if (technical.trend === 'bullish') score += 0.15;
@@ -178,18 +210,25 @@ export class AdvancedAnalysisEngine {
     let score = 0.5; // Base score
 
     // Fear & Greed Index
-    if (sentiment.fearGreedIndex < 25) score += 0.2; // Extreme fear - contrarian bullish
-    else if (sentiment.fearGreedIndex > 75) score -= 0.2; // Extreme greed - contrarian bearish
-    else if (sentiment.fearGreedIndex > 40 && sentiment.fearGreedIndex < 60) score += 0.05; // Neutral
+    if (sentiment.fearGreedIndex !== null) {
+      if (sentiment.fearGreedIndex < 25) score += 0.2; // Extreme fear - contrarian bullish
+      else if (sentiment.fearGreedIndex > 75) score -= 0.2; // Extreme greed - contrarian bearish
+      else if (sentiment.fearGreedIndex > 40 && sentiment.fearGreedIndex < 60) score += 0.05; // Neutral
+    }
 
     // News Sentiment
-    score += sentiment.newsSentiment * 0.15;
+    if (sentiment.newsScore !== null) {
+      score += sentiment.newsScore * 0.15;
+    }
 
     // Social Sentiment
-    score += sentiment.socialSentiment * 0.1;
+    if (sentiment.socialScore !== null) {
+      score += sentiment.socialScore * 0.1;
+    }
 
     // Overall Sentiment
-    score += sentiment.overallSentiment * 0.2;
+    if (sentiment.overallSentiment === 'greed') score += 0.2;
+    else if (sentiment.overallSentiment === 'fear') score -= 0.2;
 
     return Math.max(0.05, Math.min(0.95, score));
   }
@@ -208,21 +247,23 @@ export class AdvancedAnalysisEngine {
     if (fundamental.volume24h > 1000000000) score += 0.05; // High volume = interest
     else if (fundamental.volume24h < 10000000) score -= 0.05; // Low volume = lack of interest
 
-    // Network Value Analysis
-    if (fundamental.networkValue > 50000000000) score += 0.1; // Strong network value
-    else if (fundamental.networkValue < 1000000000) score -= 0.1; // Weak network value
+    // Market Cap Analysis
+    if (fundamental.marketCap !== null) {
+      if (fundamental.marketCap > 50000000000) score += 0.1; // Strong market cap
+      else if (fundamental.marketCap < 1000000000) score -= 0.1; // Weak market cap
+    }
 
-    // Active Addresses
-    if (fundamental.activeAddresses > 1000000) score += 0.05; // High activity
-    else if (fundamental.activeAddresses < 100000) score -= 0.05; // Low activity
+    // Dominance Analysis
+    if (fundamental.dominance !== null) {
+      if (fundamental.dominance > 0.5) score += 0.05; // High dominance
+      else if (fundamental.dominance < 0.1) score -= 0.05; // Low dominance
+    }
 
-    // Staking Ratio (for PoS coins)
-    if (fundamental.stakingRatio > 0.5) score += 0.05; // High staking = confidence
-    else if (fundamental.stakingRatio < 0.1) score -= 0.05; // Low staking = uncertainty
-
-    // Macro Environment
-    if (fundamental.macroEnvironment.fedRate < 3) score += 0.05; // Low rates = risk on
-    else if (fundamental.macroEnvironment.fedRate > 6) score -= 0.05; // High rates = risk off
+    // BTC Correlation
+    if (fundamental.correlationBTC !== null) {
+      if (fundamental.correlationBTC > 0.7) score += 0.05; // High correlation with BTC
+      else if (fundamental.correlationBTC < 0.3) score -= 0.05; // Low correlation
+    }
 
     return Math.max(0.05, Math.min(0.95, score));
   }
@@ -242,58 +283,58 @@ export class AdvancedAnalysisEngine {
           type: 'technical',
           description: 'Extremely high volatility indicates unstable market conditions',
           impact: 'high',
-          probability: 0.7
+          likelihood: 0.7
         });
       }
       
-      if (technical.rsi > 80) {
+      if (technical.rsi !== null && technical.rsi > 80) {
         risks.push({
           type: 'technical',
           description: 'Overbought conditions suggest potential for correction',
           impact: 'medium',
-          probability: 0.6
+          likelihood: 0.6
         });
       }
     }
 
     // Sentiment Risks
     if (sentiment) {
-      if (sentiment.fearGreedIndex > 80) {
+      if (sentiment.fearGreedIndex !== null && sentiment.fearGreedIndex > 80) {
         risks.push({
-          type: 'sentiment',
+          type: 'market',
           description: 'Extreme greed in market may lead to correction',
           impact: 'high',
-          probability: 0.6
+          likelihood: 0.6
         });
       }
       
-      if (sentiment.overallSentiment < -0.5) {
+      if (sentiment.overallSentiment === 'fear') {
         risks.push({
-          type: 'sentiment',
+          type: 'market',
           description: 'Negative sentiment across all sources',
           impact: 'medium',
-          probability: 0.7
+          likelihood: 0.7
         });
       }
     }
 
     // Fundamental Risks
     if (fundamental) {
-      if (fundamental.macroEnvironment.fedRate > 5) {
+      if (fundamental.marketCap !== null && fundamental.marketCap < 1000000000) {
         risks.push({
-          type: 'macro',
-          description: 'High interest rates may reduce risk appetite',
+          type: 'fundamental',
+          description: 'Low market cap indicates higher volatility risk',
           impact: 'high',
-          probability: 0.8
+          likelihood: 0.7
         });
       }
       
-      if (fundamental.inflationRate > 4) {
+      if (fundamental.volume24h < 1000000) {
         risks.push({
-          type: 'macro',
-          description: 'High inflation may impact asset valuations',
+          type: 'fundamental',
+          description: 'Low trading volume may indicate lack of liquidity',
           impact: 'medium',
-          probability: 0.6
+          likelihood: 0.6
         });
       }
     }
@@ -342,8 +383,8 @@ export class AdvancedAnalysisEngine {
   private generateOptimisticScenario(technical: TechnicalAnalysis | null, horizon: string, question: string): string {
     const factors = [];
     if (technical?.trend === 'bullish') factors.push('strong bullish momentum');
-    if (technical?.rsi < 50) factors.push('oversold conditions');
-    if (technical?.volatility < 0.5) factors.push('stable market conditions');
+    if (technical && technical.rsi !== null && technical.rsi < 50) factors.push('oversold conditions');
+    if (technical && technical.volatility < 0.5) factors.push('stable market conditions');
     
     return `In the most optimistic scenario, ${factors.join(', ')} would drive significant positive movement. This outcome assumes all favorable conditions align and market sentiment remains positive.`;
   }
@@ -351,7 +392,7 @@ export class AdvancedAnalysisEngine {
   private generateLikelyScenario(technical: TechnicalAnalysis | null, horizon: string, question: string): string {
     const factors = [];
     if (technical?.trend === 'neutral') factors.push('balanced market conditions');
-    if (technical?.rsi > 40 && technical?.rsi < 60) factors.push('neutral technical indicators');
+    if (technical && technical.rsi !== null && technical.rsi > 40 && technical.rsi < 60) factors.push('neutral technical indicators');
     
     return `The most likely scenario reflects current market conditions with ${factors.join(', ')}. This represents a balanced view based on available data and historical patterns.`;
   }
@@ -359,8 +400,8 @@ export class AdvancedAnalysisEngine {
   private generatePessimisticScenario(technical: TechnicalAnalysis | null, horizon: string, question: string): string {
     const factors = [];
     if (technical?.trend === 'bearish') factors.push('bearish momentum');
-    if (technical?.rsi > 70) factors.push('overbought conditions');
-    if (technical?.volatility > 0.7) factors.push('high volatility');
+    if (technical && technical.rsi !== null && technical.rsi > 70) factors.push('overbought conditions');
+    if (technical && technical.volatility > 0.7) factors.push('high volatility');
     
     return `In the pessimistic scenario, ${factors.join(', ')} would lead to negative movement. This outcome considers potential downside risks and adverse market conditions.`;
   }
@@ -403,7 +444,7 @@ export class AdvancedAnalysisEngine {
                           fundamentalScore * weights.fundamental);
 
     // Adjust for high-impact risks
-    const highImpactRisks = risks.filter(r => r.impact === 'high' && r.probability > 0.6);
+    const highImpactRisks = risks.filter(r => r.impact === 'high' && r.likelihood > 0.6);
     if (highImpactRisks.length > 0) {
       baseProbability -= 0.1 * highImpactRisks.length;
     }
@@ -425,8 +466,8 @@ export class AdvancedAnalysisEngine {
     if (fundamental) confidence += 0.1;
 
     // Data quality indicators
-    if (technical?.volatility < 0.5) confidence += 0.05; // Low volatility = more predictable
-    if (sentiment?.confidence > 0.8) confidence += 0.05; // High sentiment confidence
+    if (technical && technical.volatility < 0.5) confidence += 0.05; // Low volatility = more predictable
+    // Note: sentiment.confidence doesn't exist in the interface, skipping
 
     return Math.max(0.1, Math.min(0.95, confidence));
   }

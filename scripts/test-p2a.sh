@@ -8,7 +8,7 @@ set -e
 echo "🚀 Testing Predikt Prediction-to-Action v1"
 echo "=========================================="
 
-BASE_URL="http://localhost:3001"
+BASE_URL="http://localhost:3000"
 API_BASE="$BASE_URL/api"
 
 # Colors for output

@@ -126,7 +126,7 @@ async function performEnsembleAnalysis(
     
     // Apply confidence calibration
     const calibratedConfidence = await ConfidenceCalibrator.calibrateConfidence(
-      ensembleResult.confidence,
+      ensembleResult.ensembleDetails.consensus,
       input.topic,
       'ensemble-v1'
     );
@@ -137,7 +137,6 @@ async function performEnsembleAnalysis(
     
     return {
       ...ensembleResult,
-      confidence: calibratedConfidence.calibratedConfidence,
       analysisType: 'ensemble',
       processingTimeMs: Date.now() - startTime,
       aiAccuracy: enhancedContext.historicalAccuracy ? {
@@ -230,9 +229,9 @@ function generateDrivers(analysis: AdvancedAnalysis): string[] {
   // Technical drivers
   if (analysis.technical) {
     if (analysis.technical.trend === 'bullish') {
-      drivers.push(`Strong bullish momentum (RSI: ${analysis.technical.rsi.toFixed(1)})`);
+      drivers.push(`Strong bullish momentum${analysis.technical.rsi !== null ? ` (RSI: ${analysis.technical.rsi.toFixed(1)})` : ''}`);
     } else if (analysis.technical.trend === 'bearish') {
-      drivers.push(`Bearish trend signals (RSI: ${analysis.technical.rsi.toFixed(1)})`);
+      drivers.push(`Bearish trend signals${analysis.technical.rsi !== null ? ` (RSI: ${analysis.technical.rsi.toFixed(1)})` : ''}`);
     }
     
     if (analysis.technical.volatility > 0.7) {
@@ -244,15 +243,17 @@ function generateDrivers(analysis: AdvancedAnalysis): string[] {
   
   // Sentiment drivers
   if (analysis.sentiment) {
-    if (analysis.sentiment.fearGreedIndex < 25) {
-      drivers.push('Extreme fear - contrarian opportunity');
-    } else if (analysis.sentiment.fearGreedIndex > 75) {
-      drivers.push('Extreme greed - caution advised');
+    if (analysis.sentiment.fearGreedIndex !== null) {
+      if (analysis.sentiment.fearGreedIndex < 25) {
+        drivers.push('Extreme fear - contrarian opportunity');
+      } else if (analysis.sentiment.fearGreedIndex > 75) {
+        drivers.push('Extreme greed - caution advised');
+      }
     }
     
-    if (analysis.sentiment.overallSentiment > 0.3) {
+    if (analysis.sentiment.overallSentiment === 'greed') {
       drivers.push('Positive market sentiment');
-    } else if (analysis.sentiment.overallSentiment < -0.3) {
+    } else if (analysis.sentiment.overallSentiment === 'fear') {
       drivers.push('Negative market sentiment');
     }
   }
@@ -263,8 +264,8 @@ function generateDrivers(analysis: AdvancedAnalysis): string[] {
       drivers.push('Large market cap stability');
     }
     
-    if (analysis.fundamental.activeAddresses && analysis.fundamental.activeAddresses > 1000000) {
-      drivers.push('High network activity');
+    if (analysis.fundamental.volume24h > 1000000000) {
+      drivers.push('High trading volume');
     }
   }
   
@@ -297,7 +298,7 @@ function generateRationale(analysis: AdvancedAnalysis): string {
   rationale += `Confidence level is ${(confidence * 100).toFixed(0)}% based on data quality of ${(dataQuality * 100).toFixed(0)}%. `;
   
   if (scenarios.length > 0) {
-    const likelyScenario = scenarios.find(s => s.type === 'likely');
+    const likelyScenario = scenarios.find(s => s.name === 'likely');
     if (likelyScenario) {
       rationale += `The most likely scenario suggests ${likelyScenario.description.toLowerCase()}. `;
     }
@@ -335,7 +336,7 @@ function generateEnhancedRationale(analysis: AdvancedAnalysis, context: Enhanced
   
   // Key Scenario
   if (scenarios.length > 0) {
-    const likelyScenario = scenarios.find(s => s.type === 'likely');
+    const likelyScenario = scenarios.find(s => s.name === 'likely');
     if (likelyScenario) {
       sections.push(`**Most Likely Scenario**\n${likelyScenario.description}`);
     }

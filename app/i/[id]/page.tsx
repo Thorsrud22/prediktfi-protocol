@@ -137,7 +137,7 @@ export default async function InsightPage({ params }: PageProps) {
       {/* Proposal System for URL/TEXT Resolvers */}
       {insight.status !== 'RESOLVED' && insight.resolverKind && ['URL', 'TEXT'].includes(insight.resolverKind) && (
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <ProposalSection insightId={insight.id} resolverKind={insight.resolverKind} />
+          <ProposalSection insightId={insight.id} resolverKind={insight.resolverKind as 'URL' | 'TEXT'} />
         </div>
       )}
 

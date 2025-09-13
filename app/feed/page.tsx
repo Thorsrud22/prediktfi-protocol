@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 interface FeedInsight {
@@ -34,6 +34,12 @@ interface FeedResponse {
     current: string;
     available: string[];
   };
+  // New fields from enhanced API
+  nextCursor: string | null;
+  query: string;
+  category: string;
+  sort: string;
+  timeframe: string;
 }
 
 export default function FeedPage() {
@@ -42,21 +48,55 @@ export default function FeedPage() {
   const [currentFilter, setCurrentFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  // Normalize category to lowercase slug
+  const normalizeCategory = (category: string): string => {
+    return category.toLowerCase().trim();
+  };
+
+  // Debounce search query to avoid excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Load feed data from API
-  const loadFeedData = async () => {
+  const loadFeedData = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '20',
-        filter: currentFilter,
+        category: normalizeCategory(currentFilter),
         sort: 'recent',
       });
       
+      // Add search query only if it's not empty
+      if (debouncedSearchQuery && debouncedSearchQuery.trim()) {
+        params.set('q', debouncedSearchQuery.trim());
+      }
+      
       const response = await fetch(`/api/feed?${params}`);
       if (!response.ok) {
-        console.error('Failed to load feed data:', response.status);
+        // Enhanced error logging for debugging
+        let responseBody = '';
+        try {
+          responseBody = await response.text();
+        } catch (e) {
+          responseBody = 'Unable to read response body';
+        }
+        
+        console.error('🚨 Feed API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: `/api/feed?${params}`,
+          responseBody: responseBody,
+          timestamp: new Date().toISOString()
+        });
         return;
       }
       const contentType = response.headers.get('content-type') || '';
@@ -65,17 +105,35 @@ export default function FeedPage() {
         return;
       }
       const data = await response.json();
+      
+      // Development logging to verify client behavior
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Feed API Success:', {
+          url: `/api/feed?${params}`,
+          requestParams: Object.fromEntries(params),
+          responseCategory: data.category,
+          responseQuery: data.query,
+          resultsCount: data.insights?.length || 0,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       setFeedData(data);
     } catch (error) {
-      console.error('Failed to load feed data:', error);
+      console.error('🚨 Feed API Network Error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `/api/feed?${params}`,
+        requestParams: Object.fromEntries(params),
+        timestamp: new Date().toISOString()
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentFilter, currentPage, debouncedSearchQuery]);
 
   useEffect(() => {
     loadFeedData();
-  }, [currentFilter, currentPage]);
+  }, [loadFeedData]);
 
   const handleFilterChange = (filter: string) => {
     setCurrentFilter(filter);
@@ -84,6 +142,11 @@ export default function FeedPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   const timeAgo = (dateString: string) => {
@@ -144,7 +207,7 @@ export default function FeedPage() {
                       type="text"
                       placeholder="Search insights..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                       className="w-full px-4 py-3 pl-10 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200/60 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent backdrop-blur-sm"
                     />
                     <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">

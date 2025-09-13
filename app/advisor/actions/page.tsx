@@ -1,415 +1,1031 @@
-/**
- * Actions page - Trading intents management
- * /advisor/actions
- */
+'use client'
+import React, { useEffect, useState, useRef } from 'react'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { toast } from 'react-hot-toast'
+import { useWalletAuth } from '../../lib/useWalletAuth'
+import { useIntentDraft } from '../../lib/store/intent-draft-store'
+import TradingIntentComposer from '../../components/TradingIntentComposer'
+import UserIntentsList from '../../components/UserIntentsList'
+import { loadIntents, removeIntent, type TradingIntent } from '../../lib/intent-persistence'
+import { loadIntents as getIntents, saveIntents, upsertIntent, removeIntent as removeWalletIntent, type TradingIntent as NewTradingIntent } from '../../lib/wallet-intent-persistence'
+import { loadDevIntents, type DevIntent } from '../../lib/dev-intents'
 
-'use client';
+// Create Intent Form Component
+function CreateIntentForm({ 
+  onCreateIntent, 
+  onCancel 
+}: { 
+  onCreateIntent: (data: {
+    asset: string;
+    side: 'Long' | 'Short';
+    probability: number;
+    confidence: number;
+    horizon: string;
+    thesis: string;
+  }) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    asset: '',
+    side: 'Long' as 'Long' | 'Short',
+    probability: 50,
+    confidence: 70,
+    horizon: '30d',
+    thesis: ''
+  })
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { isFeatureEnabled } from '../../lib/flags';
-import { safeParse } from '../../lib/safe-fetch';
-import TradePanel from '../../components/actions/TradePanel';
-import IntentCard from '../../components/actions/IntentCard';
-import SimResult from '../../components/actions/SimResult';
-import AccuracyAlerts from '../../components/actions/AccuracyAlerts';
-import PnLWidget from '../../components/actions/PnLWidget';
-import InviteCodeWidget from '../../components/actions/InviteCodeWidget';
-import AggregatorFallbackBanner from '../../components/actions/AggregatorFallbackBanner';
-import { priceMonitor } from '../../lib/intents/price-monitor';
-import KillSwitchStatus from '../../components/actions/KillSwitchStatus';
-import ToSAcceptance from '../../components/actions/ToSAcceptance';
-import { AccuracyAlertBanner } from '../../components/quality/AccuracyAlertBanner';
-import { SimulateOnlyBanner } from '../../components/chaos/SimulateOnlyBanner';
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Validate required fields
+    if (!formData.asset.trim() || !formData.thesis.trim()) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+    
+    if (formData.probability < 0 || formData.probability > 100) {
+      toast.error('Probability must be between 0 and 100')
+      return
+    }
+    
+    if (formData.confidence < 0 || formData.confidence > 100) {
+      toast.error('Confidence must be between 0 and 100')
+      return
+    }
+    
+    onCreateIntent(formData)
+  }
 
-interface Intent {
-  id: string;
-  walletId: string;
-  base: string;
-  quote: string;
-  side: 'BUY' | 'SELL';
-  sizeJson: any;
-  rationale?: string;
-  confidence?: number;
-  backtestWin?: number;
-  expectedDur?: string;
-  createdAt: string;
-  receipts: Array<{
-    id: string;
-    status: 'simulated' | 'executed' | 'failed';
-    txSig?: string;
-    realizedPx?: number;
-    feesUsd?: number;
-    slippageBps?: number;
-    createdAt: string;
-  }>;
+  return (
+    <div className="rounded-xl border border-blue-600 bg-blue-900/20 p-6 text-slate-200">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-blue-300">Create New Trading Intent</h3>
+        <button
+          onClick={onCancel}
+          className="text-slate-400 hover:text-slate-200 text-sm"
+        >
+          ✕ Cancel
+        </button>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Asset Symbol */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Asset Symbol *
+            </label>
+            <input
+              type="text"
+              value={formData.asset}
+              onChange={(e) => setFormData(prev => ({ ...prev, asset: e.target.value.toUpperCase() }))}
+              placeholder="e.g. BTC, ETH, SOL"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          {/* Side */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Direction *
+            </label>
+            <select
+              value={formData.side}
+              onChange={(e) => setFormData(prev => ({ ...prev, side: e.target.value as 'Long' | 'Short' }))}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Long">Long</option>
+              <option value="Short">Short</option>
+            </select>
+          </div>
+          
+          {/* Probability */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Probability (%) *
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.probability}
+              onChange={(e) => setFormData(prev => ({ ...prev, probability: parseInt(e.target.value) || 0 }))}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          {/* Confidence */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Confidence (%) *
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.confidence}
+              onChange={(e) => setFormData(prev => ({ ...prev, confidence: parseInt(e.target.value) || 0 }))}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          {/* Horizon */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Time Horizon *
+            </label>
+            <select
+              value={formData.horizon}
+              onChange={(e) => setFormData(prev => ({ ...prev, horizon: e.target.value }))}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="1d">1 day</option>
+              <option value="7d">1 week</option>
+              <option value="30d">1 month</option>
+              <option value="90d">3 months</option>
+              <option value="180d">6 months</option>
+              <option value="365d">1 year</option>
+            </select>
+          </div>
+        </div>
+        
+        {/* Thesis */}
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Trading Thesis *
+          </label>
+          <textarea
+            value={formData.thesis}
+            onChange={(e) => setFormData(prev => ({ ...prev, thesis: e.target.value }))}
+            placeholder="Explain your reasoning for this trade..."
+            rows={3}
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        
+        {/* Submit Buttons */}
+        <div className="flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Create Intent
+          </button>
+        </div>
+      </form>
+    </div>
+  )
 }
 
-interface Wallet {
-  id: string;
-  address: string;
-  chain: string;
+// Edit Intent Form Component
+function EditIntentForm({ 
+  intent,
+  onUpdateIntent, 
+  onCancel 
+}: { 
+  intent: NewTradingIntent;
+  onUpdateIntent: (data: {
+    asset: string;
+    side: 'Long' | 'Short';
+    probability: number;
+    confidence: number;
+    horizon: string;
+    thesis: string;
+  }) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    asset: intent.symbol,
+    side: intent.direction as 'Long' | 'Short',
+    probability: intent.probability,
+    confidence: intent.confidence,
+    horizon: intent.horizon,
+    thesis: intent.thesis
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Validate required fields
+    if (!formData.asset.trim() || !formData.thesis.trim()) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+    
+    if (formData.probability < 0 || formData.probability > 100) {
+      toast.error('Probability must be between 0 and 100')
+      return
+    }
+    
+    if (formData.confidence < 0 || formData.confidence > 100) {
+      toast.error('Confidence must be between 0 and 100')
+      return
+    }
+    
+    onUpdateIntent(formData)
+  }
+
+  return (
+    <div className="rounded-xl border border-blue-600 bg-blue-900/20 p-6 text-slate-200">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-blue-300">Edit Trading Intent</h3>
+        <button
+          onClick={onCancel}
+          className="text-slate-400 hover:text-slate-200 text-sm"
+        >
+          ✕ Cancel
+        </button>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Asset Symbol */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Asset Symbol *
+            </label>
+            <input
+              type="text"
+              value={formData.asset}
+              onChange={(e) => setFormData(prev => ({ ...prev, asset: e.target.value.toUpperCase() }))}
+              placeholder="e.g. BTC, ETH, SOL"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          {/* Side */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Direction *
+            </label>
+            <select
+              value={formData.side}
+              onChange={(e) => setFormData(prev => ({ ...prev, side: e.target.value as 'Long' | 'Short' }))}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Long">Long</option>
+              <option value="Short">Short</option>
+            </select>
+          </div>
+          
+          {/* Probability */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Probability (%) *
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.probability}
+              onChange={(e) => setFormData(prev => ({ ...prev, probability: parseInt(e.target.value) || 0 }))}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          {/* Confidence */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Confidence (%) *
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.confidence}
+              onChange={(e) => setFormData(prev => ({ ...prev, confidence: parseInt(e.target.value) || 0 }))}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          {/* Horizon */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Time Horizon *
+            </label>
+            <select
+              value={formData.horizon}
+              onChange={(e) => setFormData(prev => ({ ...prev, horizon: e.target.value }))}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="1d">1 day</option>
+              <option value="7d">1 week</option>
+              <option value="30d">1 month</option>
+              <option value="90d">3 months</option>
+              <option value="180d">6 months</option>
+              <option value="365d">1 year</option>
+            </select>
+          </div>
+        </div>
+        
+        {/* Thesis */}
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Trading Thesis *
+          </label>
+          <textarea
+            value={formData.thesis}
+            onChange={(e) => setFormData(prev => ({ ...prev, thesis: e.target.value }))}
+            placeholder="Explain your reasoning for this trade..."
+            rows={3}
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        
+        {/* Submit Buttons */}
+        <div className="flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Update Intent
+          </button>
+        </div>
+      </form>
+    </div>
+  )
 }
 
 export default function ActionsPage() {
-  const searchParams = useSearchParams();
-  const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [selectedWallet, setSelectedWallet] = useState<string>('');
-  const [intents, setIntents] = useState<Intent[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [allActionsPaused, setAllActionsPaused] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showSimResult, setShowSimResult] = useState<any>(null);
-  const [templateData, setTemplateData] = useState<any>(null);
+  const { publicKey, connected } = useWallet()
+  const { isAuthenticated } = useWalletAuth()
+  const { draft, clearDraft } = useIntentDraft()
+  
+  const [showDraft, setShowDraft] = useState(false)
+  const [showComposer, setShowComposer] = useState(false)
+  const [showCreateIntent, setShowCreateIntent] = useState(false)
+  const [showEditIntent, setShowEditIntent] = useState(false)
+  const [editingIntent, setEditingIntent] = useState<NewTradingIntent | null>(null)
+  const [userIntents, setUserIntents] = useState<TradingIntent[]>([])
+  const [newIntents, setNewIntents] = useState<NewTradingIntent[]>([])
+  const [devIntents, setDevIntents] = useState<DevIntent[]>([])
+  
+  // Ref to track if we've loaded intents to prevent unnecessary clearing on first render
+  const loadedRef = useRef(false)
+  
+  // Show composer if we have a draft (for backward compatibility)
+  useEffect(() => {
+    if (draft) {
+      setShowDraft(true)
+      setShowComposer(true)
+    }
+  }, [draft])
 
-  // Check if actions feature is enabled
-  if (!isFeatureEnabled('ACTIONS')) {
-    return (
-      <div className="min-h-screen bg-[color:var(--background)] flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-[color:var(--text)] mb-4">
-            Actions Feature Not Available
-          </h1>
-          <p className="text-[color:var(--muted)]">
-            The trading actions feature is currently disabled.
-          </p>
-        </div>
-      </div>
-    );
+  // Load intents from localStorage on mount (client-side only) - legacy system
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const loadedIntents = loadIntents()
+      setUserIntents(loadedIntents)
+    }
+  }, [])
+
+  // Load intents on mount and when wallet changes
+  useEffect(() => {
+    if (connected && publicKey) {
+      // Wallet is connected - load intents for specific wallet
+      const pubkey = publicKey.toBase58()
+      console.log('[Actions] Loading intents for wallet:', pubkey.slice(0, 8) + '...')
+      setNewIntents(loadIntents(pubkey))
+    } else {
+      // Wallet not connected - try fallback to load any intents
+      console.log('[Actions] Wallet not connected, trying fallback load...')
+      setNewIntents(loadIntents()) // This will use the fallback mechanism
+    }
+  }, [publicKey, connected])
+
+  // Load dev intents on mount and when wallet connects
+  useEffect(() => {
+    const owner = publicKey?.toBase58() || ''
+    setDevIntents(loadDevIntents(owner))
+  }, [publicKey, connected])
+
+
+  const handleCreateIntent = (intent: TradingIntent) => {
+    // Convert legacy intent to new format and persist with wallet key
+    const pubkey = publicKey?.toBase58()
+    const newIntent: NewTradingIntent = {
+      id: intent.id,
+      symbol: intent.assetSymbol,
+      direction: intent.direction,
+      probability: intent.probability,
+      confidence: intent.confidence,
+      horizon: `${intent.horizonDays}d`,
+      thesis: intent.thesis,
+      createdAt: intent.createdAt
+    }
+    
+    // Persist to wallet-keyed storage
+    upsertIntent(pubkey, newIntent)
+    
+    // Update local state
+    setUserIntents(prev => [intent, ...prev])
+    setNewIntents(loadIntents(pubkey))
+    
+    clearDraft()
+    setShowComposer(false)
+    setShowDraft(false)
+    
+    // Clean up URL - remove any draft banner/params and push clean URL
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href);
+      const hasDraftParams = currentUrl.searchParams.has('draft') || 
+                            currentUrl.searchParams.has('banner') ||
+                            currentUrl.searchParams.has('intent');
+      
+      if (hasDraftParams) {
+        // Remove draft-related parameters
+        currentUrl.searchParams.delete('draft');
+        currentUrl.searchParams.delete('banner');
+        currentUrl.searchParams.delete('intent');
+        
+        // Push clean URL to history
+        window.history.pushState({}, '', currentUrl.pathname + currentUrl.search);
+      }
+    }
+    
+    console.log('[Actions] Intent created:', {
+      id: intent.id,
+      asset: intent.assetSymbol,
+      direction: intent.direction,
+      probability: intent.probability,
+      confidence: intent.confidence,
+      horizonDays: intent.horizonDays,
+      totalIntents: userIntents.length + 1
+    });
+    
+    // Show toast notification
+    if (typeof window !== 'undefined') {
+      const toast = document.createElement('div')
+      toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50'
+      toast.textContent = 'Intent saved'
+      document.body.appendChild(toast)
+      setTimeout(() => {
+        document.body.removeChild(toast)
+      }, 3000)
+    }
   }
 
-  useEffect(() => {
-    loadWallets();
+  const handleCancelComposer = () => {
+    clearDraft()
+    setShowComposer(false)
+    setShowDraft(false)
+  }
+
+  const handleCreateNewIntent = (intentData: {
+    asset: string;
+    side: 'Long' | 'Short';
+    probability: number;
+    confidence: number;
+    horizon: string;
+    thesis: string;
+  }) => {
+    const pubkey = publicKey?.toBase58()
     
-    // Check for template parameter (legacy base64 format)
-    const template = searchParams.get('template');
-    const sourceModelId = searchParams.get('sourceModelId');
-    
-    if (template === 'model' && sourceModelId) {
-      // Handle model copying template
-      setTemplateData({
-        sourceModelId: sourceModelId,
-        type: 'model_copy',
-        // Add default template values for model copying
-        base: 'SOL',
-        quote: 'USDC',
-        side: 'BUY',
-        sizeValue: 5, // 5% default
-        rationale: `Copying strategy from model ${sourceModelId}`
-      });
-      setShowCreateForm(true);
-    } else if (template) {
-      // Legacy base64 template format
-      try {
-        const decoded = safeParse(atob(template));
-        if (decoded) {
-          setTemplateData(decoded);
-          setShowCreateForm(true);
-        }
-      } catch (error) {
-        console.error('Failed to decode template:', error);
-      }
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (selectedWallet) {
-      loadIntents();
-    }
-  }, [selectedWallet]);
-
-  // Cleanup price monitoring on unmount
-  useEffect(() => {
-    return () => {
-      priceMonitor.stopAll();
-    };
-  }, []);
-
-  const loadWallets = async () => {
-    try {
-      // Mock wallet data for now
-      setWallets([
-        { id: 'wallet1', address: 'ABC123...', chain: 'solana' },
-        { id: 'wallet2', address: 'DEF456...', chain: 'solana' }
-      ]);
-    } catch (err) {
-      setError('Failed to load wallets');
-    }
-  };
-
-  const loadIntents = async () => {
-    if (!selectedWallet) return;
-    
-    setLoading(true);
-    try {
-      // Mock intent data for now
-      setIntents([
-        {
-          id: 'intent1',
-          walletId: selectedWallet,
-          base: 'SOL',
-          quote: 'USDC',
-          side: 'BUY',
-          sizeJson: { type: 'pct', value: 5 },
-          rationale: 'Strong bullish signal from AI analysis',
-          confidence: 0.85,
-          backtestWin: 0.72,
-          expectedDur: '14d',
-          createdAt: new Date().toISOString(),
-          receipts: []
-        }
-      ]);
-    } catch (err) {
-      setError('Failed to load intents');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const simulateIntent = async (intentId: string) => {
-    try {
-      const response = await fetch('/api/intents/simulate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intentId })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        setShowSimResult(result);
-        loadIntents(); // Refresh to show new receipt
-        
-        // Start price monitoring for auto-re-simulation
-        const intent = intents.find(i => i.id === intentId);
-        if (intent && result.data?.expectedPrice) {
-          const sizeTokens = intent.sizeJson.type === 'pct' ? 
-            (1000 * intent.sizeJson.value / 100) : // Assume $1000 portfolio for demo
-            intent.sizeJson.value;
-            
-          priceMonitor.startMonitoring(
-            intentId,
-            intent.base,
-            intent.quote,
-            intent.side,
-            sizeTokens,
-            result.data.expectedPrice,
-            (newPrice, oldPrice) => {
-              console.log(`🔄 Price changed: ${oldPrice.toFixed(6)} → ${newPrice.toFixed(6)}`);
-              // Auto-re-simulate when price changes significantly
-              simulateIntent(intentId);
-            },
-            { thresholdBps: 10, checkIntervalMs: 3000, maxChecks: 20 }
-          );
-        }
-      } else {
-        alert('Simulation failed');
-      }
-    } catch (err) {
-      alert('Error running simulation');
-    }
-  };
-
-  const executeIntent = async (intentId: string) => {
-    if (!confirm('Are you sure you want to execute this trade?')) {
-      return;
+    // Create intent object
+    const intent: NewTradingIntent = {
+      id: crypto.randomUUID(),
+      symbol: intentData.asset,
+      direction: intentData.side,
+      probability: intentData.probability,
+      confidence: intentData.confidence,
+      horizon: intentData.horizon,
+      thesis: intentData.thesis,
+      createdAt: Date.now()
     }
     
-    try {
-      const idempotencyKey = `execute_${intentId}_${Date.now()}`;
-      const response = await fetch('/api/intents/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intentId, idempotencyKey })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        alert(`Trade executed! Transaction: ${result.txSig}`);
-        loadIntents(); // Refresh to show new receipt
-      } else {
-        alert('Execution failed');
-      }
-    } catch (err) {
-      alert('Error executing trade');
+    // Save to wallet-keyed storage
+    upsertIntent(pubkey, intent)
+    
+    // Update local state
+    setNewIntents(loadIntents(pubkey))
+    
+    // Clear any existing draft since we're now using the stored list as source of truth
+    if (draft) {
+      clearDraft()
+      setShowDraft(false)
+      setShowComposer(false)
     }
-  };
+    
+    // Close the form
+    setShowCreateIntent(false)
+    
+    // Show success message
+    toast.success('Intent created successfully!')
+    
+    console.log('[Actions] Created new intent:', {
+      id: intent.id,
+      symbol: intent.symbol,
+      direction: intent.direction,
+      probability: intent.probability,
+      confidence: intent.confidence,
+      horizon: intent.horizon,
+      totalIntents: newIntents.length + 1
+    })
+  }
 
+  const handleCancelCreateIntent = () => {
+    setShowCreateIntent(false)
+  }
+
+  const handleRemoveIntent = (intentId: string) => {
+    // Remove from localStorage (legacy system)
+    removeIntent(intentId)
+    // Update local state
+    setUserIntents(prev => prev.filter(intent => intent.id !== intentId))
+  }
+
+  const handleRemoveNewIntent = (intentId: string) => {
+    // Remove from new intents system
+    const pubkey = publicKey?.toBase58()
+    console.log('[Actions] Removing intent:', intentId, 'for wallet:', pubkey?.slice(0, 8) + '...')
+    
+    // Remove from wallet-keyed storage
+    removeWalletIntent(pubkey, intentId)
+    
+    // Update local state
+    const updatedNewIntents = newIntents.filter(intent => intent.id !== intentId)
+    setNewIntents(updatedNewIntents)
+    
+    toast.success('Intent removed')
+  }
+
+  const handleEditNewIntent = (intentId: string) => {
+    // Find the intent to edit
+    const intent = newIntents.find(i => i.id === intentId)
+    if (!intent) {
+      toast.error('Intent not found')
+      return
+    }
+    
+    // Set the intent to edit and show the edit form
+    setEditingIntent(intent)
+    setShowEditIntent(true)
+  }
+
+  const handleUpdateIntent = (intentData: {
+    asset: string;
+    side: 'Long' | 'Short';
+    probability: number;
+    confidence: number;
+    horizon: string;
+    thesis: string;
+  }) => {
+    if (!editingIntent) return
+
+    const pubkey = publicKey?.toBase58()
+    
+    // Create updated intent object
+    const updatedIntent: NewTradingIntent = {
+      ...editingIntent,
+      symbol: intentData.asset,
+      direction: intentData.side,
+      probability: intentData.probability,
+      confidence: intentData.confidence,
+      horizon: intentData.horizon,
+      thesis: intentData.thesis,
+    }
+    
+    // Update in wallet-keyed storage
+    upsertIntent(pubkey, updatedIntent)
+    
+    // Update local state
+    setNewIntents(loadIntents(pubkey))
+    
+    // Close the edit form
+    setShowEditIntent(false)
+    setEditingIntent(null)
+    
+    // Show success message
+    toast.success('Intent updated successfully!')
+    
+    console.log('[Actions] Updated intent:', {
+      id: updatedIntent.id,
+      symbol: updatedIntent.symbol,
+      direction: updatedIntent.direction,
+      probability: updatedIntent.probability,
+      confidence: updatedIntent.confidence,
+      horizon: updatedIntent.horizon,
+    })
+  }
+
+  const handleCancelEditIntent = () => {
+    setShowEditIntent(false)
+    setEditingIntent(null)
+  }
+
+  const handleExecuteNewIntent = (intentId: string) => {
+    // Find the intent to execute
+    const intent = newIntents.find(i => i.id === intentId)
+    if (!intent) {
+      toast.error('Intent not found')
+      return
+    }
+    
+    // TODO: Implement execute functionality
+    // For now, just show a message
+    toast('Execute functionality coming soon', { icon: 'ℹ️' })
+    console.log('Execute intent:', intent)
+  }
+
+  const handleSimulateNewIntent = (intentId: string) => {
+    // Find the intent to simulate
+    const intent = newIntents.find(i => i.id === intentId)
+    if (!intent) {
+      toast.error('Intent not found')
+      return
+    }
+    
+    // TODO: Implement simulate functionality
+    // For now, just show a message
+    toast('Simulate functionality coming soon', { icon: 'ℹ️' })
+    console.log('Simulate intent:', intent)
+  }
+
+  // Don't require wallet connection for viewing drafts and creating dev intents
+  // This prevents SIWS spam during navigation
   return (
-    <div className="min-h-screen bg-[color:var(--background)]">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[color:var(--text)] mb-2">
-              Trading Actions
-            </h1>
-            <p className="text-[color:var(--muted)]">
-              Manage your trading intents, simulate outcomes, and execute trades
-            </p>
-            
-            {/* Monitor Only Warning */}
-            <div className="mt-2 inline-flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-              <span className="font-medium">Monitor only. No trades are executed automatically.</span>
+    <main className="max-w-4xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-semibold text-slate-100 mb-2">Trading Actions</h1>
+      <p className="text-sm text-slate-300 mb-6">Monitor and analyze trading opportunities. No trades are executed automatically.</p>
+      
+      <div className="space-y-6">
+          {/* Create Intent (Dev) Button */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-200">Trading Intents</h2>
+              <p className="text-sm text-slate-400">Create and manage your trading strategies</p>
             </div>
+            <button
+              onClick={() => setShowCreateIntent(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Create Intent (Dev)
+            </button>
           </div>
 
-          {/* Wallet Selection */}
-          {!selectedWallet ? (
-            <div className="bg-[color:var(--surface)] rounded-lg border border-[color:var(--border)] p-6 mb-8">
-              <h2 className="text-xl font-semibold text-[color:var(--text)] mb-4">
-                Select Wallet
-              </h2>
-              <div className="grid gap-3">
-                {wallets.map((wallet) => (
-                  <button
-                    key={wallet.id}
-                    onClick={() => setSelectedWallet(wallet.id)}
-                    className="p-4 text-left border border-[color:var(--border)] rounded-lg hover:bg-[color:var(--surface)] transition-colors"
-                  >
-                    <div className="font-medium text-[color:var(--text)]">
-                      {wallet.address}
+          {/* Create Intent Form */}
+          {showCreateIntent && (
+            <CreateIntentForm
+              onCreateIntent={handleCreateNewIntent}
+              onCancel={handleCancelCreateIntent}
+            />
+          )}
+
+          {/* Edit Intent Form */}
+          {showEditIntent && editingIntent && (
+            <EditIntentForm
+              intent={editingIntent}
+              onUpdateIntent={handleUpdateIntent}
+              onCancel={handleCancelEditIntent}
+            />
+          )}
+
+          {/* Trading Intent Composer */}
+          {showComposer && draft && (
+            <TradingIntentComposer
+              draft={draft}
+              onCreateIntent={handleCreateIntent}
+              onCancel={handleCancelComposer}
+            />
+          )}
+
+          {/* Show draft button when we have a draft but composer is not shown */}
+          {draft && !showComposer && (
+            <div className="rounded-xl border border-orange-600 bg-orange-900/20 p-4 text-slate-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-orange-300">🎯 Trading Draft Ready</h3>
+                  <p className="text-sm text-slate-400">
+                    {draft.assetSymbol} {draft.direction} • {draft.probability}% probability
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowComposer(true)}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                >
+                  Open Composer
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* User Intents List */}
+          <UserIntentsList 
+            intents={userIntents}
+            onRemoveIntent={handleRemoveIntent}
+            onSimulate={(intentId) => {
+              console.log('Simulate intent:', intentId)
+              // TODO: Implement simulation
+            }}
+            onExecute={(intentId) => {
+              console.log('Execute intent:', intentId)
+              // TODO: Implement execution
+            }}
+            onEdit={(intentId) => {
+              console.log('Edit intent:', intentId)
+              // TODO: Implement editing
+            }}
+            isWalletConnected={connected}
+          />
+
+          {/* New Intents System - Wallet-aware intents */}
+          {newIntents.length > 0 && (
+            <div className="rounded-xl border border-blue-600 bg-blue-900/20 p-6 text-slate-200">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-blue-300">
+                  📊 Wallet Intents {publicKey ? `(${publicKey.toBase58().slice(0, 8)}...)` : '(Guest)'}
+                </h2>
+                <span className="text-sm text-blue-400">{newIntents.length} intent{newIntents.length !== 1 ? 's' : ''}</span>
+              </div>
+              
+              <div className="space-y-3">
+                {newIntents.map((intent) => (
+                  <div key={intent.id} className="bg-slate-800/50 rounded-lg p-4 border border-slate-600">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-lg font-semibold text-slate-200">{intent.symbol}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          intent.direction === 'Long' ? 'bg-green-600 text-green-100' : 'bg-red-600 text-red-100'
+                        }`}>
+                          {intent.direction}
+                        </span>
+                        <span className="text-sm text-blue-400">{intent.probability}%</span>
+                        <span className="text-sm text-purple-400">{intent.confidence}% conf</span>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveNewIntent(intent.id)}
+                        className="text-slate-400 hover:text-red-400 text-sm"
+                      >
+                        ✕
+                      </button>
                     </div>
-                    <div className="text-sm text-[color:var(--muted)]">
-                      {wallet.chain}
+                    
+                    <div className="text-sm text-slate-300 mb-2">
+                      {intent.thesis}
                     </div>
-                  </button>
+                    
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                      <span>Horizon: {intent.horizon}</span>
+                      <span>Created: {new Date(intent.createdAt).toLocaleString()}</span>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => handleSimulateNewIntent(intent.id)}
+                        className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded text-sm hover:bg-blue-600/30 transition-colors"
+                      >
+                        Simulate
+                      </button>
+                      <button 
+                        onClick={() => handleEditNewIntent(intent.id)}
+                        className="px-3 py-1 bg-slate-600/20 text-slate-400 rounded text-sm hover:bg-slate-600/30 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => handleExecuteNewIntent(intent.id)}
+                        disabled={!connected}
+                        className={`px-3 py-1 rounded text-sm transition-colors ${
+                          connected 
+                            ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30' 
+                            : 'bg-slate-600/20 text-slate-500 cursor-not-allowed opacity-50'
+                        }`}
+                      >
+                        Execute
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
-          ) : (
-            <>
-              {/* Kill Switch Status */}
-              <KillSwitchStatus />
+          )}
 
-              {/* Aggregator Fallback Banner */}
-              <AggregatorFallbackBanner />
+          {/* Dev Intents System - Development intents */}
+          {devIntents.length > 0 && (
+            <div className="rounded-xl border border-purple-600 bg-purple-900/20 p-6 text-slate-200">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-purple-300">
+                  🚀 Dev Intents {publicKey ? `(${publicKey.toBase58().slice(0, 8)}...)` : '(Guest)'}
+                </h2>
+                <span className="text-sm text-purple-400">{devIntents.length} intent{devIntents.length !== 1 ? 's' : ''}</span>
+              </div>
+              
+              <div className="space-y-3">
+                {devIntents.map((intent) => (
+                  <div key={intent.id} className="bg-slate-800/50 rounded-lg p-4 border border-slate-600">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-lg font-semibold text-slate-200">{intent.symbol}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          intent.direction === 'Long' ? 'bg-green-600 text-green-100' : 'bg-red-600 text-red-100'
+                        }`}>
+                          {intent.direction}
+                        </span>
+                        <span className="text-sm text-blue-400">{intent.probability}%</span>
+                        <span className="text-sm text-purple-400">{intent.confidence}% conf</span>
+                      </div>
+                      <span className="text-xs text-slate-500">Dev</span>
+                    </div>
+                    
+                    <div className="text-sm text-slate-300 mb-2">
+                      {intent.thesis}
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                      <span>Horizon: {intent.horizon}</span>
+                      <span>Created: {new Date(intent.createdAt).toLocaleString()}</span>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => console.log('Simulate dev intent:', intent.id)}
+                        className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded text-sm hover:bg-blue-600/30 transition-colors"
+                      >
+                        Simulate
+                      </button>
+                      <button 
+                        onClick={() => console.log('Edit dev intent:', intent.id)}
+                        className="px-3 py-1 bg-slate-600/20 text-slate-400 rounded text-sm hover:bg-slate-600/30 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => console.log('Execute dev intent:', intent.id)}
+                        disabled={!connected}
+                        className={`px-3 py-1 rounded text-sm transition-colors ${
+                          connected 
+                            ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30' 
+                            : 'bg-slate-600/20 text-slate-500 cursor-not-allowed opacity-50'
+                        }`}
+                      >
+                        Execute
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-              {/* ToS Acceptance */}
-              <ToSAcceptance />
+          {/* Empty State - when no composer, no draft, and no intents */}
+          {!showComposer && !showDraft && userIntents.length === 0 && (
+            <div className="rounded-xl border border-slate-700 p-8 text-center text-slate-200">
+              <div className="mb-4">
+                <svg className="w-16 h-16 mx-auto text-slate-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <h3 className="text-xl font-semibold text-slate-200 mb-2">No trading intents yet</h3>
+                <p className="text-slate-400 mb-6 max-w-md mx-auto">
+                  Send a prediction from Studio to start trading. Analyze the market, create forecasts, and build trading strategies.
+                </p>
+                <a
+                  href="/studio"
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  Open Studio
+                </a>
+              </div>
+            </div>
+          )}
 
-              {/* Accuracy Alerts */}
-              <AccuracyAlerts />
-
-              {/* Quality Alert Banner */}
-              <AccuracyAlertBanner className="mb-6" />
-
-              {/* Simulate-Only Banner (Chaos Testing) */}
-              <SimulateOnlyBanner className="mb-6" />
-
-              {/* P&L Widget */}
-              <PnLWidget walletId={selectedWallet} className="mb-6" />
-
-              {/* Invite Code Widget */}
-              {isFeatureEnabled('INVITE_CODES') && (
-                <div className="mb-6">
-                  <InviteCodeWidget walletId={selectedWallet} />
-                </div>
-              )}
-
-              {/* Controls */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setSelectedWallet('')}
-                    className="text-sm text-[color:var(--muted)] hover:text-[color:var(--text)] transition-colors"
-                  >
-                    ← Back to wallet selection
-                  </button>
-                  <span className="text-sm text-[color:var(--muted)]">
-                    Wallet: {wallets.find(w => w.id === selectedWallet)?.address}
-                  </span>
+          {/* Draft from Studio */}
+          {showDraft && draft && !showComposer && (
+            <div className="rounded-xl border border-orange-600 bg-orange-900/20 p-6 text-slate-200">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-orange-300">🚀 Trade This Prediction</h2>
+                <button
+                  onClick={() => {
+                    clearDraft()
+                    setShowDraft(false)
+                  }}
+                  className="text-slate-400 hover:text-slate-200 text-sm"
+                >
+                  ✕ Clear
+                </button>
+              </div>
+              
+              <div className="bg-slate-800/50 rounded-lg p-4 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <label className="text-xs text-slate-400 uppercase tracking-wide">Asset</label>
+                    <div className="text-lg font-semibold text-orange-300">{draft.assetSymbol}</div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 uppercase tracking-wide">Direction</label>
+                    <div className={`text-lg font-semibold ${draft.direction === 'Long' ? 'text-green-400' : 'text-red-400'}`}>
+                      {draft.direction}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 uppercase tracking-wide">Probability</label>
+                    <div className="text-lg font-semibold text-blue-400">{draft.probability}%</div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 uppercase tracking-wide">Confidence</label>
+                    <div className="text-lg font-semibold text-purple-400">{draft.confidence}%</div>
+                  </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setShowCreateForm(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Create Intent
-                  </button>
-                  
-                  <label className="flex items-center gap-2 text-sm text-[color:var(--muted)]">
-                    <input
-                      type="checkbox"
-                      checked={allActionsPaused}
-                      onChange={(e) => setAllActionsPaused(e.target.checked)}
-                      className="rounded border-[color:var(--border)]"
-                    />
-                    Pause all actions
-                  </label>
+                <div className="mb-4">
+                  <label className="text-xs text-slate-400 uppercase tracking-wide block mb-2">Thesis</label>
+                  <div className="text-sm text-slate-300 leading-relaxed">{draft.thesis}</div>
+                </div>
+                
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span>Horizon: {draft.horizonDays} days</span>
+                  <span>Created: {new Date(draft.createdAt).toLocaleString()}</span>
                 </div>
               </div>
-
-              {/* Intents List */}
-              <div className="bg-[color:var(--surface)] rounded-lg border border-[color:var(--border)] p-6">
-                <h2 className="text-xl font-semibold text-[color:var(--text)] mb-4">
-                  Trading Intents
-                </h2>
-
-                {loading ? (
-                  <div className="text-center py-8">
-                    <div className="text-[color:var(--muted)]">Loading intents...</div>
-                  </div>
-                ) : intents.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-[color:var(--muted)] mb-4">
-                      No trading intents created yet.
-                    </div>
-                    <button
-                      onClick={() => setShowCreateForm(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Create First Intent
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {intents.map((intent) => (
-                      <IntentCard
-                        key={intent.id}
-                        intent={intent}
-                        onSimulate={simulateIntent}
-                        onExecute={executeIntent}
-                        disabled={allActionsPaused}
-                      />
-                    ))}
-                  </div>
-                )}
+              
+              <div className="flex space-x-3">
+                <button className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium">
+                  Simulate Trade
+                </button>
+                <button className="flex-1 px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors font-medium">
+                  Save for Later
+                </button>
               </div>
-            </>
+            </div>
           )}
+          
+          <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
+            <h2 className="text-lg font-semibold mb-4">Recommended Actions</h2>
+            <div className="space-y-4">
+              <div className="bg-slate-800/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">Portfolio Rebalancing</h3>
+                  <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded">Medium Priority</span>
+                </div>
+                <p className="text-sm text-slate-400">Consider rebalancing your portfolio based on current market conditions and your risk tolerance.</p>
+              </div>
+              
+              <div className="bg-slate-800/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">DCA Strategy</h3>
+                  <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">Low Risk</span>
+                </div>
+                <p className="text-sm text-slate-400">Implement a dollar-cost averaging strategy for stable long-term growth.</p>
+              </div>
+                
+              <div className="bg-slate-800/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">Stop Loss Setup</h3>
+                  <span className="text-xs bg-red-600 text-white px-2 py-1 rounded">High Priority</span>
+                </div>
+                <p className="text-sm text-slate-400">Set up stop-loss orders to protect your investments from significant downturns.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
+            <h2 className="text-lg font-semibold mb-4">Market Signals</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <h3 className="font-medium mb-2">Bullish Signals</h3>
+                <ul className="text-sm space-y-1 text-green-400">
+                  <li>• Market sentiment improving</li>
+                  <li>• Volume increasing</li>
+                  <li>• Technical indicators positive</li>
+                </ul>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <h3 className="font-medium mb-2">Bearish Signals</h3>
+                <ul className="text-sm space-y-1 text-red-400">
+                  <li>• High volatility detected</li>
+                  <li>• Resistance levels approaching</li>
+                  <li>• Market uncertainty rising</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Trade Panel Modal */}
-      {showCreateForm && (
-        <TradePanel
-          walletId={selectedWallet}
-          templateData={templateData}
-          onClose={() => {
-            setShowCreateForm(false);
-            setTemplateData(null);
-          }}
-          onIntentCreated={(intentId) => {
-            setShowCreateForm(false);
-            setTemplateData(null);
-            loadIntents();
-          }}
-        />
-      )}
-
-      {/* Simulation Result Modal */}
-      {showSimResult && (
-        <SimResult
-          simulation={showSimResult.simulation}
-          historicalAccuracy={showSimResult.historicalAccuracy}
-          onClose={() => setShowSimResult(null)}
-        />
-      )}
-    </div>
-  );
+    </main>
+  )
 }

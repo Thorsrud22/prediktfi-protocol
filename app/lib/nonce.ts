@@ -16,24 +16,36 @@ export function verifyNonce(wallet: string, nonce: string): boolean {
 
 // Helper function to consume nonce (one-time use)
 export function consumeNonce(wallet: string, nonce: string): boolean {
+  console.log('consumeNonce called with wallet:', wallet, 'nonce:', nonce);
+  
   const stored = nonceStore.get(wallet);
-  if (!stored) return false;
+  if (!stored) {
+    console.log('No stored nonce found for wallet:', wallet);
+    console.log('Available nonces in store:', Array.from(nonceStore.keys()));
+    return false;
+  }
+  
+  console.log('Found stored nonce:', stored.nonce, 'expires at:', new Date(stored.expiresAt).toISOString());
   
   if (Date.now() > stored.expiresAt) {
+    console.log('Nonce expired for wallet:', wallet);
     nonceStore.delete(wallet);
     return false;
   }
   
   if (stored.nonce === nonce) {
+    console.log('Nonce matches, consuming for wallet:', wallet);
     nonceStore.delete(wallet);
     return true;
   }
   
+  console.log('Nonce mismatch for wallet:', wallet, 'expected:', stored.nonce, 'got:', nonce);
   return false;
 }
 
 // Helper function to store nonce
 export function storeNonce(wallet: string, nonce: string, expiresAt: number): void {
+  console.log('Storing nonce for wallet:', wallet, 'nonce:', nonce, 'expires at:', new Date(expiresAt).toISOString());
   nonceStore.set(wallet, { nonce, expiresAt });
 }
 

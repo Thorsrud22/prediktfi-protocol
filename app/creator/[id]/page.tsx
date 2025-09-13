@@ -70,7 +70,7 @@ export default async function CreatorProfilePage({ params }: { params: Promise<{
   
   // Redirect to canonical URL if accessing via hashed ID instead of handle
   if (creator.handle && id !== creator.handle) {
-    redirect(`/creator/${creator.handle}`, 308);
+    redirect(`/creator/${creator.handle}`);
   }
   
   return <CreatorProfileClient id={id} />;

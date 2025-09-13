@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+// Wallet connection handled by header
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletAuth } from '../lib/useWalletAuth';
 
@@ -16,6 +16,7 @@ export default function PayPage() {
   const sp = useSearchParams();
   const { connected, publicKey } = useWallet();
   const { isAuthenticated, wallet } = useWalletAuth();
+  const ready = connected && isAuthenticated;
 
   const initialPlan = (sp.get('plan') as Plan) || 'pro';
   const [plan, setPlan] = useState<Plan>(initialPlan);
@@ -27,16 +28,21 @@ export default function PayPage() {
   // Derived copy
   const payCta = useMemo(() => {
     const label = currency === 'SOL' ? `Pay ${price} SOL` : `Pay ${price} USDC`;
-    if (!connected || !isAuthenticated || !wallet) {
-      return 'Connect and authenticate wallet to pay';
+    if (!connected) {
+      return 'Connect wallet to pay';
+    }
+    if (!isAuthenticated) {
+      return 'Sign in to pay';
     }
     return label;
-  }, [currency, connected, isAuthenticated, wallet, price]);
+  }, [currency, connected, isAuthenticated, price]);
 
   async function handlePay() {
-    if (!connected || !publicKey || !isAuthenticated || !wallet) return;
+    if (loading) return;
+    if (!ready || !publicKey || !wallet) return;
+    
+    setLoading(true);
     try {
-      setLoading(true);
       setQrUrl(null);
 
       // Plug into your existing invoice endpoint:
@@ -44,26 +50,33 @@ export default function PayPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan,                           // 'starter' | 'pro'
-          currency,                       // 'USDC' | 'SOL'
-          amountUsd: PLAN_PRICE_USD[plan] // server can compute token amounts
+          plan,
+          payer: publicKey?.toBase58?.(),
+          currency,
         }),
       });
-
-      if (!res.ok) throw new Error('Failed to create invoice');
+      
       const data = await res.json();
-
+      if (!res.ok || !data?.link) {
+        console.error('[InvoiceError]', data);
+        // toast.error(data?.error || 'Failed to create invoice')
+        return;
+      }
+      
       // Support both QR-first and deep-link flows
       if (data.qrUrl) setQrUrl(data.qrUrl);
-      if (data.deepLink) window.location.href = data.deepLink;
+      if (data.link || data.deepLink) {
+        // Open wallet deeplink
+        window.location.href = data.link || data.deepLink;
+      }
 
       // Poll auth status for up to 5 seconds after payment
-      if (data.deepLink || data.qrUrl) {
+      if (data.link || data.deepLink || data.qrUrl) {
         await pollAuthStatus();
       }
     } catch (e) {
-      console.error(e);
-      alert('Payment could not be initiated. Please try again.');
+      console.error('[InvoiceError]', e);
+      // toast.error('Failed to create invoice')
     } finally {
       setLoading(false);
     }
@@ -196,29 +209,27 @@ export default function PayPage() {
             </div>
 
             <div className="mt-6 space-y-4">
-              {!connected || !isAuthenticated || !wallet ? (
+              {!connected ? (
                 <div className="text-sm text-slate-400 text-center">
-                  Connect and authenticate your wallet to continue with payment.
+                  Connect with Phantom in the header to continue.
+                </div>
+              ) : !isAuthenticated ? (
+                <div className="text-sm text-slate-400 text-center">
+                  Sign in via the header to continue.
                 </div>
               ) : (
                 <div className="text-sm text-slate-400 text-center">
                   Paying from: {publicKey?.toString().slice(0, 8)}...{publicKey?.toString().slice(-4)}
                 </div>
               )}
-              
-              <div className="flex justify-center">
-                <WalletMultiButton 
-                  className="!bg-indigo-600 !text-white !border-0 !rounded-xl !px-6 !py-3 !font-semibold !text-sm hover:!bg-indigo-500 !transition-all !duration-200 !shadow-lg hover:!shadow-xl"
-                />
-              </div>
             </div>
 
             <button
               onClick={handlePay}
-              disabled={!connected || !isAuthenticated || !wallet || loading}
+              disabled={!ready || !wallet || loading}
               className={[
                 'mt-6 w-full rounded-xl px-5 py-3 font-semibold transition',
-                connected && isAuthenticated && wallet
+                ready && wallet
                   ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
                   : 'bg-slate-800 text-slate-500 cursor-not-allowed',
               ].join(' ')}

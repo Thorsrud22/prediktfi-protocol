@@ -289,13 +289,13 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
                               isProvisional={creator.isProvisional}
                             />
                           </div>
-                          {creator.change !== undefined && Math.abs(creator.change) > 0.01 && (
+                          {(creator as any).change !== undefined && Math.abs((creator as any).change) > 0.01 && (
                             <span className={`text-xs px-2 py-1 rounded-full ${
-                              creator.change > 0 
+                              (creator as any).change > 0 
                                 ? 'bg-green-100 text-green-800' 
                                 : 'bg-red-100 text-red-800'
                             }`}>
-                              {creator.change > 0 ? '+' : ''}{(creator.change * 100).toFixed(1)}%
+                              {(creator as any).change > 0 ? '+' : ''}{((creator as any).change * 100).toFixed(1)}%
                             </span>
                           )}
                         </div>

@@ -126,7 +126,7 @@
    ```
 
 2. **Test ny side**:
-   - Besøk `http://localhost:3001/page-enhanced-test`
+   - Besøk `http://localhost:3000/page-enhanced-test`
    - Test tema-bytte
    - Test søk og filtrering
 

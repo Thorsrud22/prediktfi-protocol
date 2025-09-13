@@ -126,8 +126,8 @@ export default function LeaderboardV2Page() {
   };
 
   const sortedItems = leaderboard?.items ? [...leaderboard.items].sort((a, b) => {
-    const aValue = a[sortBy];
-    const bValue = b[sortBy];
+    const aValue = (a as any)[sortBy];
+    const bValue = (b as any)[sortBy];
     const multiplier = sortOrder === 'desc' ? -1 : 1;
     return (aValue - bValue) * multiplier;
   }) : [];

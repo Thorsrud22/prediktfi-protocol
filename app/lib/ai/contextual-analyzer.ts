@@ -481,17 +481,17 @@ export class ContextualAnalyzer {
     let rationale = `Based on ${analysisType} analysis of this ${category} prediction:\n\n`;
     
     rationale += `**Key Factors:**\n`;
-    keyFactors.forEach(factor => {
+    keyFactors.forEach((factor: string) => {
       rationale += `• ${factor}\n`;
     });
     
     rationale += `\n**Risk Factors:**\n`;
-    riskFactors.forEach(risk => {
+    riskFactors.forEach((risk: string) => {
       rationale += `• ${risk}\n`;
     });
     
     rationale += `\n**Opportunities:**\n`;
-    opportunities.forEach(opportunity => {
+    opportunities.forEach((opportunity: string) => {
       rationale += `• ${opportunity}\n`;
     });
     

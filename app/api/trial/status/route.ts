@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTrialStatus } from '@/lib/trial';
-import { getWalletIdentifier } from '@/lib/wallet';
+import { getWalletIdentifier } from '@/lib/rate-limit-wallet';
 import { isFeatureEnabled } from '@/lib/flags';
 
 export const runtime = 'edge';

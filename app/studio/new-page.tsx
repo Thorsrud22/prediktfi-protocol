@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+// Wallet connection handled by header
 import Link from "next/link";
 import { normalizePrediction } from "../../lib/normalize";
 import { generateSolanaMemo } from "../../lib/memo";
@@ -192,7 +192,7 @@ export default function StudioPage() {
               <p className="text-blue-300 mt-1">Create verified predictions on-chain</p>
             </div>
             <div className="flex items-center space-x-4">
-              <WalletMultiButton />
+              {/* Removed "Connect via header" banner - wallet connection handled by header */}
               <Link 
                 href="/feed" 
                 className="text-blue-300 hover:text-white transition-colors"

@@ -267,9 +267,9 @@ export default function SimResult({ simulation, historicalAccuracy, onClose }: S
               {accuracyData && (
                 <>
                   <div className="flex justify-between text-sm">
-                    <span className="text-[color:var(--muted)]">30d sim-nøyaktighet</span>
+                    <span className="text-[color:var(--muted)]">30d sim-accuracy</span>
                     <span className="text-[color:var(--text)]" aria-label={`30-day simulation accuracy: ${accuracyData.accuracy}%`}>
-                      {accuracyData.accuracy}% innen ±50 bps
+                      {accuracyData.accuracy}% within ±50 bps
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">

@@ -6,7 +6,7 @@ test.describe('Wallet Modal Functionality', () => {
     await page.goto('/');
   });
 
-  test('should show only Phantom and Solflare wallets', async ({ page }) => {
+  test('should show only Phantom, Solflare, and Ledger wallets', async ({ page }) => {
     // Wait for the page to load
     await page.waitForLoadState('networkidle');
     
@@ -31,14 +31,25 @@ test.describe('Wallet Modal Functionality', () => {
     // Check for specific wallet options
     const phantomOption = page.locator('.wallet-adapter-modal-list-item').filter({ hasText: /Phantom/i });
     const solflareOption = page.locator('.wallet-adapter-modal-list-item').filter({ hasText: /Solflare/i });
+    const ledgerOption = page.locator('.wallet-adapter-modal-list-item').filter({ hasText: /Ledger/i });
     
     await expect(phantomOption).toBeVisible();
     await expect(solflareOption).toBeVisible();
+    await expect(ledgerOption).toBeVisible();
     
-    // Verify no other wallets are present
+    // Assert that Coinbase, Backpack, and MetaMask are not present
+    const coinbaseOption = page.locator('.wallet-adapter-modal-list-item').filter({ hasText: /Coinbase/i });
+    const backpackOption = page.locator('.wallet-adapter-modal-list-item').filter({ hasText: /Backpack/i });
+    const metamaskOption = page.locator('.wallet-adapter-modal-list-item').filter({ hasText: /MetaMask/i });
+    
+    await expect(coinbaseOption).not.toBeVisible();
+    await expect(backpackOption).not.toBeVisible();
+    await expect(metamaskOption).not.toBeVisible();
+    
+    // Verify correct number of wallets are present
     const allWalletOptions = page.locator('.wallet-adapter-modal-list-item');
     const count = await allWalletOptions.count();
-    expect(count).toBe(2);
+    expect(count).toBe(3);
   });
 
   test('should open wallet modal when header connect button is clicked', async ({ page }) => {
@@ -210,7 +221,7 @@ test.describe('Pricing Page Gating', () => {
     await page.waitForLoadState('networkidle');
     
     // Find the upgrade button
-    const upgradeButton = page.locator('a').filter({ hasText: /Connect Wallet to Upgrade/i });
+    const upgradeButton = page.locator('a').filter({ hasText: /Connect via header to upgrade/i });
     await expect(upgradeButton).toBeVisible();
     
     // The button should be disabled (grayed out)
@@ -224,7 +235,7 @@ test.describe('Pricing Page Gating', () => {
     await page.waitForLoadState('networkidle');
     
     // Check that the button text shows connect wallet message
-    const upgradeButton = page.locator('a').filter({ hasText: /Connect Wallet to Upgrade/i });
+    const upgradeButton = page.locator('a').filter({ hasText: /Connect via header to upgrade/i });
     await expect(upgradeButton).toBeVisible();
     
     // Clicking should not navigate (prevented)

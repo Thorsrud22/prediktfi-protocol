@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, memo } from "react";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { Transaction } from "@solana/web3.js";
 import ProbabilityGauge from "./ProbabilityGauge";
 import { type Insight, type PredictResponse } from "../../lib/ai/types";
@@ -10,6 +10,7 @@ import { timeAgo, formatHorizon } from "../../lib/time";
 import { useToast } from "../ToastProvider";
 import { safeParse, safeLocalStorageGet, safeLocalStorageSet } from "../../lib/safe-fetch";
 import { buildShareUrl, buildXShareUrl } from "../../lib/share";
+import TradeButton from "../TradeButton";
 
 interface InsightPreviewProps {
   input: {
@@ -335,7 +336,7 @@ function InsightPreview({ input, response, enhancedResponse, onNewInsight }: Ins
         </div>
 
         {/* Action buttons */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <button
             onClick={handleCopyJSON}
             className="flex items-center justify-center gap-2 bg-[color:var(--surface-2)] hover:bg-[color:var(--surface)] border border-[var(--border)] text-[color:var(--text)] font-medium py-2.5 px-3 rounded-lg transition-colors text-sm"
@@ -357,10 +358,25 @@ function InsightPreview({ input, response, enhancedResponse, onNewInsight }: Ins
             🐦 Share
           </button>
           
+          <TradeButton
+            insight={{
+              probability: response.prob,
+              confidence: 0.5, // Default confidence since EnhancedPredictOutput doesn't have confidence
+              rationale: response.rationale,
+              p: response.prob,
+              reasoning: response.rationale,
+              analysis: enhancedResponse
+            }}
+            className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2.5 px-3 rounded-lg transition-colors text-sm"
+            title="Create trading intent from this analysis"
+          >
+            📈 Trade This
+          </TradeButton>
+          
           <button
             onClick={handleLogOnChain}
             disabled={logPending || !publicKey}
-            className="flex items-center justify-center gap-2 bg-[color:var(--primary)] hover:bg-[color:var(--primary)]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 px-3 rounded-lg transition-colors text-sm col-span-2 lg:col-span-1"
+            className="flex items-center justify-center gap-2 bg-[color:var(--primary)] hover:bg-[color:var(--primary)]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 px-3 rounded-lg transition-colors text-sm"
           >
             {logPending ? (
               <>

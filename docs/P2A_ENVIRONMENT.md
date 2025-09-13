@@ -81,7 +81,7 @@ FEATURE_ACTIONS=true
 FEATURE_EMBED_INTENT=true
 JUPITER_BASE_URL=https://quote-api.jup.ag
 WEBHOOK_HMAC_SECRET=dev-secret-key
-PREDIKT_BASE_URL=http://localhost:3001
+PREDIKT_BASE_URL=http://localhost:3000
 ```
 
 ### Staging Environment

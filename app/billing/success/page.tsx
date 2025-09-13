@@ -4,7 +4,7 @@ import { trackServer } from "../../lib/analytics";
 import { CopyButton } from "../../components/CopyButton";
 import CheckoutCompleted from "./CheckoutCompleted";
 import { upgradeToPro } from "../../lib/subscription";
-import { getWalletIdentifier } from "../../lib/wallet";
+import { getWalletIdentifier } from "../../lib/rate-limit-wallet";
 import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";

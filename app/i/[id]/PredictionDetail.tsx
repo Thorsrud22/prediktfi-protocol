@@ -418,10 +418,10 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                       </div>
                     </div>
                     
-                    {insight.rationale && (
+                    {(insight as any).rationale && (
                       <div className="bg-white/5 rounded-xl p-4">
                         <div className="text-sm text-gray-400 mb-3">AI Rationale</div>
-                        <div className="text-white leading-relaxed text-sm">{insight.rationale}</div>
+                        <div className="text-white leading-relaxed text-sm">{(insight as any).rationale}</div>
                       </div>
                     )}
                   </div>

@@ -88,26 +88,6 @@ export class AIAccuracyTracker {
         update: {
           totalPredictions: { increment: 1 },
           correctPredictions: wasCorrect ? { increment: 1 } : undefined,
-          accuracy: {
-            // Recalculate accuracy
-            set: prisma.$queryRaw`
-              CASE 
-                WHEN total_predictions + 1 > 0 
-                THEN CAST((correct_predictions + ${wasCorrect ? 1 : 0}) AS REAL) / (total_predictions + 1)
-                ELSE 0.0
-              END
-            `
-          },
-          brierScore: {
-            // Running average of Brier scores
-            set: prisma.$queryRaw`
-              CASE 
-                WHEN total_predictions > 0 
-                THEN (COALESCE(brier_score, 0.0) * total_predictions + ${brierScore}) / (total_predictions + 1)
-                ELSE ${brierScore}
-              END
-            `
-          },
           lastUpdated: new Date()
         },
         create: {
@@ -120,6 +100,36 @@ export class AIAccuracyTracker {
           lastUpdated: new Date()
         }
       });
+
+      // Recalculate accuracy and brier score after the update
+      const updated = await prisma.aIAccuracy.findUnique({
+        where: {
+          modelVersion_category: {
+            modelVersion,
+            category
+          }
+        }
+      });
+
+      if (updated) {
+        const newAccuracy = updated.correctPredictions / updated.totalPredictions;
+        const newBrierScore = updated.brierScore 
+          ? (updated.brierScore * (updated.totalPredictions - 1) + brierScore) / updated.totalPredictions
+          : brierScore;
+
+        await prisma.aIAccuracy.update({
+          where: {
+            modelVersion_category: {
+              modelVersion,
+              category
+            }
+          },
+          data: {
+            accuracy: newAccuracy,
+            brierScore: newBrierScore
+          }
+        });
+      }
 
       console.log(`✅ Updated AI accuracy for ${modelVersion}/${category}: ${wasCorrect ? 'CORRECT' : 'INCORRECT'}`);
     } catch (error) {

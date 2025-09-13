@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import "../src/styles/design-tokens.css";
+import "@solana/wallet-adapter-react-ui/styles.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import SolanaProviders from "./solana-providers";
@@ -96,10 +97,28 @@ export default async function RootLayout({
                 };
                 
                 try {
-                  // Clear ALL localStorage to ensure a clean state
-                  console.log('[BOOT] Clearing all localStorage...');
+                  // Clear localStorage but preserve wallet persistence
+                  console.log('[BOOT] Clearing localStorage while preserving wallet data...');
+                  
+                  // Preserve wallet persistence keys
+                  const walletKeys = ['predikt:wallet:name', 'predikt:wallet:pubkey', 'predikt:wallet', 'predikt:auth:v1'];
+                  const preservedData = {};
+                  walletKeys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    if (value) {
+                      preservedData[key] = value;
+                    }
+                  });
+                  
+                  // Clear all localStorage
                   localStorage.clear();
-                  console.log('[BOOT] localStorage cleared completely');
+                  
+                  // Restore preserved wallet data
+                  Object.entries(preservedData).forEach(([key, value]) => {
+                    localStorage.setItem(key, value);
+                  });
+                  
+                  console.log('[BOOT] localStorage cleared, wallet data preserved');
                   
                   // Add global error handler to prevent dev overlay
                   window.addEventListener('error', function(event) {

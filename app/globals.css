@@ -48,6 +48,12 @@ body {
   }
 }
 
+/* Wallet modal stacking fixes */
+.wallet-adapter-modal { z-index: 9999 !important; }
+.wallet-adapter-modal-container { z-index: 9999 !important; }
+.wallet-adapter-modal-overlay { z-index: 9998 !important; }
+html.wallet-modal-open, body.wallet-modal-open { overflow: hidden; }
+
 /* Mobile-first responsive improvements */
 @media (max-width: 640px) {
   /* Ensure minimum touch target size */
@@ -398,6 +404,20 @@ body {
 .chip-no[aria-selected="true"] { background: var(--danger); color: #fff; }
 .chip-no:hover { background: var(--surface); }
 .chip-no:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 3px; }
+
+/* Hide non-Phantom wallets in wallet modal */
+.wallet-adapter-modal-list .wallet-adapter-button:not([data-testid="phantom"]):not([aria-label*="Phantom"]) {
+  display: none !important;
+}
+
+.wallet-adapter-modal-list button:not([data-testid="phantom"]):not([aria-label*="Phantom"]) {
+  display: none !important;
+}
+
+/* Hide wallets that don't contain "Phantom" in their alt text */
+.wallet-adapter-modal-list button:not(:has(img[alt*="Phantom"])) {
+  display: none !important;
+}
 
 /* Line clamp utilities */
 .line-clamp-1 {

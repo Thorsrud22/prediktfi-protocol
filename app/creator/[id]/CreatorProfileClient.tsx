@@ -54,7 +54,7 @@ export default function CreatorProfileClient({ id }: CreatorProfileClientProps) 
         handle: profileData.score.handle,
         channel,
         referrer_path: document.referrer || '',
-        creator_rank_at_click: profileData.score.rank7d || profileData.score.rank90d || null,
+        creator_rank_at_click: profileData.score.rank7d || null,
         ts: Date.now(),
       });
     }
@@ -111,7 +111,7 @@ export default function CreatorProfileClient({ id }: CreatorProfileClientProps) 
         handle: profileData.score.handle,
         period: historyPeriod,
         referrer_path: document.referrer || '',
-        creator_rank_at_view: profileData.score.rank7d || profileData.score.rank90d || null,
+        creator_rank_at_view: profileData.score.rank7d || null,
         ts: Date.now(),
       });
     }

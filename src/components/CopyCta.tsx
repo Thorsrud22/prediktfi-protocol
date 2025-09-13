@@ -19,10 +19,10 @@ interface CopyCtaProps {
 interface ExperimentData {
   experimentKey: string;
   variant: CTAVariant;
-} | null;
+}
 
 export default function CopyCta({ insightId, onCopy, className = '' }: CopyCtaProps) {
-  const [experiment, setExperiment] = useState<ExperimentData>(null);
+  const [experiment, setExperiment] = useState<ExperimentData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { addToast } = useToast();
 

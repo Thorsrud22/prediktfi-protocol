@@ -14,6 +14,17 @@ const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfc
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
+  // Check if stamping is disabled in dev
+  if (process.env.NEXT_PUBLIC_SOLANA_CLUSTER !== 'mainnet') {
+    return NextResponse.json(
+      { 
+        message: 'Stamping disabled in dev',
+        error: 'Stamping is only available on mainnet with Pro plan'
+      },
+      { status: 501 }
+    );
+  }
+  
   try {
     // Step 1: Parse and validate request body
     const body = await request.json();

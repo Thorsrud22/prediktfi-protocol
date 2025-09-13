@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { fmt, fmtPct } from '../../lib/num';
 
 interface AnalysisProgress {
   status: string;
@@ -108,7 +109,7 @@ export function AdvancedInsightDisplay({ analysis }: { analysis: any }) {
         
         <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
           <div className="text-2xl font-bold text-[color:var(--text)]">
-            {analysis.processingTimeMs ? (analysis.processingTimeMs / 1000).toFixed(1) : 'N/A'}s
+            {analysis.processingTimeMs ? fmt(analysis.processingTimeMs / 1000, 1) : '—'}s
           </div>
           <div className="text-sm text-[color:var(--muted)]">Analysis Time</div>
         </div>
@@ -184,7 +185,7 @@ export function AdvancedInsightDisplay({ analysis }: { analysis: any }) {
                 <div className={`text-lg font-semibold ${
                   analysis.technical.change24h > 0 ? 'text-green-400' : 'text-red-400'
                 }`}>
-                  {analysis.technical.change24h > 0 ? '+' : ''}{analysis.technical.change24h.toFixed(2)}%
+                  {analysis.technical.change24h > 0 ? '+' : ''}{fmtPct(analysis.technical.change24h / 100, 2)}
                 </div>
               </div>
               
@@ -198,14 +199,14 @@ export function AdvancedInsightDisplay({ analysis }: { analysis: any }) {
               <div className="p-3 bg-[--background] rounded border">
                 <div className="text-sm text-[--muted]">RSI</div>
                 <div className="text-lg font-semibold text-[--text]">
-                  {analysis.technical.rsi ? analysis.technical.rsi.toFixed(1) : 'N/A'}
+                  {fmt(analysis.technical.rsi, 1)}
                 </div>
               </div>
               
               <div className="p-3 bg-[--background] rounded border">
                 <div className="text-sm text-[--muted]">Volatility</div>
                 <div className="text-lg font-semibold text-[--text]">
-                  {analysis.technical.volatility.toFixed(1)}%
+                  {fmtPct(analysis.technical.volatility / 100, 1)}
                 </div>
               </div>
             </div>
