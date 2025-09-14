@@ -378,7 +378,7 @@ export default function ActionsPage() {
   // put this near the top of the component
   const [mounted, setMounted] = useState(false)
   const [debugKeys, setDebugKeys] = useState<string[]>([])
-  const walletBase58 = publicKey?.toBase58?.() || null
+  const walletBase58 = publicKey || null
   
   const [showDraft, setShowDraft] = useState(false)
   const [showComposer, setShowComposer] = useState(false)
