@@ -161,7 +161,14 @@ function EditIntentForm({
       return
     }
     
-    onUpdateIntent(formData)
+    onUpdateIntent({
+      asset: formData.asset,
+      side: formData.side,
+      probability: formData.probability ?? 0,
+      confidence: formData.confidence ?? 0,
+      horizon: formData.horizon ?? '',
+      thesis: formData.thesis ?? ''
+    })
   }
 
   return (
