@@ -417,7 +417,7 @@ export default function ActionsPage() {
   // Load intents from localStorage on mount (client-side only) - legacy system
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const loadedIntents = loadIntents()
+      const loadedIntents = getIntents()
       setUserIntents(loadedIntents)
     }
   }, [])
@@ -497,7 +497,7 @@ export default function ActionsPage() {
     
     // Update local state
     setUserIntents(prev => [intent, ...prev])
-    setNewIntents(loadIntents(pubkey))
+    setNewIntents(getIntents(pubkey))
     
     clearDraft()
     setShowComposer(false)
@@ -603,7 +603,7 @@ export default function ActionsPage() {
     upsertIntent(pubkey, updatedIntent)
     
     // Update local state
-    setNewIntents(loadIntents(pubkey))
+    setNewIntents(getIntents(pubkey))
     
     // Close the edit form
     setShowEditIntent(false)
