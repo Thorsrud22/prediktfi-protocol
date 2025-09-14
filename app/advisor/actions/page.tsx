@@ -151,12 +151,12 @@ function EditIntentForm({
       return
     }
     
-    if (formData.probability < 0 || formData.probability > 100) {
+    if ((formData.probability ?? 0) < 0 || (formData.probability ?? 0) > 100) {
       toast.error('Probability must be between 0 and 100')
       return
     }
     
-    if (formData.confidence < 0 || formData.confidence > 100) {
+    if ((formData.confidence ?? 0) < 0 || (formData.confidence ?? 0) > 100) {
       toast.error('Confidence must be between 0 and 100')
       return
     }
