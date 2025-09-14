@@ -472,7 +472,7 @@ export default function ActionsPage() {
       }
     }
 
-    const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter(Boolean)
+    const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter((item): item is UiIntent => item !== null)
     const sorted = [...normalized].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
     setPerWalletIntents(sorted)
   }, [isConnected, publicKey])
@@ -677,7 +677,7 @@ export default function ActionsPage() {
                     }
                   }
                   
-                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter(Boolean)
+                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter((item): item is UiIntent => item !== null)
                   const sorted = [...normalized].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
                   setPerWalletIntents(sorted)
                 }}
@@ -909,7 +909,7 @@ export default function ActionsPage() {
                     }
                   }
                   
-                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter(Boolean)
+                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter((item): item is UiIntent => item !== null)
                   const sorted = [...normalized].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
                   setPerWalletIntents(sorted)
                 }}
