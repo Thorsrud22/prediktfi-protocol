@@ -7,6 +7,12 @@ export type TradingIntent = {
   createdAt: number;
   title: string;
   side?: "long" | "short";
+  symbol?: string;
+  direction?: "Long" | "Short";
+  probability?: number;
+  confidence?: number;
+  horizon?: string;
+  thesis?: string;
   payload: Record<string, unknown>;
 };
 
@@ -15,6 +21,12 @@ export type V2TradingIntent = {
   createdAt: number;
   title: string;
   side?: "long" | "short";
+  symbol?: string;
+  direction?: "Long" | "Short";
+  probability?: number;
+  confidence?: number;
+  horizon?: string;
+  thesis?: string;
   payload: Record<string, unknown>;
 };
 
@@ -134,6 +146,24 @@ export function getAllWalletKeys(): string[] {
       .map(key => key.replace('predikt:intents:v2:', ''));
   } catch {
     // If an error occurs (e.g., localStorage is unavailable), return an empty array.
+    return [];
+  }
+}
+
+// Add missing getWalletKeysWithIntents function
+export function getWalletKeysWithIntents(): string[] {
+  if (typeof window === 'undefined') return [];
+  
+  try {
+    const keys = Object.keys(localStorage);
+    return keys
+      .filter(key => key.startsWith('predikt:intents:v2:'))
+      .map(key => key.replace('predikt:intents:v2:', ''))
+      .filter(pubkey => {
+        const intents = loadIntentsForV2(pubkey);
+        return intents.length > 0;
+      });
+  } catch {
     return [];
   }
 }

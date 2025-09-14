@@ -134,7 +134,7 @@ function EditIntentForm({
   onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
-    asset: intent.symbol,
+    asset: intent.symbol || intent.title,
     side: intent.direction as 'Long' | 'Short',
     probability: intent.probability,
     confidence: intent.confidence,
