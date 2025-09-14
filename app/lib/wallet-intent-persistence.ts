@@ -52,6 +52,16 @@ export function saveIntents(intents: TradingIntent[]): void {
   }
 }
 
+export function clearIntents(): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.removeItem('predikt:intents');
+  } catch {
+    // Silent fail
+  }
+}
+
 export function upsertIntent(pubkey: string, intent: TradingIntent): TradingIntent[] {
   const intents = loadIntents();
   const existingIndex = intents.findIndex(i => i.id === intent.id);

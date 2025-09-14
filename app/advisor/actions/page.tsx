@@ -146,7 +146,7 @@ function EditIntentForm({
     e.preventDefault()
     
     // Validate required fields
-    if (!formData.asset.trim() || !formData.thesis.trim()) {
+    if (!formData.asset.trim() || !formData.thesis?.trim()) {
       toast.error('Please fill in all required fields')
       return
     }
