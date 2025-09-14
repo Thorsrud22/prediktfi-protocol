@@ -6,7 +6,7 @@ import { useSimplifiedWallet } from '../../components/wallet/SimplifiedWalletPro
 import { useIntentDraft } from '../../lib/store/intent-draft-store'
 import TradingIntentComposer from '../../components/TradingIntentComposer'
 import UserIntentsList from '../../components/UserIntentsList'
-import { loadIntents as getIntents, saveIntents, upsertIntent, removeIntent as removeWalletIntent, type TradingIntent as NewTradingIntent } from '../../lib/wallet-intent-persistence'
+import { loadIntents as getIntents, loadIntentsForV2, saveIntents, upsertIntent, removeIntent as removeWalletIntent, type TradingIntent as NewTradingIntent } from '../../lib/wallet-intent-persistence'
 import { loadDevIntents, type DevIntent } from '../../lib/dev-intents'
 
 // local reader helpers for per-wallet intents
@@ -427,7 +427,7 @@ export default function ActionsPage() {
     if (isConnected && publicKey) {
       // Wallet is isConnected - load intents for specific wallet
       const pubkey = publicKey // publicKey is already a string in SimplifiedWallet
-      setNewIntents(getIntents(pubkey))
+      setNewIntents(loadIntentsForV2(pubkey))
     } else {
       // Wallet not isConnected - try fallback to load any intents
       setNewIntents(getIntents()) // This will use the fallback mechanism
@@ -497,7 +497,7 @@ export default function ActionsPage() {
     
     // Update local state
     setUserIntents(prev => [intent, ...prev])
-    setNewIntents(getIntents(pubkey))
+    setNewIntents(loadIntentsForV2(pubkey))
     
     clearDraft()
     setShowComposer(false)
@@ -603,7 +603,7 @@ export default function ActionsPage() {
     upsertIntent(pubkey, updatedIntent)
     
     // Update local state
-    setNewIntents(getIntents(pubkey))
+    setNewIntents(loadIntentsForV2(pubkey))
     
     // Close the edit form
     setShowEditIntent(false)
