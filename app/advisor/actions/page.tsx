@@ -450,7 +450,7 @@ export default function ActionsPage() {
 
     // one-time fix: migrate any accidental "v2:undefined" to the real wallet key
     try {
-      const base58 = publicKey?.toBase58?.();
+      const base58 = publicKey;
       if (base58) {
         const badKey = 'predikt:intents:v2:undefined';
         const goodKey = `predikt:intents:v2:${base58}`;
