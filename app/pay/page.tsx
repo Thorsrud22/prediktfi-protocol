@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 // Wallet connection handled by header
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useWalletAuth } from '../lib/useWalletAuth';
+import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 
 type Plan = 'starter' | 'pro';
 type Currency = 'USDC' | 'SOL';
@@ -14,9 +13,8 @@ const PLAN_PRICE_USD: Record<Plan, number> = { starter: 9, pro: 29 };
 export default function PayPage() {
   const router = useRouter();
   const sp = useSearchParams();
-  const { connected, publicKey } = useWallet();
-  const { isAuthenticated, wallet } = useWalletAuth();
-  const ready = connected && isAuthenticated;
+  const { isConnected, publicKey } = useSimplifiedWallet();
+  const ready = isConnected;
 
   const initialPlan = (sp.get('plan') as Plan) || 'pro';
   const [plan, setPlan] = useState<Plan>(initialPlan);
@@ -28,18 +26,15 @@ export default function PayPage() {
   // Derived copy
   const payCta = useMemo(() => {
     const label = currency === 'SOL' ? `Pay ${price} SOL` : `Pay ${price} USDC`;
-    if (!connected) {
+    if (!isConnected) {
       return 'Connect wallet to pay';
     }
-    if (!isAuthenticated) {
-      return 'Sign in to pay';
-    }
     return label;
-  }, [currency, connected, isAuthenticated, price]);
+  }, [currency, isConnected, price]);
 
   async function handlePay() {
     if (loading) return;
-    if (!ready || !publicKey || !wallet) return;
+    if (!ready || !publicKey) return;
     
     setLoading(true);
     try {
@@ -134,7 +129,7 @@ export default function PayPage() {
               Pay with crypto and unlock advanced features.
             </p>
           </div>
-          {isAuthenticated && (
+          {isConnected && (
             <div className="flex items-center gap-2 bg-green-600/20 text-green-400 px-3 py-2 rounded-lg border border-green-600/30">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span className="text-sm font-medium">Pro Active</span>
@@ -209,13 +204,9 @@ export default function PayPage() {
             </div>
 
             <div className="mt-6 space-y-4">
-              {!connected ? (
+              {!isConnected ? (
                 <div className="text-sm text-slate-400 text-center">
                   Connect with Phantom in the header to continue.
-                </div>
-              ) : !isAuthenticated ? (
-                <div className="text-sm text-slate-400 text-center">
-                  Sign in via the header to continue.
                 </div>
               ) : (
                 <div className="text-sm text-slate-400 text-center">
@@ -226,10 +217,10 @@ export default function PayPage() {
 
             <button
               onClick={handlePay}
-              disabled={!ready || !wallet || loading}
+              disabled={!ready || !publicKey || loading}
               className={[
                 'mt-6 w-full rounded-xl px-5 py-3 font-semibold transition',
-                ready && wallet
+                ready && publicKey
                   ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
                   : 'bg-slate-800 text-slate-500 cursor-not-allowed',
               ].join(' ')}

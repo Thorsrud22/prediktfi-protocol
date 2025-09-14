@@ -6,13 +6,15 @@ import "../src/styles/design-tokens.css";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import SolanaProviders from "./solana-providers";
+import SimplifiedWalletProvider from "./components/wallet/SimplifiedWalletProvider";
 import ToastProvider from "./components/ToastProvider";
 import ConsentGate from "./components/ConsentGate";
 import AttributionBoot from "./components/AttributionBoot";
 import ClientErrorBoundary from "./components/ClientErrorBoundary";
 import DebugProvider from "./providers/DebugProvider";
 import DebugOverlay from "./components/dev/DebugOverlay";
+import IntentStorageGuard from "./components/IntentStorageGuard";
+import AuthGuard from "./components/AuthGuard";
 import { SITE } from "./config/site";
 import { getPlanFromRequest } from "./lib/plan";
 import { headers } from "next/headers";
@@ -97,28 +99,34 @@ export default async function RootLayout({
                 };
                 
                 try {
-                  // Clear localStorage but preserve wallet persistence
-                  console.log('[BOOT] Clearing localStorage while preserving wallet data...');
+                  // Clear localStorage but preserve wallet+intents data
+                  console.log('[BOOT] Clearing localStorage while preserving wallet+intents data...');
                   
-                  // Preserve wallet persistence keys
-                  const walletKeys = ['predikt:wallet:name', 'predikt:wallet:pubkey', 'predikt:wallet', 'predikt:auth:v1'];
-                  const preservedData = {};
-                  walletKeys.forEach(key => {
-                    const value = localStorage.getItem(key);
-                    if (value) {
-                      preservedData[key] = value;
+                  function clearLocalStorageButKeep(prefixesToKeep = [
+                    'predikt:intents',      // behold alle intents
+                    'predikt:wallet',       // behold wallet-navn/pubkey
+                    'predikt:auth',         // SIWS cache
+                    'predikt:visited',      // evt. visited flagg
+                    'predikt:feed'          // behold feed cache (includes predikt:feed:v1)
+                  ]) {
+                    try {
+                      const keep = {}
+                      for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i)
+                        if (prefixesToKeep.some(p => k.startsWith(p))) {
+                          const v = localStorage.getItem(k)
+                          if (v != null) keep[k] = v
+                        }
+                      }
+                      localStorage.clear()
+                      for (const k in keep) localStorage.setItem(k, keep[k])
+                      console.log('[BOOT] localStorage cleared, preserved:', Object.keys(keep))
+                    } catch (e) {
+                      console.warn('[BOOT] selective clear failed, skipping:', e)
                     }
-                  });
+                  }
                   
-                  // Clear all localStorage
-                  localStorage.clear();
-                  
-                  // Restore preserved wallet data
-                  Object.entries(preservedData).forEach(([key, value]) => {
-                    localStorage.setItem(key, value);
-                  });
-                  
-                  console.log('[BOOT] localStorage cleared, wallet data preserved');
+                  clearLocalStorageButKeep()
                   
                   // Add global error handler to prevent dev overlay
                   window.addEventListener('error', function(event) {
@@ -199,22 +207,9 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-[#0F172A] text-slate-100`}>
-        <SolanaProviders>
-          {process.env.NODE_ENV === "development" ? (
-            <DebugProvider>
-              <ClientErrorBoundary>
-                <ToastProvider>
-                  <ConsentGate />
-                  <Navbar />
-                  <main className="flex min-h-screen flex-col">
-                    {children}
-                  </main>
-                  <Footer />
-                  <DebugOverlay />
-                </ToastProvider>
-              </ClientErrorBoundary>
-            </DebugProvider>
-          ) : (
+        <IntentStorageGuard />
+        <AuthGuard>
+          <SimplifiedWalletProvider>
             <ClientErrorBoundary>
               <ToastProvider>
                 <ConsentGate />
@@ -223,10 +218,15 @@ export default async function RootLayout({
                   {children}
                 </main>
                 <Footer />
+                {process.env.NODE_ENV === "development" && (
+                  <DebugProvider>
+                    <DebugOverlay />
+                  </DebugProvider>
+                )}
               </ToastProvider>
             </ClientErrorBoundary>
-          )}
-        </SolanaProviders>
+          </SimplifiedWalletProvider>
+        </AuthGuard>
       </body>
     </html>
   );

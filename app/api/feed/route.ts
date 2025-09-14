@@ -81,6 +81,10 @@ export async function GET(request: NextRequest) {
         'coins': 'crypto',
         'bitcoin': 'crypto',
         'ethereum': 'crypto',
+        'btc': 'crypto',
+        'eth': 'crypto',
+        'sol': 'crypto',
+        'market': 'crypto', // market-related questions are typically crypto
         'stocks': 'stocks',
         'equities': 'stocks',
         'finance': 'finance',
@@ -92,6 +96,7 @@ export async function GET(request: NextRequest) {
         'tech': 'technology',
         'technology': 'technology',
         'ai': 'technology',
+        'general': 'general',
         'all': 'all'
       };
       
@@ -195,15 +200,15 @@ export async function GET(request: NextRequest) {
     }
     
     // Check if this is an unknown category - return empty results gracefully
-    const knownCategories = ['crypto', 'stocks', 'finance', 'politics', 'sports', 'technology', 'all'];
+    const knownCategories = ['crypto', 'stocks', 'finance', 'politics', 'sports', 'technology', 'all', 'general', 'market'];
     const isUnknownCategory = normalizedCategory !== 'all' && !knownCategories.includes(normalizedCategory);
     
     let total = 0;
     let insights: any[] = [];
     
     if (isUnknownCategory) {
-      // For unknown categories, return empty results with 200 status
-      console.log(`Feed API: Unknown category '${normalizedCategory}', returning empty results`);
+      // For unknown categories, return empty results with 200 status (never 400)
+      console.log(`Feed API: Unknown category '${normalizedCategory}', returning empty results with 200 status`);
     } else {
       // Get total count for pagination
       total = await prisma.insight.count({

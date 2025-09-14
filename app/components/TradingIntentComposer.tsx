@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useWallet } from '@solana/wallet-adapter-react'
+import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider'
 import { toast } from 'react-hot-toast'
 import { TradeDraft } from '../lib/store/intent-draft-store'
 import { persistIntent, type TradingIntent } from '../lib/intent-persistence'
@@ -27,7 +27,7 @@ const TIME_HORIZONS = [
 ]
 
 export default function TradingIntentComposer({ draft, onCreateIntent, onCancel }: TradingIntentComposerProps) {
-  const { publicKey } = useWallet()
+  const { publicKey } = useSimplifiedWallet()
   const [assetSymbol, setAssetSymbol] = useState(draft.assetSymbol)
   const [direction, setDirection] = useState<'Long' | 'Short'>(draft.direction)
   const [confidence, setConfidence] = useState(draft.confidence)
@@ -46,7 +46,7 @@ export default function TradingIntentComposer({ draft, onCreateIntent, onCancel 
     setIsCreating(true)
 
     try {
-      const pubkey = publicKey?.toBase58()
+      const pubkey = publicKey
       
       // Create new TradingIntent object from form values
       const next: NewTradingIntent = {

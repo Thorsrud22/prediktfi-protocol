@@ -1,8 +1,8 @@
 'use client'
 import React, { useEffect, useState, useRef } from 'react'
-import { useWallet } from '@solana/wallet-adapter-react'
+import Link from 'next/link'
 import { toast } from 'react-hot-toast'
-import { useWalletAuth } from '../../lib/useWalletAuth'
+import { useSimplifiedWallet } from '../../components/wallet/SimplifiedWalletProvider'
 import { useIntentDraft } from '../../lib/store/intent-draft-store'
 import TradingIntentComposer from '../../components/TradingIntentComposer'
 import UserIntentsList from '../../components/UserIntentsList'
@@ -10,183 +10,111 @@ import { loadIntents, removeIntent, type TradingIntent } from '../../lib/intent-
 import { loadIntents as getIntents, saveIntents, upsertIntent, removeIntent as removeWalletIntent, type TradingIntent as NewTradingIntent } from '../../lib/wallet-intent-persistence'
 import { loadDevIntents, type DevIntent } from '../../lib/dev-intents'
 
-// Create Intent Form Component
-function CreateIntentForm({ 
-  onCreateIntent, 
-  onCancel 
-}: { 
-  onCreateIntent: (data: {
-    asset: string;
-    side: 'Long' | 'Short';
-    probability: number;
-    confidence: number;
-    horizon: string;
-    thesis: string;
-  }) => void;
-  onCancel: () => void;
-}) {
-  const [formData, setFormData] = useState({
-    asset: '',
-    side: 'Long' as 'Long' | 'Short',
-    probability: 50,
-    confidence: 70,
-    horizon: '30d',
-    thesis: ''
-  })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Validate required fields
-    if (!formData.asset.trim() || !formData.thesis.trim()) {
-      toast.error('Please fill in all required fields')
-      return
-    }
-    
-    if (formData.probability < 0 || formData.probability > 100) {
-      toast.error('Probability must be between 0 and 100')
-      return
-    }
-    
-    if (formData.confidence < 0 || formData.confidence > 100) {
-      toast.error('Confidence must be between 0 and 100')
-      return
-    }
-    
-    onCreateIntent(formData)
-  }
-
-  return (
-    <div className="rounded-xl border border-blue-600 bg-blue-900/20 p-6 text-slate-200">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-blue-300">Create New Trading Intent</h3>
-        <button
-          onClick={onCancel}
-          className="text-slate-400 hover:text-slate-200 text-sm"
-        >
-          ✕ Cancel
-        </button>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Asset Symbol */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Asset Symbol *
-            </label>
-            <input
-              type="text"
-              value={formData.asset}
-              onChange={(e) => setFormData(prev => ({ ...prev, asset: e.target.value.toUpperCase() }))}
-              placeholder="e.g. BTC, ETH, SOL"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          {/* Side */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Direction *
-            </label>
-            <select
-              value={formData.side}
-              onChange={(e) => setFormData(prev => ({ ...prev, side: e.target.value as 'Long' | 'Short' }))}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Long">Long</option>
-              <option value="Short">Short</option>
-            </select>
-          </div>
-          
-          {/* Probability */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Probability (%) *
-            </label>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={formData.probability}
-              onChange={(e) => setFormData(prev => ({ ...prev, probability: parseInt(e.target.value) || 0 }))}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          {/* Confidence */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Confidence (%) *
-            </label>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={formData.confidence}
-              onChange={(e) => setFormData(prev => ({ ...prev, confidence: parseInt(e.target.value) || 0 }))}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          {/* Horizon */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Time Horizon *
-            </label>
-            <select
-              value={formData.horizon}
-              onChange={(e) => setFormData(prev => ({ ...prev, horizon: e.target.value }))}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="1d">1 day</option>
-              <option value="7d">1 week</option>
-              <option value="30d">1 month</option>
-              <option value="90d">3 months</option>
-              <option value="180d">6 months</option>
-              <option value="365d">1 year</option>
-            </select>
-          </div>
-        </div>
-        
-        {/* Thesis */}
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Trading Thesis *
-          </label>
-          <textarea
-            value={formData.thesis}
-            onChange={(e) => setFormData(prev => ({ ...prev, thesis: e.target.value }))}
-            placeholder="Explain your reasoning for this trade..."
-            rows={3}
-            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-        
-        {/* Submit Buttons */}
-        <div className="flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Create Intent
-          </button>
-        </div>
-      </form>
-    </div>
-  )
+// local reader helpers for per-wallet intents
+type PerWalletIntent = {
+  id: string
+  createdAt: number
+  title: string
+  side?: "long" | "short"
+  payload: Record<string, unknown>
 }
+
+
+function intentsKey(base58?: string | null) {
+  return base58 ? `predikt:intents:${base58}` : null
+}
+
+function loadIntentsFor(base58?: string | null): PerWalletIntent[] {
+  try {
+    const k = intentsKey(base58)
+    if (!k) return []
+    const raw = localStorage.getItem(k)
+    return raw ? (JSON.parse(raw) as PerWalletIntent[]) : []
+  } catch {
+    return []
+  }
+}
+
+function readIntentsAny(base58?: string | null) {
+  if (!base58) return []
+  try {
+    const v2 = localStorage.getItem(`predikt:intents:v2:${base58}`)
+    if (v2) {
+      const arr = JSON.parse(v2)
+      if (Array.isArray(arr) && arr.length) return arr
+    }
+    const v1 = localStorage.getItem(`predikt:intents:${base58}`)
+    return v1 ? (JSON.parse(v1) as StoredIntent[]) : []
+  } catch {
+    return []
+  }
+}
+
+// Robust conversion from stored intent to UI format
+type StoredIntent = {
+  id?: string
+  title?: unknown
+  side?: "long" | "short"
+  symbol?: unknown
+  assetSymbol?: unknown
+  confidence?: unknown
+  probability?: unknown
+  createdAt?: unknown
+  payload?: any
+}
+
+type UiIntent = {
+  id: string
+  assetSymbol: string
+  direction: "Long" | "Short"
+  confidence: number
+  probability: number
+  horizonDays: number
+  thesis: string
+  createdAt: number
+  raw: StoredIntent
+}
+
+function toStringOrEmpty(v: unknown): string {
+  return typeof v === "string" ? v : ""
+}
+function toNumberOr(v: unknown, def: number): number {
+  const n = typeof v === "number" ? v : Number(v)
+  return Number.isFinite(n) ? n : def
+}
+
+function safeTitle(x: StoredIntent): string {
+  const t1 = toStringOrEmpty(x.title).trim()
+  if (t1) return t1
+  const t2 = toStringOrEmpty(x?.payload?.predictionTitle).trim()
+  if (t2) return t2
+  return "Untitled"
+}
+
+function safeAssetSymbol(x: StoredIntent, title: string): string {
+  const s1 = toStringOrEmpty(x.symbol).trim()
+  if (s1) return s1.toUpperCase()
+  const s2 = toStringOrEmpty(x.assetSymbol).trim()
+  if (s2) return s2.toUpperCase()
+  const firstWord = title.trim().split(/\s+/)[0] || ""
+  return firstWord ? firstWord.toUpperCase() : "UNKNOWN"
+}
+
+function convertPerWalletIntentToTradingIntent(x: StoredIntent): UiIntent {
+  const title = safeTitle(x)
+  return {
+    id: String(x.id ?? `${Date.now()}-${Math.random().toString(36).slice(2,8)}`),
+    assetSymbol: safeAssetSymbol(x, title),
+    direction: x.side === "short" ? "Short" : "Long",
+    confidence: toNumberOr(x.confidence, 70),
+    probability: toNumberOr(x.probability, 50),
+    horizonDays: 30, // Default horizon
+    thesis: `Trading intent: ${title}`,
+    createdAt: toNumberOr(x.createdAt, Date.now()),
+    raw: x,
+  }
+}
+
 
 // Edit Intent Form Component
 function EditIntentForm({ 
@@ -368,22 +296,109 @@ function EditIntentForm({
   )
 }
 
+function listIntentKeys(): string[] {
+  try {
+    return Object.keys(localStorage).filter(k => k.startsWith("predikt:intents"))
+  } catch {
+    return []
+  }
+}
+
+type RawIntent = {
+  id?: string
+  title?: string
+  side?: "long" | "short"
+  createdAt?: number
+  payload?: Record<string, unknown>
+  probability?: number
+  confidence?: number
+}
+
+function parseJson<T=unknown>(raw: string | null): T | null {
+  if (!raw) return null
+  try { return JSON.parse(raw) as T } catch { return null }
+}
+
+function readIntentsV2(base58?: string | null): RawIntent[] {
+  if (!base58) return []
+  return parseJson(localStorage.getItem(`predikt:intents:v2:${base58}`)) ?? []
+}
+
+function readIntentsV1(base58?: string | null): RawIntent[] {
+  if (!base58) return []
+  return parseJson(localStorage.getItem(`predikt:intents:${base58}`)) ?? []
+}
+
+function readIntentsScanAll(base58?: string | null): {key:string, items:RawIntent[]} | null {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith("predikt:intents"))
+  // 1) Prøv eksakt wallet-match
+  if (base58) {
+    const exact = keys.find(k => k.endsWith(`:${base58}`))
+    if (exact) return { key: exact, items: parseJson(localStorage.getItem(exact)) ?? [] }
+  }
+  // 2) Ellers: første nøkkel med items (for å gjøre data synlig i UI)
+  for (const k of keys) {
+    const arr = parseJson(localStorage.getItem(k)) ?? []
+    if (Array.isArray(arr) && arr.length) return { key: k, items: arr }
+  }
+  return null
+}
+
+function normalizeIntent(x: RawIntent) {
+  if (!x || typeof x !== "object") return null
+  const payload = (x.payload && typeof x.payload === "object") ? x.payload : {}
+  const title = typeof x.title === "string" && x.title.trim()
+    ? x.title.trim()
+    : (typeof payload.predictionTitle === "string" && payload.predictionTitle.trim())
+      ? payload.predictionTitle.trim()
+      : "Untitled"
+  const createdAtNum = Number(x.createdAt)
+  return {
+    id: String(x.id ?? `${Date.now()}-${Math.random().toString(36).slice(2,8)}`),
+    title,
+    side: x.side === "short" ? "short" : "long",
+    createdAt: Number.isFinite(createdAtNum) ? createdAtNum : Date.now(),
+    payload,
+    probability: Number.isFinite(Number(x.probability)) ? Number(x.probability) : 50,
+    confidence: Number.isFinite(Number(x.confidence)) ? Number(x.confidence) : 70,
+  }
+}
+
 export default function ActionsPage() {
-  const { publicKey, connected } = useWallet()
-  const { isAuthenticated } = useWalletAuth()
+  const { isConnected, publicKey } = useSimplifiedWallet()
   const { draft, clearDraft } = useIntentDraft()
+  
+  // put this near the top of the component
+  const [mounted, setMounted] = useState(false)
+  const [debugKeys, setDebugKeys] = useState<string[]>([])
+  const walletBase58 = publicKey?.toBase58?.() || null
   
   const [showDraft, setShowDraft] = useState(false)
   const [showComposer, setShowComposer] = useState(false)
-  const [showCreateIntent, setShowCreateIntent] = useState(false)
   const [showEditIntent, setShowEditIntent] = useState(false)
   const [editingIntent, setEditingIntent] = useState<NewTradingIntent | null>(null)
   const [userIntents, setUserIntents] = useState<TradingIntent[]>([])
   const [newIntents, setNewIntents] = useState<NewTradingIntent[]>([])
   const [devIntents, setDevIntents] = useState<DevIntent[]>([])
+  const [perWalletIntents, setPerWalletIntents] = useState<UiIntent[]>([])
+  
   
   // Ref to track if we've loaded intents to prevent unnecessary clearing on first render
   const loadedRef = useRef(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    try {
+      const keys = Object.keys(localStorage).filter(k => k.startsWith("predikt:intents"))
+      setDebugKeys(keys)
+    } catch {
+      setDebugKeys([])
+    }
+  }, [mounted, isConnected, walletBase58, perWalletIntents?.length])
   
   // Show composer if we have a draft (for backward compatibility)
   useEffect(() => {
@@ -403,28 +418,63 @@ export default function ActionsPage() {
 
   // Load intents on mount and when wallet changes
   useEffect(() => {
-    if (connected && publicKey) {
-      // Wallet is connected - load intents for specific wallet
-      const pubkey = publicKey.toBase58()
-      console.log('[Actions] Loading intents for wallet:', pubkey.slice(0, 8) + '...')
+    if (isConnected && publicKey) {
+      // Wallet is isConnected - load intents for specific wallet
+      const pubkey = publicKey // publicKey is already a string in SimplifiedWallet
       setNewIntents(loadIntents(pubkey))
     } else {
-      // Wallet not connected - try fallback to load any intents
-      console.log('[Actions] Wallet not connected, trying fallback load...')
+      // Wallet not isConnected - try fallback to load any intents
       setNewIntents(loadIntents()) // This will use the fallback mechanism
     }
-  }, [publicKey, connected])
+  }, [publicKey, isConnected])
 
   // Load dev intents on mount and when wallet connects
   useEffect(() => {
-    const owner = publicKey?.toBase58() || ''
+    const owner = publicKey || ''
     setDevIntents(loadDevIntents(owner))
-  }, [publicKey, connected])
+  }, [publicKey, isConnected])
+
+  // Load per-wallet intents from localStorage when wallet connects
+  useEffect(() => {
+    if (!isConnected || !publicKey) {
+      setPerWalletIntents([]) // kun skjul i UI, ikke skriv til storage
+      return
+    }
+    const base58 = publicKey
+
+    // one-time fix: migrate any accidental "v2:undefined" to the real wallet key
+    try {
+      const base58 = publicKey?.toBase58?.();
+      if (base58) {
+        const badKey = 'predikt:intents:v2:undefined';
+        const goodKey = `predikt:intents:v2:${base58}`;
+        const bad = localStorage.getItem(badKey);
+        if (bad && !localStorage.getItem(goodKey)) {
+          localStorage.setItem(goodKey, bad);      // move
+          localStorage.removeItem(badKey);
+        }
+      }
+    } catch {}
+
+    // leserekkefølge
+    let raw = readIntentsV2(base58)
+    if (!raw?.length) raw = readIntentsV1(base58)
+    if (!raw?.length) {
+      const scan = readIntentsScanAll(base58)
+      if (scan?.items?.length) {
+        raw = scan.items
+      }
+    }
+
+    const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter(Boolean)
+    const sorted = [...normalized].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
+    setPerWalletIntents(sorted)
+  }, [isConnected, publicKey])
 
 
   const handleCreateIntent = (intent: TradingIntent) => {
     // Convert legacy intent to new format and persist with wallet key
-    const pubkey = publicKey?.toBase58()
+    const pubkey = publicKey
     const newIntent: NewTradingIntent = {
       id: intent.id,
       symbol: intent.assetSymbol,
@@ -465,15 +515,6 @@ export default function ActionsPage() {
       }
     }
     
-    console.log('[Actions] Intent created:', {
-      id: intent.id,
-      asset: intent.assetSymbol,
-      direction: intent.direction,
-      probability: intent.probability,
-      confidence: intent.confidence,
-      horizonDays: intent.horizonDays,
-      totalIntents: userIntents.length + 1
-    });
     
     // Show toast notification
     if (typeof window !== 'undefined') {
@@ -493,61 +534,7 @@ export default function ActionsPage() {
     setShowDraft(false)
   }
 
-  const handleCreateNewIntent = (intentData: {
-    asset: string;
-    side: 'Long' | 'Short';
-    probability: number;
-    confidence: number;
-    horizon: string;
-    thesis: string;
-  }) => {
-    const pubkey = publicKey?.toBase58()
-    
-    // Create intent object
-    const intent: NewTradingIntent = {
-      id: crypto.randomUUID(),
-      symbol: intentData.asset,
-      direction: intentData.side,
-      probability: intentData.probability,
-      confidence: intentData.confidence,
-      horizon: intentData.horizon,
-      thesis: intentData.thesis,
-      createdAt: Date.now()
-    }
-    
-    // Save to wallet-keyed storage
-    upsertIntent(pubkey, intent)
-    
-    // Update local state
-    setNewIntents(loadIntents(pubkey))
-    
-    // Clear any existing draft since we're now using the stored list as source of truth
-    if (draft) {
-      clearDraft()
-      setShowDraft(false)
-      setShowComposer(false)
-    }
-    
-    // Close the form
-    setShowCreateIntent(false)
-    
-    // Show success message
-    toast.success('Intent created successfully!')
-    
-    console.log('[Actions] Created new intent:', {
-      id: intent.id,
-      symbol: intent.symbol,
-      direction: intent.direction,
-      probability: intent.probability,
-      confidence: intent.confidence,
-      horizon: intent.horizon,
-      totalIntents: newIntents.length + 1
-    })
-  }
 
-  const handleCancelCreateIntent = () => {
-    setShowCreateIntent(false)
-  }
 
   const handleRemoveIntent = (intentId: string) => {
     // Remove from localStorage (legacy system)
@@ -558,8 +545,7 @@ export default function ActionsPage() {
 
   const handleRemoveNewIntent = (intentId: string) => {
     // Remove from new intents system
-    const pubkey = publicKey?.toBase58()
-    console.log('[Actions] Removing intent:', intentId, 'for wallet:', pubkey?.slice(0, 8) + '...')
+    const pubkey = publicKey
     
     // Remove from wallet-keyed storage
     removeWalletIntent(pubkey, intentId)
@@ -594,7 +580,7 @@ export default function ActionsPage() {
   }) => {
     if (!editingIntent) return
 
-    const pubkey = publicKey?.toBase58()
+    const pubkey = publicKey
     
     // Create updated intent object
     const updatedIntent: NewTradingIntent = {
@@ -620,14 +606,6 @@ export default function ActionsPage() {
     // Show success message
     toast.success('Intent updated successfully!')
     
-    console.log('[Actions] Updated intent:', {
-      id: updatedIntent.id,
-      symbol: updatedIntent.symbol,
-      direction: updatedIntent.direction,
-      probability: updatedIntent.probability,
-      confidence: updatedIntent.confidence,
-      horizon: updatedIntent.horizon,
-    })
   }
 
   const handleCancelEditIntent = () => {
@@ -646,7 +624,6 @@ export default function ActionsPage() {
     // TODO: Implement execute functionality
     // For now, just show a message
     toast('Execute functionality coming soon', { icon: 'ℹ️' })
-    console.log('Execute intent:', intent)
   }
 
   const handleSimulateNewIntent = (intentId: string) => {
@@ -660,11 +637,12 @@ export default function ActionsPage() {
     // TODO: Implement simulate functionality
     // For now, just show a message
     toast('Simulate functionality coming soon', { icon: 'ℹ️' })
-    console.log('Simulate intent:', intent)
   }
 
   // Don't require wallet connection for viewing drafts and creating dev intents
   // This prevents SIWS spam during navigation
+  
+  
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-semibold text-slate-100 mb-2">Trading Actions</h1>
@@ -675,23 +653,41 @@ export default function ActionsPage() {
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-lg font-semibold text-slate-200">Trading Intents</h2>
-              <p className="text-sm text-slate-400">Create and manage your trading strategies</p>
+              <p className="text-sm text-slate-400">Trading intents created from AI predictions in Studio</p>
             </div>
-            <button
-              onClick={() => setShowCreateIntent(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Create Intent (Dev)
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  if (!publicKey) return
+                  const base58 = publicKey
+                  
+                  // leserekkefølge
+                  let raw = readIntentsV2(base58)
+                  if (!raw?.length) raw = readIntentsV1(base58)
+                  if (!raw?.length) {
+                    const scan = readIntentsScanAll(base58)
+                    if (scan?.items?.length) {
+                      raw = scan.items
+                    }
+                  }
+                  
+                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter(Boolean)
+                  const sorted = [...normalized].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
+                  setPerWalletIntents(sorted)
+                }}
+                className="px-3 py-2 rounded bg-neutral-800 text-sm"
+              >
+                Reload
+              </button>
+              <Link
+                href="/studio"
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              >
+                Open Studio
+              </Link>
+            </div>
           </div>
 
-          {/* Create Intent Form */}
-          {showCreateIntent && (
-            <CreateIntentForm
-              onCreateIntent={handleCreateNewIntent}
-              onCancel={handleCancelCreateIntent}
-            />
-          )}
 
           {/* Edit Intent Form */}
           {showEditIntent && editingIntent && (
@@ -733,21 +729,18 @@ export default function ActionsPage() {
 
           {/* User Intents List */}
           <UserIntentsList 
-            intents={userIntents}
+            intents={perWalletIntents}
             onRemoveIntent={handleRemoveIntent}
             onSimulate={(intentId) => {
-              console.log('Simulate intent:', intentId)
               // TODO: Implement simulation
             }}
             onExecute={(intentId) => {
-              console.log('Execute intent:', intentId)
               // TODO: Implement execution
             }}
             onEdit={(intentId) => {
-              console.log('Edit intent:', intentId)
               // TODO: Implement editing
             }}
-            isWalletConnected={connected}
+            isWalletConnected={isConnected}
           />
 
           {/* New Intents System - Wallet-aware intents */}
@@ -755,7 +748,7 @@ export default function ActionsPage() {
             <div className="rounded-xl border border-blue-600 bg-blue-900/20 p-6 text-slate-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-blue-300">
-                  📊 Wallet Intents {publicKey ? `(${publicKey.toBase58().slice(0, 8)}...)` : '(Guest)'}
+                  📊 Wallet Intents {publicKey ? `(${publicKey.slice(0, 8)}...)` : '(Guest)'}
                 </h2>
                 <span className="text-sm text-blue-400">{newIntents.length} intent{newIntents.length !== 1 ? 's' : ''}</span>
               </div>
@@ -807,9 +800,9 @@ export default function ActionsPage() {
                       </button>
                       <button 
                         onClick={() => handleExecuteNewIntent(intent.id)}
-                        disabled={!connected}
+                        disabled={!isConnected}
                         className={`px-3 py-1 rounded text-sm transition-colors ${
-                          connected 
+                          isConnected 
                             ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30' 
                             : 'bg-slate-600/20 text-slate-500 cursor-not-allowed opacity-50'
                         }`}
@@ -828,7 +821,7 @@ export default function ActionsPage() {
             <div className="rounded-xl border border-purple-600 bg-purple-900/20 p-6 text-slate-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-purple-300">
-                  🚀 Dev Intents {publicKey ? `(${publicKey.toBase58().slice(0, 8)}...)` : '(Guest)'}
+                  🚀 Dev Intents {publicKey ? `(${publicKey.slice(0, 8)}...)` : '(Guest)'}
                 </h2>
                 <span className="text-sm text-purple-400">{devIntents.length} intent{devIntents.length !== 1 ? 's' : ''}</span>
               </div>
@@ -862,22 +855,22 @@ export default function ActionsPage() {
                     {/* Action Buttons */}
                     <div className="flex space-x-2">
                       <button 
-                        onClick={() => console.log('Simulate dev intent:', intent.id)}
+                        onClick={() => {}}
                         className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded text-sm hover:bg-blue-600/30 transition-colors"
                       >
                         Simulate
                       </button>
                       <button 
-                        onClick={() => console.log('Edit dev intent:', intent.id)}
+                        onClick={() => {}}
                         className="px-3 py-1 bg-slate-600/20 text-slate-400 rounded text-sm hover:bg-slate-600/30 transition-colors"
                       >
                         Edit
                       </button>
                       <button 
-                        onClick={() => console.log('Execute dev intent:', intent.id)}
-                        disabled={!connected}
+                        onClick={() => {}}
+                        disabled={!isConnected}
                         className={`px-3 py-1 rounded text-sm transition-colors ${
-                          connected 
+                          isConnected 
                             ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30' 
                             : 'bg-slate-600/20 text-slate-500 cursor-not-allowed opacity-50'
                         }`}
@@ -891,8 +884,61 @@ export default function ActionsPage() {
             </div>
           )}
 
+          {/* Per-Wallet Intents from Studio */}
+          <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">Trading Intents from Studio</h3>
+              <button
+                onClick={() => {
+                  if (!publicKey) return
+                  const base58 = publicKey
+                  
+                  // leserekkefølge
+                  let raw = readIntentsV2(base58)
+                  if (!raw?.length) raw = readIntentsV1(base58)
+                  if (!raw?.length) {
+                    const scan = readIntentsScanAll(base58)
+                    if (scan?.items?.length) {
+                      raw = scan.items
+                    }
+                  }
+                  
+                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter(Boolean)
+                  const sorted = [...normalized].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
+                  setPerWalletIntents(sorted)
+                }}
+                className="px-3 py-2 rounded bg-slate-800 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+              >
+                Reload
+              </button>
+            </div>
+
+            {!isConnected ? (
+              <p className="text-sm text-slate-400">Connect Phantom to view your saved intents.</p>
+            ) : (() => {
+              const ui = Array.isArray(perWalletIntents) ? perWalletIntents : []
+              const sorted = [...ui].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
+              return sorted.length > 0 ? (
+                <ul className="space-y-2">
+                  {sorted.map(i => (
+                    <li key={i.id} className="p-3 rounded-lg bg-slate-800/50 border border-slate-600">
+                      {/* bruk kun normaliserte felter */}
+                      <div className="text-sm font-medium text-slate-200">{i.title}</div>
+                      <div className="text-xs text-slate-500 mt-1">Created {new Date(i.createdAt).toLocaleString()}</div>
+                      {i?.payload?.predictionId && (
+                        <div className="text-xs text-blue-400 mt-1">Prediction ID: {String(i.payload.predictionId)}</div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-slate-400">No trading intents yet.</p>
+              )
+            })()}
+          </div>
+
           {/* Empty State - when no composer, no draft, and no intents */}
-          {!showComposer && !showDraft && userIntents.length === 0 && (
+          {!showComposer && !showDraft && perWalletIntents.length === 0 && (
             <div className="rounded-xl border border-slate-700 p-8 text-center text-slate-200">
               <div className="mb-4">
                 <svg className="w-16 h-16 mx-auto text-slate-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -900,7 +946,7 @@ export default function ActionsPage() {
                 </svg>
                 <h3 className="text-xl font-semibold text-slate-200 mb-2">No trading intents yet</h3>
                 <p className="text-slate-400 mb-6 max-w-md mx-auto">
-                  Send a prediction from Studio to start trading. Analyze the market, create forecasts, and build trading strategies.
+                  Create AI predictions in Studio, then click "🚀 Trade This Prediction" to generate trading intents. This is the only way to create new intents.
                 </p>
                 <a
                   href="/studio"

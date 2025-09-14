@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
-import { useTopCreators } from '../../src/lib/topCreatorsClient';
+import { useTopCreators } from '../lib/topCreatorsClient';
 import ScoreTooltip from './ScoreTooltip';
 import { SkeletonCreatorItem } from './ui/Skeleton';
 

@@ -1,281 +1,139 @@
-/**
- * Wallet-Keyed Intent Persistence Utilities
- * Handles saving and loading trading intents to/from localStorage keyed by wallet pubkey
- * 
- * Features:
- * - Keys intents by wallet pubkey (falls back to '__no_wallet__' if no wallet)
- * - Safe JSON parsing with fallback to empty array
- * - SSR safe - only accesses localStorage on client side
- * - Comprehensive error handling and validation
- */
+// Wallet Intent Persistence - v1 and v2 storage systems
+// v1: Global storage (legacy)
+// v2: Per-wallet storage (new)
 
-export interface TradingIntent {
+export type TradingIntent = {
   id: string;
-  symbol: string;
-  direction: 'Long' | 'Short';
-  probability: number; // %
-  confidence: number;  // %
-  horizon: string;     // e.g. "30d"
-  thesis: string;
   createdAt: number;
+  title: string;
+  side?: "long" | "short";
+  payload: Record<string, unknown>;
+};
+
+export type V2TradingIntent = {
+  id: string;
+  createdAt: number;
+  title: string;
+  side?: "long" | "short";
+  payload: Record<string, unknown>;
+};
+
+// v1 Global storage functions
+export function loadIntents(): TradingIntent[] {
+  if (typeof window === 'undefined') return [];
+  
+  try {
+    const raw = localStorage.getItem('predikt:intents');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }
 
-/**
- * Normalize pubkey to string format
- * Handles both PublicKey objects and strings
- */
-function normalizePubkey(pubkey?: string | any): string | undefined {
-  if (!pubkey) return undefined;
-  if (typeof pubkey === 'string') return pubkey;
-  if (pubkey.toBase58) return pubkey.toBase58();
-  return String(pubkey);
+export function saveIntents(intents: TradingIntent[]): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem('predikt:intents', JSON.stringify(intents));
+  } catch {
+    // Silent fail
+  }
 }
 
-/**
- * Get the localStorage key for a wallet's intents
- */
-function getStorageKey(pubkey?: string | any): string {
+export function upsertIntent(pubkey: string, intent: TradingIntent): TradingIntent[] {
+  const intents = loadIntents();
+  const existingIndex = intents.findIndex(i => i.id === intent.id);
+  
+  if (existingIndex >= 0) {
+    intents[existingIndex] = intent;
+  } else {
+    intents.unshift(intent);
+  }
+  
+  saveIntents(intents);
+  return intents;
+}
+
+// v2 Per-wallet storage functions
+function normalizePubkey(pubkey: string): string {
+  return pubkey.trim();
+}
+
+export function loadIntentsForV2(pubkey: string): V2TradingIntent[] {
+  if (typeof window === 'undefined') return [];
+  
+  try {
+    const normalizedPubkey = normalizePubkey(pubkey);
+    const v2Key = `predikt:intents:v2:${normalizedPubkey}`;
+    const raw = localStorage.getItem(v2Key);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveIntentsForV2(pubkey: string, intents: V2TradingIntent[]): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    const normalizedPubkey = normalizePubkey(pubkey);
+    const v2Key = `predikt:intents:v2:${normalizedPubkey}`;
+    localStorage.setItem(v2Key, JSON.stringify(intents));
+  } catch {
+    // Silent fail
+  }
+}
+
+export function upsertIntentForV2(pubkey: string, intent: V2TradingIntent): V2TradingIntent[] {
   const normalizedPubkey = normalizePubkey(pubkey);
-  const walletKey = normalizedPubkey || '__no_wallet__';
-  return `predikt:intents:${walletKey}`;
+  const intents = loadIntentsForV2(normalizedPubkey);
+  
+  const existingIndex = intents.findIndex(i => i.id === intent.id);
+  
+  if (existingIndex >= 0) {
+    intents[existingIndex] = intent;
+  } else {
+    intents.unshift(intent);
+  }
+  
+  saveIntentsForV2(normalizedPubkey, intents);
+  
+  console.log(`[WalletIntentPersistence:v2] Saved ${intents.length} intents with key: ${normalizedPubkey}`);
+  return intents;
 }
 
-/**
- * Safe JSON parse with fallback
- */
-function safeParse<T>(input: string | null, fallback: T): T {
-  if (!input) return fallback;
+// Utility functions
+export function clearIntentsForWallet(pubkey: string): void {
+  if (typeof window === 'undefined') return;
+  
   try {
-    return JSON.parse(input);
-  } catch (error) {
-    console.warn('[WalletIntentPersistence] Failed to parse JSON:', error);
-    return fallback;
-  }
-}
-
-/**
- * Load intents for a specific wallet
- * @param pubkey - Wallet public key (base58 string or PublicKey object)
- * @returns Array of trading intents
- */
-export function loadIntents(pubkey?: string | any): TradingIntent[] {
-  // SSR guardrail - only access localStorage on client side
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  try {
-    // If no pubkey provided, try to find intents from any wallet
-    if (!pubkey) {
-      console.log('[WalletIntentPersistence] No pubkey provided, searching for intents from any wallet');
-      return loadIntentsFromAnyWallet();
-    }
-
-    const key = getStorageKey(pubkey);
-    const stored = localStorage.getItem(key);
-    const intents = safeParse<TradingIntent[]>(stored, []);
-    
-    // Validate that it's an array
-    if (!Array.isArray(intents)) {
-      console.warn('[WalletIntentPersistence] Invalid intents data, resetting');
-      localStorage.removeItem(key);
-      return [];
-    }
-    
-    // Validate each intent has required fields
-    const validIntents = intents.filter((intent: any) => {
-      return intent && 
-             typeof intent.id === 'string' &&
-             typeof intent.symbol === 'string' &&
-             (intent.direction === 'Long' || intent.direction === 'Short') &&
-             typeof intent.confidence === 'number' &&
-             typeof intent.probability === 'number' &&
-             typeof intent.horizon === 'string' &&
-             typeof intent.thesis === 'string' &&
-             typeof intent.createdAt === 'number';
-    });
-    
-    if (validIntents.length !== intents.length) {
-      console.warn('[WalletIntentPersistence] Some intents were invalid, filtering them out');
-      // Save the cleaned intents back
-      localStorage.setItem(key, JSON.stringify(validIntents));
-    }
-    
     const normalizedPubkey = normalizePubkey(pubkey);
-    console.log(`[WalletIntentPersistence] Loaded ${validIntents.length} intents for wallet: ${normalizedPubkey?.slice(0, 8) || 'no_wallet'}...`);
-    
-    return validIntents;
-  } catch (error) {
-    console.error('[WalletIntentPersistence] Failed to load intents:', error);
-    return [];
+    const v2Key = `predikt:intents:v2:${normalizedPubkey}`;
+    localStorage.removeItem(v2Key);
+  } catch {
+    // Silent fail
   }
 }
 
-/**
- * Load intents from any wallet when pubkey is not available
- * This is useful during page refresh when wallet connection is still initializing
- */
-function loadIntentsFromAnyWallet(): TradingIntent[] {
-  try {
-    const allIntents: TradingIntent[] = [];
-    
-    // Search through all localStorage keys for intent data
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('predikt:intents:')) {
-        const stored = localStorage.getItem(key);
-        if (stored) {
-          const intents = safeParse<TradingIntent[]>(stored, []);
-          if (Array.isArray(intents)) {
-            // Validate each intent has required fields
-            const validIntents = intents.filter((intent: any) => {
-              return intent && 
-                     typeof intent.id === 'string' &&
-                     typeof intent.symbol === 'string' &&
-                     (intent.direction === 'Long' || intent.direction === 'Short') &&
-                     typeof intent.confidence === 'number' &&
-                     typeof intent.probability === 'number' &&
-                     typeof intent.horizon === 'string' &&
-                     typeof intent.thesis === 'string' &&
-                     typeof intent.createdAt === 'number';
-            });
-            allIntents.push(...validIntents);
-          }
-        }
-      }
-    }
-    
-    // Sort by creation time (newest first)
-    allIntents.sort((a, b) => b.createdAt - a.createdAt);
-    
-    console.log(`[WalletIntentPersistence] Loaded ${allIntents.length} intents from any wallet`);
-    return allIntents;
-  } catch (error) {
-    console.error('[WalletIntentPersistence] Failed to load intents from any wallet:', error);
-    return [];
-  }
+export function removeIntent(pubkey: string, intentId: string): V2TradingIntent[] {
+  const normalizedPubkey = normalizePubkey(pubkey);
+  const intents = loadIntentsForV2(normalizedPubkey);
+  const filteredIntents = intents.filter(intent => intent.id !== intentId);
+  
+  saveIntentsForV2(normalizedPubkey, filteredIntents);
+  return filteredIntents;
 }
 
-/**
- * Save intents for a specific wallet
- * @param pubkey - Wallet public key (base58 string or PublicKey object)
- * @param intents - Array of trading intents to save
- */
-export function saveIntents(pubkey: string | any, intents: TradingIntent[]): void {
-  // SSR guardrail - only access localStorage on client side
-  if (typeof window === 'undefined') {
-    console.warn('[WalletIntentPersistence] saveIntents called on server side, skipping localStorage save');
-    return;
-  }
-
+export function getAllWalletKeys(): string[] {
+  if (typeof window === 'undefined') return [];
+  
   try {
-    const key = getStorageKey(pubkey);
-    localStorage.setItem(key, JSON.stringify(intents));
-    const normalizedPubkey = normalizePubkey(pubkey);
-    console.log(`[WalletIntentPersistence] Saved ${intents.length} intents for wallet: ${normalizedPubkey?.slice(0, 8) || 'no_wallet'}...`);
-  } catch (error) {
-    console.error('[WalletIntentPersistence] Failed to save intents:', error);
-    throw new Error('Failed to save intents to localStorage');
-  }
-}
-
-/**
- * Add or update an intent for a specific wallet
- * @param pubkey - Wallet public key (base58 string or PublicKey object)
- * @param intent - Trading intent to add or update
- */
-export function upsertIntent(pubkey: string | any, intent: TradingIntent): void {
-  try {
-    const intents = loadIntents(pubkey);
-    
-    // Find existing intent by ID
-    const existingIndex = intents.findIndex(i => i.id === intent.id);
-    
-    const normalizedPubkey = normalizePubkey(pubkey);
-    if (existingIndex >= 0) {
-      // Update existing intent
-      intents[existingIndex] = intent;
-      console.log(`[WalletIntentPersistence] Updated intent ${intent.id} for wallet: ${normalizedPubkey?.slice(0, 8) || 'no_wallet'}...`);
-    } else {
-      // Add new intent to the beginning (newest first)
-      intents.unshift(intent);
-      console.log(`[WalletIntentPersistence] Added intent ${intent.id} for wallet: ${normalizedPubkey?.slice(0, 8) || 'no_wallet'}...`);
-    }
-    
-    saveIntents(pubkey, intents);
-  } catch (error) {
-    console.error('[WalletIntentPersistence] Failed to upsert intent:', error);
-    throw new Error('Failed to save intent');
-  }
-}
-
-/**
- * Remove an intent by ID for a specific wallet
- * @param pubkey - Wallet public key (base58 string or PublicKey object)
- * @param intentId - ID of the intent to remove
- */
-export function removeIntent(pubkey: string | any, intentId: string): void {
-  try {
-    const intents = loadIntents(pubkey);
-    const filteredIntents = intents.filter(intent => intent.id !== intentId);
-    
-    const normalizedPubkey = normalizePubkey(pubkey);
-    if (filteredIntents.length !== intents.length) {
-      saveIntents(pubkey, filteredIntents);
-      console.log(`[WalletIntentPersistence] Removed intent ${intentId} for wallet: ${normalizedPubkey?.slice(0, 8) || 'no_wallet'}...`);
-    } else {
-      console.warn(`[WalletIntentPersistence] Intent ${intentId} not found for wallet: ${normalizedPubkey?.slice(0, 8) || 'no_wallet'}...`);
-    }
-  } catch (error) {
-    console.error('[WalletIntentPersistence] Failed to remove intent:', error);
-    throw new Error('Failed to remove intent');
-  }
-}
-
-/**
- * Clear all intents for a specific wallet
- * @param pubkey - Wallet public key (base58 string or PublicKey object)
- */
-export function clearIntents(pubkey: string | any): void {
-  // SSR guardrail - only access localStorage on client side
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    const key = getStorageKey(pubkey);
-    localStorage.removeItem(key);
-    const normalizedPubkey = normalizePubkey(pubkey);
-    console.log(`[WalletIntentPersistence] Cleared all intents for wallet: ${normalizedPubkey?.slice(0, 8) || 'no_wallet'}...`);
-  } catch (error) {
-    console.error('[WalletIntentPersistence] Failed to clear intents:', error);
-  }
-}
-
-/**
- * Get all wallet keys that have stored intents
- * @returns Array of wallet pubkeys that have intents stored
- */
-export function getWalletKeysWithIntents(): string[] {
-  // SSR guardrail - only access localStorage on client side
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  try {
-    const keys: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('predikt:intents:')) {
-        const walletKey = key.replace('predikt:intents:', '');
-        if (walletKey !== '__no_wallet__') {
-          keys.push(walletKey);
-        }
-      }
-    }
-    return keys;
-  } catch (error) {
-    console.error('[WalletIntentPersistence] Failed to get wallet keys:', error);
+    const keys = Object.keys(localStorage);
+    return keys
+      .filter(key => key.startsWith('predikt:intents:v2:'))
+      .map(key => key.replace('predikt:intents:v2:', ''));
+  } catch {
+    // If an error occurs (e.g., localStorage is unavailable), return an empty array.
     return [];
   }
 }

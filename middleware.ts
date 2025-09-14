@@ -66,11 +66,13 @@ export function middleware(request: NextRequest) {
   const method = request.method;
   const identifier = getClientIdentifier(request);
   
-  // Skip middleware for static files and Next.js internals
+  // Skip middleware for static files, Next.js internals, and auth routes
   if (
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/icon.svg') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/api/auth') ||
     pathname.includes('.')
   ) {
     return NextResponse.next();

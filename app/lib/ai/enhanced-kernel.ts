@@ -281,32 +281,45 @@ function generateDrivers(analysis: AdvancedAnalysis): string[] {
 }
 
 function generateRationale(analysis: AdvancedAnalysis): string {
-  const { probability, confidence, scenarios, dataQuality } = analysis;
+  const { probability, confidence, scenarios, dataQuality, topic } = analysis;
   
-  let rationale = `Based on comprehensive analysis of technical indicators, market sentiment, and fundamental factors, `;
+  // Safe null handling with defaults
+  const safeProbability = Number.isFinite(probability) ? probability : 0.5;
+  const safeConfidence = Number.isFinite(confidence) ? confidence : 0.6;
+  const safeDataQuality = Number.isFinite(dataQuality) ? dataQuality : 0.7;
   
-  if (probability > 0.7) {
-    rationale += `the probability appears strongly favorable at ${(probability * 100).toFixed(1)}%. `;
-  } else if (probability > 0.6) {
-    rationale += `the probability appears favorable at ${(probability * 100).toFixed(1)}%. `;
-  } else if (probability > 0.4) {
-    rationale += `the probability appears moderate at ${(probability * 100).toFixed(1)}%. `;
+  // Determine topic scope for appropriate language
+  const topicScope = /crypto|btc|eth|market/i.test(topic || '') ? 'market' : 'general';
+  
+  // Topic-appropriate analysis basis
+  const analysisBasis = topicScope === 'market' 
+    ? 'Based on comprehensive analysis of technical indicators, market sentiment, and fundamental factors'
+    : 'Based on available evidence and assumptions';
+  
+  let rationale = `${analysisBasis}, `;
+  
+  if (safeProbability > 0.7) {
+    rationale += `the probability appears strongly favorable at ${(safeProbability * 100).toFixed(1)}%. `;
+  } else if (safeProbability > 0.6) {
+    rationale += `the probability appears favorable at ${(safeProbability * 100).toFixed(1)}%. `;
+  } else if (safeProbability > 0.4) {
+    rationale += `the probability appears moderate at ${(safeProbability * 100).toFixed(1)}%. `;
   } else {
-    rationale += `the probability appears challenging at ${(probability * 100).toFixed(1)}%. `;
+    rationale += `the probability appears challenging at ${(safeProbability * 100).toFixed(1)}%. `;
   }
   
-  rationale += `Confidence level is ${(confidence * 100).toFixed(0)}% based on data quality of ${(dataQuality * 100).toFixed(0)}%. `;
+  rationale += `Confidence level is ${(safeConfidence * 100).toFixed(0)}% based on data quality of ${(safeDataQuality * 100).toFixed(0)}%. `;
   
-  if (scenarios.length > 0) {
-    const likelyScenario = scenarios.find(s => s.name === 'likely');
-    if (likelyScenario) {
+  if (scenarios && scenarios.length > 0) {
+    const likelyScenario = scenarios.find(s => s?.name === 'likely');
+    if (likelyScenario?.description) {
       rationale += `The most likely scenario suggests ${likelyScenario.description.toLowerCase()}. `;
     }
   }
   
-  if (analysis.risks.length > 0) {
-    const highRisks = analysis.risks.filter(r => r.impact === 'high');
-    if (highRisks.length > 0) {
+  if (analysis?.risks && analysis.risks.length > 0) {
+    const highRisks = analysis.risks.filter(r => r?.impact === 'high');
+    if (highRisks.length > 0 && highRisks[0]?.description) {
       rationale += `Key risks include ${highRisks[0].description.toLowerCase()}. `;
     }
   }

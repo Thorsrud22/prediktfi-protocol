@@ -62,10 +62,14 @@ export async function runPipeline(request: InsightRequest): Promise<InsightRespo
       await simulateDelay(2000, 4000); // Simulate complex analysis
     }
     
-    // Step 9: Generate probability and confidence
+    // Step 9: Generate probability and confidence with null safety
     await simulateDelay(200, 600);
-    const probability = calibrateProbability(context);
-    const confidence = deriveConfidence(context);
+    const rawProbability = calibrateProbability(context);
+    const rawConfidence = deriveConfidence(context);
+    
+    // Ensure valid values with defaults
+    const probability = Number.isFinite(rawProbability) ? rawProbability : 0.5;
+    const confidence = Number.isFinite(rawConfidence) ? rawConfidence : 0.6;
     const interval = calculateProbabilityInterval(probability, confidence);
     
     // Step 10: Generate scenarios
@@ -355,78 +359,118 @@ function buildScenarios(context: PipelineContext, baseProbability: number): Arra
 function generateRationale(context: PipelineContext, probability: number, confidence: number): string {
   const { indicators, sentiment, request, dataQuality } = context;
   
-  const probPercent = Math.round(probability * 100);
-  const confPercent = Math.round(confidence * 100);
-  const isAdvanced = request.analysisType === 'advanced';
+  // Safe null handling with defaults
+  const probPercent = Math.round(Number.isFinite(probability) ? probability * 100 : 50);
+  const confPercent = Math.round(Number.isFinite(confidence) ? confidence * 100 : 60);
+  const isAdvanced = request?.analysisType === 'advanced';
+  
+  // Determine topic scope for appropriate language
+  const topic = request?.category || request?.topic || 'General';
+  const scope = /crypto|btc|eth|market/i.test(topic) ? 'market' : 'general';
   
   // Create structured, professional analysis sections
   let sections: string[] = [];
   
-  // Executive Summary
-  const analysisType = isAdvanced ? 'comprehensive multi-source' : 'standard market';
-  sections.push(`**Executive Summary**\nBased on ${analysisType} analysis, this prediction has a ${probPercent}% probability with ${confPercent}% confidence.`);
+  // Executive Summary with topic-appropriate language
+  const analysisType = isAdvanced ? 'comprehensive multi-source' : 'standard';
+  const analysisBasis = scope === 'market' 
+    ? `Based on ${analysisType} market analysis` 
+    : `Based on available evidence and assumptions`;
+  sections.push(`**Executive Summary**\n${analysisBasis}, this prediction has a ${probPercent}% probability with ${confPercent}% confidence.`);
   
   // Data Quality Assessment
-  const dataQualityPercent = Math.round(dataQuality * 100);
-  const dataSources = isAdvanced ? 'technical indicators, sentiment analysis, fundamental data, and market intelligence' : 'technical indicators and market sentiment';
+  const dataQualityPercent = Math.round(Number.isFinite(dataQuality) ? dataQuality * 100 : 70);
+  const dataSources = scope === 'market' 
+    ? (isAdvanced ? 'technical indicators, sentiment analysis, fundamental data, and market intelligence' : 'technical indicators and market sentiment')
+    : (isAdvanced ? 'available data sources, contextual analysis, and comprehensive research' : 'available evidence and contextual factors');
   sections.push(`**Data Quality Assessment**\nAnalysis incorporates ${dataQualityPercent}% quality data from ${dataSources}.`);
   
-  // Technical Analysis
-  let technicalText = `**Technical Analysis**\n`;
-  if (indicators.trend === 'up') {
-    technicalText += `Current trend is bullish with positive momentum indicators. `;
-  } else if (indicators.trend === 'down') {
-    technicalText += `Current trend is bearish with negative momentum indicators. `;
-  } else {
-    technicalText += `Market is in a neutral trend with mixed signals. `;
-  }
-  
-  // RSI insights
-  if (indicators.rsi > 70) {
-    technicalText += `RSI at ${indicators.rsi.toFixed(1)} indicates overbought conditions.`;
-  } else if (indicators.rsi < 30) {
-    technicalText += `RSI at ${indicators.rsi.toFixed(1)} shows oversold levels.`;
-  } else {
-    technicalText += `RSI at ${indicators.rsi.toFixed(1)} is in neutral territory.`;
-  }
-  
-  // Additional technical details for advanced analysis
-  if (isAdvanced) {
-    technicalText += ` Moving averages show ${indicators.sma20 > indicators.sma50 ? 'bullish' : 'bearish'} crossover pattern.`;
-    if (indicators.atr) {
+  // Technical Analysis (only for market scope)
+  let technicalText = '';
+  if (scope === 'market' && indicators) {
+    technicalText = `**Technical Analysis**\n`;
+    const trend = indicators?.trend || 'neutral';
+    if (trend === 'up') {
+      technicalText += `Current trend is bullish with positive momentum indicators. `;
+    } else if (trend === 'down') {
+      technicalText += `Current trend is bearish with negative momentum indicators. `;
+    } else {
+      technicalText += `Market is in a neutral trend with mixed signals. `;
+    }
+    
+    // RSI insights with null safety
+    const rsi = indicators?.rsi;
+    if (Number.isFinite(rsi)) {
+      if (rsi > 70) {
+        technicalText += `RSI at ${rsi.toFixed(1)} indicates overbought conditions.`;
+      } else if (rsi < 30) {
+        technicalText += `RSI at ${rsi.toFixed(1)} shows oversold levels.`;
+      } else {
+        technicalText += `RSI at ${rsi.toFixed(1)} is in neutral territory.`;
+      }
+    }
+    
+    // Additional technical details for advanced analysis
+    if (isAdvanced && Number.isFinite(indicators?.sma20) && Number.isFinite(indicators?.sma50)) {
+      technicalText += ` Moving averages show ${indicators.sma20 > indicators.sma50 ? 'bullish' : 'bearish'} crossover pattern.`;
+    }
+    if (Number.isFinite(indicators?.atr)) {
       technicalText += ` ATR indicates ${indicators.atr > 0.05 ? 'high' : 'moderate'} volatility.`;
     }
   }
   
-  sections.push(technicalText);
-  
-  // Market Sentiment
-  if (Math.abs(sentiment) > 0.1) {
-    const sentimentText = sentiment > 0 ? 'positive' : 'negative';
-    const impact = sentiment > 0 ? 'supporting upside scenarios' : 'creating downside pressure';
-    const sentimentStrength = Math.abs(sentiment) > 0.5 ? 'strong' : 'moderate';
-    sections.push(`**Market Sentiment**\nCurrent sentiment is ${sentimentStrength} ${sentimentText}, ${impact}.`);
+  if (technicalText) {
+    sections.push(technicalText);
   }
   
-  // Advanced Analysis Features
+  // Sentiment Analysis (topic-aware)
+  const sentimentValue = Number.isFinite(sentiment) ? sentiment : 0;
+  if (Math.abs(sentimentValue) > 0.1) {
+    const sentimentText = sentimentValue > 0 ? 'positive' : 'negative';
+    const sentimentStrength = Math.abs(sentimentValue) > 0.5 ? 'strong' : 'moderate';
+    
+    if (scope === 'market') {
+      const impact = sentimentValue > 0 ? 'supporting upside scenarios' : 'creating downside pressure';
+      sections.push(`**Market Sentiment**\nCurrent sentiment is ${sentimentStrength} ${sentimentText}, ${impact}.`);
+    } else {
+      const impact = sentimentValue > 0 ? 'supporting favorable outcomes' : 'indicating challenges ahead';
+      sections.push(`**Contextual Sentiment**\nCurrent sentiment is ${sentimentStrength} ${sentimentText}, ${impact}.`);
+    }
+  }
+  
+  // Advanced Analysis Features (topic-aware)
   if (isAdvanced) {
-    sections.push(`**Advanced Research**\nComprehensive analysis includes multi-timeframe technical patterns, cross-asset correlation analysis, and institutional flow indicators.`);
+    if (scope === 'market') {
+      sections.push(`**Advanced Research**\nComprehensive analysis includes multi-timeframe technical patterns, cross-asset correlation analysis, and institutional flow indicators.`);
+    } else {
+      sections.push(`**Advanced Research**\nComprehensive analysis includes multi-source data integration, contextual pattern recognition, and comprehensive scenario modeling.`);
+    }
   }
   
-  // Risk Assessment
+  // Risk Assessment (topic-aware with null safety)
   let riskFactors: string[] = [];
   
-  if (request.category === 'crypto') {
+  if (request?.category === 'crypto') {
     riskFactors.push('Crypto markets are highly volatile');
+  } else if (scope !== 'market') {
+    riskFactors.push('Non-market predictions involve inherent uncertainty');
   }
-  if (indicators.rsi > 70 || indicators.rsi < 30) {
+  
+  if (scope === 'market' && Number.isFinite(indicators?.rsi) && (indicators.rsi > 70 || indicators.rsi < 30)) {
     riskFactors.push('Technical indicators suggest potential reversal risk');
   }
-  if (dataQuality < 0.7) {
+  
+  const dataQualityValue = Number.isFinite(dataQuality) ? dataQuality : 0.7;
+  if (dataQualityValue < 0.7) {
     riskFactors.push('Limited data availability increases uncertainty');
   }
+  
   if (isAdvanced) {
-    riskFactors.push('Advanced analysis accounts for macro-economic factors and regulatory risks');
+    if (scope === 'market') {
+      riskFactors.push('Advanced analysis accounts for macro-economic factors and regulatory risks');
+    } else {
+      riskFactors.push('Advanced analysis accounts for complex interdependencies and external factors');
+    }
   }
   
   if (riskFactors.length > 0) {

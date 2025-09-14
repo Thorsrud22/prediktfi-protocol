@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import Link from 'next/link';
-import { useTopCreators } from '../../src/lib/topCreatorsClient';
+import { useTopCreators } from '../lib/topCreatorsClient';
 import { SkeletonCard } from './ui/Skeleton';
 
 interface TrendingMarket {

@@ -2,9 +2,53 @@
 
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { upsertIntent, type TradingIntent as NewTradingIntent } from '../lib/wallet-intent-persistence'
+import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider'
+import { upsertIntent, upsertIntentForV2, type TradingIntent as NewTradingIntent } from '../lib/wallet-intent-persistence'
 import { useIntentDraft } from '../lib/store/intent-draft-store'
+
+// v2 helpers scoped in denne fila
+type TradingIntent = {
+  id: string
+  createdAt: number
+  title: string
+  side?: "long" | "short"
+  payload: Record<string, unknown>
+}
+
+
+
+// Helpers for per-wallet intent storage in localStorage (legacy v1)
+function intentsKey(base58?: string | null) {
+  return base58 ? `predikt:intents:${base58}` : null
+}
+
+function loadIntentsFor(base58?: string | null): TradingIntent[] {
+  try {
+    const k = intentsKey(base58)
+    if (!k) return []
+    const raw = localStorage.getItem(k)
+    return raw ? (JSON.parse(raw) as TradingIntent[]) : []
+  } catch {
+    return []
+  }
+}
+
+function saveIntentsFor(base58?: string | null, intents: TradingIntent[]) {
+  try {
+    const k = intentsKey(base58)
+    if (!k) return
+    localStorage.setItem(k, JSON.stringify(intents))
+  } catch {}
+}
+
+function upsertIntentFor(base58: string, intent: TradingIntent) {
+  const list = loadIntentsFor(base58)
+  const i = list.findIndex(x => x.id === intent.id)
+  if (i >= 0) list[i] = intent
+  else list.unshift(intent)
+  saveIntentsFor(base58, list)
+  return list
+}
 
 interface InsightResponse {
   probability: number; // 0 to 1
@@ -96,7 +140,7 @@ function convertDraftToNewIntent(draft: ReturnType<typeof buildTradeDraftFromIns
 
 export default function TradeButton({ children, className, title, disabled, insight }: TradeButtonProps) {
   const router = useRouter()
-  const { publicKey } = useWallet()
+  const { publicKey } = useSimplifiedWallet()
   const { setDraft, createDraft } = useIntentDraft()
 
   const handleClick = useCallback(async () => {
@@ -114,7 +158,28 @@ export default function TradeButton({ children, className, title, disabled, insi
         // Also save to wallet-keyed storage if wallet is connected
         if (publicKey) {
           const newIntent = convertDraftToNewIntent(draftData);
-          upsertIntent(publicKey.toBase58(), newIntent);
+          upsertIntent(publicKey, newIntent);
+          
+          // Save using the new v2 per-wallet storage system
+          const base58 = publicKey;
+          const intent: TradingIntent = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+            createdAt: Date.now(),
+            title: `${draftData.direction} ${draftData.assetSymbol}`,
+            side: draftData.direction.toLowerCase() as "long" | "short",
+            payload: { 
+              predictionId: newIntent.id,
+              symbol: draftData.assetSymbol,
+              assetSymbol: draftData.assetSymbol,
+              category: 'Crypto', // Default category for now
+              probability: draftData.probability,
+              confidence: draftData.confidence,
+              side: draftData.direction.toLowerCase(),
+              mode: "dev"
+            }
+          };
+          const after = upsertIntentForV2(base58, intent);
+          console.log("[Trade:v2] saved len:", after.length, "key:", `predikt:intents:v2:${base58}`);
           
           console.log('[Trade] Intent created and saved to wallet storage:', { 
             id: newIntent.id, 
@@ -122,7 +187,7 @@ export default function TradeButton({ children, className, title, disabled, insi
             direction: newIntent.direction,
             probability: newIntent.probability,
             confidence: newIntent.confidence,
-            wallet: publicKey.toBase58().slice(0, 8) + '...'
+            wallet: publicKey.slice(0, 8) + '...'
           });
         } else {
           console.log('[Trade] Draft created (no wallet connected):', { 

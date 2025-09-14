@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { safeParse, safeLocalStorageGet, safeLocalStorageSet } from "../lib/safe-fetch";
 import { fmt, fmtPct } from "../lib/num";
+import { useSimplifiedWallet } from "../components/wallet/SimplifiedWalletProvider";
 
 import InsightForm from "../components/Studio/InsightForm";
 import InsightPreview from "../components/Studio/InsightPreview";
@@ -17,10 +18,53 @@ import { enhancedPredict, type EnhancedPredictInput, type EnhancedPredictOutput 
 import { env } from "../lib/env";
 import { persistReferralData } from "../lib/share";
 import { getQuota, bumpQuota, isExhausted, resetIfNewDay } from "../lib/quota";
+import { pushLocalFeed, type FeedItem, FEED_KEY } from "../lib/feed-cache";
+import { upsertIntentForV2, type V2TradingIntent } from "../lib/wallet-intent-persistence";
 import { useIsPro } from "../lib/use-plan";
 import { isFeatureEnabled } from "../lib/flags";
 import { quoteCache } from "../lib/aggregators/quote-cache";
 import { getTokenMint } from "../lib/aggregators/jupiter";
+
+// Helpers for per-wallet intent storage in localStorage
+type TradingIntent = {
+  id: string
+  createdAt: number
+  title: string
+  side?: "long" | "short"
+  payload: Record<string, unknown>
+}
+
+function intentsKey(base58?: string | null) {
+  return base58 ? `predikt:intents:${base58}` : null
+}
+
+function loadIntentsFor(base58?: string | null): TradingIntent[] {
+  try {
+    const k = intentsKey(base58)
+    if (!k) return []
+    const raw = localStorage.getItem(k)
+    return raw ? (JSON.parse(raw) as TradingIntent[]) : []
+  } catch {
+    return []
+  }
+}
+
+function saveIntentsFor(base58: string | null | undefined, intents: TradingIntent[]) {
+  try {
+    const k = intentsKey(base58)
+    if (!k) return
+    localStorage.setItem(k, JSON.stringify(intents))
+  } catch {}
+}
+
+function upsertIntentFor(base58: string, intent: TradingIntent) {
+  const list = loadIntentsFor(base58)
+  const i = list.findIndex(x => x.id === intent.id)
+  if (i >= 0) list[i] = intent
+  else list.unshift(intent)
+  saveIntentsFor(base58, list)
+  return list
+}
 
 // Safe JSON parser to avoid console SyntaxError overlays in dev
 function parseJsonOr<T>(input: string | null, fallback: T, context = 'unknown'): T {
@@ -34,6 +78,7 @@ function StudioContent() {
   const searchParams = useSearchParams();
   const [isProOverride, setIsProOverride] = useState(false);
   const isPro = useIsPro() || isProOverride;
+  const { publicKey, isConnected } = useSimplifiedWallet();
 
   // Clear corrupted localStorage on mount and add global error handler
   useEffect(() => {
@@ -103,7 +148,7 @@ function StudioContent() {
     totalSteps: number;
     message: string;
   } | null>(null);
-  const [insightResponse, setInsightResponse] = useState<any>(null);
+  const [insightResponse, setInsightResponse] = useState<InsightResponse | null>(null);
   
   // E9.0 Save and stamp states
   const [saveModalOpen, setSaveModalOpen] = useState(false);
@@ -245,18 +290,32 @@ function StudioContent() {
       if (typeof window !== "undefined") {
         try {
           const currentResponse = insightResponse;
-          const insight: any = {
+          const insight: {
+            kind: "insight";
+            topic: string;
+            question: string;
+            horizon: string;
+            prob: number;
+            drivers: string[];
+            rationale: string;
+            model: string;
+            confidence: number;
+            ts: string;
+            metrics?: any;
+            ref?: string;
+            creatorId?: string;
+          } = {
             kind: "insight" as const,
             topic: insightInput.topic,
             question: insightInput.question,
             horizon: insightInput.horizon,
-            prob: currentResponse.probability,
-            drivers: currentResponse.scenarios?.[0]?.drivers || [],
-            rationale: currentResponse.rationale,
+            prob: currentResponse?.probability || 0,
+            drivers: currentResponse?.scenarios?.[0]?.drivers || [],
+            rationale: currentResponse?.rationale || "",
             model: useAdvancedAnalysis ? "advanced-v1" : "e8.1-pipeline",
-            confidence: currentResponse.confidence,
+            confidence: currentResponse?.confidence || 0,
             ts: new Date().toISOString(),
-            metrics: currentResponse.metrics,
+            metrics: currentResponse?.metrics,
             // No signature yet (only added after on-chain logging)
           };
 
@@ -266,7 +325,7 @@ function StudioContent() {
           if (ref) insight.ref = ref;
           if (creatorId) insight.creatorId = creatorId;
 
-          const insights = safeLocalStorageGet<any[]>("predikt:insights", [], 'studio-save-insights');
+          const insights: Array<{kind: "insight"; topic: string; question: string; horizon: string; prob: number; drivers: string[]; rationale: string; model: string; confidence: number; ts: string; metrics?: any; ref?: string; creatorId?: string}> = safeLocalStorageGet("predikt:insights", [], 'studio-save-insights');
           insights.unshift(insight);
           
           // Keep only last 5
@@ -436,77 +495,137 @@ function StudioContent() {
     setSavedInsightId(null);
   };
 
+
   const handleSaveInsight = async (stampOnChain: boolean = false) => {
     if (!input || !insightResponse) return;
     
     setSaving(true);
     
-    try {
-      const payload = {
-        question: input.question,
-        category: input.topic,
-        horizon: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        creatorHandle: 'anonymous', // In real app, get from user auth
-      };
+    // Scope detection and safe defaults (same as in preview)
+    const topic = String(insightResponse?.category || input?.topic || '').toLowerCase();
+    const isMarket = /(crypto|btc|eth|sol|market|price|token|stock|index)/i.test(topic);
+    const scope: 'market' | 'general' = isMarket ? 'market' : 'general';
+    
+    const probability = Number.isFinite(insightResponse?.probability) ? insightResponse.probability : 0.5;
+    const confidence = Number.isFinite(insightResponse?.confidence) ? insightResponse.confidence : 0.6;
+    
+    const payload = {
+      title: input.question ?? 'Untitled',
+      probability,
+      confidence,
+      scope,
+      raw: insightResponse ?? null,
+      question: input.question,
+      category: input.topic,
+      horizon: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      creatorHandle: 'anonymous',
+    };
 
+    try {
       const res = await fetch('/api/insight', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      // Try to read json, otherwise text, before we decide
-      let body: any = null
-      try { body = await res.clone().json() } catch { try { body = await res.text() } catch {} }
-
-      if (!res.ok) {
-        const serverMsg =
-          (body && typeof body === 'object' && (body.error || body.message)) ||
-          (typeof body === 'string' ? body.slice(0, 300) : '') ||
-          'Unknown error'
-        // Don't throw hard error (dev-overlay), but give useful message:
-        console.warn('[SaveError]', res.status, serverMsg)
-        // TODO: replace with your toast solution if you have one:
-        alert(`Save failed (${res.status}): ${serverMsg}`)
-        return
-      }
-
-      // Success: 'body' is already our data
-      const savedInsight = body
-      setSavedInsightId(savedInsight.id);
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
       
-      // Clean up URL - remove any draft banner/params and push clean URL
-      if (typeof window !== 'undefined') {
-        const currentUrl = new URL(window.location.href);
-        const hasDraftParams = currentUrl.searchParams.has('draft') || 
-                              currentUrl.searchParams.has('banner') ||
-                              currentUrl.searchParams.has('intent');
+      if (!res.ok) throw new Error(`save failed ${res.status}`);
+      
+      const data = await res.json();
+      const savedInsight = { id: data.id, ...payload };
+      
+      // Add to optimistic feed cache with exact structure
+      const item: FeedItem = {
+        id: savedInsight.id,
+        createdAt: Date.now(),
+        title: savedInsight.title || 'Untitled',
+        category: (scope === 'market' ? 'crypto' : 'general'),
+        probability: Number.isFinite(probability) ? probability : 50,
+        confidence: Number.isFinite(confidence) ? confidence : 60,
+        source: 'studio',
+      };
+      pushLocalFeed(item);
+      console.log('[Feed:local:len]', JSON.parse(localStorage.getItem(FEED_KEY)||'[]').length);
+      
+      proceedToPreview(savedInsight, stampOnChain);
+      
+    } catch (err) {
+      if (process.env.NODE_ENV === 'development') {
+        // DEV fallback: local storage + proceed to preview
+        const id = `local_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+        const key = 'predikt:insights:dev';
+        const arr = JSON.parse(localStorage.getItem(key) || '[]');
+        arr.unshift({ id, createdAt: Date.now(), ...payload });
+        localStorage.setItem(key, JSON.stringify(arr));
+        console.warn('[DEV SAVE] API failed, saved locally as', id, err);
         
-        if (hasDraftParams) {
-          // Remove draft-related parameters
-          currentUrl.searchParams.delete('draft');
-          currentUrl.searchParams.delete('banner');
-          currentUrl.searchParams.delete('intent');
-          
-          // Push clean URL to history
-          window.history.pushState({}, '', currentUrl.pathname + currentUrl.search);
-        }
-      }
-      
-      // If user wants to stamp on chain
-      if (stampOnChain) {
-        await handleStampInsight(savedInsight.id);
+        const savedInsight = { id, ...payload };
+        
+        // Add to optimistic feed cache even in dev fallback with exact structure
+        const item: FeedItem = {
+          id: savedInsight.id,
+          createdAt: Date.now(),
+          title: savedInsight.title || 'Untitled',
+          category: (scope === 'market' ? 'crypto' : 'general'),
+          probability: Number.isFinite(probability) ? probability : 50,
+          confidence: Number.isFinite(confidence) ? confidence : 60,
+          source: 'studio',
+        };
+        pushLocalFeed(item);
+        console.log('[Feed:local:len]', JSON.parse(localStorage.getItem(FEED_KEY)||'[]').length);
+        
+        proceedToPreview(savedInsight, stampOnChain);
       } else {
-        setSaveModalOpen(false);
-        // Navigate to the saved insight
-        window.open(`/i/${savedInsight.id}`, '_blank');
+        // Prod: show clear error message, don't block entire UI
+        console.error('Save failed:', err);
+        alert('Could not save. Please try again.');
       }
-      
-    } catch (error) {
-      console.error('Failed to save insight:', error);
-      alert('Failed to save insight. Please try again.');
     } finally {
       setSaving(false);
+      setSaveModalOpen(false);
+    }
+  };
+
+  const proceedToPreview = async (savedInsight: any, stampOnChain: boolean = false) => {
+    // Set the saved insight ID for tracking
+    setSavedInsightId(savedInsight.id);
+    
+    // Save to per-wallet storage if wallet is connected
+    if (isConnected && publicKey) {
+      const base58 = publicKey;
+      const intent: TradingIntent = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        createdAt: Date.now(),
+        title: savedInsight.title || "Prediction",
+        side: undefined, // Will be set by user selection in modal
+        payload: { predictionId: savedInsight.id, mode: "dev" }
+      };
+      upsertIntentFor(base58, intent);
+    }
+    
+    // Clean up URL - remove any draft banner/params and push clean URL
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href);
+      const hasDraftParams = currentUrl.searchParams.has('draft') || 
+                            currentUrl.searchParams.has('banner') ||
+                            currentUrl.searchParams.has('intent');
+      
+      if (hasDraftParams) {
+        // Remove draft-related parameters
+        currentUrl.searchParams.delete('draft');
+        currentUrl.searchParams.delete('banner');
+        currentUrl.searchParams.delete('intent');
+        
+        // Push clean URL to history
+        window.history.pushState({}, '', currentUrl.pathname + currentUrl.search);
+      }
+    }
+    
+    // If user wants to stamp on chain
+    if (stampOnChain) {
+      await handleStampInsight(savedInsight.id);
+    } else {
+      // Navigate to the saved insight
+      window.open(`/i/${savedInsight.id}`, '_blank');
     }
   };
 
@@ -557,6 +676,26 @@ function StudioContent() {
       setStamping(false);
     }
   };
+
+  // Scope detection and safe number handling (moved out of JSX)
+  const topic = String(insightResponse?.category || input?.topic || '').toLowerCase();
+  const isMarket = /(crypto|btc|eth|sol|market|price|token|stock|index)/i.test(topic);
+  const scope: 'market' | 'general' = isMarket ? 'market' : 'general';
+  
+  const probability = Number.isFinite(insightResponse?.probability) ? (insightResponse?.probability ?? 0.5) : 0.5;
+  const confidence = Number.isFinite(insightResponse?.confidence) ? (insightResponse?.confidence ?? 0.6) : 0.6;
+  
+  // Update Executive Summary copy
+  const summaryLead = scope === 'market'
+    ? 'Based on market analysis and signals'
+    : 'Based on available evidence and assumptions';
+
+  // Process rationale to update Executive Summary
+  const processedRationale = insightResponse?.rationale ? 
+    insightResponse.rationale.replace(
+      /Based on .*?analysis/,
+      summaryLead
+    ) : `${summaryLead}, this prediction has a ${Math.round((probability || 0.5) * 100)}% probability with ${Math.round((confidence || 0.6) * 100)}% confidence.`;
 
   return (
     <div className="min-h-screen">
@@ -925,76 +1064,116 @@ function StudioContent() {
         )}
 
         {currentStep === "preview" && input && insightResponse && (
-          <div className="space-y-8">
-            {/* E8.1 Results Panel */}
-            <div className="bg-[color:var(--surface)] rounded-xl shadow-lg border border-[var(--border)] p-8">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4">
-                  <span className="text-3xl font-bold text-white">
-                    {Math.round(insightResponse.probability * 100)}%
-                  </span>
+            <div className="space-y-8">
+              {/* E8.1 Results Panel */}
+              <div className="bg-[color:var(--surface)] rounded-xl shadow-lg border border-[var(--border)] p-8">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4">
+                    <span className="text-3xl font-bold text-white">
+                      {Math.round(probability * 100)}%
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-[color:var(--text)] mb-2">
+                    Probability Assessment
+                  </h2>
+                  <div className="flex items-center justify-center space-x-4 text-sm text-[color:var(--muted)]">
+                    <span>Confidence: {Math.round(confidence * 100)}%</span>
+                    <span>•</span>
+                    <span>
+                      Range: {Math.round((insightResponse?.interval?.lower || 0) * 100)}% - {Math.round((insightResponse?.interval?.upper || 0) * 100)}%
+                    </span>
+                  </div>
                 </div>
-                <h2 className="text-2xl font-bold text-[color:var(--text)] mb-2">
-                  Probability Assessment
-                </h2>
-                <div className="flex items-center justify-center space-x-4 text-sm text-[color:var(--muted)]">
-                  <span>Confidence: {Math.round(insightResponse.confidence * 100)}%</span>
-                  <span>•</span>
-                  <span>
-                    Range: {Math.round(insightResponse.interval.lower * 100)}% - {Math.round(insightResponse.interval.upper * 100)}%
-                  </span>
-                </div>
-              </div>
 
-              {/* Technical Metrics */}
-              {insightResponse.metrics && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
-                    <div className="text-lg font-semibold text-[color:var(--text)]">
-                      {fmt(insightResponse.metrics.rsi, 1)}
+                {/* Market Metrics - Only show for market scope */}
+                {scope === 'market' && insightResponse.metrics && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
+                      <div className="text-lg font-semibold text-[color:var(--text)]">
+                        {fmt(insightResponse.metrics.rsi, 1)}
+                      </div>
+                      <div className="text-sm text-[color:var(--muted)]">RSI</div>
                     </div>
-                    <div className="text-sm text-[color:var(--muted)]">RSI</div>
-                  </div>
-                  <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
-                    <div className="text-lg font-semibold text-[color:var(--text)]">
-                      {insightResponse.metrics.trend || 'neutral'}
+                    <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
+                      <div className="text-lg font-semibold text-[color:var(--text)]">
+                        {insightResponse?.metrics?.trend || 'neutral'}
+                      </div>
+                      <div className="text-sm text-[color:var(--muted)]">Trend</div>
                     </div>
-                    <div className="text-sm text-[color:var(--muted)]">Trend</div>
-                  </div>
-                  <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
-                    <div className="text-lg font-semibold text-[color:var(--text)]">
-                      {fmt(insightResponse.metrics.sentiment, 2)}
+                    <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
+                      <div className="text-lg font-semibold text-[color:var(--text)]">
+                        {fmt(insightResponse.metrics.sentiment, 2)}
+                      </div>
+                      <div className="text-sm text-[color:var(--muted)]">Sentiment</div>
                     </div>
-                    <div className="text-sm text-[color:var(--muted)]">Sentiment</div>
-                  </div>
-                  <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
-                    <div className="text-lg font-semibold text-[color:var(--text)]">
-                      {insightResponse.tookMs}ms
+                    <div className="text-center p-4 bg-[color:var(--surface-2)] rounded-lg border border-[var(--border)]">
+                      <div className="text-lg font-semibold text-[color:var(--text)]">
+                        {insightResponse.tookMs}ms
+                      </div>
+                      <div className="text-sm text-[color:var(--muted)]">Processing</div>
                     </div>
-                    <div className="text-sm text-[color:var(--muted)]">Processing</div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Professional Analysis */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-[color:var(--text)] mb-4">Professional Analysis</h3>
-                <div className="bg-[color:var(--surface-2)] rounded-lg p-6 border border-[var(--border)] space-y-4">
-                  {insightResponse.rationale.split('\n\n').map((section: string, index: number) => (
-                    <div key={index} className="border-b border-[var(--border)] last:border-b-0 pb-4 last:pb-0">
-                      {section.includes('**') ? (
-                        <div dangerouslySetInnerHTML={{
-                          __html: section
-                            .replace(/\*\*(.*?)\*\*/g, '<h4 class="font-semibold text-[color:var(--text)] mb-2">$1</h4>')
-                            .replace(/\n/g, '<br/>')
-                        }} />
-                      ) : (
-                        <p className="text-[color:var(--muted)] leading-relaxed">{section}</p>
-                      )}
+                {/* General Analysis - Only show for general scope */}
+                {scope === 'general' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div className="bg-[color:var(--surface-2)] rounded-lg p-4 border border-[var(--border)]">
+                      <h4 className="font-semibold text-[color:var(--text)] mb-3">Key Drivers</h4>
+                      <ul className="space-y-2 text-sm text-[color:var(--muted)]">
+                        <li className="flex items-start">
+                          <span className="text-blue-400 mr-2">•</span>
+                          Evidence strength and reliability
+                        </li>
+                        <li className="flex items-start">
+                          <span className="text-blue-400 mr-2">•</span>
+                          Historical precedent analysis
+                        </li>
+                        <li className="flex items-start">
+                          <span className="text-blue-400 mr-2">•</span>
+                          Contextual factors and timing
+                        </li>
+                      </ul>
                     </div>
-                  ))}
+                    <div className="bg-[color:var(--surface-2)] rounded-lg p-4 border border-[var(--border)]">
+                      <h4 className="font-semibold text-[color:var(--text)] mb-3">Risk Factors</h4>
+                      <ul className="space-y-2 text-sm text-[color:var(--muted)]">
+                        <li className="flex items-start">
+                          <span className="text-orange-400 mr-2">•</span>
+                          Counterarguments and opposing views
+                        </li>
+                        <li className="flex items-start">
+                          <span className="text-orange-400 mr-2">•</span>
+                          Uncertainty and unknowns
+                        </li>
+                        <li className="flex items-start">
+                          <span className="text-orange-400 mr-2">•</span>
+                          External factors and dependencies
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {/* Professional Analysis */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-[color:var(--text)] mb-4">Professional Analysis</h3>
+                  <div className="bg-[color:var(--surface-2)] rounded-lg p-6 border border-[var(--border)] space-y-4">
+                    {processedRationale.split('\n\n').map((section: string, index: number) => (
+                      <div key={index} className="border-b border-[var(--border)] last:border-b-0 pb-4 last:pb-0">
+                        {section.includes('**') ? (
+                          <div dangerouslySetInnerHTML={{
+                            __html: section
+                              .replace(/\*\*(.*?)\*\*/g, '<h4 class="font-semibold text-[color:var(--text)] mb-2">$1</h4>')
+                              .replace(/\n/g, '<br/>')
+                          }} />
+                        ) : (
+                          <p className="text-[color:var(--muted)] leading-relaxed">{section}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
               {/* Scenarios */}
               {insightResponse.scenarios && insightResponse.scenarios.length > 0 && (
@@ -1097,6 +1276,30 @@ interface SaveInsightModalProps {
 
 function SaveInsightModal({ open, onClose, insight, onSave, saving, stamping, isPro }: SaveInsightModalProps) {
   const [wantToStamp, setWantToStamp] = useState(false);
+  const [side, setSide] = useState<"long" | "short" | null>(null);
+  const { publicKey, isConnected } = useSimplifiedWallet();
+  
+  const handleSaveWithIntent = async (stampOnChain: boolean) => {
+    // Call the original save function
+    await onSave(stampOnChain);
+    
+    // If wallet is isConnected and side is selected, save to per-wallet storage
+    if (isConnected && publicKey && side && insight) {
+      const base58 = publicKey;
+      const intent: TradingIntent = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        createdAt: Date.now(),
+        title: insight.question || "Prediction",
+        side: side,
+        payload: { 
+          predictionId: insight.id || "unknown", 
+          side: side,
+          mode: "dev"
+        }
+      };
+      upsertIntentFor(base58, intent);
+    }
+  };
   
   if (!open) return null;
   
@@ -1145,6 +1348,46 @@ function SaveInsightModal({ open, onClose, insight, onSave, saving, stamping, is
             </div>
           </div>
 
+          {/* Trading Direction Selection */}
+          {isConnected && publicKey && (
+            <div className="mb-6">
+              <h3 className="font-medium text-[color:var(--text)] mb-3">Trading Direction</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setSide("long")}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    side === "long"
+                      ? "border-green-500 bg-green-500/10 text-green-400"
+                      : "border-gray-300 hover:border-green-400 text-gray-400 hover:text-green-300"
+                  }`}
+                  disabled={saving || stamping}
+                >
+                  <div className="text-center">
+                    <div className="text-lg font-semibold">Long</div>
+                    <div className="text-xs">Bullish position</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setSide("short")}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    side === "short"
+                      ? "border-red-500 bg-red-500/10 text-red-400"
+                      : "border-gray-300 hover:border-red-400 text-gray-400 hover:text-red-300"
+                  }`}
+                  disabled={saving || stamping}
+                >
+                  <div className="text-center">
+                    <div className="text-lg font-semibold">Short</div>
+                    <div className="text-xs">Bearish position</div>
+                  </div>
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Select your trading direction to save this prediction for future trading
+              </p>
+            </div>
+          )}
+
           {/* Stamping Option */}
           <div className="mb-6">
             <div className="flex items-start space-x-3">
@@ -1180,14 +1423,14 @@ function SaveInsightModal({ open, onClose, insight, onSave, saving, stamping, is
           {/* Actions */}
           <div className="flex space-x-3">
             <button
-              onClick={() => onSave(false)}
+              onClick={() => handleSaveWithIntent(false)}
               disabled={saving || stamping || !hasInsight}
               className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save Only'}
             </button>
             <button
-              onClick={() => onSave(wantToStamp)}
+              onClick={() => handleSaveWithIntent(wantToStamp)}
               disabled={saving || stamping || !hasInsight}
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               title={wantToStamp && ((process.env.NEXT_PUBLIC_SOLANA_CLUSTER !== 'mainnet') || !isPro) ? 
@@ -1251,13 +1494,27 @@ function SaveInsightModal({ open, onClose, insight, onSave, saving, stamping, is
 }
 
 function RecentInsightsFeed() {
-  const [insights, setInsights] = useState<any[]>([]);
+  const [insights, setInsights] = useState<{
+    kind: "insight";
+    topic: string;
+    question: string;
+    horizon: string;
+    prob: number;
+    drivers: string[];
+    rationale: string;
+    model: string;
+    confidence: number;
+    ts: string;
+    metrics?: any;
+    ref?: string;
+    creatorId?: string;
+  }[]>([]);
 
   // Load insights from localStorage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        const parsed = safeLocalStorageGet<any[]>("predikt:insights", [], 'studio-recent-insights');
+        const parsed = safeLocalStorageGet<typeof insights>("predikt:insights", [], 'studio-recent-insights');
         if (parsed.length > 0) {
           setInsights(parsed);
         }

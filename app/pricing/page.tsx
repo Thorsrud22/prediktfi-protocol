@@ -1,16 +1,12 @@
 'use client'
 import React from 'react'
 import Link from 'next/link'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { useWalletAuth } from '../lib/useWalletAuth'
+import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider'
 import { useRouter } from 'next/navigation'
 
 export default function PricingPage() {
-  const { publicKey } = useWallet()
-  const { isAuthenticated } = useWalletAuth()
+  const { isConnected, publicKey } = useSimplifiedWallet()
   const router = useRouter()
-  const connected = Boolean(publicKey)
-  const ready = Boolean(publicKey) && isAuthenticated
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-5xl px-6 py-16">
@@ -39,9 +35,9 @@ export default function PricingPage() {
               title: 'Pro',
               price: 9,
               button: { 
-                label: ready ? 'Upgrade with Crypto' : connected ? 'Sign in to upgrade' : 'Connect with Phantom to upgrade', 
-                href: ready ? '/pay?plan=pro' : '#',
-                disabled: !ready
+                label: isConnected ? 'Upgrade with Crypto' : 'Connect with Phantom to upgrade', 
+                href: isConnected ? '/pay?plan=pro' : '#',
+                disabled: !isConnected
               },
               features: ['30 intents per week', 'Advanced analytics', 'Priority support'],
               accent: 'border-indigo-500/60',
@@ -84,12 +80,12 @@ export default function PricingPage() {
           You can also pay in SOL or USDC on devnet or mainnet. Funds settle directly to your wallet.
         </p>
         
-        {!ready && (
+        {!isConnected && (
           <div className="mt-8 text-center">
             <div className="rounded-xl border border-slate-700 p-6 max-w-2xl mx-auto">
               <h2 className="text-lg font-semibold text-slate-100 mb-2">Connect Your Wallet</h2>
               <p className="text-slate-400 mb-4">
-                {!connected ? 'Connect with Phantom in the header to continue.' : 'Sign in via the header to continue.'}
+                Connect with Phantom in the header to continue.
               </p>
               <p className="text-sm text-slate-500">
                 Use the "Connect Wallet" button in the header to get started.

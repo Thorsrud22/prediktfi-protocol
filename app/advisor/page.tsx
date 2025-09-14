@@ -1,13 +1,10 @@
 'use client'
 import React from 'react'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { useWalletAuth } from '../lib/useWalletAuth'
+import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider'
 import Link from 'next/link'
 
 export default function AdvisorPage() {
-  const { publicKey } = useWallet()
-  const { isAuthenticated } = useWalletAuth()
-  const connected = Boolean(publicKey)
+  const { isConnected } = useSimplifiedWallet()
 
   // Allow access to actions page even when disconnected
   // Only require wallet connection for other advisor features
@@ -36,7 +33,7 @@ export default function AdvisorPage() {
         </div>
 
         {/* Other features - Require wallet connection */}
-        {connected && isAuthenticated ? (
+        {isConnected ? (
           <>
             <div className="rounded-lg border border-slate-600 p-6 bg-slate-800/50">
               <h3 className="text-lg font-semibold text-slate-200 mb-2">🔔 Alerts</h3>

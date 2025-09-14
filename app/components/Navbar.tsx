@@ -7,8 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useIsPro } from "../lib/use-plan";
 import { isFeatureEnabled } from "../lib/flags";
-import { useWalletAuth } from "../lib/useWalletAuth";
-import HeaderConnectButton from "./HeaderConnectButton";
+import SimplifiedConnectButton from "./wallet/SimplifiedConnectButton";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -17,7 +16,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const isInsightPage = pathname.startsWith('/i/');
   const isPro = useIsPro();
-  const { isAuthenticated, wallet, connectAndAuthenticate, signOut, isLoading } = useWalletAuth();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<Element | null>(null);
 
@@ -203,7 +201,7 @@ export default function Navbar() {
         
         {/* Right side - Wallet auth, Upgrade and Studio buttons */}
         <div className="flex items-center gap-3">
-          {mounted && <HeaderConnectButton />}
+          {mounted && <SimplifiedConnectButton />}
           {mounted && !isPro && (
             <Link
               href="/pay"
@@ -306,7 +304,7 @@ export default function Navbar() {
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Wallet</div>
                 <div className="w-full">
                   <div className="w-full">
-                    <HeaderConnectButton />
+                    <SimplifiedConnectButton />
                   </div>
                 </div>
               </div>
