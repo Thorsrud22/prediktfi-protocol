@@ -367,8 +367,8 @@ function normalizeIntent(x: RawIntent): UiIntent | null {
     raw: x as StoredIntent,
     probability: Number.isFinite(Number(x.probability)) ? Number(x.probability) : 50,
     confidence: Number.isFinite(Number(x.confidence)) ? Number(x.confidence) : 70,
-    horizonDays: Number.isFinite(Number(x.horizon)) ? Number(x.horizon) : 30,
-    thesis: typeof x.thesis === "string" ? x.thesis : (typeof payload.thesis === "string" ? payload.thesis : ""),
+    horizonDays: Number.isFinite(Number(payload.horizon)) ? Number(payload.horizon) : 30,
+    thesis: typeof payload.thesis === "string" ? payload.thesis : "",
   }
 }
 
