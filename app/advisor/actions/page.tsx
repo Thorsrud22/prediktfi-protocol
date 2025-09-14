@@ -350,7 +350,7 @@ function readIntentsScanAll(base58?: string | null): {key:string, items:RawInten
   return null
 }
 
-function normalizeIntent(x: RawIntent) {
+function normalizeIntent(x: RawIntent): UiIntent | null {
   if (!x || typeof x !== "object") return null
   const payload = (x.payload && typeof x.payload === "object") ? x.payload : {}
   const title = typeof x.title === "string" && x.title.trim()
@@ -361,12 +361,14 @@ function normalizeIntent(x: RawIntent) {
   const createdAtNum = Number(x.createdAt)
   return {
     id: String(x.id ?? `${Date.now()}-${Math.random().toString(36).slice(2,8)}`),
-    title,
-    side: x.side === "short" ? "short" : "long",
+    assetSymbol: title,
+    direction: x.side === "short" ? "Short" : "Long",
     createdAt: Number.isFinite(createdAtNum) ? createdAtNum : Date.now(),
-    payload,
+    raw: x as StoredIntent,
     probability: Number.isFinite(Number(x.probability)) ? Number(x.probability) : 50,
     confidence: Number.isFinite(Number(x.confidence)) ? Number(x.confidence) : 70,
+    horizonDays: Number.isFinite(Number(x.horizon)) ? Number(x.horizon) : 30,
+    thesis: typeof x.thesis === "string" ? x.thesis : (typeof payload.thesis === "string" ? payload.thesis : ""),
   }
 }
 
@@ -472,7 +474,7 @@ export default function ActionsPage() {
       }
     }
 
-    const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter((item): item is NonNullable<ReturnType<typeof normalizeIntent>> => item !== null)
+    const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter((item): item is UiIntent => item !== null)
     const sorted = [...normalized].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
     setPerWalletIntents(sorted)
   }, [isConnected, publicKey])
@@ -677,7 +679,7 @@ export default function ActionsPage() {
                     }
                   }
                   
-                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter((item): item is NonNullable<ReturnType<typeof normalizeIntent>> => item !== null)
+                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter((item): item is UiIntent => item !== null)
                   const sorted = [...normalized].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
                   setPerWalletIntents(sorted)
                 }}
@@ -909,7 +911,7 @@ export default function ActionsPage() {
                     }
                   }
                   
-                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter((item): item is NonNullable<ReturnType<typeof normalizeIntent>> => item !== null)
+                  const normalized = (Array.isArray(raw) ? raw : []).map(normalizeIntent).filter((item): item is UiIntent => item !== null)
                   const sorted = [...normalized].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
                   setPerWalletIntents(sorted)
                 }}
