@@ -6,7 +6,6 @@ import { useSimplifiedWallet } from '../../components/wallet/SimplifiedWalletPro
 import { useIntentDraft } from '../../lib/store/intent-draft-store'
 import TradingIntentComposer from '../../components/TradingIntentComposer'
 import UserIntentsList from '../../components/UserIntentsList'
-import { loadIntents, removeIntent, type TradingIntent } from '../../lib/intent-persistence'
 import { loadIntents as getIntents, saveIntents, upsertIntent, removeIntent as removeWalletIntent, type TradingIntent as NewTradingIntent } from '../../lib/wallet-intent-persistence'
 import { loadDevIntents, type DevIntent } from '../../lib/dev-intents'
 
@@ -384,7 +383,7 @@ export default function ActionsPage() {
   const [showComposer, setShowComposer] = useState(false)
   const [showEditIntent, setShowEditIntent] = useState(false)
   const [editingIntent, setEditingIntent] = useState<NewTradingIntent | null>(null)
-  const [userIntents, setUserIntents] = useState<TradingIntent[]>([])
+  const [userIntents, setUserIntents] = useState<NewTradingIntent[]>([])
   const [newIntents, setNewIntents] = useState<NewTradingIntent[]>([])
   const [devIntents, setDevIntents] = useState<DevIntent[]>([])
   const [perWalletIntents, setPerWalletIntents] = useState<UiIntent[]>([])
@@ -428,10 +427,10 @@ export default function ActionsPage() {
     if (isConnected && publicKey) {
       // Wallet is isConnected - load intents for specific wallet
       const pubkey = publicKey // publicKey is already a string in SimplifiedWallet
-      setNewIntents(loadIntents(pubkey))
+      setNewIntents(getIntents(pubkey))
     } else {
       // Wallet not isConnected - try fallback to load any intents
-      setNewIntents(loadIntents()) // This will use the fallback mechanism
+      setNewIntents(getIntents()) // This will use the fallback mechanism
     }
   }, [publicKey, isConnected])
 
