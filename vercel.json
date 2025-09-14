@@ -8,32 +8,6 @@
       "runtime": "nodejs20.x"
     }
   },
-  "crons": [
-    {
-      "path": "/api/monitoring/synthetic",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/ops/guard",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/cron/pmf-metrics",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/resolve/run",
-      "schedule": "10 * * * *"
-    },
-    {
-      "path": "/api/cron/recompute-scores", 
-      "schedule": "20 0 * * *"
-    },
-    {
-      "path": "/api/cron/weekly-digest",
-      "schedule": "0 9 * * 1"
-    }
-  ],
   "headers": [
     {
       "source": "/api/og/(.*)",
