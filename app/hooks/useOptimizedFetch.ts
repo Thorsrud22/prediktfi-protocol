@@ -2,186 +2,267 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-interface FetchOptions {
-  revalidate?: number; // Cache duration in seconds
-  staleWhileRevalidate?: boolean; // Return cached data immediately, then fetch fresh
-  dedupe?: boolean; // Deduplicate identical requests
-}
-
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-}
-
 /**
  * Optimized fetch hook with smart caching and performance optimizations
  * Inspired by SWR and modern data fetching patterns
  */
-export function useOptimizedFetch<T>(url: string | null, options: FetchOptions = {}) {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Global caches shared across hook instances
-  const cacheRef = useRef<Map<string, CacheEntry<T>>>(
-    typeof window !== 'undefined'
-      ? ((window as any).__optimizedFetchCache ||= new Map())
-      : new Map(),
-  );
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  expiry: number;
+}
 
-  const pendingRequests = useRef<Map<string, Promise<T>>>(
-    typeof window !== 'undefined'
-      ? ((window as any).__optimizedFetchPending ||= new Map())
-      : new Map(),
-  );
+interface FetchOptions {
+  cacheTime?: number; // How long to cache data (ms)
+  staleTime?: number; // When to consider data stale (ms)
+  enabled?: boolean; // Whether to fetch data
+  retries?: number; // Number of retries on failure
+  retryDelay?: number; // Delay between retries (ms)
+}
 
-  const { revalidate = 60, staleWhileRevalidate = false, dedupe = true } = options;
+interface FetchState<T> {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+  isStale: boolean;
+  lastFetched: number | null;
+}
 
-  const fetchFresh = useCallback(
-    async (fetchUrl: string): Promise<T> => {
-      const request = fetch(fetchUrl).then(async response => {
+// Global cache shared across all hook instances
+const globalCache = new Map<string, CacheEntry<any>>();
+
+// Cleanup interval for cache
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+function startCacheCleanup() {
+  if (cleanupInterval) return;
+
+  cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of globalCache.entries()) {
+      if (now > entry.expiry) {
+        globalCache.delete(key);
+      }
+    }
+  }, 60000); // Cleanup every minute
+}
+
+function stopCacheCleanup() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+}
+
+export function useOptimizedFetch<T>(
+  url: string | null,
+  options: FetchOptions = {},
+): FetchState<T> & { refetch: () => Promise<T | null>; clearCache: () => void } {
+  const {
+    cacheTime = 5 * 60 * 1000, // 5 minutes default cache
+    staleTime = 30 * 1000, // 30 seconds stale time
+    enabled = true,
+    retries = 3,
+    retryDelay = 1000,
+  } = options;
+
+  const [state, setState] = useState<FetchState<T>>({
+    data: null,
+    loading: enabled,
+    error: null,
+    isStale: false,
+    lastFetched: null,
+  });
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const retryCountRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  const updateState = useCallback((updates: Partial<FetchState<T>>) => {
+    if (isMountedRef.current) {
+      setState(prev => ({ ...prev, ...updates }));
+    }
+  }, []);
+
+  const fetchWithRetry = useCallback(
+    async (attempt = 0): Promise<T | null> => {
+      if (!enabled || !url) return null;
+
+      // Check cache first
+      const cached = globalCache.get(url);
+      const now = Date.now();
+
+      if (cached && now < cached.expiry) {
+        const isStale = now > cached.timestamp + staleTime;
+        updateState({
+          data: cached.data,
+          loading: false,
+          error: null,
+          isStale,
+          lastFetched: cached.timestamp,
+        });
+
+        // Return cached data but potentially fetch fresh data in background if stale
+        if (!isStale) {
+          return cached.data;
+        }
+      }
+
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      abortControllerRef.current = new AbortController();
+
+      updateState({ loading: true, error: null });
+
+      try {
+        const response = await fetch(url, {
+          signal: abortControllerRef.current.signal,
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        });
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const contentType = response.headers.get('content-type');
-        if (!contentType?.includes('application/json')) {
-          throw new Error('Expected JSON response');
+        const result = (await response.json()) as T;
+
+        // Cache the result
+        const timestamp = Date.now();
+        globalCache.set(url, {
+          data: result,
+          timestamp,
+          expiry: timestamp + cacheTime,
+        });
+
+        updateState({
+          data: result,
+          loading: false,
+          error: null,
+          isStale: false,
+          lastFetched: timestamp,
+        });
+
+        retryCountRef.current = 0;
+        return result;
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return null; // Request was cancelled
         }
 
-        const data = await response.json();
+        const errorMessage = error instanceof Error ? error.message : 'Fetch failed';
 
-        // Cache the response
-        const now = Date.now();
-        cacheRef.current.set(fetchUrl, { data, timestamp: now });
+        // Retry logic
+        if (attempt < retries) {
+          console.warn(`Fetch attempt ${attempt + 1} failed for ${url}, retrying...`);
 
-        return data;
-      });
-
-      if (dedupe) {
-        pendingRequests.current.set(fetchUrl, request);
-        request.finally(() => pendingRequests.current.delete(fetchUrl));
-      }
-
-      return request;
-    },
-    [dedupe],
-  );
-
-  const fetchData = useCallback(
-    async (fetchUrl: string): Promise<T> => {
-      // Dedupe identical requests
-      if (dedupe && pendingRequests.current.has(fetchUrl)) {
-        return pendingRequests.current.get(fetchUrl)!;
-      }
-
-      // Check cache first
-      const cached = cacheRef.current.get(fetchUrl);
-      const now = Date.now();
-      const revalidateTime = revalidate * 1000;
-
-      if (cached && now - cached.timestamp < revalidateTime) {
-        if (staleWhileRevalidate) {
-          // Return cached data immediately, fetch fresh data in background
-          setTimeout(() => {
-            fetchFresh(fetchUrl).catch(console.warn);
-          }, 0);
+          await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, attempt)));
+          return fetchWithRetry(attempt + 1);
         }
-        return cached.data;
-      }
 
-      return fetchFresh(fetchUrl);
+        // Final failure
+        console.error(`Fetch failed after ${retries + 1} attempts for ${url}:`, error);
+
+        updateState({
+          loading: false,
+          error: errorMessage,
+        });
+
+        return null;
+      }
     },
-    [dedupe, revalidate, staleWhileRevalidate, fetchFresh],
+    [url, enabled, cacheTime, staleTime, retries, retryDelay, updateState],
   );
 
-  // Main effect to fetch data
+  const refetch = useCallback(async (): Promise<T | null> => {
+    // Clear cache for this URL
+    if (url) globalCache.delete(url);
+    retryCountRef.current = 0;
+    return fetchWithRetry(0);
+  }, [url, fetchWithRetry]);
+
+  const clearCache = useCallback(() => {
+    if (url) globalCache.delete(url);
+  }, [url]);
+
+  // Initial fetch
   useEffect(() => {
-    if (!url) {
-      setLoading(false);
-      return;
-    }
+    if (!enabled) return;
 
-    let mounted = true;
-
-    setLoading(true);
-    setError(null);
-
-    fetchData(url)
-      .then(result => {
-        if (mounted) {
-          setData(result);
-          setError(null);
-        }
-      })
-      .catch(err => {
-        if (mounted) {
-          setError(err instanceof Error ? err.message : 'Unknown error');
-          console.error('Fetch error:', err);
-        }
-      })
-      .finally(() => {
-        if (mounted) {
-          setLoading(false);
-        }
-      });
+    startCacheCleanup();
+    fetchWithRetry(0);
 
     return () => {
-      mounted = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
-  }, [url, fetchData]);
+  }, [fetchWithRetry, enabled]);
 
-  // Refetch function for manual refresh
-  const refetch = useCallback(() => {
-    if (!url) return Promise.resolve();
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
-    setLoading(true);
-    setError(null);
-
-    // Clear cache for this URL
-    cacheRef.current.delete(url);
-
-    return fetchData(url)
-      .then(result => {
-        setData(result);
-        return result;
-      })
-      .catch(err => {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        setError(errorMessage);
-        throw err;
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [url, fetchData]);
-
-  // Mutate function for optimistic updates
-  const mutate = useCallback(
-    (newData: T | ((prevData: T | null) => T)) => {
-      if (!url) return;
-
-      const updatedData =
-        typeof newData === 'function' ? (newData as (prevData: T | null) => T)(data) : newData;
-
-      setData(updatedData);
-
-      // Update cache
-      cacheRef.current.set(url, {
-        data: updatedData,
-        timestamp: Date.now(),
-      });
-    },
-    [url, data],
-  );
+      // Stop cleanup if no active hooks
+      const hasActiveFetches = Array.from(globalCache.values()).some(
+        entry => Date.now() < entry.expiry,
+      );
+      if (!hasActiveFetches) {
+        stopCacheCleanup();
+      }
+    };
+  }, []);
 
   return {
-    data,
-    loading,
-    error,
+    ...state,
     refetch,
-    mutate,
+    clearCache,
   };
+}
+
+// Utility functions for cache management
+export function clearAllCache() {
+  globalCache.clear();
+}
+
+export function getCacheStats() {
+  const now = Date.now();
+  let active = 0;
+  let expired = 0;
+
+  for (const entry of globalCache.values()) {
+    if (now < entry.expiry) {
+      active++;
+    } else {
+      expired++;
+    }
+  }
+
+  return {
+    total: globalCache.size,
+    active,
+    expired,
+  };
+}
+
+export function preloadData<T>(url: string, data: T, cacheTime = 5 * 60 * 1000) {
+  const timestamp = Date.now();
+  globalCache.set(url, {
+    data,
+    timestamp,
+    expiry: timestamp + cacheTime,
+  });
 }
 
 // Helper hook for API endpoints with consistent base URL

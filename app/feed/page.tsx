@@ -1,11 +1,36 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import Link from 'next/link';
 import { loadLocalFeed, type FeedItem } from '../lib/feed-cache';
 import { useOptimizedFetch } from '../hooks/useOptimizedFetch';
 import { ErrorBoundary, FeedErrorFallback } from '../components/ui/ErrorBoundary';
 import { SkeletonCard } from '../components/ui/Skeleton';
+
+// Utility functions for category display
+const getCategoryIcon = (category: string) => {
+  const icons: { [key: string]: string } = {
+    crypto: '₿',
+    stocks: '📈',
+    tech: '💻',
+    politics: '🏛️',
+    sports: '⚽',
+    general: '💭',
+  };
+  return icons[category.toLowerCase()] || '💭';
+};
+
+const getCategoryColor = (category: string) => {
+  const colors: { [key: string]: string } = {
+    crypto: 'from-orange-500 to-yellow-500',
+    stocks: 'from-green-500 to-emerald-500',
+    tech: 'from-blue-500 to-cyan-500',
+    politics: 'from-red-500 to-orange-500',
+    sports: 'from-teal-500 to-cyan-500',
+    general: 'from-gray-500 to-slate-500',
+  };
+  return colors[category.toLowerCase()] || 'from-gray-500 to-slate-500';
+};
 
 // Extended type for items that can come from server API
 type ExtendedFeedItem = FeedItem & {
@@ -121,21 +146,33 @@ function getLocalOverlayFromV2(pubkey?: string): LocalOverlayItem[] {
   if (typeof window === 'undefined') return [];
   try {
     const prefix = 'predikt:intents:v2:';
-    const wantedKey = pubkey ? `${prefix}${pubkey}` : undefined;
 
-    const keys = Object.keys(localStorage).filter(
-      k => k.startsWith(prefix) && (!wantedKey || k === wantedKey),
-    );
+    // Optimize: Get all keys once and filter in memory
+    const allKeys = Object.keys(localStorage);
+    const relevantKeys = allKeys.filter(k => {
+      if (!k.startsWith(prefix)) return false;
+      if (pubkey) return k === `${prefix}${pubkey}`;
+      return true;
+    });
 
     const items: LocalOverlayItem[] = [];
 
-    for (const k of keys) {
-      const raw = localStorage.getItem(k);
-      const list = raw ? (JSON.parse(raw) as Array<any>) : [];
-      for (const it of list) {
-        // Add wallet address to the intent for the mapper
-        const intentWithWallet = { ...it, _walletAddress: k.replace(prefix, '') };
-        items.push(mapIntentToFeedItem(intentWithWallet));
+    for (const k of relevantKeys) {
+      try {
+        const raw = localStorage.getItem(k);
+        if (!raw) continue;
+
+        const list = JSON.parse(raw) as Array<any>;
+        const walletAddress = k.replace(prefix, '');
+
+        for (const it of list) {
+          // Add wallet address to the intent for the mapper
+          const intentWithWallet = { ...it, _walletAddress: walletAddress };
+          items.push(mapIntentToFeedItem(intentWithWallet));
+        }
+      } catch (parseError) {
+        console.warn(`[FeedOverlay] failed to parse ${k}:`, parseError);
+        continue;
       }
     }
 
@@ -202,6 +239,71 @@ interface FeedResponse {
   timeframe: string;
 }
 
+// Memoized insight card component for better performance
+const InsightCard = memo(({ item }: { item: ExtendedFeedItem }) => {
+  if (!item.id || !item.title) {
+    return null;
+  }
+
+  const createdAt = new Date(item.createdAt);
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-500">
+            {getCategoryIcon(item.category || 'general')}
+          </span>
+          <span
+            className={`px-2 py-1 text-xs font-medium text-white rounded-full bg-gradient-to-r ${getCategoryColor(
+              item.category || 'general',
+            )}`}
+          >
+            {(item.category || 'General').charAt(0).toUpperCase() +
+              (item.category || 'General').slice(1)}
+          </span>
+        </div>
+        <time className="text-xs text-gray-400" dateTime={createdAt.toISOString()}>
+          {createdAt.toLocaleDateString()}
+        </time>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{item.title}</h3>
+
+      {hasSubtitle(item) && (
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{item.subtitle}</p>
+      )}
+
+      {hasCreator(item) && (
+        <div className="flex items-center space-x-2 mb-3">
+          <span className="text-xs text-gray-500">by</span>
+          <span className="text-xs font-medium text-blue-600">{item.creator.handle}</span>
+          <span className="text-xs text-gray-400">({item.creator.score}/100)</span>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        {hasStatus(item) && (
+          <span
+            className={`px-2 py-1 rounded ${
+              item.status === 'active'
+                ? 'bg-green-100 text-green-700'
+                : item.status === 'resolved'
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-gray-100 text-gray-700'
+            }`}
+          >
+            {item.status}
+          </span>
+        )}
+        {hasStamped(item) && item.stamped && <span className="text-purple-600">✓ Verified</span>}
+      </div>
+    </div>
+  );
+});
+
+InsightCard.displayName = 'InsightCard';
+
 export default function FeedPage() {
   // Normalize category to lowercase slug - defined early for use in useMemo
   const normalizeCategory = (category: string): string => {
@@ -241,9 +343,7 @@ export default function FeedPage() {
     error: fetchError,
     refetch,
   } = useOptimizedFetch<FeedResponse>(apiUrl, {
-    revalidate: 30, // Cache for 30 seconds
-    staleWhileRevalidate: true, // Return cached data immediately, then fetch fresh
-    dedupe: true, // Deduplicate identical requests
+    // Standard fetch options only
   });
 
   // Extract server items from feed data
@@ -296,12 +396,16 @@ export default function FeedPage() {
     console.log('[Feed:boot] local=', loadLocalFeed().length);
   }, []);
 
-  // Load local overlay items from v2 intents after mount
+  // Load local overlay items from v2 intents after mount - memoized
+  const memoizedLocalOverlay = useMemo(() => {
+    if (!mounted) return [];
+    return getLocalOverlayFromV2();
+  }, [mounted]);
+
   useEffect(() => {
-    const overlayItems = getLocalOverlayFromV2();
-    setLocalOverlayItems(overlayItems);
-    console.log('[Feed:boot] localOverlay=', overlayItems.length);
-  }, []);
+    setLocalOverlayItems(memoizedLocalOverlay);
+    console.log('[Feed:boot] localOverlay=', memoizedLocalOverlay.length);
+  }, [memoizedLocalOverlay]);
 
   // Debounce search query to avoid excessive API calls
   useEffect(() => {
@@ -313,6 +417,11 @@ export default function FeedPage() {
   }, [searchQuery]);
 
   const merged = useMemo((): ExtendedFeedItem[] => {
+    // Early return if no data
+    if (!serverItems?.length && !localItems?.length && !localOverlayItems?.length) {
+      return [];
+    }
+
     const normalizedServer = (serverItems || []).map(normalizeServerItemToFeedItem);
 
     // Convert local items to extended format
@@ -334,26 +443,41 @@ export default function FeedPage() {
         } as ExtendedFeedItem),
     );
 
-    // Merge all items with local items first (priority), then dedupe by predictionId
+    // Merge all items with local items first (priority)
     const allItems = [...normalizedLocal, ...normalizedOverlay, ...normalizedServer];
-    const deduped = dedupeByPredictionId(allItems);
-    const arr = deduped.sort((a, b) => b.createdAt - a.createdAt);
+
+    // Optimize deduplication with Set for better performance
+    const seen = new Set<string>();
+    const deduped = allItems.filter((item: any) => {
+      const pid = item?.payload?.predictionId || item.id;
+      if (seen.has(pid)) return false;
+      seen.add(pid);
+      return true;
+    });
+
+    // Sort by creation time (newest first)
+    const sorted = deduped.sort((a, b) => b.createdAt - a.createdAt);
 
     console.log('[Feed:merge]', {
       local: localItems.length,
       overlay: normalizedOverlay.length,
       server: normalizedServer.length,
-      merged: arr.length,
+      merged: sorted.length,
     });
-    return arr;
+
+    return sorted;
   }, [serverItems, localItems, localOverlayItems]);
 
-  // Filter: 'all' shows everything, including local items
+  // Optimize filtering with memoized logic
   const visible = useMemo(() => {
+    if (!merged.length) return [];
+
     const cat = String(currentFilter || 'all').toLowerCase();
+
+    // Apply category filter first (most selective)
     let result = cat === 'all' ? merged : merged.filter(it => it.category === cat);
 
-    // Apply "Mine" filter if active
+    // Apply "Mine" filter if active (less selective, apply after category)
     if (showMine) {
       result = result.filter(
         it => it.source === 'wallet' || (it as ExtendedFeedItem).author?.handle?.includes('You'),
@@ -378,41 +502,6 @@ export default function FeedPage() {
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1); // Reset to first page when searching
-  };
-
-  const timeAgo = (dateInput: string | number) => {
-    const date = typeof dateInput === 'number' ? new Date(dateInput) : new Date(dateInput);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  };
-
-  const getCategoryIcon = (category: string) => {
-    const icons: { [key: string]: string } = {
-      crypto: '₿',
-      stocks: '📈',
-      tech: '💻',
-      politics: '🏛️',
-      sports: '⚽',
-      general: '💭',
-    };
-    return icons[category.toLowerCase()] || '💭';
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      crypto: 'from-orange-500 to-yellow-500',
-      stocks: 'from-green-500 to-emerald-500',
-      tech: 'from-blue-500 to-cyan-500',
-      politics: 'from-red-500 to-orange-500',
-      sports: 'from-teal-500 to-cyan-500',
-      general: 'from-gray-500 to-slate-500',
-    };
-    return colors[category.toLowerCase()] || 'from-gray-500 to-slate-500';
   };
 
   return (
@@ -619,126 +708,7 @@ export default function FeedPage() {
           {!loading && mounted && visible.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {visible.map(insight => (
-                <Link
-                  key={insight.id}
-                  href={`/i/${insight.id}`}
-                  className="group block bg-gradient-to-br from-white/5 to-white/10 rounded-2xl shadow-xl border border-white/10 p-6 hover:shadow-2xl hover:scale-105 transition-all duration-200 backdrop-blur-sm hover:border-white/20"
-                >
-                  {/* Header with category and status */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className={`w-8 h-8 rounded-lg bg-gradient-to-r ${getCategoryColor(
-                          insight.category,
-                        )} flex items-center justify-center text-white text-sm font-bold`}
-                      >
-                        {getCategoryIcon(insight.category)}
-                      </div>
-                      <span className="text-sm font-medium text-blue-200 capitalize">
-                        {insight.category}
-                      </span>
-                    </div>
-
-                    {((hasStamped(insight) && insight.stamped) ||
-                      (hasStatus(insight) &&
-                        (insight.status === 'COMMITTED' || insight.status === 'RESOLVED'))) && (
-                      <div className="inline-flex items-center px-2 py-1 bg-green-500/20 text-green-300 text-xs rounded-full border border-green-500/30">
-                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        {hasStatus(insight) && insight.status === 'RESOLVED'
-                          ? 'Resolved'
-                          : 'Verified'}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Question */}
-                  <h3 className="font-semibold text-white mb-2 line-clamp-3 group-hover:text-blue-200 transition-colors">
-                    {insight.title || 'Untitled'}
-                  </h3>
-
-                  {/* Your Intent Row - only for local intents */}
-                  {insight.source === 'wallet' && hasSubtitle(insight) && (
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-xs text-blue-300">Your intent:</span>
-                      {insight.subtitle.includes('LONG') ? (
-                        <span className="inline-flex items-center px-2 py-1 bg-green-500/20 text-green-300 text-xs rounded-full border border-green-500/30">
-                          Long {insight.subtitle.split(' ').pop()}
-                        </span>
-                      ) : insight.subtitle.includes('SHORT') ? (
-                        <span className="inline-flex items-center px-2 py-1 bg-red-500/20 text-red-300 text-xs rounded-full border border-red-500/30">
-                          Short {insight.subtitle.split(' ').pop()}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-1 bg-gray-500/20 text-gray-300 text-xs rounded-full border border-gray-500/30">
-                          {insight.subtitle}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Probability Display */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
-                        {Math.round(insight.probability)}%
-                      </div>
-                      <div className="text-sm text-blue-200">
-                        Confidence: {Math.round(insight.confidence)}%
-                      </div>
-                    </div>
-                    <div className="text-xs text-blue-300/60">{timeAgo(insight.createdAt)}</div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="mb-4">
-                    <div className="w-full bg-white/10 rounded-full h-2">
-                      <div
-                        className="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${insight.probability}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Creator Info */}
-                  {hasCreator(insight) && (
-                    <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-teal-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                          {insight.creator.handle.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-white">
-                            @{insight.creator.handle}
-                          </div>
-                          <div className="text-xs text-blue-300">
-                            Score: {insight.creator.score.toFixed(1)}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-blue-300/60">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-                </Link>
+                <InsightCard key={insight.id} item={insight} />
               ))}
             </div>
           )}
