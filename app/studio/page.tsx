@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useOptimizedFetch } from '@/app/hooks/useOptimizedFetch';
 import { SkeletonCard } from '@/app/components/ui/Skeleton';
 import { ErrorBoundary } from '@/app/components/ui/ErrorBoundary';
 import { useSimplifiedWallet } from '@/app/components/wallet/SimplifiedWalletProvider';
+import { trackPageLoad, usePerformanceTracking } from '@/app/utils/performance';
 
 interface PredictionTemplate {
   id: string;
@@ -26,6 +27,17 @@ interface AIAnalysis {
 }
 
 export default function StudioPage() {
+  // Track page performance
+  usePerformanceTracking('StudioPage');
+
+  // Track page load timing
+  useEffect(() => {
+    const pageTimer = trackPageLoad('Studio');
+    return () => {
+      // Clean up if component unmounts
+    };
+  }, []);
+
   const { isConnected, publicKey } = useSimplifiedWallet();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<PredictionTemplate | null>(null);
@@ -42,14 +54,89 @@ export default function StudioPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const { data: templates, loading } = useOptimizedFetch<PredictionTemplate[]>(
-    '/api/studio/templates',
-    { revalidate: 300, staleWhileRevalidate: true },
-  );
+  const {
+    data: dynamicTemplates,
+    loading,
+    error,
+  } = useOptimizedFetch<PredictionTemplate[]>('/api/studio/templates', {
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    timeoutMs: 3000,
+    retries: 1,
+  });
+
+  // Static templates for immediate rendering
+  const staticTemplates: PredictionTemplate[] = [
+    {
+      id: 'btc-100k',
+      category: 'crypto',
+      title: 'Bitcoin $100k Prediction',
+      description:
+        'Will Bitcoin reach $100,000 by end of year? Analyze market trends, institutional adoption, and regulatory developments.',
+      timeframe: '6 months',
+      difficulty: 'Medium' as const,
+      potentialReward: 3.5,
+    },
+    {
+      id: 'eth-5k',
+      category: 'crypto',
+      title: 'Ethereum $5k Target',
+      description:
+        'Predict if Ethereum will break the $5,000 resistance level in the next quarter.',
+      timeframe: '3 months',
+      difficulty: 'Hard' as const,
+      potentialReward: 4.2,
+    },
+    {
+      id: 'tesla-stock',
+      category: 'stocks',
+      title: 'Tesla Q4 Performance',
+      description:
+        'Will Tesla stock outperform the NASDAQ this quarter? Consider EV market trends and production targets.',
+      timeframe: '3 months',
+      difficulty: 'Medium' as const,
+      potentialReward: 2.8,
+    },
+    {
+      id: 'nfl-playoffs',
+      category: 'sports',
+      title: 'NFL Playoff Predictions',
+      description:
+        'Predict which teams will make it to the playoffs based on current season performance.',
+      timeframe: '2 months',
+      difficulty: 'Easy' as const,
+      potentialReward: 1.5,
+    },
+    {
+      id: 'ai-breakthrough',
+      category: 'tech',
+      title: 'AI Model Breakthrough',
+      description:
+        'Will there be a major AI model release that surpasses GPT-4 capabilities this year?',
+      timeframe: '12 months',
+      difficulty: 'Hard' as const,
+      potentialReward: 5.0,
+    },
+    {
+      id: 'weather-pattern',
+      category: 'weather',
+      title: 'Winter Weather Prediction',
+      description: 'Predict if this winter will be colder than average in major US cities.',
+      timeframe: '4 months',
+      difficulty: 'Easy' as const,
+      potentialReward: 1.2,
+    },
+  ];
+
+  // Combine static and dynamic templates
+  const allTemplates = [...staticTemplates, ...(dynamicTemplates || [])];
+
+  // Use fallback templates if loading fails after 3 seconds or there's an error
+  const displayTemplates = allTemplates;
 
   const { data: aiAnalysis, loading: analysisLoading } = useOptimizedFetch<AIAnalysis>(
     selectedTemplate ? `/api/studio/analysis/${selectedTemplate.id}` : null,
-    { revalidate: 60 },
+    { cacheTime: 2 * 60 * 1000, staleTime: 10 * 1000 },
   );
 
   const categories = [
@@ -70,8 +157,8 @@ export default function StudioPage() {
 
   const filteredTemplates =
     selectedCategory === 'all'
-      ? templates
-      : templates?.filter(t => t.category === selectedCategory);
+      ? displayTemplates
+      : displayTemplates?.filter(t => t.category === selectedCategory);
 
   const handleSubmitPrediction = async () => {
     // Require wallet connection for security
@@ -219,9 +306,9 @@ export default function StudioPage() {
                   </span>
                 </div>
 
-                {loading ? (
+                {loading && !dynamicTemplates && filteredTemplates?.length === 0 ? (
                   <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
+                    {Array.from({ length: 3 }).map((_, i) => (
                       <SkeletonCard key={i} />
                     ))}
                   </div>
@@ -234,8 +321,14 @@ export default function StudioPage() {
                         className={`border rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg backdrop-blur-sm ${
                           selectedTemplate?.id === template.id
                             ? 'border-blue-400 bg-blue-500/20 ring-2 ring-blue-400/50'
-                            : 'border-white/20 bg-white/5 hover:border-white/30 hover:bg-white/10'
+                            : 'border-white/20 bg-slate-800/80 hover:border-white/30 hover:bg-slate-700/80'
                         }`}
+                        style={{
+                          backgroundColor:
+                            selectedTemplate?.id === template.id
+                              ? 'rgba(59, 130, 246, 0.2)'
+                              : 'rgba(30, 41, 59, 0.8)',
+                        }}
                       >
                         <h4 className="font-semibold text-white mb-2">{template.title}</h4>
                         <p className="text-sm text-blue-200/80 mb-3 line-clamp-2">

@@ -14,8 +14,9 @@ interface CacheEntry {
 }
 
 const feedCache = new Map<string, CacheEntry>();
-const CACHE_TTL = 30000; // 30 seconds cache
-const MAX_CACHE_SIZE = 100; // Limit cache size
+const CACHE_TTL = 60000; // 60 seconds cache (increased from 30s)
+const STALE_WHILE_REVALIDATE = 300000; // 5 minutes stale-while-revalidate
+const MAX_CACHE_SIZE = 50; // Reduced to more reasonable size to prevent memory leaks
 
 function getCacheKey(params: any): string {
   return JSON.stringify({
@@ -43,10 +44,22 @@ function getFromCache(key: string): any | null {
 }
 
 function setCache(key: string, data: any, ttl: number = CACHE_TTL): void {
-  // Simple LRU: remove oldest entries if cache is full
+  // Clean expired entries first
+  const now = Date.now();
+  for (const [k, entry] of feedCache.entries()) {
+    if (now - entry.timestamp > entry.ttl) {
+      feedCache.delete(k);
+    }
+  }
+
+  // If still too large after cleanup, remove oldest 50% of entries
   if (feedCache.size >= MAX_CACHE_SIZE) {
-    const firstKey = feedCache.keys().next().value;
-    if (firstKey) feedCache.delete(firstKey);
+    const keys = Array.from(feedCache.keys());
+    const oldestKeys = keys.slice(0, Math.floor(keys.length / 2));
+    oldestKeys.forEach(k => feedCache.delete(k));
+    console.log(
+      `[Feed API] Cleaned ${oldestKeys.length} old cache entries, size now: ${feedCache.size}`,
+    );
   }
 
   feedCache.set(key, {
@@ -54,6 +67,30 @@ function setCache(key: string, data: any, ttl: number = CACHE_TTL): void {
     timestamp: Date.now(),
     ttl,
   });
+}
+
+// Periodic cache cleanup to prevent memory buildup
+declare global {
+  var __feedCacheCleanupStarted: boolean | undefined;
+}
+
+if (!globalThis.__feedCacheCleanupStarted) {
+  globalThis.__feedCacheCleanupStarted = true;
+  setInterval(() => {
+    const now = Date.now();
+    let cleaned = 0;
+    for (const [key, entry] of feedCache.entries()) {
+      if (now - entry.timestamp > entry.ttl) {
+        feedCache.delete(key);
+        cleaned++;
+      }
+    }
+    if (cleaned > 0) {
+      console.log(
+        `[Feed API] Auto-cleaned ${cleaned} expired cache entries, cache size: ${feedCache.size}`,
+      );
+    }
+  }, 60000); // Clean every minute
 }
 
 export async function GET(request: NextRequest) {
@@ -213,7 +250,7 @@ export async function GET(request: NextRequest) {
         headers: {
           'X-Processing-Time': `${tookMs}ms`,
           'X-Cache': 'HIT',
-          'Cache-Control': 'public, max-age=30',
+          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
         },
       });
     }
@@ -417,7 +454,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'X-Processing-Time': `${tookMs}ms`,
         'X-Cache': 'MISS',
-        'Cache-Control': 'public, max-age=30',
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
       },
     });
   } catch (error) {

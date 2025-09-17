@@ -8,16 +8,14 @@ interface SkeletonProps {
 }
 
 export default function Skeleton({ className = '', children }: SkeletonProps) {
-  return (
-    <div className={`animate-pulse bg-gray-200/20 rounded ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`animate-pulse bg-slate-600/30 rounded ${className}`}>{children}</div>;
 }
 
 export function SkeletonCard({ className = '' }: { className?: string }) {
   return (
-    <div className={`bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 ${className}`}>
+    <div
+      className={`bg-slate-800/60 backdrop-blur-sm rounded-xl p-6 border border-white/10 ${className}`}
+    >
       <div className="flex items-center gap-3 mb-3">
         <Skeleton className="w-8 h-8 rounded-full" />
         <div className="flex-1">
@@ -26,15 +24,15 @@ export function SkeletonCard({ className = '' }: { className?: string }) {
         </div>
         <Skeleton className="h-6 w-16 rounded-full" />
       </div>
-      
+
       <Skeleton className="h-4 w-3/4 mb-2" />
       <Skeleton className="h-4 w-1/2 mb-4" />
-      
+
       <div className="flex gap-2 mb-4">
         <Skeleton className="h-6 w-20 rounded-full" />
         <Skeleton className="h-6 w-16 rounded-full" />
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Skeleton className="h-3 w-12 mb-1" />

@@ -31,18 +31,18 @@ export interface AdapterCtx {
 
 export async function fetchFearGreed(ctx: AdapterCtx): Promise<AdapterResult> {
   const { startTime } = ctx.telemetry.start('fear_greed');
-  
+
   try {
     const baseUrl = process.env.NEXT_PUBLIC_FGI_BASE || 'https://api.alternative.me/fng/';
     const url = `${baseUrl}?limit=1`;
-    
+
     // Check for existing ETag
     const existingEtag = ctx.etagStore.get('fear_greed');
     const headers: HeadersInit = {
       'User-Agent': 'PrediktFi/1.0',
-      'Accept': 'application/json'
+      Accept: 'application/json',
     };
-    
+
     if (existingEtag) {
       headers['If-None-Match'] = existingEtag;
     }
@@ -53,7 +53,7 @@ export async function fetchFearGreed(ctx: AdapterCtx): Promise<AdapterResult> {
 
     const response = await ctx.fetchImpl(url, {
       headers,
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
@@ -66,7 +66,7 @@ export async function fetchFearGreed(ctx: AdapterCtx): Promise<AdapterResult> {
         items: [],
         ok: true,
         timedOut: false,
-        etag: existingEtag
+        etag: existingEtag || undefined,
       };
     }
 
@@ -75,12 +75,12 @@ export async function fetchFearGreed(ctx: AdapterCtx): Promise<AdapterResult> {
       return {
         items: [],
         ok: false,
-        timedOut: false
+        timedOut: false,
       };
     }
 
     const data = await response.json();
-    
+
     // Extract ETag from response
     const etag = response.headers.get('ETag');
     if (etag) {
@@ -94,40 +94,41 @@ export async function fetchFearGreed(ctx: AdapterCtx): Promise<AdapterResult> {
       return {
         items: [],
         ok: false,
-        timedOut: false
+        timedOut: false,
       };
     }
 
     const parsedValue = parseInt(fngData.value);
     const value = isNaN(parsedValue) ? 50 : parsedValue;
     const classification = fngData.value_classification || 'Neutral';
-    
-    const items = [{
-      type: 'fear_greed' as const,
-      label: `${classification} (${value})`,
-      value,
-      ts: ctx.now.toISOString()
-    }];
+
+    const items = [
+      {
+        type: 'fear_greed' as const,
+        label: `${classification} (${value})`,
+        value,
+        ts: ctx.now.toISOString(),
+      },
+    ];
 
     ctx.telemetry.end('fear_greed', { ok: true, timedOut: false, elapsedMs });
-    
+
     return {
       items,
       ok: true,
       timedOut: false,
-      etag
+      etag: etag || undefined,
     };
-
   } catch (error) {
     const elapsedMs = Date.now() - startTime;
     const timedOut = error instanceof Error && error.name === 'AbortError';
-    
+
     ctx.telemetry.end('fear_greed', { ok: false, timedOut, elapsedMs });
-    
+
     return {
       items: [],
       ok: false,
-      timedOut
+      timedOut,
     };
   }
 }

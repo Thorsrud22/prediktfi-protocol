@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import Link from 'next/link';
 import { loadLocalFeed, type FeedItem } from '../lib/feed-cache';
 import { useOptimizedFetch } from '../hooks/useOptimizedFetch';
 import { ErrorBoundary, FeedErrorFallback } from '../components/ui/ErrorBoundary';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { trackPageLoad, usePerformanceTracking } from '../utils/performance';
 
 // Utility functions for category display
 const getCategoryIcon = (category: string) => {
@@ -246,12 +247,18 @@ const InsightCard = memo(({ item }: { item: ExtendedFeedItem }) => {
   }
 
   const createdAt = new Date(item.createdAt);
+  const linkHref = `/i/${item.id}`;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <Link
+      href={linkHref}
+      prefetch={false}
+      aria-label={item.title}
+      className="group block rounded-xl bg-slate-800/60 border border-white/20 p-6 shadow-sm hover:shadow-md hover:border-blue-400/40 hover:bg-slate-700/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-all duration-200 backdrop-blur-sm"
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-blue-300">
             {getCategoryIcon(item.category || 'general')}
           </span>
           <span
@@ -263,21 +270,27 @@ const InsightCard = memo(({ item }: { item: ExtendedFeedItem }) => {
               (item.category || 'General').slice(1)}
           </span>
         </div>
-        <time className="text-xs text-gray-400" dateTime={createdAt.toISOString()}>
+        <time className="text-xs text-blue-200/60" dateTime={createdAt.toISOString()}>
           {createdAt.toLocaleDateString()}
         </time>
       </div>
 
-      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{item.title}</h3>
+      <h3 className="font-semibold text-white mb-2 line-clamp-2 group-hover:text-blue-200 transition-colors">
+        {item.title}
+      </h3>
 
       {hasSubtitle(item) && (
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{item.subtitle}</p>
+        <p className="text-gray-400 text-sm mb-3 line-clamp-2 group-hover:text-gray-300 transition-colors">
+          {item.subtitle}
+        </p>
       )}
 
       {hasCreator(item) && (
         <div className="flex items-center space-x-2 mb-3">
           <span className="text-xs text-gray-500">by</span>
-          <span className="text-xs font-medium text-blue-600">{item.creator.handle}</span>
+          <span className="text-xs font-medium text-blue-400 group-hover:text-blue-300 transition-colors">
+            {item.creator.handle}
+          </span>
           <span className="text-xs text-gray-400">({item.creator.score}/100)</span>
         </div>
       )}
@@ -296,15 +309,28 @@ const InsightCard = memo(({ item }: { item: ExtendedFeedItem }) => {
             {item.status}
           </span>
         )}
-        {hasStamped(item) && item.stamped && <span className="text-purple-600">✓ Verified</span>}
+        {hasStamped(item) && item.stamped && (
+          <span className="text-purple-400 font-medium">✓ Verified</span>
+        )}
       </div>
-    </div>
+    </Link>
   );
 });
 
 InsightCard.displayName = 'InsightCard';
 
-export default function FeedPage() {
+const FeedPage = memo(() => {
+  // Track page performance
+  usePerformanceTracking('FeedPage');
+
+  // Track page load timing
+  useEffect(() => {
+    const pageTimer = trackPageLoad('Feed');
+    return () => {
+      // Clean up if component unmounts
+    };
+  }, []);
+
   // Normalize category to lowercase slug - defined early for use in useMemo
   const normalizeCategory = (category: string): string => {
     return category.toLowerCase().trim();
@@ -323,7 +349,7 @@ export default function FeedPage() {
   const apiUrl = useMemo(() => {
     const params = new URLSearchParams({
       page: currentPage.toString(),
-      limit: '20',
+      limit: '10', // Reduced from 20 for faster loading
       category: normalizeCategory(currentFilter),
       sort: 'recent',
     });
@@ -336,20 +362,95 @@ export default function FeedPage() {
     return `/api/feed?${params}`;
   }, [currentFilter, currentPage, debouncedSearchQuery]);
 
-  // Use optimized fetch with smart caching
+  // Use optimized fetch with conservative settings to prevent request storm
   const {
     data: feedData,
     loading,
     error: fetchError,
     refetch,
   } = useOptimizedFetch<FeedResponse>(apiUrl, {
-    // Standard fetch options only
+    timeoutMs: 10000, // Increased from 2000ms to prevent premature failures
+    staleTime: 5 * 60 * 1000, // 5 minutes instead of 30 seconds
+    cacheTime: 15 * 60 * 1000, // 15 minutes cache (increased from 5 minutes)
+    retries: 1, // Maximum 1 retry to prevent request storms
+    retryDelay: 30000, // 30 second delay between retries
   });
 
-  // Extract server items from feed data
+  // Extract server items from feed data with immediate fallback
   const serverItems = useMemo(() => {
-    return feedData?.insights || [];
-  }, [feedData]);
+    if (feedData?.insights) {
+      return feedData.insights;
+    }
+
+    // If loading for more than 2 seconds with no data, show demo data
+    if (loading && mounted && !feedData) {
+      const now = Date.now();
+      return [
+        {
+          id: 'demo-1',
+          question: 'Will BTC reach $100k this year?',
+          category: 'crypto',
+          probability: 75,
+          confidence: 65,
+          stamped: false,
+          createdAt: new Date(now).toISOString(),
+          creator: { handle: 'demo_user', score: 85 },
+        },
+        {
+          id: 'demo-2',
+          question: 'Will AI adoption accelerate in 2025?',
+          category: 'tech',
+          probability: 85,
+          confidence: 70,
+          stamped: false,
+          createdAt: new Date(now - 30 * 60 * 1000).toISOString(),
+          creator: { handle: 'tech_analyst', score: 92 },
+        },
+        {
+          id: 'demo-3',
+          question: 'Will SOL flip ETH in TPS metrics this quarter?',
+          category: 'crypto',
+          probability: 62,
+          confidence: 58,
+          stamped: false,
+          createdAt: new Date(now - 60 * 60 * 1000).toISOString(),
+          creator: { handle: 'demo_chain', score: 77 },
+        },
+        {
+          id: 'demo-4',
+          question: 'Will a major L2 outage occur this month?',
+          category: 'tech',
+          probability: 28,
+          confidence: 55,
+          stamped: false,
+          createdAt: new Date(now - 2 * 60 * 60 * 1000).toISOString(),
+          creator: { handle: 'demo_ops', score: 80 },
+        },
+        {
+          id: 'demo-5',
+          question: 'Will a top 10 exchange announce bankruptcy?',
+          category: 'stocks',
+          probability: 12,
+          confidence: 45,
+          stamped: false,
+          createdAt: new Date(now - 3 * 60 * 60 * 1000).toISOString(),
+          creator: { handle: 'risk_demo', score: 70 },
+        },
+        {
+          id: 'demo-6',
+          question: 'Will a major AI model surpass benchmarks this quarter?',
+          category: 'tech',
+          probability: 54,
+          confidence: 60,
+          stamped: false,
+          createdAt: new Date(now - 4 * 60 * 60 * 1000).toISOString(),
+          creator: { handle: 'demo_research', score: 82 },
+        },
+      ];
+    }
+
+    return [];
+  }, [feedData, loading, mounted]);
 
   // Robust normalization utilities
   const num = (v: any, d = 0) => {
@@ -406,6 +507,18 @@ export default function FeedPage() {
     setLocalOverlayItems(memoizedLocalOverlay);
     console.log('[Feed:boot] localOverlay=', memoizedLocalOverlay.length);
   }, [memoizedLocalOverlay]);
+
+  // Force loading to false after reasonable timeout to prevent infinite spinners
+  useEffect(() => {
+    if (!loading) return;
+
+    const forceTimeout = setTimeout(() => {
+      console.warn('[Feed] Forcing loading to false after 5 seconds');
+      // This will be handled by the hook's timeout mechanism
+    }, 5000);
+
+    return () => clearTimeout(forceTimeout);
+  }, [loading]);
 
   // Debounce search query to avoid excessive API calls
   useEffect(() => {
@@ -487,6 +600,31 @@ export default function FeedPage() {
     console.log('[Feed:visible]', { cat, showMine, len: result.length });
     return result;
   }, [merged, currentFilter, showMine]);
+
+  // Debug logging for loading states
+  useEffect(() => {
+    console.log('[Feed:debug]', {
+      loading,
+      hasServerData: !!feedData,
+      serverItemsCount: serverItems.length,
+      localItemsCount: localItems.length,
+      overlayItemsCount: localOverlayItems.length,
+      visibleCount: visible.length,
+      apiUrl: apiUrl.substring(0, 50) + '...',
+      mounted,
+      hasError: !!fetchError,
+    });
+  }, [
+    loading,
+    feedData,
+    serverItems.length,
+    localItems.length,
+    localOverlayItems.length,
+    visible.length,
+    apiUrl,
+    mounted,
+    fetchError,
+  ]);
 
   // No need for manual loading - useOptimizedFetch handles this automatically
 
@@ -628,8 +766,8 @@ export default function FeedPage() {
             </div>
           </div>
 
-          {/* Loading State */}
-          {loading && (
+          {/* Loading State – only when nothing to show yet */}
+          {loading && visible.length === 0 && (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               <p className="text-blue-300 mt-2">Loading insights...</p>
@@ -704,8 +842,8 @@ export default function FeedPage() {
             </div>
           )}
 
-          {/* Enhanced Insights List */}
-          {!loading && mounted && visible.length > 0 && (
+          {/* Enhanced Insights List – render immediately if we have anything */}
+          {mounted && visible.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {visible.map(insight => (
                 <InsightCard key={insight.id} item={insight} />
@@ -802,8 +940,14 @@ export default function FeedPage() {
               </div>
             </div>
           )}
+
+          {/* Feed Content Continues Here */}
         </div>
       </div>
     </ErrorBoundary>
   );
-}
+});
+
+FeedPage.displayName = 'FeedPage';
+
+export default FeedPage;

@@ -15,6 +15,7 @@ import {
   type TradingIntent as NewTradingIntent,
 } from '../../lib/wallet-intent-persistence';
 import { loadDevIntents, type DevIntent } from '../../lib/dev-intents';
+import { type TradingIntent, removeIntent } from '../../lib/intent-persistence';
 
 // local reader helpers for per-wallet intents
 type PerWalletIntent = {
@@ -490,6 +491,11 @@ export default function ActionsPage() {
   const handleCreateIntent = (intent: TradingIntent) => {
     // Convert legacy intent to new format and persist with wallet key
     const pubkey = publicKey;
+    if (!pubkey) {
+      toast.error('Wallet not connected');
+      return;
+    }
+
     const newIntent: NewTradingIntent = {
       id: intent.id,
       symbol: intent.assetSymbol,
@@ -499,13 +505,18 @@ export default function ActionsPage() {
       horizon: `${intent.horizonDays}d`,
       thesis: intent.thesis,
       createdAt: intent.createdAt,
+      title: `${intent.direction} ${intent.assetSymbol}`,
+      payload: {
+        assetSymbol: intent.assetSymbol,
+        horizonDays: intent.horizonDays,
+      },
     };
 
     // Persist to wallet-keyed storage
     upsertIntent(pubkey, newIntent);
 
-    // Update local state
-    setUserIntents(prev => [intent, ...prev]);
+    // Update local state - use newIntent for consistency
+    setUserIntents(prev => [newIntent, ...prev]);
     setNewIntents(loadIntentsForV2(pubkey));
 
     clearDraft();
@@ -560,6 +571,10 @@ export default function ActionsPage() {
   const handleRemoveNewIntent = (intentId: string) => {
     // Remove from new intents system
     const pubkey = publicKey;
+    if (!pubkey) {
+      toast.error('Wallet not connected');
+      return;
+    }
 
     // Remove from wallet-keyed storage
     removeWalletIntent(pubkey, intentId);
@@ -595,6 +610,10 @@ export default function ActionsPage() {
     if (!editingIntent) return;
 
     const pubkey = publicKey;
+    if (!pubkey) {
+      toast.error('Wallet not connected');
+      return;
+    }
 
     // Create updated intent object
     const updatedIntent: NewTradingIntent = {
@@ -929,13 +948,15 @@ export default function ActionsPage() {
                       className="p-3 rounded-lg bg-slate-800/50 border border-slate-600"
                     >
                       {/* bruk kun normaliserte felter */}
-                      <div className="text-sm font-medium text-slate-200">{i.title}</div>
+                      <div className="text-sm font-medium text-slate-200">
+                        {i.direction} {i.assetSymbol}
+                      </div>
                       <div className="text-xs text-slate-500 mt-1">
                         Created {new Date(i.createdAt).toLocaleString()}
                       </div>
-                      {i?.payload?.predictionId && (
+                      {i?.raw?.payload?.predictionId && (
                         <div className="text-xs text-blue-400 mt-1">
-                          Prediction ID: {String(i.payload.predictionId)}
+                          Prediction ID: {String(i.raw.payload.predictionId)}
                         </div>
                       )}
                     </li>

@@ -79,9 +79,6 @@ export async function GET() {
     },
   ];
 
-  // Add small delay to simulate real API
-  await new Promise(resolve => setTimeout(resolve, 200));
-
   return NextResponse.json(templates, {
     headers: {
       'Cache-Control': 'public, max-age=300', // Cache for 5 minutes

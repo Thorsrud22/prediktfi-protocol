@@ -31,20 +31,21 @@ export interface AdapterCtx {
 
 export async function fetchFunding(ctx: AdapterCtx): Promise<AdapterResult> {
   const { startTime } = ctx.telemetry.start('funding');
-  
+
   try {
     // For now, use a mock funding rate API or create a simple proxy
     // In production, this would connect to Binance, Bybit, or similar
-    const baseUrl = process.env.NEXT_PUBLIC_FUNDING_BASE || 'https://api.binance.com/api/v3/premiumIndex';
-    const url = `${baseUrl}?symbols=["BTCUSDT","ETHUSDT","SOLUSDT"]`;
-    
+    const baseUrl =
+      process.env.NEXT_PUBLIC_FUNDING_BASE || 'https://fapi.binance.com/fapi/v1/premiumIndex';
+    const url = `${baseUrl}?symbol=BTCUSDT`;
+
     // Check for existing ETag
     const existingEtag = ctx.etagStore.get('funding');
     const headers: HeadersInit = {
       'User-Agent': 'PrediktFi/1.0',
-      'Accept': 'application/json'
+      Accept: 'application/json',
     };
-    
+
     if (existingEtag) {
       headers['If-None-Match'] = existingEtag;
     }
@@ -55,7 +56,7 @@ export async function fetchFunding(ctx: AdapterCtx): Promise<AdapterResult> {
 
     const response = await ctx.fetchImpl(url, {
       headers,
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
@@ -68,7 +69,7 @@ export async function fetchFunding(ctx: AdapterCtx): Promise<AdapterResult> {
         items: [],
         ok: true,
         timedOut: false,
-        etag: existingEtag
+        etag: existingEtag || undefined,
       };
     }
 
@@ -77,12 +78,12 @@ export async function fetchFunding(ctx: AdapterCtx): Promise<AdapterResult> {
       return {
         items: [],
         ok: false,
-        timedOut: false
+        timedOut: false,
       };
     }
 
     const data = await response.json();
-    
+
     // Extract ETag from response
     const etag = response.headers.get('ETag');
     if (etag) {
@@ -90,42 +91,42 @@ export async function fetchFunding(ctx: AdapterCtx): Promise<AdapterResult> {
     }
 
     // Normalize to our format
-    const items = (Array.isArray(data) ? data : [data]).slice(0, 3).map((item: any) => {
-      const symbol = item.symbol?.replace('USDT', '') || 'BTC';
-      const fundingRate = parseFloat(item.lastFundingRate) || 0;
-      
+    const items = [];
+    if (data && data.symbol) {
+      const symbol = data.symbol?.replace('USDT', '') || 'BTC';
+      const fundingRate = parseFloat(data.lastFundingRate) || 0;
+
       // Convert funding rate to probability and direction
       const absRate = Math.abs(fundingRate);
       const direction = fundingRate > 0.0001 ? 'up' : fundingRate < -0.0001 ? 'down' : 'neutral';
       const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
-      
-      return {
+
+      items.push({
         type: 'funding' as const,
         label: `${symbol} funding ${arrow}`,
         direction: direction as 'up' | 'down' | 'neutral',
-        ts: ctx.now.toISOString()
-      };
-    });
+        ts: ctx.now.toISOString(),
+      });
+    }
 
     ctx.telemetry.end('funding', { ok: true, timedOut: false, elapsedMs });
-    
+
     return {
       items,
       ok: true,
       timedOut: false,
-      etag
+      etag: etag || undefined,
     };
-
   } catch (error) {
     const elapsedMs = Date.now() - startTime;
     const timedOut = error instanceof Error && error.name === 'AbortError';
-    
+
     ctx.telemetry.end('funding', { ok: false, timedOut, elapsedMs });
-    
+
     return {
       items: [],
       ok: false,
-      timedOut
+      timedOut,
     };
   }
 }
