@@ -169,6 +169,10 @@ export function useOptimizedFetch<T>(
           attempt: attempt + 1,
           retries,
           cacheHit: !!cached,
+        }).catch((fetchError) => {
+          // If trackApiCall fails, still throw the original fetch error
+          console.error(`Fetch failed for ${url}:`, fetchError);
+          throw new Error(`Failed to fetch: ${fetchError.message}`);
         });
 
         clearTimeout(timeoutId);
