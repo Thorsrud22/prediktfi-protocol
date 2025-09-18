@@ -136,8 +136,14 @@ export function useOptimizedFetch<T>(
       }
 
       // Cancel previous request if it's still in-flight
-      if (abortControllerRef.current && inFlightRef.current && !abortControllerRef.current.signal.aborted) {
-        try { abortControllerRef.current.abort(); } catch {}
+      if (
+        abortControllerRef.current &&
+        inFlightRef.current &&
+        !abortControllerRef.current.signal.aborted
+      ) {
+        try {
+          abortControllerRef.current.abort();
+        } catch {}
       }
 
       abortControllerRef.current = new AbortController();
@@ -173,14 +179,17 @@ export function useOptimizedFetch<T>(
           cacheHit: !!cached,
         }).catch(fetchError => {
           // Swallow aborts (expected during rapid filter changes or unmounts)
-          if (fetchError && (fetchError.name === 'AbortError' || fetchError.message?.includes('aborted'))) {
+          if (
+            fetchError &&
+            (fetchError.name === 'AbortError' || fetchError.message?.includes('aborted'))
+          ) {
             throw fetchError; // handled in outer catch as AbortError
           }
           // If trackApiCall fails for other reasons, propagate a clear error
           throw new Error(`Failed to fetch: ${fetchError?.message || 'unknown error'}`);
         });
 
-  clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -273,8 +282,14 @@ export function useOptimizedFetch<T>(
     return () => {
       clearTimeout(safetyTimeout);
       // Only abort if in-flight and not already aborted
-      if (abortControllerRef.current && inFlightRef.current && !abortControllerRef.current.signal.aborted) {
-        try { abortControllerRef.current.abort(); } catch {}
+      if (
+        abortControllerRef.current &&
+        inFlightRef.current &&
+        !abortControllerRef.current.signal.aborted
+      ) {
+        try {
+          abortControllerRef.current.abort();
+        } catch {}
       }
     };
   }, [fetchWithRetry, enabled, timeoutMs, updateState]);
@@ -283,8 +298,14 @@ export function useOptimizedFetch<T>(
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      if (abortControllerRef.current && inFlightRef.current && !abortControllerRef.current.signal.aborted) {
-        try { abortControllerRef.current.abort(); } catch {}
+      if (
+        abortControllerRef.current &&
+        inFlightRef.current &&
+        !abortControllerRef.current.signal.aborted
+      ) {
+        try {
+          abortControllerRef.current.abort();
+        } catch {}
       }
 
       // Stop cleanup if no active hooks

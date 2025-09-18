@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "lint:fix": "prettier --write \"tests/**/*.ts\"",
     "dev": "NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS='--max-old-space-size=8192' next dev --turbo -p 3000",
+    "dev:clean": "bash scripts/ensure-port-3000.sh 3000 && NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS='--max-old-space-size=8192' next dev --turbo -p 3000",
     "dev:safe": "NEXT_TELEMETRY_DISABLED=1 next dev -p 3000",
     "start": "next start -p 3000",
     "typecheck": "tsc --noEmit",

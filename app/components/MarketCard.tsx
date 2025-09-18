@@ -10,7 +10,7 @@ interface Creator {
   avatarUrl: string;
 }
 
-interface MarketCardProps {
+export interface MarketCardProps {
   id: string;
   title: string;
   subtitle?: string;

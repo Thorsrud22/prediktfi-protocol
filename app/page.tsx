@@ -1,110 +1,39 @@
-"use client";
-
-import React, { memo, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSimplifiedWallet } from './components/wallet/SimplifiedWalletProvider';
+import React from "react";
 import Hero from "./components/Hero";
 import TrendingMarkets from "./components/TrendingMarkets";
 import ActivityFeed from "./components/ActivityFeed";
 import TopCreators from "./components/TopCreators";
+import HomeClient from "./components/HomeClient";
 import Link from "next/link";
 
-const Home = memo(function Home() {
-  const router = useRouter();
-  const { isConnected } = useSimplifiedWallet();
-  const [isReturningUser, setIsReturningUser] = useState<boolean | null>(null);
+// ISR: Revalidate every hour like PredictionSwap
+export const revalidate = 3600;
 
-  // Check if user is returning (has visited before) or has wallet isConnected
-  useEffect(() => {
-    // Ensure we're on the client side
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
-      setIsReturningUser(false);
-      return;
+// Server Component - static content pre-rendered
+async function getHomeData() {
+  // Simulate API fetch for stats
+  return {
+    stats: {
+      activePredictions: 1234,
+      totalVolume: 2.5,
+      accuracyRate: 89,
+      activeCreators: 5678,
     }
-
-    try {
-      // Check for various indicators of returning user
-      const hasVisitedBefore = 
-        localStorage.getItem('predikt:visited') === 'true' ||
-        localStorage.getItem('predikt:referral') !== null ||
-        document.cookie.includes('predikt_plan=') ||
-        document.cookie.includes('predikt_consent_v1=');
-
-      setIsReturningUser(hasVisitedBefore);
-
-      // If returning user OR wallet is authenticated, redirect to Feed after a short delay
-      if (hasVisitedBefore || isConnected) {
-        const timer = setTimeout(() => {
-          router.push('/feed');
-        }, 1500); // 1.5 second delay to show the redirect
-
-        return () => clearTimeout(timer);
-      } else {
-        // Mark as visited for future visits
-        localStorage.setItem('predikt:visited', 'true');
-      }
-    } catch (error) {
-      console.warn('Error checking returning user status:', error);
-      setIsReturningUser(false);
-    }
-  }, [router, isConnected]);
-
-  const trackEvent = (eventName: string, properties: Record<string, any> = {}) => {
-    if (typeof window === 'undefined') return;
-
-    fetch('/api/analytics', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event: eventName,
-        properties: {
-          ...properties,
-          ts: Date.now(),
-          path: window.location.pathname
-        },
-        timestamp: new Date().toISOString(),
-      }),
-    }).catch(error => {
-      console.error('Failed to track event:', error);
-    });
   };
+}
 
-  // Show loading state while checking returning user status
-  if (isReturningUser === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show redirect message for returning users or authenticated wallet
-  if (isReturningUser || isConnected) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-pulse text-4xl mb-4">🚀</div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            {isConnected ? 'Wallet Authenticated!' : 'Welcome back!'}
-          </h2>
-          <p className="text-gray-400 mb-4">Taking you to your Feed...</p>
-          <div className="w-64 bg-gray-700 rounded-full h-2">
-            <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+export default async function Home() {
+  const data = await getHomeData();
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
+      {/* Client-side logic for redirects */}
+      <HomeClient />
+      
+      {/* Hero Section - Static */}
       <Hero />
       
-      {/* Main Content Grid */}
+      {/* Main Content Grid - Static */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -122,7 +51,6 @@ const Home = memo(function Home() {
                 <Link 
                   href="/feed"
                   className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
-                  onClick={() => trackEvent('home_trending_view_all')}
                 >
                   View All →
                 </Link>
@@ -133,10 +61,7 @@ const Home = memo(function Home() {
 
             {/* Sidebar */}
             <div className="space-y-8">
-              {/* Live Activity Feed */}
               <ActivityFeed />
-              
-              {/* Top Creators */}
               <TopCreators />
             </div>
           </div>
@@ -154,14 +79,12 @@ const Home = memo(function Home() {
               <Link
                 href="/studio"
                 className="px-8 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all transform hover:scale-105"
-                onClick={() => trackEvent('home_hero_open_studio_clicked')}
               >
                 🚀 Start Creating
               </Link>
               <Link
                 href="/leaderboard"
                 className="px-8 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors"
-                onClick={() => trackEvent('home_hero_view_feed_clicked')}
               >
                 🏆 View Leaderboard
               </Link>
@@ -170,7 +93,7 @@ const Home = memo(function Home() {
         </div>
       </section>
 
-      {/* Live Stats Section */}
+      {/* Live Stats Section - Pre-rendered with server data */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/10">
         <div className="max-w-7xl mx-auto">
           <h3 className="text-2xl font-bold text-white text-center mb-12">
@@ -179,25 +102,25 @@ const Home = memo(function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center group">
               <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-400 mb-2 group-hover:scale-110 transition-transform">
-                1,234
+                {data.stats.activePredictions.toLocaleString()}
               </div>
               <div className="text-gray-400">Active Predictions</div>
             </div>
             <div className="text-center group">
               <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 mb-2 group-hover:scale-110 transition-transform">
-                $2.5M
+                ${data.stats.totalVolume}M
               </div>
               <div className="text-gray-400">Total Volume</div>
             </div>
             <div className="text-center group">
               <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 mb-2 group-hover:scale-110 transition-transform">
-                89%
+                {data.stats.accuracyRate}%
               </div>
               <div className="text-gray-400">Accuracy Rate</div>
             </div>
             <div className="text-center group">
               <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 mb-2 group-hover:scale-110 transition-transform">
-                5,678
+                {data.stats.activeCreators.toLocaleString()}
               </div>
               <div className="text-gray-400">Active Creators</div>
             </div>
@@ -222,6 +145,4 @@ const Home = memo(function Home() {
       </section>
     </div>
   );
-});
-
-export default Home;
+}
