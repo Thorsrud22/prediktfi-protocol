@@ -95,6 +95,7 @@ export function useOptimizedFetch<T>(
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const inFlightRef = useRef(false);
   const retryCountRef = useRef(0);
   const isMountedRef = useRef(true);
 
@@ -134,12 +135,13 @@ export function useOptimizedFetch<T>(
         }
       }
 
-      // Cancel previous request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      // Cancel previous request if it's still in-flight
+      if (abortControllerRef.current && inFlightRef.current && !abortControllerRef.current.signal.aborted) {
+        try { abortControllerRef.current.abort(); } catch {}
       }
 
       abortControllerRef.current = new AbortController();
+      inFlightRef.current = true;
 
       updateState({ loading: true, error: null });
 
@@ -169,13 +171,16 @@ export function useOptimizedFetch<T>(
           attempt: attempt + 1,
           retries,
           cacheHit: !!cached,
-        }).catch((fetchError) => {
-          // If trackApiCall fails, still throw the original fetch error
-          console.error(`Fetch failed for ${url}:`, fetchError);
-          throw new Error(`Failed to fetch: ${fetchError.message}`);
+        }).catch(fetchError => {
+          // Swallow aborts (expected during rapid filter changes or unmounts)
+          if (fetchError && (fetchError.name === 'AbortError' || fetchError.message?.includes('aborted'))) {
+            throw fetchError; // handled in outer catch as AbortError
+          }
+          // If trackApiCall fails for other reasons, propagate a clear error
+          throw new Error(`Failed to fetch: ${fetchError?.message || 'unknown error'}`);
         });
 
-        clearTimeout(timeoutId);
+  clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -200,6 +205,7 @@ export function useOptimizedFetch<T>(
         });
 
         retryCountRef.current = 0;
+        inFlightRef.current = false;
         return result;
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -207,9 +213,11 @@ export function useOptimizedFetch<T>(
           const cached = url ? globalCache.get(url) : null;
           if (cached) {
             updateState({ loading: false, isStale: true, error: 'Request timed out' });
+            inFlightRef.current = false;
             return cached.data as T;
           }
           updateState({ loading: false, error: 'Request timed out' });
+          inFlightRef.current = false;
           return null; // Request was cancelled
         }
 
@@ -231,6 +239,7 @@ export function useOptimizedFetch<T>(
           error: errorMessage,
         });
 
+        inFlightRef.current = false;
         return null;
       }
     },
@@ -263,8 +272,9 @@ export function useOptimizedFetch<T>(
 
     return () => {
       clearTimeout(safetyTimeout);
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      // Only abort if in-flight and not already aborted
+      if (abortControllerRef.current && inFlightRef.current && !abortControllerRef.current.signal.aborted) {
+        try { abortControllerRef.current.abort(); } catch {}
       }
     };
   }, [fetchWithRetry, enabled, timeoutMs, updateState]);
@@ -273,8 +283,8 @@ export function useOptimizedFetch<T>(
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      if (abortControllerRef.current && inFlightRef.current && !abortControllerRef.current.signal.aborted) {
+        try { abortControllerRef.current.abort(); } catch {}
       }
 
       // Stop cleanup if no active hooks
