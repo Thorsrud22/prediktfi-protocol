@@ -35,52 +35,7 @@ interface FetchState<T> {
 const globalCache = new Map<string, CacheEntry<any>>();
 const MAX_CACHE_SIZE = 50; // Limit cache size to prevent memory leaks
 
-// Circuit breaker state per URL
-const circuitBreakers = new Map<
-  string,
-  {
-    failureCount: number;
-    lastFailureTime: number;
-    isOpen: boolean;
-  }
->();
-
-const CIRCUIT_BREAKER_THRESHOLD = 3; // Failures before opening circuit
-const CIRCUIT_BREAKER_TIMEOUT = 60000; // 1 minute before trying again
-
-function getCircuitState(url: string) {
-  const circuit = circuitBreakers.get(url);
-  if (!circuit) {
-    circuitBreakers.set(url, { failureCount: 0, lastFailureTime: 0, isOpen: false });
-    return circuitBreakers.get(url)!;
-  }
-
-  // Auto-reset circuit breaker after timeout
-  if (circuit.isOpen && Date.now() - circuit.lastFailureTime > CIRCUIT_BREAKER_TIMEOUT) {
-    circuit.isOpen = false;
-    circuit.failureCount = 0;
-    console.log(`Circuit breaker reset for ${url}`);
-  }
-
-  return circuit;
-}
-
-function recordFailure(url: string) {
-  const circuit = getCircuitState(url);
-  circuit.failureCount++;
-  circuit.lastFailureTime = Date.now();
-
-  if (circuit.failureCount >= CIRCUIT_BREAKER_THRESHOLD) {
-    circuit.isOpen = true;
-    console.warn(`Circuit breaker opened for ${url} after ${circuit.failureCount} failures`);
-  }
-}
-
-function recordSuccess(url: string) {
-  const circuit = getCircuitState(url);
-  circuit.failureCount = 0;
-  circuit.isOpen = false;
-}
+// Cache management only
 
 // Cleanup interval for cache
 let cleanupInterval: NodeJS.Timeout | null = null;
@@ -152,17 +107,6 @@ export function useOptimizedFetch<T>(
   const fetchWithRetry = useCallback(
     async (attempt = 0): Promise<T | null> => {
       if (!enabled || !url) return null;
-
-      // Check circuit breaker first
-      const circuit = getCircuitState(url);
-      if (circuit.isOpen) {
-        updateState({
-          loading: false,
-          error: 'Circuit breaker open - too many failures, retrying in 1 minute',
-          isStale: true,
-        });
-        return null;
-      }
 
       // Check cache first with more sophisticated cache logic
       const cached = globalCache.get(url);
@@ -277,9 +221,6 @@ export function useOptimizedFetch<T>(
 
         // Final failure
         console.error(`Fetch failed after ${retries + 1} attempts for ${url}:`, error);
-
-        // Record failure for circuit breaker
-        recordFailure(url);
 
         updateState({
           loading: false,

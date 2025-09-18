@@ -1,0 +1,153 @@
+# Code Citations
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWith
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super(props);
+    this.state
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super(props);
+    this.state = { hasError: false };
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerive
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error):
+```
+
+## License: unknown
+
+https://github.com/ndhamele/my-app/blob/0c73394c7c0cdca563d8a78ddc780955f80b71ed/src/ErrorBoundary.tsx
+
+```
+extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+```
