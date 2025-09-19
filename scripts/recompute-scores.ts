@@ -6,7 +6,7 @@
  */
 
 import { updateAllProfileAggregates, getLeaderboard } from '../lib/score';
-import { createEvent } from '../lib/events';
+import { createEvent, EVENT_TYPES } from '../lib/events';
 
 interface RecomputeStats {
   startTime: Date;
@@ -64,7 +64,8 @@ async function main() {
     }
     
     // Log completion event
-    await createEvent('scores_recomputed', {
+    createEvent(EVENT_TYPES.SYSTEM_WARNING, {
+      type: 'scores_recomputed',
       durationMs,
       creatorsProcessed: stats.creatorsProcessed,
       errorsCount: stats.errors.length,
@@ -80,9 +81,9 @@ async function main() {
     
     console.error(`💥 Score recomputation failed after ${durationMs}ms:`, errorMessage);
     stats.errors.push(`Job failed: ${errorMessage}`);
-    
     // Log failure event
-    await createEvent('scores_recomputation_failed', {
+    createEvent(EVENT_TYPES.SYSTEM_ERROR, {
+      type: 'scores_recomputation_failed',
       durationMs,
       error: errorMessage,
       creatorsProcessed: stats.creatorsProcessed

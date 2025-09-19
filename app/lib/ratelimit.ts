@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { handler } from 'next/dist/build/templates/app-page';
+import { number } from 'zod';
 
 // Initialize Redis (fallback to in-memory for development)
 const redis = process.env.UPSTASH_REDIS_REST_URL
@@ -16,40 +18,40 @@ const redis = process.env.UPSTASH_REDIS_REST_URL
   : null;
 
 // Rate limiters for different user tiers
-const rateLimiters = {
+const rateLimiters = redis ? {
   free: new Ratelimit({
-    redis: redis || new Map(), // Use in-memory Map as fallback
+    redis: redis,
     limiter: Ratelimit.slidingWindow(20, '1 m'), // 20 requests per minute
     analytics: true,
   }),
   pro: new Ratelimit({
-    redis: redis || new Map(),
+    redis: redis,
     limiter: Ratelimit.slidingWindow(100, '1 m'), // 100 requests per minute
     analytics: true,
   }),
   // Global rate limit for unauthenticated requests
   global: new Ratelimit({
-    redis: redis || new Map(),
+    redis: redis,
     limiter: Ratelimit.slidingWindow(10, '1 m'), // 10 requests per minute
     analytics: true,
   }),
   // Advisor-specific rate limits (stricter for write operations)
   advisor_read: new Ratelimit({
-    redis: redis || new Map(),
+    redis: redis,
     limiter: Ratelimit.slidingWindow(30, '1 m'), // 30 reads per minute
     analytics: true,
   }),
   advisor_write: new Ratelimit({
-    redis: redis || new Map(),
+    redis: redis,
     limiter: Ratelimit.slidingWindow(10, '1 m'), // 10 writes per minute
     analytics: true,
   }),
   alerts: new Ratelimit({
-    redis: redis || new Map(),
+    redis: redis,
     limiter: Ratelimit.slidingWindow(5, '1 m'), // 5 alert operations per minute
     analytics: true,
   }),
-};
+} : null;
 
 export interface RateLimitOptions {
   identifier?: string; // Custom identifier (defaults to IP)
@@ -70,10 +72,14 @@ export async function checkRateLimit(
     return null;
   }
   
+  // Skip rate limiting if Redis is not available
+  if (!rateLimiters) {
+    return null;
+  }
+  
   try {
     // Determine identifier (IP address or custom)
     const identifier = options.identifier || 
-      request.ip || 
       request.headers.get('x-forwarded-for') || 
       request.headers.get('x-real-ip') || 
       'unknown';
@@ -116,26 +122,45 @@ export async function checkRateLimit(
   }
 }
 
-/**
- * Get rate limit info without consuming quota
- */
 export async function getRateLimitInfo(
   identifier: string,
-  plan: 'free' | 'pro' = 'free'
+  plan: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' = 'free'
 ): Promise<{
   limit: number;
   remaining: number;
   reset: number;
 }> {
   try {
+    if (!rateLimiters) {
+      const defaultLimits = {
+        pro: 100,
+        advisor_read: 30,
+        advisor_write: 10,
+        alerts: 5,
+        free: 20
+      };
+      const limit = defaultLimits[plan] || 20;
+      return {
+        limit,
+        remaining: limit,
+        reset: Date.now() + 60000 // 1 minute from now
+      };
+    }
+    
     const ratelimiter = rateLimiters[plan];
     // This is a bit of a hack - we'd need to implement a separate check method
-    // For now, we'll use the limit method but this consumes quota
-    const result = await ratelimiter.limit(identifier);
+    const defaultLimits = {
+      pro: 100,
+      advisor_read: 30,
+      advisor_write: 10,
+      alerts: 5,
+      free: 20
+    };
+    const limit = defaultLimits[plan] || 20;
     return {
-      limit: result.limit,
-      remaining: result.remaining,
-      reset: result.reset
+      limit,
+      remaining: limit,
+      reset: Date.now() + 60000 // 1 minute from now
     };
   } catch (error) {
     console.error('Failed to get rate limit info:', error);
@@ -146,16 +171,15 @@ export async function getRateLimitInfo(
     };
   }
 }
-
 /**
  * Wrapper function for easy use in API routes
  */
-export async function withRateLimit<T>(
+export async function withRateLimit(
   request: NextRequest,
   handler: () => Promise<NextResponse>,
   options: RateLimitOptions = {}
 ): Promise<NextResponse> {
-  // Check rate limit
+  // Check rate limit first
   const rateLimitResponse = await checkRateLimit(request, options);
   if (rateLimitResponse) {
     return rateLimitResponse;
@@ -167,10 +191,9 @@ export async function withRateLimit<T>(
   // Add rate limit headers to successful responses
   try {
     const identifier = options.identifier || 
-      request.ip || 
       request.headers.get('x-forwarded-for') || 
+      request.headers.get('x-real-ip') || 
       'unknown';
-    
     const info = await getRateLimitInfo(identifier, options.plan);
     
     response.headers.set('X-RateLimit-Limit', info.limit.toString());

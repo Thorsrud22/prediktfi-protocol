@@ -24,6 +24,7 @@ export const QUOTA_LIMITS: Record<UserTier, QuotaLimits> = {
 };
 
 export interface UserSubscriptionInfo {
+  [x: string]: any;
   tier: UserTier;
   isPro: boolean;
   isTrial: boolean;
@@ -87,8 +88,8 @@ export async function getUserSubscription(walletId: string): Promise<UserSubscri
   });
 
   const isTrial = !!activeTrial;
-  const effectiveTier = isTrial ? 'PRO' : subscription.tier;
-  const isPro = effectiveTier === 'PRO';
+  let effectiveTier = isTrial ? 'PRO' : subscription.tier;
+  let isPro = effectiveTier === 'PRO';
 
   // Get current quotas
   const quotas = await getCurrentQuotas(subscription.id, effectiveTier);
@@ -112,7 +113,7 @@ export async function getUserSubscription(walletId: string): Promise<UserSubscri
     isPro,
     isTrial,
     trialEndsAt: activeTrial?.endsAt,
-    planExpiresAt,
+    planExpiresAt: planExpiresAt || undefined,
     quotas,
   };
 }

@@ -1,20 +1,13 @@
 import { NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
+import { PrismaClient } from '@prisma/client';
+import {
+  selectResolver,
+  verifiabilityScore,
+  confidenceToProbability,
+  canonicalize,
+} from '@/app/lib/resolvers';
 
-interface PredictionSubmission {
-  id: string;
-  userId?: string;
-  templateId: string;
-  predictionText: string;
-  confidence: 'high' | 'medium' | 'low';
-  timeHorizon: string;
-  stakeAmount: number;
-  category: string;
-  status: 'pending' | 'active' | 'resolved';
-  potentialReward: number;
-  createdAt: string;
-  expiresAt: string;
-}
+const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
@@ -28,68 +21,91 @@ export async function POST(request: Request) {
     }
 
     // Calculate expiration date based on time horizon
-    const expirationDate = calculateExpirationDate(timeHorizon);
+    const deadline = calculateExpirationDate(timeHorizon);
 
-    // Calculate potential reward based on stake and difficulty
-    const potentialReward = calculatePotentialReward(stakeAmount, confidence, templateId);
+    // Canonicalize prediction text
+    const canonical = canonicalize(predictionText.trim());
 
-    // Create prediction submission
-    const prediction: PredictionSubmission = {
-      id: uuidv4(),
-      userId: body.userId || 'anonymous', // In production, get from auth
-      templateId,
-      predictionText: predictionText.trim(),
-      confidence,
-      timeHorizon,
-      stakeAmount: parseFloat(stakeAmount),
-      category: getCategoryFromTemplate(templateId),
-      status: 'pending',
-      potentialReward,
-      createdAt: new Date().toISOString(),
-      expiresAt: expirationDate.toISOString(),
-    };
+    // Select resolver automatically
+    const resolver = selectResolver(canonical);
 
-    // In production, save to database
-    // For now, simulate database save
-    console.log('📝 New prediction submitted:', {
-      id: prediction.id,
-      text: prediction.predictionText,
-      confidence: prediction.confidence,
-      stake: prediction.stakeAmount,
-      reward: prediction.potentialReward,
+    // Calculate initial probability from confidence
+    const probability = confidenceToProbability(confidence);
+
+    // Calculate verifiability score
+    const vScore = verifiabilityScore(resolver.kind, {
+      kind: resolver.kind,
+      deadline,
+      evidenceCount: resolver.resolverRef ? 1 : 0,
     });
 
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 500));
-
-    // Return success response
-    return NextResponse.json({
-      success: true,
-      prediction: {
-        id: prediction.id,
-        status: 'submitted',
-        message: 'Prediction submitted successfully!',
-        details: {
-          predictionText: prediction.predictionText,
-          confidence: prediction.confidence,
-          timeHorizon: prediction.timeHorizon,
-          stakeAmount: prediction.stakeAmount,
-          potentialReward: prediction.potentialReward,
-          expiresAt: prediction.expiresAt,
-        },
+    // Create insight in database
+    const insight = await prisma.insight.create({
+      data: {
+        question: canonical,
+        category: getCategoryFromTemplate(templateId),
+        horizon: deadline,
+        probability: probability,
+        confidence: parseFloat(stakeAmount), // Store stake as confidence for now
+        intervalLower: Math.max(0, probability - 0.1),
+        intervalUpper: Math.min(1, probability + 0.1),
+        rationale: `Auto-generated from Studio. Resolver: ${
+          resolver.kind
+        }. Reasons: ${resolver.reasons.join(', ')}`,
+        scenarios: JSON.stringify({ verifiabilityScore: vScore }),
+        metrics: JSON.stringify({
+          timeHorizon,
+          confidence,
+          stakeAmount: parseFloat(stakeAmount),
+          templateId,
+        }),
+        sources: resolver.resolverRef || '',
+        dataQuality: vScore,
+        // Proof fields
+        canonical,
+        p: probability,
+        deadline,
+        resolverKind: resolver.kind,
+        resolverRef: resolver.resolverRef,
+        status: 'OPEN',
       },
     });
+
+    console.log('📝 New insight created:', {
+      id: insight.id,
+      canonical: insight.canonical,
+      resolverKind: insight.resolverKind,
+      deadline: insight.deadline,
+      verifiabilityScore: vScore,
+    });
+
+    // Return success response with redirect to insight page
+    return NextResponse.json({
+      success: true,
+      insight: {
+        id: insight.id,
+        canonical: insight.canonical,
+        resolverKind: insight.resolverKind,
+        resolverRef: insight.resolverRef,
+        deadline: insight.deadline,
+        verifiabilityScore: vScore,
+        status: insight.status,
+      },
+      redirectTo: `/i/${insight.id}`,
+    });
   } catch (error) {
-    console.error('Prediction submission failed:', error);
+    console.error('Insight creation failed:', error);
 
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to submit prediction',
+        error: 'Failed to create insight',
         message: 'Something went wrong. Please try again.',
       },
       { status: 500 },
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -110,46 +126,6 @@ function calculateExpirationDate(timeHorizon: string): Date {
     default:
       return new Date(now.getTime() + 24 * 60 * 60 * 1000);
   }
-}
-
-function calculatePotentialReward(
-  stakeAmount: number,
-  confidence: string,
-  templateId: string,
-): number {
-  // Base multiplier based on confidence level
-  const confidenceMultiplier =
-    {
-      high: 1.8, // Lower risk, lower reward
-      medium: 2.5, // Moderate risk/reward
-      low: 4.0, // Higher risk, higher reward
-    }[confidence] || 2.5;
-
-  // Template difficulty multiplier
-  const templateMultiplier = getTemplateDifficulty(templateId);
-
-  // Calculate reward
-  const baseReward = stakeAmount * confidenceMultiplier * templateMultiplier;
-
-  // Add some randomness (±10%)
-  const randomFactor = 0.9 + Math.random() * 0.2;
-
-  return Math.round(baseReward * randomFactor * 100) / 100;
-}
-
-function getTemplateDifficulty(templateId: string): number {
-  const difficulties: { [key: string]: number } = {
-    '1': 1.2, // Bitcoin - medium difficulty
-    '2': 1.5, // Tesla - harder
-    '3': 2.0, // Sports - very hard
-    '4': 0.8, // Weather - easier
-    '5': 1.3, // Ethereum gas
-    '6': 1.4, // Apple earnings
-    '7': 2.2, // Champions League
-    '8': 1.6, // AI chip demand
-  };
-
-  return difficulties[templateId] || 1.0;
 }
 
 function getCategoryFromTemplate(templateId: string): string {

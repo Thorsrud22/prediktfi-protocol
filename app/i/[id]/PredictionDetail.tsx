@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { InsightResponse } from '../../api/insight/_schemas';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
+import { verifiabilityScore } from '../../lib/resolvers';
 
 interface PredictionDetailProps {
   insight: InsightResponse;
@@ -24,6 +25,27 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
   const isCommitted = insight.status === 'COMMITTED';
   const isResolved = insight.status === 'RESOLVED';
   const isOverdue = deadline < new Date() && !isResolved;
+
+  // Calculate verifiability score for this insight
+  let resolverRef = {};
+  let verifiability = 0.4; // Default fallback
+
+  try {
+    if (insight.resolverRef && typeof insight.resolverRef === 'string') {
+      resolverRef = JSON.parse(insight.resolverRef);
+      verifiability = verifiabilityScore(insight.resolverKind, {
+        kind: insight.resolverKind as any,
+        deadline: new Date(insight.deadline),
+        evidenceCount: resolverRef ? 1 : 0,
+      });
+    }
+  } catch (error) {
+    console.warn('Failed to parse resolverRef:', insight.resolverRef, error);
+    // Use fallback verifiability score based on resolver kind
+    if (insight.resolverKind === 'PRICE') verifiability = 0.8;
+    else if (insight.resolverKind === 'URL') verifiability = 0.7;
+    else if (insight.resolverKind === 'TEXT') verifiability = 0.4;
+  }
 
   const getStatusIcon = () => {
     if (isResolved && insight.outcome) {
@@ -114,7 +136,28 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
     return { level: 'Low', color: 'text-red-400', bg: 'bg-red-500/20', icon: '⚠️' };
   };
 
+  const getVerifiabilityLevel = (score: number) => {
+    if (score >= 0.8)
+      return {
+        level: 'Highly Verifiable',
+        color: 'text-green-400',
+        bg: 'bg-green-500/20',
+        icon: '🔒',
+      };
+    if (score >= 0.6)
+      return { level: 'Verifiable', color: 'text-blue-400', bg: 'bg-blue-500/20', icon: '🔐' };
+    if (score >= 0.4)
+      return {
+        level: 'Partially Verifiable',
+        color: 'text-yellow-400',
+        bg: 'bg-yellow-500/20',
+        icon: '🔓',
+      };
+    return { level: 'Low Verifiability', color: 'text-red-400', bg: 'bg-red-500/20', icon: '⚠️' };
+  };
+
   const confidence = getConfidenceLevel(insight.p);
+  const verifiabilityLevel = getVerifiabilityLevel(verifiability);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -248,13 +291,25 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
               </div>
 
               {/* Clean info cards below circle */}
-              <div className="flex justify-center items-center gap-6">
+              <div className="flex justify-center items-center gap-6 flex-wrap">
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/20">
                   <span className="text-lg">{confidence.icon}</span>
                   <div className="text-left">
                     <div className="text-xs text-white/60 uppercase tracking-wide">Confidence</div>
                     <div className={`text-sm font-bold ${confidence.color}`}>
                       {confidence.level}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/20">
+                  <span className="text-lg">{verifiabilityLevel.icon}</span>
+                  <div className="text-left">
+                    <div className="text-xs text-white/60 uppercase tracking-wide">
+                      Verifiability
+                    </div>
+                    <div className={`text-sm font-bold ${verifiabilityLevel.color}`}>
+                      {Math.round(verifiability * 100)}%
                     </div>
                   </div>
                 </div>
@@ -563,6 +618,12 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                       <div className="text-gray-400 text-sm">Confidence</div>
                     </div>
                     <div className="bg-white/5 rounded-xl p-4 text-center">
+                      <div className="text-2xl font-bold text-white mb-1">
+                        {Math.round(verifiability * 100)}%
+                      </div>
+                      <div className="text-gray-400 text-sm">Verifiability</div>
+                    </div>
+                    <div className="bg-white/5 rounded-xl p-4 text-center">
                       <div className="text-2xl font-bold text-white mb-1">{getTimeRemaining()}</div>
                       <div className="text-gray-400 text-sm">Time Remaining</div>
                     </div>
@@ -595,7 +656,7 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                     <span>AI Analysis</span>
                   </h3>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-white/5 rounded-xl p-4">
                         <div className="text-sm text-gray-400 mb-2">Confidence Level</div>
                         <div className={`text-2xl font-bold ${confidence.color} mb-2`}>
@@ -609,6 +670,13 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                           {probabilityPercent}%
                         </div>
                         <div className="text-gray-300 text-sm">Predicted likelihood</div>
+                      </div>
+                      <div className="bg-white/5 rounded-xl p-4">
+                        <div className="text-sm text-gray-400 mb-2">Verifiability Score</div>
+                        <div className={`text-2xl font-bold ${verifiabilityLevel.color} mb-2`}>
+                          {verifiabilityLevel.icon} {Math.round(verifiability * 100)}%
+                        </div>
+                        <div className="text-gray-300 text-sm">{verifiabilityLevel.level}</div>
                       </div>
                     </div>
 
@@ -651,6 +719,15 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                       <div className="bg-white/5 rounded-xl p-4">
                         <div className="text-sm text-gray-400 mb-2">Deadline</div>
                         <div className="text-white font-medium">{format(deadline, 'PPP')}</div>
+                      </div>
+                      <div className="bg-white/5 rounded-xl p-4">
+                        <div className="text-sm text-gray-400 mb-2">Verifiability Score</div>
+                        <div className={`font-medium ${verifiabilityLevel.color}`}>
+                          {Math.round(verifiability * 100)}% • {verifiabilityLevel.level}
+                        </div>
+                        <div className="text-gray-300 text-xs mt-1">
+                          Automatic scoring based on resolver type and data availability
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -765,6 +842,12 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                 <div className="bg-white/5 rounded-lg p-3">
                   <div className="text-xs text-gray-400 mb-1">Resolver</div>
                   <div className="text-white font-medium text-sm">{insight.resolverKind}</div>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3">
+                  <div className="text-xs text-gray-400 mb-1">Verifiability</div>
+                  <div className={`text-sm font-medium ${verifiabilityLevel.color}`}>
+                    {Math.round(verifiability * 100)}% • {verifiabilityLevel.level}
+                  </div>
                 </div>
                 <div className="bg-white/5 rounded-lg p-3">
                   <div className="text-xs text-gray-400 mb-1">Status</div>

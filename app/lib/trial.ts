@@ -37,11 +37,11 @@ export async function checkTrialEligibility(walletId: string): Promise<TrialElig
   });
 
   const requiredCount = 3;
-  const canStartTrial = sharedCount >= requiredCount;
+  const canStartTrialFromShares = sharedCount >= requiredCount;
 
   return {
-    canStart: canStartTrial,
-    reason: canStartTrial 
+    canStart: canStartTrialFromShares,
+    reason: canStartTrialFromShares 
       ? undefined 
       : `Need ${requiredCount - sharedCount} more shared receipts`,
     sharedCount,

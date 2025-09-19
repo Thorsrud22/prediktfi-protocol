@@ -389,4 +389,5 @@ if (require.main === module) {
   main();
 }
 
-export { evaluateModel, EvalConfig, EvalResult };
+export { evaluateModel };
+export type { EvalConfig, EvalResult };

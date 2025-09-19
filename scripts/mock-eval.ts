@@ -187,7 +187,7 @@ async function createMockEval(modelId: string, modelPath: string, plattPath: str
   const accuracy = correct / calibratedPredictions.length;
   
   // Reliability and resolution
-  const overallMean = actuals.reduce((sum, a) => sum + a, 0) / actuals.length;
+  const overallMean = actuals.reduce((sum: number, a) => sum + a, 0) / actuals.length;
   const uncertainty = overallMean * (1 - overallMean);
   
   let reliability = 0;
@@ -206,7 +206,7 @@ async function createMockEval(modelId: string, modelPath: string, plattPath: str
     if (binIndices.length > 0) {
       const binProbs = binIndices.map(idx => calibratedPredictions[idx]);
       const binActuals = binIndices.map(idx => actuals[idx]);
-      const binMean = binActuals.reduce((sum, a) => sum + a, 0) / binActuals.length;
+      const binMean = binActuals.reduce((sum: number, a) => sum + a, 0) / binActuals.length;
       const binProbMean = binProbs.reduce((sum, p) => sum + p, 0) / binProbs.length;
       
       const binReliability = binProbs.reduce((sum, p) => sum + Math.pow(p - binMean, 2), 0) / binProbs.length;
@@ -301,4 +301,5 @@ if (require.main === module) {
   main();
 }
 
-export { createMockEval, MockEvalResult };
+export { createMockEval };
+export type { MockEvalResult };

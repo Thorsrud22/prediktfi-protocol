@@ -12,7 +12,7 @@ interface AuthState {
 }
 
 export function useWalletAuth() {
-  const { wallet, publicKey, connected, connect, disconnect } = useWallet();
+  const { wallet, publicKey, connected, connect, disconnect, signMessage } = useWallet();
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     wallet: null,
@@ -166,7 +166,7 @@ export function useWalletAuth() {
       const message = `Sign this message to authenticate with Predikt: ${nonce}`;
       const encodedMessage = new TextEncoder().encode(message);
       
-      const signature = await wallet?.adapter.signMessage?.(encodedMessage);
+      const signature = await signMessage?.(encodedMessage);
       if (!signature) {
         throw new Error('Failed to sign message - user may have cancelled');
       }
@@ -321,7 +321,7 @@ export function useSiwsGuard() {
       return true;
     } catch (e) {
       // Ikke spam brukeren; bare logg
-      console.warn('[SIWS] avbrutt/feilet:', e?.name || e);
+      console.warn('[SIWS] avbrutt/feilet:', (e as Error)?.name || e);
       return false;
     } finally {
       inflight.current = false;

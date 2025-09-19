@@ -196,7 +196,14 @@ export default function StudioPage() {
         throw new Error(result.message || 'Failed to submit prediction');
       }
 
-      console.log('🎉 Prediction submitted successfully:', result);
+      console.log('🎉 Insight created successfully:', result);
+
+      // Redirect to insight page if provided
+      if (result.redirectTo) {
+        window.location.href = result.redirectTo;
+        return;
+      }
+
       setSubmitSuccess(true);
 
       // Reset form after successful submission

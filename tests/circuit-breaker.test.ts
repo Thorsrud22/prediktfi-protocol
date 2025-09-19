@@ -8,7 +8,7 @@ import {
   getCircuitBreakerStates, 
   resetCircuitBreaker,
   clearSignalsCache 
-} from '@/src/server/signals/feed';
+} from '../src/server/signals/feed';
 
 // Mock adapters
 const mockFetchPolymarket = vi.fn();

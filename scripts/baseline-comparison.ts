@@ -162,4 +162,5 @@ if (require.main === module) {
   main();
 }
 
-export { compareBaselines, ComparisonResult };
+export { compareBaselines };
+export type { ComparisonResult };

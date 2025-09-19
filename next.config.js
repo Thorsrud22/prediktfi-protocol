@@ -3,95 +3,20 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // External packages that should not be bundled
+
+  // Performance: External packages that should not be bundled
   serverExternalPackages: ['@solana/web3.js', '@coral-xyz/anchor'],
-  
-  // Security headers for production
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://commerce.coinbase.com",
-              "connect-src 'self' https://commerce.coinbase.com",
-              "img-src 'self' data: https:",
-              "style-src 'self' 'unsafe-inline'",
-              "frame-src https://commerce.coinbase.com"
-            ].join('; ')
-          }
-        ]
-      },
-      // Static assets caching like PredictionSwap
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
-          }
-        ]
-      },
-      // Images and public assets
-      {
-        source: '/images/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400'
-          }
-        ]
-      },
-      // API routes caching
-      {
-        source: '/api/public/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=60, stale-while-revalidate=300'
-          },
-          {
-            key: 'CDN-Cache-Control',
-            value: 'public, s-maxage=300'
-          }
-        ]
-      }
-    ];
-  },
-  
+
   // Performance optimizations
   webpack: (config, { dev, isServer }) => {
     if (dev) {
-      // Only alias react-native to prevent build issues
+      // Development optimizations for speed
       config.resolve.alias = {
         ...config.resolve.alias,
         'react-native': require.resolve('./app/lib/wallet-adapters.dev.ts'),
       };
-      
-      // Faster dev builds
+
+      // Faster dev builds - reduce file watching overhead
       config.watchOptions = {
         poll: false,
         aggregateTimeout: 300,
@@ -99,25 +24,43 @@ const nextConfig = {
           '**/node_modules/@reown/**',
           '**/node_modules/@walletconnect/**',
           '**/node_modules/react-native/**',
+          '**/node_modules/@solana/**',
+          '**/node_modules/@heroicons/**',
+          '**/node_modules/framer-motion/**',
         ],
       };
-      
-      // Reduce bundle size in development
+
+      // Speed up dev builds by disabling heavy optimizations
       config.optimization = {
         ...config.optimization,
         removeAvailableModules: false,
         removeEmptyChunks: false,
-        splitChunks: false,
+        splitChunks: {
+          chunks: 'async',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+          },
+        },
       };
-      
+
       // Skip source maps in development for speed
       config.devtool = false;
+
+      // Reduce parsing overhead
+      config.module.rules.push({
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      });
     } else {
       // Production optimizations
       config.optimization = {
         ...config.optimization,
         splitChunks: {
           chunks: 'all',
+          maxSize: 244000,
           cacheGroups: {
             vendor: {
               test: /[\\/]node_modules[\\/]/,
@@ -140,14 +83,21 @@ const nextConfig = {
         },
       };
     }
-    
+
     return config;
   },
-  
+
   // Enable experimental features for better performance
   experimental: {
     optimizeCss: true,
     optimizePackageImports: ['lucide-react', '@heroicons/react'],
+  },
+
+  // Turbopack configuration
+  turbopack: {
+    rules: {
+      '*.svg': ['@svgr/webpack'],
+    },
   },
 };
 

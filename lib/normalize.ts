@@ -161,6 +161,9 @@ function generateResolverRef(
   switch (resolverKind) {
     case 'price':
       const priceConfig = config.price || extractPriceConfigFromCanonical(canonical);
+      if (!priceConfig) {
+        throw new Error('Unable to extract price configuration');
+      }
       return JSON.stringify({
         asset: priceConfig.asset,
         source: priceConfig.source,

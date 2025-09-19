@@ -42,7 +42,7 @@ async function main() {
         horizon: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         p: 0.65,
         deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        resolverKind: 'PRICE',
+        resolverKind: 'PRICE' as const,
         resolverRef: JSON.stringify({
           symbol: 'bitcoin',
           operator: '>=',
@@ -66,7 +66,7 @@ async function main() {
         horizon: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
         p: 0.8,
         deadline: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-        resolverKind: 'URL',
+        resolverKind: 'URL' as const,
         resolverRef: JSON.stringify({
           url: 'https://ethereum.org/en/roadmap/',
           expectedText: 'EIP-4844',
@@ -90,7 +90,7 @@ async function main() {
         horizon: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days
         p: 0.4,
         deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-        resolverKind: 'PRICE',
+        resolverKind: 'PRICE' as const,
         resolverRef: JSON.stringify({
           symbol: 'solana',
           operator: '>=',

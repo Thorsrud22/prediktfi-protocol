@@ -59,9 +59,9 @@ function WalletManager({ children }: { children: React.ReactNode }) {
       }
 
       // Connect to Phantom
-      const response = await window.phantom.solana.connect()
+      const response = await window.phantom.solana.connect?.()
       
-      if (response.publicKey) {
+      if (response?.publicKey) {
         const pubkey = response.publicKey.toString()
         setPublicKey(pubkey)
         setIsConnected(true)
@@ -80,7 +80,7 @@ function WalletManager({ children }: { children: React.ReactNode }) {
 
   const disconnect = async () => {
     try {
-      if (window.phantom?.solana?.isConnected) {
+      if (window.phantom?.solana?.disconnect) {
         await window.phantom.solana.disconnect()
       }
       
@@ -109,6 +109,7 @@ function WalletManager({ children }: { children: React.ReactNode }) {
       } else {
         setIsConnected(false)
         setPublicKey(null)
+        localStorage.removeItem('predikt:wallet:name')
         localStorage.removeItem('predikt:wallet:pubkey')
       }
     }
@@ -124,8 +125,11 @@ function WalletManager({ children }: { children: React.ReactNode }) {
     window.phantom.solana.on('disconnect', handleDisconnect)
 
     return () => {
-      window.phantom.solana.off('accountChanged', handleAccountChange)
-      window.phantom.solana.off('disconnect', handleDisconnect)
+      if (window.phantom?.solana) {
+        // Type assertion to access 'off' method which exists but isn't in the type definition
+        ;(window.phantom.solana as any).off('accountChanged', handleAccountChange)
+        ;(window.phantom.solana as any).off('disconnect', handleDisconnect)
+      }
     }
   }, [])
 
@@ -145,7 +149,7 @@ function WalletManager({ children }: { children: React.ReactNode }) {
 }
 
 export default function SimplifiedWalletProvider({ children }: { children: React.ReactNode }) {
-  const endpoint = clusterApiUrl(process.env.NEXT_PUBLIC_SOLANA_CLUSTER || 'devnet')
+  const endpoint = clusterApiUrl((process.env.NEXT_PUBLIC_SOLANA_CLUSTER as any) || 'devnet')
   const wallets = useMemo(() => [new PhantomWalletAdapter()], [])
 
   return (

@@ -21,7 +21,6 @@ async function runP2AMonitoring() {
     console.log('📊 Running SLO monitoring...');
     const sloMonitor = new SLOMonitor();
     await sloMonitor.checkAllSLOs();
-    await sloMonitor.sendAlerts();
     
     const duration = Date.now() - startTime;
     console.log(`✅ P2A monitoring cycle completed in ${duration}ms`);

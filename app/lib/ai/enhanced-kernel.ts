@@ -280,8 +280,8 @@ function generateDrivers(analysis: AdvancedAnalysis): string[] {
   return drivers.slice(0, 5); // Limit to top 5 drivers
 }
 
-function generateRationale(analysis: AdvancedAnalysis): string {
-  const { probability, confidence, scenarios, dataQuality, topic } = analysis;
+function generateRationale(analysis: AdvancedAnalysis, topic?: string): string {
+  const { probability, confidence, scenarios, dataQuality } = analysis;
   
   // Safe null handling with defaults
   const safeProbability = Number.isFinite(probability) ? probability : 0.5;

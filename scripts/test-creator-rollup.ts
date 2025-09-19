@@ -51,10 +51,7 @@ async function testRollup() {
       // Show sample records
       const sampleRecords = await prisma.creatorDaily.findMany({
         take: 3,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          // Note: This won't work with the current schema, but shows the intent
-        }
+        orderBy: { createdAt: 'desc' }
       });
 
       console.log('\n📋 Sample records:');

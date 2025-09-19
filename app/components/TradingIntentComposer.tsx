@@ -58,16 +58,18 @@ export default function TradingIntentComposer({ draft, onCreateIntent, onCancel 
         horizon: `${horizonDays}d`,
         thesis,
         createdAt: Date.now(),
+        title: '',
+        payload: {}
       }
       
       // Read existing intents
-      const items = getIntents(pubkey)
+      const items = getIntents()
       
       // Add new intent to the beginning
       items.unshift(next)
       
       // Save updated intents
-      saveIntents(pubkey, items)
+      saveIntents(items)
       
       // Also persist using the old system for compatibility
       const intentData = {

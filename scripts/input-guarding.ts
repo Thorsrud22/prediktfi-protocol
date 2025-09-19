@@ -82,7 +82,6 @@ const testCases: TestCase[] = [
 async function testInputGuarding(modelPath: string, plattPath: string) {
   console.log('Loading model and Platt scaling...');
   
-  const { readFileSync } = 'fs';
   const modelData = require('fs').readFileSync(modelPath, 'utf-8');
   const model = loadModel(modelData);
   
@@ -132,7 +131,8 @@ async function testInputGuarding(modelPath: string, plattPath: string) {
         console.log('✅ PASSED - Threw as expected');
         passed++;
       } else {
-        console.log(`❌ FAILED - Unexpected error: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.log(`❌ FAILED - Unexpected error: ${errorMessage}`);
         failed++;
       }
     }

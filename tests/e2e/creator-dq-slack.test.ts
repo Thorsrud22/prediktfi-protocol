@@ -327,7 +327,7 @@ function formatViolationsForSlack(violations: any[]): string {
   return message;
 }
 
-function createSlackBlocks(violations: any[], summary: any): Array<any> {
+function createSlackBlocks(violations: any[], summary: any): any[] {
   const blocks = [
     {
       type: 'header',
@@ -400,7 +400,7 @@ function createSlackBlocks(violations: any[], summary: any): Array<any> {
         text: `Checked at: ${new Date().toISOString()}`
       }
     ]
-  });
+  } as any);
   
   return blocks;
 }

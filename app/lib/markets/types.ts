@@ -32,6 +32,9 @@ export interface MarketSyncResult {
 }
 
 export interface PolymarketMarket {
+  lastTradePrice: any;
+  volumeClob: any;
+  liquidityClob: any;
   id?: string;
   question: string;
   outcomes?: Array<{

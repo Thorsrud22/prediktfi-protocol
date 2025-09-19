@@ -46,7 +46,7 @@ export default function PayPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan,
-          payer: publicKey?.toBase58?.(),
+          payer: publicKey,
           currency,
         }),
       });

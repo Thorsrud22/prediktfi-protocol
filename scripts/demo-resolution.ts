@@ -7,6 +7,7 @@
 import { prisma } from '../app/lib/prisma';
 import { ulid } from 'ulid';
 import { processInsightResolution } from '../lib/resolution/engine';
+import { ResolverKind, InsightStatus } from '@prisma/client';
 
 async function main() {
   console.log('🧪 Demo: Testing Resolution System');
@@ -31,15 +32,14 @@ async function main() {
     // Proof fields
     canonical: 'BTC close >= 50000 USD on 2024-01-01',
     p: 0.85,
-    deadline: new Date('2024-01-01T23:59:59.999Z'),
-    resolverKind: 'PRICE',
+    resolverKind: ResolverKind.PRICE,
     resolverRef: JSON.stringify({
       asset: 'BTC',
       source: 'coingecko',
       field: 'close',
       currency: 'USD'
     }),
-    status: 'COMMITTED'
+    status: InsightStatus.COMMITTED
   };
   
   try {

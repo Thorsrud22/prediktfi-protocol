@@ -340,7 +340,7 @@ export async function processInsightResolution(insightId: string): Promise<void>
     
     // Log event
     const tookMs = Date.now() - startTime;
-    await createEvent(EVENT_TYPES.OUTCOME_RESOLVED, {
+    createEvent(EVENT_TYPES.OUTCOME_RESOLVED, {
       insightId: insight.id,
       result: resolution.result,
       decidedBy: resolution.decidedBy,
@@ -355,7 +355,7 @@ export async function processInsightResolution(insightId: string): Promise<void>
     console.error(`❌ Failed to process resolution for ${insightId} (${tookMs}ms):`, error);
     
     // Log error event
-    await createEvent('resolution_failed', {
+    createEvent(EVENT_TYPES.SYSTEM_ERROR, {
       insightId,
       error: error instanceof Error ? error.message : 'Unknown error',
       tookMs

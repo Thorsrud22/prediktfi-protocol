@@ -210,7 +210,7 @@ export default function ProposalSection({ insightId, resolverKind }: ProposalSec
                 {proposal.proposal.evidence.extractedText && (
                   <div>
                     <span className="text-sm font-medium text-gray-500">Extracted Text:</span>
-                    <p className="mt-1 text-sm text-gray-600 bg-gray-50 p-2 rounded text-xs font-mono">
+                    <p className="mt-1 text-xs text-gray-600 bg-gray-50 p-2 rounded font-mono">
                       {proposal.proposal.evidence.extractedText}
                     </p>
                   </div>

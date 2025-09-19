@@ -33,7 +33,7 @@ function loadIntentsFor(base58?: string | null): TradingIntent[] {
   }
 }
 
-function saveIntentsFor(base58?: string | null, intents: TradingIntent[]) {
+function saveIntentsFor(base58: string | null | undefined, intents: TradingIntent[]) {
   try {
     const k = intentsKey(base58)
     if (!k) return
@@ -134,7 +134,14 @@ function convertDraftToNewIntent(draft: ReturnType<typeof buildTradeDraftFromIns
     confidence: draft.confidence,
     horizon: `${draft.horizonDays}d`,
     thesis: draft.thesis,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    title: `${draft.direction} ${draft.assetSymbol}`,
+    payload: {
+      symbol: draft.assetSymbol,
+      direction: draft.direction,
+      probability: draft.probability,
+      confidence: draft.confidence
+    }
   };
 }
 

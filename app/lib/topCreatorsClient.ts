@@ -83,7 +83,7 @@ export function useTopCreators() {
 
       // Cache the result
       const cacheEntry: CacheEntry = {
-        data: rankMap,
+        data: Object.fromEntries(rankMap),
         timestamp: Date.now()
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheEntry));

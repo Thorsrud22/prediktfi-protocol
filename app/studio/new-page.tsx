@@ -209,7 +209,7 @@ export default function StudioPage() {
         <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
           
           {/* Input Phase */}
-          {(state === 'input' || state === 'preview') && (
+          {(state === 'input' || state === 'preview' || state === 'creating') && (
             <div className="p-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Create Your Prediction

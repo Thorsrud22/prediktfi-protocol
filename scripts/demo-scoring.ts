@@ -119,7 +119,7 @@ async function main() {
           data: {
             id: ulid(),
             insightId: insight.id,
-            result: insightData.outcome,
+            result: insightData.outcome === 'YES' ? 'YES' : 'NO',
             decidedBy: 'AGENT',
             decidedAt: new Date()
           }

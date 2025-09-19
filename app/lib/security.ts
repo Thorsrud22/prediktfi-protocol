@@ -34,22 +34,30 @@ export function validateCSRF(request: NextRequest): boolean {
 /**
  * Input validation schemas
  */
-export const AlertRuleSchema = {
+interface ValidationRule {
+  type: 'string' | 'boolean' | 'object';
+  maxLength?: number;
+  required: boolean;
+  enum?: string[];
+  pattern?: RegExp;
+}
+
+type ValidationSchema = Record<string, ValidationRule>;
+
+export const AlertRuleSchema: ValidationSchema = {
   name: { type: 'string', maxLength: 100, required: true },
   ruleJson: { type: 'object', required: true },
-  channel: { type: 'string', enum: ['inapp', 'email', 'webhook'], required: true },
   target: { type: 'string', maxLength: 500, required: false },
   enabled: { type: 'boolean', required: false }
 };
 
-export const StrategySchema = {
+export const StrategySchema: ValidationSchema = {
   name: { type: 'string', maxLength: 100, required: true },
   kind: { type: 'string', enum: ['risk', 'rebalance', 'momentum'], required: true },
-  configJson: { type: 'object', required: true },
   enabled: { type: 'boolean', required: false }
 };
 
-export const WalletSchema = {
+export const WalletSchema: ValidationSchema = {
   address: { type: 'string', pattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/, required: true },
   chain: { type: 'string', enum: ['solana'], required: true }
 };
@@ -57,10 +65,10 @@ export const WalletSchema = {
 /**
  * Validate input against schema
  */
-export function validateInput(data: any, schema: any): { valid: boolean; errors: string[] } {
+export function validateInput(data: any, schema: ValidationSchema): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
-  for (const [field, rules] of Object.entries(schema)) {
+  for (const [field, rules] of Object.entries(schema) as [string, ValidationRule][]) {
     const value = data[field];
     
     // Check required fields

@@ -5,6 +5,7 @@
  */
 
 import { prisma } from '../app/lib/prisma';
+import { ResolverKind, InsightStatus } from '@prisma/client';
 import { ulid } from 'ulid';
 
 async function main() {
@@ -31,14 +32,13 @@ async function main() {
       // Proof fields
       canonical: 'GitHub status page will show "All systems operational"',
       p: 0.8,
-      deadline: new Date('2025-12-31T23:59:59.999Z'),
-      resolverKind: 'URL',
+      resolverKind: ResolverKind.URL,
       resolverRef: JSON.stringify({
         href: 'https://www.githubstatus.com/',
         expect: 'all systems operational',
         timeout: 10000
       }),
-      status: 'COMMITTED'
+      status: InsightStatus.COMMITTED
     },
     {
       id: ulid(),
@@ -60,13 +60,13 @@ async function main() {
       canonical: 'Example.com will contain "Example Domain"',
       p: 0.9,
       deadline: new Date('2025-12-31T23:59:59.999Z'),
-      resolverKind: 'URL',
+      resolverKind: ResolverKind.URL,
       resolverRef: JSON.stringify({
         href: 'https://example.com/',
         expect: 'Example Domain',
         timeout: 10000
       }),
-      status: 'COMMITTED'
+      status: InsightStatus.COMMITTED
     },
     {
       id: ulid(),
@@ -87,14 +87,13 @@ async function main() {
       // Proof fields
       canonical: 'Text will contain "project completed successfully"',
       p: 0.75,
-      deadline: new Date('2025-12-31T23:59:59.999Z'),
-      resolverKind: 'TEXT',
+      resolverKind: ResolverKind.TEXT,
       resolverRef: JSON.stringify({
         expect: 'project completed successfully',
         caseSensitive: false,
         exactMatch: false
       }),
-      status: 'COMMITTED'
+      status: InsightStatus.COMMITTED
     }
   ];
   

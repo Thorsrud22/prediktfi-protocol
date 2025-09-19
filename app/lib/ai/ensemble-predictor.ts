@@ -284,7 +284,6 @@ export class EnsemblePredictor {
       
       return {
         prob: Math.max(0.05, Math.min(0.95, baseProb + technicalBias)),
-        confidence: 0.7 + Math.random() * 0.2,
         drivers: [
           'Technical indicators show bullish momentum',
           'Volume analysis supports upward movement',
@@ -309,7 +308,6 @@ export class EnsemblePredictor {
       
       return {
         prob: Math.max(0.05, Math.min(0.95, baseProb)),
-        confidence: 0.6 + Math.random() * 0.25,
         drivers: [
           'Social media sentiment trending positive',
           'News coverage shows optimistic tone',
@@ -323,30 +321,29 @@ export class EnsemblePredictor {
     };
   }
 
-  /**
-   * Create specialized fundamental analysis model
-   */
-  private createFundamentalModel() {
-    return async (input: PredictInput): Promise<PredictOutput> => {
-      // Simulate fundamental analysis with more conservative predictions
-      const baseProb = 0.45 + Math.random() * 0.1; // 0.45-0.55 range
-      
-      return {
-        prob: Math.max(0.05, Math.min(0.95, baseProb)),
-        confidence: 0.8 + Math.random() * 0.15,
-        drivers: [
-          'Strong underlying fundamentals',
-          'Market cap and adoption metrics positive',
-          'Long-term value proposition intact'
-        ],
-        rationale: 'Fundamental analysis examines intrinsic value, market fundamentals, and long-term viability. Current fundamentals show solid foundation.',
-        model: 'fundamental-analyst',
-        scenarioId: `fundamental-${Date.now()}`,
-        ts: new Date().toISOString()
+    /**
+     * Create specialized fundamental analysis model
+     */
+    private createFundamentalModel() {
+      return async (input: PredictInput): Promise<PredictOutput> => {
+        // Simulate fundamental analysis with more conservative predictions
+        const baseProb = 0.45 + Math.random() * 0.1; // 0.45-0.55 range
+        
+        return {
+          prob: Math.max(0.05, Math.min(0.95, baseProb)),
+          drivers: [
+            'Strong underlying fundamentals',
+            'Market cap and adoption metrics positive',
+            'Long-term value proposition intact'
+          ],
+          rationale: 'Fundamental analysis examines intrinsic value, market fundamentals, and long-term viability. Current fundamentals show solid foundation.',
+          model: 'fundamental-analyst',
+          scenarioId: `fundamental-${Date.now()}`,
+          ts: new Date().toISOString()
+        };
       };
-    };
-  }
-
+    }
+  
   private generateScenarioId(input: PredictInput): string {
     const topic = input.topic.toLowerCase().replace(/[^a-z0-9]/g, '');
     const question = input.question.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 20);

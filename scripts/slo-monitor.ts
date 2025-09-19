@@ -28,6 +28,7 @@ interface SLOAlert {
   pair?: string;
   reason?: string;
   duration?: number; // How long the condition has been active
+  unit?: string; // Unit of measurement for the metric
 }
 
 interface MonitoringWindow {
@@ -96,7 +97,7 @@ class SLOMonitor {
         return [{
           name: 'simulation_latency_p95',
           value: 0,
-          threshold: 1500, // 1.5 seconds
+          threshold: 0,
           unit: 'ms',
           timestamp: new Date(),
           status: 'healthy',
@@ -408,7 +409,6 @@ class SLOMonitor {
       if (metric.status === 'critical') {
         // Check if this is a sustained violation (5+ minutes)
         const duration = await this.getViolationDuration(metric.name, metric.value, metric.threshold);
-        
         this.alerts.push({
           metric: metric.name,
           value: metric.value,
@@ -419,7 +419,8 @@ class SLOMonitor {
           intentId: metric.intentId,
           pair: metric.pair,
           reason: metric.reason,
-          duration: duration
+          duration: duration,
+          unit: metric.unit
         });
       } else if (metric.status === 'warning') {
         this.alerts.push({
@@ -431,7 +432,8 @@ class SLOMonitor {
           timestamp: new Date(),
           intentId: metric.intentId,
           pair: metric.pair,
-          reason: metric.reason
+          reason: metric.reason,
+          unit: metric.unit
         });
       }
     }
@@ -594,12 +596,12 @@ class SLOMonitor {
               },
               {
                 title: 'Value',
-                value: `${alert.value}${alert.unit}`,
+                value: `${alert.value}${alert.unit || ''}`,
                 short: true
               },
               {
                 title: 'Threshold',
-                value: `${alert.threshold}${alert.unit}`,
+                value: `${alert.threshold}${alert.unit || ''}`,
                 short: true
               },
               {

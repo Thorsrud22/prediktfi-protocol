@@ -35,18 +35,19 @@ const generateDraftId = (): string => {
 
 // Custom storage implementation for sessionStorage
 const sessionStorage = {
-  getItem: (name: string): string | null => {
+  getItem: (name: string) => {
     if (typeof window === 'undefined') return null;
     try {
-      return window.sessionStorage.getItem(name);
+      const item = window.sessionStorage.getItem(name);
+      return item ? JSON.parse(item) : null;
     } catch {
       return null;
     }
   },
-  setItem: (name: string, value: string): void => {
+  setItem: (name: string, value: any): void => {
     if (typeof window === 'undefined') return;
     try {
-      window.sessionStorage.setItem(name, value);
+      window.sessionStorage.setItem(name, JSON.stringify(value));
     } catch {
       // Silently fail if sessionStorage is not available
     }

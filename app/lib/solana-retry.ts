@@ -2,7 +2,7 @@
  * Solana transaction retry utilities with blockhash expiry handling
  */
 
-import { Connection, Transaction, TransactionSignature, SendTransactionOptions } from '@solana/web3.js';
+import { Connection, Transaction, TransactionSignature, SendOptions } from '@solana/web3.js';
 
 export interface RetryConfig {
   maxRetries: number;
@@ -31,7 +31,7 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 export async function sendTransactionWithRetry(
   connection: Connection,
   transaction: Transaction,
-  options: SendTransactionOptions = {},
+  options: SendOptions = {},
   retryConfig: RetryConfig = DEFAULT_RETRY_CONFIG
 ): Promise<TransactionResult> {
   let lastError: Error;

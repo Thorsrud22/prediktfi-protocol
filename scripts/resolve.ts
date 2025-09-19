@@ -5,7 +5,7 @@
  */
 
 import { findInsightsReadyForResolution, processInsightResolution } from '../lib/resolution/engine';
-import { createEvent } from '../lib/events';
+import { createEvent, EVENT_TYPES } from '../lib/events';
 
 interface ResolutionStats {
   total: number;
@@ -80,7 +80,7 @@ async function main() {
     }
     
     // Log event for monitoring
-    await createEvent('resolution_job_completed', {
+    createEvent(EVENT_TYPES.SYSTEM_WARNING, {
       total: stats.total,
       resolved: stats.resolved,
       failed: stats.failed,

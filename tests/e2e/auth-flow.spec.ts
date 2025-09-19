@@ -1,5 +1,22 @@
 import { test, expect } from '@playwright/test'
 
+// Extend Window interface to include mock properties
+declare global {
+  interface Window {
+    __WALLET_MOCK__?: {
+      connected: boolean;
+      publicKey: {
+        toBase58: () => string;
+      };
+      wallet?: any;
+    };
+    __AUTH_MOCK__?: {
+      authenticated: boolean;
+      wallet: string | null;
+    };
+  }
+}
+
 test.describe('SIWS Authentication Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Mock the auth verify endpoint to return authenticated = true

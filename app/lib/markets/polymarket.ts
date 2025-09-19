@@ -60,7 +60,7 @@ export class PolymarketClient {
         });
         
         // Sort by volume (descending) to get the most trending markets
-        const sortedMarkets = currentMarkets.sort((a, b) => (b.volume || 0) - (a.volume || 0));
+        const sortedMarkets = currentMarkets.sort((a: ExternalMarket, b: ExternalMarket) => (b.volume || 0) - (a.volume || 0));
         
         console.log('Current markets after filtering:', currentMarkets.length);
         
