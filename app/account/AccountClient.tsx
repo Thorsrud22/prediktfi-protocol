@@ -1,99 +1,235 @@
-'use client'
-import React, { useState, useEffect } from 'react'
-import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider'
-import { useWalletAuth } from '../lib/useWalletAuth'
+'use client';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
+import { useWalletAuth } from '../lib/useWalletAuth';
 
 function shortAddress(address: string) {
-  return `${address.slice(0, 4)}…${address.slice(-4)}`
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
+// Extracted loading skeleton component for better reusability
+const LoadingSkeleton = React.memo(() => (
+  <main className="max-w-4xl mx-auto px-4 py-10">
+    <h1 className="text-3xl font-semibold text-slate-100 mb-6">Your Account</h1>
+    <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
+      <div className="animate-pulse">
+        <div className="h-4 bg-slate-700 rounded w-1/4 mb-4"></div>
+        <div className="h-3 bg-slate-700 rounded w-1/2"></div>
+      </div>
+    </div>
+  </main>
+));
+
+// Extracted authentication states component
+const AuthenticationPrompt = React.memo(
+  ({
+    isWalletConnected,
+    verifying,
+    publicKey,
+    onVerify,
+  }: {
+    isWalletConnected: boolean;
+    verifying: boolean;
+    publicKey: string | null;
+    onVerify: () => void;
+  }) => (
+    <div className="rounded-xl border border-slate-700 p-8 text-center text-slate-200">
+      <div className="mb-6">
+        <svg
+          className="w-16 h-16 mx-auto text-slate-500 mb-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+          />
+        </svg>
+
+        {!isWalletConnected ? (
+          <>
+            <h3 className="text-xl font-semibold text-slate-200 mb-2">
+              Connect Phantom to access your account
+            </h3>
+            <p className="text-slate-400 mb-6 max-w-md mx-auto">
+              Connect your wallet and sign a message to view your account details, subscription
+              status, and transaction history.
+            </p>
+          </>
+        ) : verifying ? (
+          <>
+            <div className="animate-pulse mb-4" role="status" aria-label="Authenticating">
+              <div className="w-8 h-8 mx-auto bg-indigo-600 rounded-full animate-spin"></div>
+            </div>
+            <h3 className="text-xl font-semibold text-slate-200 mb-2">Authenticating...</h3>
+            <p className="text-slate-400 mb-6 max-w-md mx-auto">
+              Please check your wallet and sign the authentication message.
+            </p>
+          </>
+        ) : (
+          <>
+            <h3 className="text-xl font-semibold text-slate-200 mb-2">Authentication Required</h3>
+            <p className="text-slate-400 mb-6 max-w-md mx-auto">
+              Your wallet is connected ({publicKey ? shortAddress(publicKey) : 'Unknown'}), but you
+              need to sign a message to access your account.
+            </p>
+            <button
+              onClick={onVerify}
+              disabled={verifying}
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+              aria-describedby="auth-description"
+            >
+              {verifying ? 'Authenticating...' : 'Sign Message to Continue'}
+            </button>
+            <p id="auth-description" className="sr-only">
+              Click to sign a message with your wallet to authenticate and access your account
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  ),
+);
+
+// Extracted account details component
+const AccountDetails = React.memo(({ publicKey }: { publicKey: string | null }) => (
+  <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
+    <section className="mb-6">
+      <h2 className="text-lg font-semibold mb-2">Wallet Connected</h2>
+      <p className="text-sm text-slate-400 mb-4">
+        Address:{' '}
+        <span className="font-mono bg-slate-800/50 px-2 py-1 rounded">
+          {publicKey ? shortAddress(publicKey) : 'Unknown'}
+        </span>
+      </p>
+    </section>
+
+    <section className="mb-6">
+      <h3 className="text-md font-semibold mb-2">Account Details</h3>
+      <div className="space-y-2 text-sm">
+        <div>
+          Plan: <span className="font-medium text-indigo-400">Starter (Free)</span>
+        </div>
+        <div>
+          Status: <span className="font-medium text-green-400">Active</span>
+        </div>
+        <div>
+          Features: <span className="font-medium">Basic predictions and insights</span>
+        </div>
+      </div>
+    </section>
+
+    <section className="mb-6">
+      <h3 className="text-md font-semibold mb-2">Upgrade Options</h3>
+      <p className="text-sm text-slate-400 mb-3">
+        Unlock advanced features with a Pro subscription:
+      </p>
+      <ul className="text-sm space-y-1 text-slate-300" role="list">
+        <li>• Advanced AI analysis</li>
+        <li>• Priority support</li>
+        <li>• Historical data access</li>
+        <li>• Custom alerts</li>
+      </ul>
+      <a
+        href="/pricing"
+        className="inline-block mt-3 px-4 py-2 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+        aria-label="View pricing plans for Pro subscription"
+      >
+        View Pricing
+      </a>
+    </section>
+
+    <section>
+      <h3 className="text-md font-semibold mb-2">Transaction History</h3>
+      <p className="text-sm text-slate-400">
+        No transactions yet. Your activity will appear here once you start using the platform.
+      </p>
+    </section>
+  </div>
+));
+
 export default function AccountClient() {
-  const { isConnected, publicKey } = useSimplifiedWallet()
-  const { isAuthenticated: siwsOk, wallet: authWallet } = useWalletAuth()
-  const [mounted, setMounted] = useState(false)
+  const { isConnected, publicKey } = useSimplifiedWallet();
+  const { isAuthenticated: siwsOk, wallet: authWallet, verify, verifying } = useWalletAuth();
+  const [mounted, setMounted] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
-  // Derive three booleans as requested
-  const isWalletConnected = !!publicKey && isConnected
-  const isSiwsOk = siwsOk === true
-  const canShowAccount = isWalletConnected && isSiwsOk
+  // Memoize computed states to prevent unnecessary re-renders
+  const computedStates = useMemo(
+    () => ({
+      isWalletConnected: !!publicKey && isConnected,
+      isSiwsOk: siwsOk === true,
+    }),
+    [publicKey, isConnected, siwsOk],
+  );
+
+  const canShowAccount = useMemo(
+    () => computedStates.isWalletConnected && computedStates.isSiwsOk,
+    [computedStates.isWalletConnected, computedStates.isSiwsOk],
+  );
+
+  // Memoize verify handler to prevent unnecessary re-renders of child components
+  const handleVerify = useCallback(() => {
+    setRetryCount(prev => prev + 1);
+    verify();
+  }, [verify]);
+
+  // Auto-authenticate when wallet is connected but not authenticated
+  useEffect(() => {
+    if (
+      mounted &&
+      computedStates.isWalletConnected &&
+      !computedStates.isSiwsOk &&
+      !verifying &&
+      retryCount < 3 // Prevent infinite retry loops
+    ) {
+      console.log('Wallet connected but not authenticated, attempting authentication...');
+      handleVerify();
+    }
+  }, [
+    mounted,
+    computedStates.isWalletConnected,
+    computedStates.isSiwsOk,
+    verifying,
+    retryCount,
+    handleVerify,
+  ]);
+
+  // Reset retry count when authentication succeeds
+  useEffect(() => {
+    if (computedStates.isSiwsOk) {
+      setRetryCount(0);
+    }
+  }, [computedStates.isSiwsOk]);
 
   if (!mounted) {
-    return (
-      <main className="max-w-4xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-semibold text-slate-100 mb-6">Your Account</h1>
-        <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
-          <div className="animate-pulse">
-            <div className="h-4 bg-slate-700 rounded w-1/4 mb-4"></div>
-            <div className="h-3 bg-slate-700 rounded w-1/2"></div>
-          </div>
-        </div>
-      </main>
-    )
+    return <LoadingSkeleton />;
   }
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-semibold text-slate-100 mb-6">Your Account</h1>
 
-      {!canShowAccount && (
-        <div className="rounded-xl border border-slate-700 p-8 text-center text-slate-200">
-          <div className="mb-6">
-            <svg className="w-16 h-16 mx-auto text-slate-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <h3 className="text-xl font-semibold text-slate-200 mb-2">Connect Phantom to access your account</h3>
-            <p className="text-slate-400 mb-6 max-w-md mx-auto">
-              Connect your wallet and sign a message to view your account details, subscription status, and transaction history.
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Error handling removed because 'error' is not provided by useWalletAuth */}
 
-      {canShowAccount && (
-        <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2">Wallet Connected</h2>
-            <p className="text-sm text-slate-400 mb-4">
-              Address: <span className="font-mono bg-slate-800/50 px-2 py-1 rounded">{publicKey ? shortAddress(publicKey) : 'Unknown'}</span>
-            </p>
-          </div>
-
-          <div className="mb-6">
-            <h3 className="text-md font-semibold mb-2">Account Details</h3>
-            <div className="space-y-2 text-sm">
-              <div>Plan: <span className="font-medium text-indigo-400">Starter (Free)</span></div>
-              <div>Status: <span className="font-medium text-green-400">Active</span></div>
-              <div>Features: <span className="font-medium">Basic predictions and insights</span></div>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <h3 className="text-md font-semibold mb-2">Upgrade Options</h3>
-            <p className="text-sm text-slate-400 mb-3">Unlock advanced features with a Pro subscription:</p>
-            <ul className="text-sm space-y-1 text-slate-300">
-              <li>• Advanced AI analysis</li>
-              <li>• Priority support</li>
-              <li>• Historical data access</li>
-              <li>• Custom alerts</li>
-            </ul>
-            <a 
-              href="/pricing" 
-              className="inline-block mt-3 px-4 py-2 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              View Pricing
-            </a>
-          </div>
-
-          <div>
-            <h3 className="text-md font-semibold mb-2">Transaction History</h3>
-            <p className="text-sm text-slate-400">No transactions yet. Your activity will appear here once you start using the platform.</p>
-          </div>
-        </div>
+      {!canShowAccount ? (
+        <AuthenticationPrompt
+          isWalletConnected={computedStates.isWalletConnected}
+          verifying={verifying}
+          publicKey={publicKey}
+          onVerify={handleVerify}
+        />
+      ) : (
+        <AccountDetails publicKey={publicKey} />
       )}
     </main>
-  )
+  );
 }

@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { toast } from 'react-hot-toast';
 
+// Import simplified wallet to sync state
+let useSimplifiedWallet: any = null;
+try {
+  const simplifiedModule = require('../components/wallet/SimplifiedWalletProvider');
+  useSimplifiedWallet = simplifiedModule.useSimplifiedWallet;
+} catch (error) {
+  // Simplified wallet not available
+}
+
 interface AuthState {
   isAuthenticated: boolean;
   wallet: string | null;
@@ -13,10 +22,26 @@ interface AuthState {
 
 export function useWalletAuth() {
   const { wallet, publicKey, connected, connect, disconnect, signMessage } = useWallet();
+
+  // Also get simplified wallet state if available
+  let simplifiedWalletState = null;
+  try {
+    if (useSimplifiedWallet) {
+      simplifiedWalletState = useSimplifiedWallet();
+    }
+  } catch (error) {
+    // Simplified wallet not available in this context
+  }
+
+  // Use simplified wallet state if available, otherwise fall back to wallet adapter
+  const effectivePublicKey = simplifiedWalletState?.publicKey
+    ? { toString: () => simplifiedWalletState.publicKey }
+    : publicKey;
+  const effectiveConnected = simplifiedWalletState?.isConnected ?? connected;
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     wallet: null,
-    isLoading: false
+    isLoading: false,
   });
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const verifyingRef = useRef(false); // prevent double-calls
@@ -29,15 +54,15 @@ export function useWalletAuth() {
 
   // Reset authentication state when wallet disconnects
   useEffect(() => {
-    if (!connected) {
+    if (!effectiveConnected) {
       setAuthState({
         isAuthenticated: false,
         wallet: null,
-        isLoading: false
+        isLoading: false,
       });
       setIsAuthenticating(false);
     }
-  }, [connected]);
+  }, [effectiveConnected]);
 
   // Listen to wallet adapter events for connect/disconnect
   useEffect(() => {
@@ -54,7 +79,7 @@ export function useWalletAuth() {
       setAuthState({
         isAuthenticated: false,
         wallet: null,
-        isLoading: false
+        isLoading: false,
       });
       setIsAuthenticating(false);
     };
@@ -81,7 +106,7 @@ export function useWalletAuth() {
         setAuthState({
           isAuthenticated: data.authenticated,
           wallet: data.wallet,
-          isLoading: false
+          isLoading: false,
         });
       } else {
         console.log('Auth status check failed with status:', response.status);
@@ -94,7 +119,7 @@ export function useWalletAuth() {
   };
 
   const authenticate = async () => {
-    if (!publicKey) {
+    if (!effectivePublicKey) {
       toast.error('Please connect your wallet first');
       return;
     }
@@ -121,8 +146,8 @@ export function useWalletAuth() {
           console.log('Using cached authentication');
           setAuthState({
             isAuthenticated: true,
-            wallet: publicKey.toString(),
-            isLoading: false
+            wallet: effectivePublicKey.toString(),
+            isLoading: false,
           });
           return;
         } else {
@@ -135,18 +160,18 @@ export function useWalletAuth() {
       localStorage.removeItem(cacheKey);
     }
 
-    console.log('Starting authentication process for wallet:', publicKey.toString());
+    console.log('Starting authentication process for wallet:', effectivePublicKey.toString());
     verifyingRef.current = true;
     setIsAuthenticating(true);
     setAuthState(prev => ({ ...prev, isLoading: true }));
 
     try {
       // Step 1: Get nonce
-      console.log('Step 1: Requesting nonce for wallet:', publicKey.toString());
+      console.log('Step 1: Requesting nonce for wallet:', effectivePublicKey.toString());
       const nonceResponse = await fetch('/api/auth/nonce', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet: publicKey.toString() })
+        body: JSON.stringify({ wallet: effectivePublicKey.toString() }),
       });
 
       if (!nonceResponse.ok) {
@@ -165,8 +190,15 @@ export function useWalletAuth() {
       console.log('Step 2: Signing message with wallet adapter');
       const message = `Sign this message to authenticate with Predikt: ${nonce}`;
       const encodedMessage = new TextEncoder().encode(message);
-      
-      const signature = await signMessage?.(encodedMessage);
+
+      // Use simplified wallet's signMessage if available, otherwise use wallet adapter
+      let signature;
+      if (simplifiedWalletState?.signMessage) {
+        signature = await simplifiedWalletState.signMessage(encodedMessage);
+      } else {
+        signature = await signMessage?.(encodedMessage);
+      }
+
       if (!signature) {
         throw new Error('Failed to sign message - user may have cancelled');
       }
@@ -178,10 +210,10 @@ export function useWalletAuth() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          wallet: publicKey.toString(),
+          wallet: effectivePublicKey.toString(),
           signature: Array.from(signature), // Send as array of numbers
-          message
-        })
+          message,
+        }),
       });
 
       if (!verifyResponse.ok) {
@@ -196,7 +228,7 @@ export function useWalletAuth() {
       // Cache the authentication for 12 hours
       const cacheData = {
         sig: Array.from(signature).join(','),
-        exp: Date.now() + (12 * 60 * 60 * 1000) // 12 hours
+        exp: Date.now() + 12 * 60 * 60 * 1000, // 12 hours
       };
       localStorage.setItem(cacheKey, JSON.stringify(cacheData));
 
@@ -204,16 +236,15 @@ export function useWalletAuth() {
       setAuthState({
         isAuthenticated: true,
         wallet: displayWallet,
-        isLoading: false
+        isLoading: false,
       });
 
       toast.success('Wallet connected successfully!');
-      
+
       // Add a small delay before refresh to ensure state is set
       setTimeout(() => {
         router.refresh();
       }, 100);
-
     } catch (error) {
       console.error('Authentication error:', error);
       toast.error(error instanceof Error ? error.message : 'Authentication failed');
@@ -230,16 +261,16 @@ export function useWalletAuth() {
     } catch (error) {
       console.error('Sign out error:', error);
     }
-    
+
     // Clear local state regardless of server response
     setAuthState({
       isAuthenticated: false,
       wallet: null,
-      isLoading: false
+      isLoading: false,
     });
     setIsAuthenticating(false);
     verifyingRef.current = false;
-    
+
     // Clear auth cache and saved adapter key
     try {
       localStorage.removeItem('predikt:auth:v1');
@@ -250,8 +281,12 @@ export function useWalletAuth() {
   };
 
   const signOutAndDisconnect = async () => {
-    try { await signOut?.(); } catch {}
-    try { await wallet?.adapter?.disconnect?.(); } catch {}
+    try {
+      await signOut?.();
+    } catch {}
+    try {
+      await wallet?.adapter?.disconnect?.();
+    } catch {}
   };
 
   const connectAndAuthenticate = async () => {
@@ -277,7 +312,7 @@ export function useWalletAuth() {
     refreshing: authState.isLoading,
     plan: 'free', // Default plan
     expiry: null, // Default expiry
-    payments: [] // Default empty payments
+    payments: [], // Default empty payments
   };
 }
 
