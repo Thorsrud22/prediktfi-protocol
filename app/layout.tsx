@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import "../src/styles/design-tokens.css";
 import "@solana/wallet-adapter-react-ui/styles.css";
-import AppDock from "./components/AppDock";
+import AppPillNav from "./components/AppPillNav";
 import Footer from "./components/Footer";
 import SimplifiedWalletProvider from "./components/wallet/SimplifiedWalletProvider";
 import ToastProvider from "./components/ToastProvider";
@@ -215,8 +215,8 @@ export default async function RootLayout({
               <ToastProvider>
                 <ConsentGate />
                 <RoutePreloader />
-                <AppDock />
-                <main className="flex min-h-screen flex-col pt-20">
+                <AppPillNav />
+                <main className="flex min-h-screen flex-col pt-24">
                   {children}
                 </main>
                 <Footer />
