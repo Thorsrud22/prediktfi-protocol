@@ -125,17 +125,6 @@ const MobileMenu = memo(function MobileMenu({
               </FastLink>
             ))}
           </div>
-          <Link
-            href="/studio"
-            className={`mt-2 inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-blue-500/60 ${
-              isInsightPage 
-                ? "bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg" 
-                : "border border-slate-600 bg-transparent text-slate-100/80 opacity-80 hover:opacity-100"
-            }`}
-            onClick={onClose}
-          >
-            Open Studio
-          </Link>
         </nav>
       </div>
     </div>
@@ -476,17 +465,6 @@ export default function Navbar() {
               Upgrade
             </Link>
           )}
-          <Link
-            href="/studio"
-            className={`inline-flex h-10 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
-              isInsightPage 
-                ? "bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg hover:shadow-xl" 
-                : "border border-slate-600 bg-transparent text-slate-100 hover:bg-slate-800"
-            }`}
-          >
-            <span className="hidden sm:inline">Open Studio</span>
-            <span className="sm:hidden">Studio</span>
-          </Link>
           <button
             type="button"
             className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-700 bg-slate-900/70 text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 hover:bg-slate-800/70 transition-colors"

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Metadata } from "next";
+import Aurora from "@/components/ui/Aurora";
 
 export const metadata: Metadata = {
   title: "About",
@@ -8,9 +9,22 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-gray-50">
+      {/* Aurora Background - Subtle Variant */}
+      <Aurora 
+        colorStops={['#3b82f6', '#60a5fa', '#93c5fd']} // Softer blue gradient
+        amplitude={0.8}
+        blend={0.4}
+        speed={0.5}
+        variant="subtle"
+        className="fixed inset-0 -z-10"
+      />
+      
+      {/* Subtle gradient overlay */}
+      <div className="fixed inset-0 bg-gradient-to-b from-gray-50/80 via-gray-50/60 to-gray-50/80 -z-[9]" />
+      
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="relative z-10 bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-all duration-200 hover:scale-105">
@@ -23,8 +37,8 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">About Predikt</h1>
           
           <div className="prose prose-lg max-w-none">
@@ -123,7 +137,7 @@ export default function AboutPage() {
                   href="/studio"
                   className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
                 >
-                  Open Studio
+                  Go to Studio
                 </Link>
                 <Link
                   href="/feed"
