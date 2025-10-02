@@ -15,6 +15,7 @@ import DebugProvider from "./providers/DebugProvider";
 import DebugOverlay from "./components/dev/DebugOverlay";
 import IntentStorageGuard from "./components/IntentStorageGuard";
 import AuthGuard from "./components/AuthGuard";
+import RoutePreloader from "./components/RoutePreloader";
 import { SITE } from "./config/site";
 import { getPlanFromRequest } from "./lib/plan";
 import { headers } from "next/headers";
@@ -213,6 +214,7 @@ export default async function RootLayout({
             <ClientErrorBoundary>
               <ToastProvider>
                 <ConsentGate />
+                <RoutePreloader />
                 <Navbar />
                 <main className="flex min-h-screen flex-col">
                   {children}

@@ -73,21 +73,37 @@ const Hero = memo(function Hero() {
         <div className="max-w-4xl">
           {/* Heading */}
           <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight text-blue-100">
-            Ask smarter. <span className="bg-gradient-to-r from-blue-300 to-teal-300 bg-clip-text text-transparent">Log insights on-chain</span>.
+            Build a <span className="bg-gradient-to-r from-blue-300 to-teal-300 bg-clip-text text-transparent">verifiable track record</span> of your predictions
           </h1>
 
           {/* Lead */}
           <p className="mt-6 max-w-2xl text-lg text-blue-200/90">
-            Predikt is an AI-first prediction studio. Ask a question, get a probability with rationale, and stamp it on Solana.
+            Create AI-powered predictions and commit them on Solana. Every forecast is timestamped, immutable, and proves your accuracy over time.
           </p>
           
           {/* How it works */}
-          <div className="mt-4 text-sm text-blue-300/80">
-            <p>
-              <strong>Sign</strong> with your Solana wallet (no email needed) • 
-              <strong>Pay</strong> in USDC or SOL (funds go directly to our on-chain wallet) • 
-              <strong>Unlock</strong> Pro instantly—verifiable on chain
-            </p>
+          <div className="mt-8 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-300 font-bold">1</div>
+              <div>
+                <p className="text-blue-100 font-semibold">Ask any question</p>
+                <p className="text-sm text-blue-300/80">Get AI-powered probability and reasoning</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-300 font-bold">2</div>
+              <div>
+                <p className="text-blue-100 font-semibold">Commit to blockchain</p>
+                <p className="text-sm text-blue-300/80">Your prediction is timestamped on Solana</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-300 font-bold">3</div>
+              <div>
+                <p className="text-blue-100 font-semibold">Build your reputation</p>
+                <p className="text-sm text-blue-300/80">Earn credibility with every accurate forecast</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -95,24 +111,29 @@ const Hero = memo(function Hero() {
         <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
           <Link
             href="/studio"
-            className="inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-teal-600 text-white font-semibold hover:shadow-lg transition-all"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-teal-600 text-white font-semibold hover:shadow-lg hover:scale-105 transition-all"
           >
-            Open Studio
+            Create Your First Prediction
           </Link>
           <Link
             href="/feed"
             className="inline-flex items-center px-4 py-3 text-sm text-slate-400 hover:text-slate-300 transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 rounded"
           >
-            View Feed
+            See What Others Are Predicting →
           </Link>
         </div>
 
         {/* Trust row */}
         <div className="mt-12 flex items-center gap-2 text-xs text-slate-500">
-          <span>Powered by Solana</span>
+          <span>Verified on Solana</span>
           <span className="opacity-60" aria-hidden>
             ◆
           </span>
+          <span>No email required</span>
+          <span className="opacity-60" aria-hidden>
+            ◆
+          </span>
+          <span>Build reputation over time</span>
         </div>
       </div>
     </section>

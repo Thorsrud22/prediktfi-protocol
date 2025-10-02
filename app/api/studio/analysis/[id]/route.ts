@@ -55,6 +55,9 @@ const templates = {
 
 const analyzer = new PredictionAnalyzer();
 
+// Add in-memory cache for fast responses
+const analysisCache = new Map<string, { data: any; expiry: number }>();
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   
@@ -62,7 +65,34 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const template = templates[id as keyof typeof templates];
     
     if (!template) {
-      return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+      // Return 200 OK with error flag instead of 404 to prevent console spam
+      return NextResponse.json({ 
+        success: false,
+        error: 'Template not found',
+        confidence: 0,
+        factors: ['Template does not exist'],
+        recommendation: 'Neutral' as const,
+        reasoning: 'The requested template was not found in our system.',
+        dataPoints: 0,
+        riskLevel: 'Unknown' as const,
+        timeHorizon: '0h',
+        lastUpdated: new Date().toISOString()
+      }, { status: 200 }); // Changed from 404 to 200
+    }
+
+    // Check cache first for instant response
+    const cacheKey = `analysis_${id}`;
+    const cached = analysisCache.get(cacheKey);
+    const now = Date.now();
+    
+    if (cached && now < cached.expiry) {
+      console.log(`⚡ Returning cached analysis for ${id}`);
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': 'public, max-age=300',
+          'X-Cache': 'HIT',
+        },
+      });
     }
 
     console.log(`🔍 Analyzing template ${id}: ${template.title}`);
@@ -74,9 +104,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       template.timeframe
     );
 
+    // Cache the result for 5 minutes
+    analysisCache.set(cacheKey, {
+      data: analysis,
+      expiry: now + 5 * 60 * 1000,
+    });
+
     return NextResponse.json(analysis, {
       headers: {
         'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+        'X-Cache': 'MISS',
       },
     });
     

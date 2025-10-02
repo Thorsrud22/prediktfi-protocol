@@ -3,6 +3,8 @@
 import React, { memo, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider';
+import { useOnboarding } from '@/app/hooks/useOnboarding';
+import OnboardingModal from './onboarding/OnboardingModal';
 import Hero from './Hero';
 import TrendingMarkets from './TrendingMarkets';
 import ActivityFeed from './ActivityFeed';
@@ -23,6 +25,7 @@ interface HomeClientProps {
 const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
   const router = useRouter();
   const { isConnected } = useSimplifiedWallet();
+  const { showOnboarding, completeOnboarding } = useOnboarding();
   const [isReturningUser, setIsReturningUser] = useState<boolean | null>(null);
 
   // Check if user is returning (has visited before) or has wallet isConnected
@@ -102,6 +105,9 @@ const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
 
   return (
     <>
+      {/* Onboarding Modal for first-time users */}
+      <OnboardingModal isOpen={showOnboarding} onClose={completeOnboarding} />
+
       {/* Hero Section - Static */}
       <Hero />
 
@@ -114,10 +120,10 @@ const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-3xl font-bold text-white mb-2">
-                    🔥 Trending Prediction Markets
+                    🔥 Recent Predictions
                   </h2>
                   <p className="text-gray-400">
-                    Live markets from PrediktFi creators and external platforms
+                    See what forecasters are predicting and their track records
                   </p>
                 </div>
                 <Link
@@ -140,23 +146,23 @@ const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
 
           {/* Call to Action */}
           <div className="mt-16 text-center">
-            <h3 className="text-2xl font-bold text-white mb-4">Ready to make predictions?</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">Ready to prove your forecasting skills?</h3>
             <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
-              Join thousands of creators making data-driven predictions. Use AI-powered insights,
-              connect to real markets, and build your reputation.
+              Join creators building verifiable track records. Make predictions, commit them on-chain, 
+              and earn credibility with every accurate forecast.
             </p>
             <div className="inline-flex flex-col sm:flex-row gap-4">
               <Link
                 href="/studio"
                 className="px-8 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all transform hover:scale-105"
               >
-                🚀 Start Creating
+                🚀 Create Your First Prediction
               </Link>
               <Link
                 href="/leaderboard"
                 className="px-8 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors"
               >
-                🏆 View Leaderboard
+                🏆 View Top Forecasters
               </Link>
             </div>
           </div>
@@ -172,25 +178,25 @@ const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
               <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-400 mb-2 group-hover:scale-110 transition-transform">
                 {data.stats.activePredictions.toLocaleString()}
               </div>
-              <div className="text-gray-400">Active Predictions</div>
+              <div className="text-gray-400">On-Chain Predictions</div>
             </div>
             <div className="text-center group">
               <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 mb-2 group-hover:scale-110 transition-transform">
-                ${data.stats.totalVolume}M
+                {data.stats.activeCreators.toLocaleString()}
               </div>
-              <div className="text-gray-400">Total Volume</div>
+              <div className="text-gray-400">Active Forecasters</div>
             </div>
             <div className="text-center group">
               <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 mb-2 group-hover:scale-110 transition-transform">
                 {data.stats.accuracyRate}%
               </div>
-              <div className="text-gray-400">Accuracy Rate</div>
+              <div className="text-gray-400">Average Accuracy</div>
             </div>
             <div className="text-center group">
               <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 mb-2 group-hover:scale-110 transition-transform">
-                {data.stats.activeCreators.toLocaleString()}
+                ${data.stats.totalVolume}M
               </div>
-              <div className="text-gray-400">Active Creators</div>
+              <div className="text-gray-400">Predictions Resolved</div>
             </div>
           </div>
         </div>
@@ -200,14 +206,14 @@ const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
       <section className="py-12 px-4 sm:px-6 lg:px-8 border-t border-white/10">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-            <span className="text-gray-400">Powered by</span>
-            <span className="text-white font-bold">Solana</span>
+            <span className="text-gray-400">Verified on</span>
+            <span className="text-white font-bold">Solana Blockchain</span>
             <span className="text-gray-400">•</span>
-            <span className="text-white">AI-Driven Analysis</span>
+            <span className="text-white">AI-Powered Analysis</span>
             <span className="text-gray-400">•</span>
-            <span className="text-white">Real-Time Resolution</span>
+            <span className="text-white">Immutable Track Records</span>
             <span className="text-gray-400">•</span>
-            <span className="text-white">Verified On-Chain</span>
+            <span className="text-white">No Email Required</span>
           </div>
         </div>
       </section>

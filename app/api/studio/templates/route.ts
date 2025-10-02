@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// Enable static response caching
+export const dynamic = 'force-static';
+export const revalidate = 300; // Revalidate every 5 minutes
+
 export async function GET() {
   // Mock prediction templates - replace with real database queries later
   const templates = [
@@ -81,7 +85,9 @@ export async function GET() {
 
   return NextResponse.json(templates, {
     headers: {
-      'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+      'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=600',
+      'CDN-Cache-Control': 'public, max-age=300',
+      'Vercel-CDN-Cache-Control': 'public, max-age=300',
     },
   });
 }

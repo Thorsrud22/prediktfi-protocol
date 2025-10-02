@@ -3,11 +3,15 @@
 import Link from "next/link";
 import FastLink from "./FastLink";
 import { SITE } from "../config/site";
-import { useEffect, useRef, useState, useCallback, memo, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, memo, useMemo, lazy, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { useIsPro } from "../lib/use-plan";
 import { isFeatureEnabled } from "../lib/flags";
-import SimplifiedConnectButton from "./wallet/SimplifiedConnectButton";
+import { useInstantRouter } from "./InstantRouter";
+import { useOnboarding } from "../hooks/useOnboarding";
+
+// Lazy load the wallet component since it's heavy
+const SimplifiedConnectButton = lazy(() => import("./wallet/SimplifiedConnectButton"));
 
 // Extract constants to prevent recreating on each render
 const SCROLL_THRESHOLD = 10;
@@ -20,7 +24,8 @@ const MobileMenu = memo(function MobileMenu({
   pathname, 
   isPro, 
   isInsightPage,
-  panelRef 
+  panelRef,
+  onShowHelp
 }: {
   open: boolean;
   onClose: () => void;
@@ -28,10 +33,13 @@ const MobileMenu = memo(function MobileMenu({
   isPro: boolean;
   isInsightPage: boolean;
   panelRef: React.RefObject<HTMLDivElement | null>;
+  onShowHelp: () => void;
 }) {
   const navigationItems = useMemo(() => [
     { href: "/feed", label: "Feed", primary: true },
     { href: "/studio", label: "Studio", primary: true },
+    { href: "/leaderboard", label: "Leaderboard", primary: true },
+    { href: "/my-predictions", label: "My Predictions", primary: true },
     ...(isFeatureEnabled('ADVISOR') ? [{ href: "/advisor", label: "Advisor", primary: false }] : []),
     ...(isFeatureEnabled('ACTIONS') ? [{ href: "/advisor/actions", label: "Actions", primary: false }] : []),
     { href: "/pricing", label: "Pricing", primary: false },
@@ -91,7 +99,13 @@ const MobileMenu = memo(function MobileMenu({
           <div className="space-y-2 mb-4">
             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Wallet</div>
             <div className="w-full">
-              <SimplifiedConnectButton />
+              <Suspense fallback={
+                <button className="w-full px-4 py-2 bg-slate-700 rounded-lg animate-pulse">
+                  <div className="h-5 bg-slate-600 rounded w-24 mx-auto"></div>
+                </button>
+              }>
+                <SimplifiedConnectButton />
+              </Suspense>
             </div>
           </div>
           
@@ -116,6 +130,29 @@ const MobileMenu = memo(function MobileMenu({
                 )}
               </FastLink>
             ))}
+            <button
+              onClick={() => {
+                onShowHelp();
+                onClose();
+              }}
+              className="rounded-md px-3 py-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 flex items-center gap-2 text-slate-300 hover:bg-slate-800/70 w-full text-left"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Help & Tutorial
+            </button>
           </div>
           <Link
             href="/studio"
@@ -149,19 +186,22 @@ const NavLink = memo(function NavLink({
   [key: string]: any;
 }) {
   const isActive = pathname === href;
+  const { instantNavigate, preloadOnHover, isTransitioning } = useInstantRouter();
   
   return (
-    <FastLink
+    <a
       href={href}
+      onClick={(e) => instantNavigate(href, e)}
+      onMouseEnter={() => preloadOnHover(href)}
       className={`flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
         isActive 
           ? 'text-white bg-blue-500/20 rounded-lg' 
-          : 'text-blue-200 hover:text-white hover:bg-blue-500/10 rounded-lg'
-      } ${className}`}
+          : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+      } ${isTransitioning ? 'opacity-70' : ''} ${className}`}
       {...props}
     >
       {children}
-    </FastLink>
+    </a>
   );
 });
 
@@ -171,8 +211,12 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const isPro = useIsPro();
+  const { resetOnboarding } = useOnboarding();
   const panelRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<Element | null>(null);
+
+  // Add InstantRouter for faster navigation
+  const { instantNavigate, preloadOnHover, isTransitioning } = useInstantRouter();
 
   // Memoize derived values
   const isInsightPage = useMemo(() => pathname.startsWith('/i/'), [pathname]);
@@ -275,27 +319,44 @@ export default function Navbar() {
 
         {/* Desktop nav - Optimized with memoized components */}
         <div className="hidden items-center gap-6 sm:flex">
-          <FastLink
+          <a
             href="/feed"
+            onClick={(e) => instantNavigate('/feed', e)}
+            onMouseEnter={() => preloadOnHover('/feed')}
             className={`flex h-14 items-center px-4 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
               pathname === '/feed' 
                 ? 'text-white bg-blue-500/20 rounded-lg' 
                 : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-            }`}
+            } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             Feed
-          </FastLink>
+          </a>
           
-          <FastLink
+          <a
             href="/studio"
+            onClick={(e) => instantNavigate('/studio', e)}
+            onMouseEnter={() => preloadOnHover('/studio')}
             className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
               pathname === '/studio' 
                 ? 'text-white bg-blue-500/20 rounded-lg' 
                 : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-            }`}
+            } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             Studio
-          </FastLink>
+          </a>
+
+          <a
+            href="/leaderboard"
+            onClick={(e) => instantNavigate('/leaderboard', e)}
+            onMouseEnter={() => preloadOnHover('/leaderboard')}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+              pathname === '/leaderboard' 
+                ? 'text-white bg-blue-500/20 rounded-lg' 
+                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+            } ${isTransitioning ? 'opacity-70' : ''}`}
+          >
+            Leaderboard
+          </a>
           
           <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-600">
             {showAdvisor && (
@@ -324,12 +385,45 @@ export default function Navbar() {
                 Billing
               </NavLink>
             )}
+            <NavLink href="/my-predictions" pathname={pathname}>
+              My Predictions
+            </NavLink>
+            <button
+              onClick={resetOnboarding}
+              className="flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg group relative"
+              aria-label="Show help tutorial"
+              title="Replay onboarding tutorial"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span className="ml-1 hidden lg:inline">Help</span>
+            </button>
           </div>
         </div>
         
         {/* Right side - Optimized with conditional rendering */}
         <div className="flex items-center gap-3">
-          {mounted && <SimplifiedConnectButton />}
+          {mounted && (
+            <Suspense fallback={
+              <button className="px-4 py-2 bg-slate-700 rounded-lg animate-pulse">
+                <div className="h-5 bg-slate-600 rounded w-20"></div>
+              </button>
+            }>
+              <SimplifiedConnectButton />
+            </Suspense>
+          )}
           {mounted && !isPro && (
             <Link
               href="/pay"
@@ -378,6 +472,7 @@ export default function Navbar() {
         isPro={isPro}
         isInsightPage={isInsightPage}
         panelRef={panelRef}
+        onShowHelp={resetOnboarding}
       />
     </nav>
   );
