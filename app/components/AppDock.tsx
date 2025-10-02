@@ -164,7 +164,7 @@ export default function AppDock() {
       {walletMenuOpen && isConnected && (
         <div 
           ref={walletMenuRef}
-          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[60] w-64"
+          className="fixed top-24 left-1/2 transform -translate-x-1/2 z-[60] w-64"
           style={{ marginLeft: '140px' }} // Offset to align with wallet icon
         >
           <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-2xl overflow-hidden">
