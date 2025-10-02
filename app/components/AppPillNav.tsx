@@ -64,10 +64,6 @@ export default function AppPillNav() {
         logoAlt="PrediktFi"
         items={navItems}
         activeHref={pathname}
-        baseColor="#60a5fa"
-        pillColor="#0f172a"
-        hoveredPillTextColor="#0f172a"
-        pillTextColor="#e2e8f0"
         ease="power2.easeOut"
         initialLoadAnimation={true}
       />
