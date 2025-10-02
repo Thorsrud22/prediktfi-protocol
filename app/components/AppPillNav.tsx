@@ -2,7 +2,8 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useRef, useEffect, useState } from 'react';
-import PillNav from './pill-nav/PillNav';
+import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider';
 import { useIsPro } from '../lib/use-plan';
 
@@ -12,7 +13,9 @@ export default function AppPillNav() {
   const { publicKey, disconnect } = useSimplifiedWallet();
   const isPro = useIsPro();
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const walletDropdownRef = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
 
   // Close wallet dropdown when clicking outside
   useEffect(() => {
@@ -31,42 +34,80 @@ export default function AppPillNav() {
     };
   }, [isWalletDropdownOpen]);
 
+  // Scroll detection
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   function shortAddress(addr: string) {
     return `${addr.slice(0, 4)}...${addr.slice(-3)}`;
   }
 
   const navItems = [
-    { label: 'Feed', href: '/feed' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Leaderboard', href: '/leaderboard' },
-    { label: 'My Predictions', href: '/my-predictions' },
-    { label: 'Account', href: '/account' }
+    { href: '/feed', label: 'FEED' },
+    { href: '/studio', label: 'STUDIO' },
+    { href: '/leaderboard', label: 'LEADERBOARD' },
+    { href: '/my-predictions', label: 'MY PREDICTIONS' },
+    { href: '/account', label: 'ACCOUNT' }
   ];
 
-  // Logo as base64 SVG (N letter)
-  const logoSvg = `data:image/svg+xml;base64,${btoa(`
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="36" height="36" rx="8" fill="url(#gradient)"/>
-      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#0f172a" font-family="Arial, sans-serif" font-weight="bold" font-size="20">N</text>
-      <defs>
-        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#60a5fa"/>
-          <stop offset="100%" stop-color="#22d3ee"/>
-        </linearGradient>
-      </defs>
-    </svg>
-  `)}`;
+  // Logo component
+  const Logo = () => (
+    <Link
+      href="/feed"
+      className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center font-bold text-slate-900 text-lg hover:scale-105 transition-transform"
+    >
+      N
+    </Link>
+  );
 
   return (
-    <div className="w-full flex items-center justify-center relative">
-      <PillNav
-        logo={logoSvg}
-        logoAlt="PrediktFi"
-        items={navItems}
-        activeHref={pathname}
-        ease="power2.easeOut"
-        initialLoadAnimation={true}
-      />
+    <>
+      {/* Main Navigation */}
+      <div className={`fixed top-3 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${isScrolled ? 'scale-95' : 'scale-100'}`}>
+        <div className="flex items-center gap-3">
+          <Logo />
+          
+          {/* Pill Nav - Outer wrapper with ring */}
+          <div className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${isScrolled ? 'backdrop-blur-lg shadow-xl' : ''}`}>
+            {/* Inner wrapper with overflow-hidden to clip animated pill */}
+            <div className="rounded-full overflow-hidden">
+              <ul className="flex items-center gap-1 whitespace-nowrap overflow-x-auto px-1">
+                {navItems.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="relative inline-flex h-10 md:h-11 items-center justify-center rounded-full px-4 text-sm font-semibold leading-none text-white/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide"
+                        aria-current={active ? 'page' : undefined}
+                      >
+                        {active && (
+                          <motion.span
+                            layoutId="active-pill"
+                            className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-r from-sky-500/25 to-cyan-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,.20)]"
+                            transition={
+                              reduce
+                                ? { duration: 0 }
+                                : { type: 'spring', stiffness: 500, damping: 38, mass: 0.4 }
+                            }
+                          />
+                        )}
+                        <span className="relative z-10 translate-y-[0.5px]">{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Wallet & Upgrade Actions - Positioned absolutely on the right */}
       <div className="fixed top-4 right-4 z-[100] flex items-center gap-2">
@@ -75,7 +116,7 @@ export default function AppPillNav() {
           <div className="relative" ref={walletDropdownRef}>
             <button
               onClick={() => setIsWalletDropdownOpen(!isWalletDropdownOpen)}
-              className="h-[42px] px-4 bg-slate-900/90 backdrop-blur-lg text-slate-200 rounded-full font-medium text-sm hover:bg-slate-800 transition-all flex items-center gap-2 border border-slate-700/50"
+              className="h-[42px] px-4 bg-white/5 backdrop-blur-md text-slate-200 rounded-full font-medium text-sm hover:bg-white/10 transition-all flex items-center gap-2 ring-1 ring-inset ring-white/10"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -119,6 +160,6 @@ export default function AppPillNav() {
           </button>
         )}
       </div>
-    </div>
+    </>
   );
 }

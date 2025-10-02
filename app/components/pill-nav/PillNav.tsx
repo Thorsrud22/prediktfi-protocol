@@ -42,6 +42,7 @@ const PillNav = ({
 }: PillNavProps) => {
   const resolvedPillTextColor = pillTextColor ?? baseColor;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const circleRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const tlRefs = useRef<gsap.core.Timeline[]>([]);
   const activeTweenRefs = useRef<gsap.core.Tween[]>([]);
@@ -51,6 +52,17 @@ const PillNav = ({
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navItemsRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll detection effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const layout = () => {
@@ -246,7 +258,7 @@ const PillNav = ({
   };
 
   return (
-    <div className="pill-nav-container">
+    <div className={`pill-nav-container${isScrolled ? ' scrolled' : ''}`} ref={containerRef}>
       <nav className={`pill-nav ${className}`} aria-label="Primary" style={cssVars}>
         <Link
           className="pill-logo"
