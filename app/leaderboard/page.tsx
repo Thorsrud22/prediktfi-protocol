@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { LeaderboardResponse } from '../api/leaderboard/route';
 import Link from 'next/link';
 import ScoreTooltip from '../components/ScoreTooltip';
+import CreatorLink from './CreatorLink';
 
 export const metadata: Metadata = {
   title: 'Leaderboard | PrediktFi',
@@ -238,33 +239,14 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
                           </div>
                           <div>
                             <div className="flex items-center space-x-2">
-                              <Link 
-                                href={`/creator/${creator.handle || creator.id}`}
-                                className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
-                                prefetch={true}
-                                onClick={() => {
-                                  // Track analytics event
-                                  if (typeof window !== 'undefined') {
-                                    fetch('/api/analytics', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({
-                                        event: 'creator_profile_nav_from_leaderboard',
-                                        properties: { 
-                                          ts: Date.now(), 
-                                          path: window.location.pathname,
-                                          creator_handle: creator.handle,
-                                          creator_rank: creator.rank,
-                                          period: selectedPeriod
-                                        },
-                                        timestamp: new Date().toISOString(),
-                                      }),
-                                    }).catch(error => console.error('Failed to track event:', error));
-                                  }
-                                }}
+                              <CreatorLink
+                                href={`/creator/${creator.id}`}
+                                handle={creator.handle}
+                                rank={creator.rank}
+                                selectedPeriod={selectedPeriod}
                               >
                                 {creator.handle}
-                              </Link>
+                              </CreatorLink>
                               {getTrendIcon(creator.trend)}
                             </div>
                             <div className="mt-1">

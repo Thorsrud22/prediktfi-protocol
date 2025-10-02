@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 import { useIsPro } from "../lib/use-plan";
 import { isFeatureEnabled } from "../lib/flags";
 import { useInstantRouter } from "./InstantRouter";
-import { useOnboarding } from "../hooks/useOnboarding";
 
 // Lazy load the wallet component since it's heavy
 const SimplifiedConnectButton = lazy(() => import("./wallet/SimplifiedConnectButton"));
@@ -24,8 +23,7 @@ const MobileMenu = memo(function MobileMenu({
   pathname, 
   isPro, 
   isInsightPage,
-  panelRef,
-  onShowHelp
+  panelRef
 }: {
   open: boolean;
   onClose: () => void;
@@ -33,16 +31,12 @@ const MobileMenu = memo(function MobileMenu({
   isPro: boolean;
   isInsightPage: boolean;
   panelRef: React.RefObject<HTMLDivElement | null>;
-  onShowHelp: () => void;
 }) {
   const navigationItems = useMemo(() => [
     { href: "/feed", label: "Feed", primary: true },
     { href: "/studio", label: "Studio", primary: true },
     { href: "/leaderboard", label: "Leaderboard", primary: true },
     { href: "/my-predictions", label: "My Predictions", primary: true },
-    ...(isFeatureEnabled('ADVISOR') ? [{ href: "/advisor", label: "Advisor", primary: false }] : []),
-    ...(isFeatureEnabled('ACTIONS') ? [{ href: "/advisor/actions", label: "Actions", primary: false }] : []),
-    { href: "/pricing", label: "Pricing", primary: false },
     { href: "/account", label: "Account", primary: false, showPro: true },
     ...(isPro ? [{ href: "/account/billing", label: "Billing", primary: false }] : []),
   ], [isPro]);
@@ -130,29 +124,6 @@ const MobileMenu = memo(function MobileMenu({
                 )}
               </FastLink>
             ))}
-            <button
-              onClick={() => {
-                onShowHelp();
-                onClose();
-              }}
-              className="rounded-md px-3 py-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 flex items-center gap-2 text-slate-300 hover:bg-slate-800/70 w-full text-left"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Help & Tutorial
-            </button>
           </div>
           <Link
             href="/studio"
@@ -205,13 +176,109 @@ const NavLink = memo(function NavLink({
   );
 });
 
+// Account dropdown menu component
+const AccountDropdown = memo(function AccountDropdown({ 
+  pathname, 
+  isPro 
+}: {
+  pathname: string;
+  isPro: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { instantNavigate, preloadOnHover } = useInstantRouter();
+  
+  const isAccountPage = pathname.startsWith('/account') || pathname === '/my-predictions';
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => {
+          preloadOnHover('/account');
+          preloadOnHover('/my-predictions');
+        }}
+        className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+          isAccountPage
+            ? 'text-white bg-blue-500/20 rounded-lg' 
+            : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+        }`}
+      >
+        Account
+        {isPro && (
+          <span className="ml-1.5 inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            PRO
+          </span>
+        )}
+        <svg 
+          className={`ml-1 h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-700 bg-slate-900/95 backdrop-blur-md shadow-xl z-50">
+          <div className="py-1">
+            <a
+              href="/my-predictions"
+              onClick={(e) => {
+                instantNavigate('/my-predictions', e);
+                setIsOpen(false);
+              }}
+              className={`block px-4 py-2 text-sm transition-colors ${
+                pathname === '/my-predictions'
+                  ? 'text-white bg-blue-500/20'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              My Predictions
+            </a>
+            {isPro && (
+              <a
+                href="/account/billing"
+                onClick={(e) => {
+                  instantNavigate('/account/billing', e);
+                  setIsOpen(false);
+                }}
+                className={`block px-4 py-2 text-sm transition-colors ${
+                  pathname === '/account/billing'
+                    ? 'text-white bg-blue-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                Billing
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const isPro = useIsPro();
-  const { resetOnboarding } = useOnboarding();
   const panelRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<Element | null>(null);
 
@@ -344,7 +411,7 @@ export default function Navbar() {
           >
             Studio
           </a>
-
+          
           <a
             href="/leaderboard"
             onClick={(e) => instantNavigate('/leaderboard', e)}
@@ -358,59 +425,36 @@ export default function Navbar() {
             Leaderboard
           </a>
           
-          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-600">
-            {showAdvisor && (
-              <NavLink href="/advisor" pathname={pathname}>
-                Advisor
-              </NavLink>
+          <a
+            href="/my-predictions"
+            onClick={(e) => instantNavigate('/my-predictions', e)}
+            onMouseEnter={() => preloadOnHover('/my-predictions')}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+              pathname === '/my-predictions' 
+                ? 'text-white bg-blue-500/20 rounded-lg' 
+                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+            } ${isTransitioning ? 'opacity-70' : ''}`}
+          >
+            My Predictions
+          </a>
+          
+          <a
+            href="/account"
+            onClick={(e) => instantNavigate('/account', e)}
+            onMouseEnter={() => preloadOnHover('/account')}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+              pathname.startsWith('/account')
+                ? 'text-white bg-blue-500/20 rounded-lg' 
+                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+            } ${isTransitioning ? 'opacity-70' : ''}`}
+          >
+            Account
+            {isPro && (
+              <span className="ml-1.5 inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                PRO
+              </span>
             )}
-            {showActions && (
-              <NavLink href="/advisor/actions" pathname={pathname}>
-                Actions
-              </NavLink>
-            )}
-            <NavLink href="/pricing" pathname={pathname}>
-              Pricing
-            </NavLink>
-            <NavLink href="/account" pathname={pathname} className="gap-1.5">
-              Account
-              {isPro && (
-                <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  PRO
-                </span>
-              )}
-            </NavLink>
-            {mounted && isPro && (
-              <NavLink href="/account/billing" pathname={pathname}>
-                Billing
-              </NavLink>
-            )}
-            <NavLink href="/my-predictions" pathname={pathname}>
-              My Predictions
-            </NavLink>
-            <button
-              onClick={resetOnboarding}
-              className="flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg group relative"
-              aria-label="Show help tutorial"
-              title="Replay onboarding tutorial"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="ml-1 hidden lg:inline">Help</span>
-            </button>
-          </div>
+          </a>
         </div>
         
         {/* Right side - Optimized with conditional rendering */}
@@ -472,7 +516,6 @@ export default function Navbar() {
         isPro={isPro}
         isInsightPage={isInsightPage}
         panelRef={panelRef}
-        onShowHelp={resetOnboarding}
       />
     </nav>
   );
