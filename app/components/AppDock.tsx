@@ -43,12 +43,6 @@ const WalletIcon = () => (
   </svg>
 );
 
-const LogoIcon = () => (
-  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center font-bold text-slate-900 text-sm">
-    N
-  </div>
-);
-
 const UpgradeIcon = () => (
   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -95,12 +89,6 @@ export default function AppDock() {
   }, [isConnected, connect]);
 
   const dockItems: DockItemType[] = [
-    {
-      icon: <LogoIcon />,
-      label: 'Home',
-      onClick: () => navigate('/'),
-      className: pathname === '/' ? 'ring-2 ring-blue-400/50' : ''
-    },
     {
       icon: <HomeIcon />,
       label: 'Feed',
