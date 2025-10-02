@@ -29,15 +29,16 @@ function DockItem({ icon, label, className = '', onClick, mouseX, spring, distan
     return val - rect.x - baseItemSize / 2;
   });
 
-  const targetSize = useTransform(mouseDistance, [-distance, 0, distance], [baseItemSize, magnification, baseItemSize]);
-  const size = useSpring(targetSize, spring);
+  const targetScale = useTransform(mouseDistance, [-distance, 0, distance], [1, magnification / baseItemSize, 1]);
+  const scale = useSpring(targetScale, spring);
 
   return (
     <motion.div
       ref={ref}
       style={{
-        width: size,
-        height: size
+        width: baseItemSize,
+        height: baseItemSize,
+        transform: scale.get() !== 1 ? `scale(${scale.get()})` : undefined
       }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
@@ -49,7 +50,17 @@ function DockItem({ icon, label, className = '', onClick, mouseX, spring, distan
       role="button"
       aria-label={label}
     >
-      <div className="dock-icon">{icon}</div>
+      <motion.div 
+        className="dock-icon"
+        style={{ scale }}
+      >
+        {icon}
+      </motion.div>
+      
+      {/* Always visible label */}
+      <div className="dock-label-always">
+        {label}
+      </div>
       
       <AnimatePresence>
         {isHovered && (
@@ -58,7 +69,7 @@ function DockItem({ icon, label, className = '', onClick, mouseX, spring, distan
             animate={{ opacity: 1, y: 10 }}
             exit={{ opacity: 0, y: 0 }}
             transition={{ duration: 0.2 }}
-            className="dock-label"
+            className="dock-label-hover"
             role="tooltip"
             style={{ x: '-50%' }}
           >
@@ -91,7 +102,7 @@ interface DockProps {
 export default function Dock({
   items,
   className = '',
-  spring = { mass: 0.1, stiffness: 150, damping: 12 },
+  spring = { mass: 0.05, stiffness: 200, damping: 15 },
   magnification = 70,
   distance = 200,
   panelHeight = 68,
