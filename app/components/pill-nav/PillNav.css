@@ -95,9 +95,7 @@
   justify-content: center;
   height: 100%;
   padding: 0 var(--pill-pad-x);
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: transparent;
   color: rgba(226, 232, 240, 0.9);
   text-decoration: none;
   border-radius: 9999px;
@@ -115,9 +113,7 @@
 }
 
 .pill:hover {
-  background: rgba(59, 130, 246, 0.25);
   color: rgba(147, 197, 253, 1);
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
 }
 
 .pill .hover-circle {
@@ -127,7 +123,7 @@
   border-radius: 50%;
   background: rgba(59, 130, 246, 0.8);
   z-index: 1;
-  display: block;
+  display: none;
   pointer-events: none;
   will-change: transform;
 }
@@ -158,9 +154,7 @@
 }
 
 .pill.is-active {
-  background: rgba(59, 130, 246, 0.3);
   color: rgba(147, 197, 253, 1);
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
 
 .pill.is-active::after {
@@ -264,9 +258,7 @@
   display: block;
   padding: 12px 16px;
   color: rgba(226, 232, 240, 0.9);
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: transparent;
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
@@ -278,13 +270,9 @@
 
 .mobile-menu-popover .mobile-menu-link:hover {
   cursor: pointer;
-  background: rgba(59, 130, 246, 0.25);
   color: rgba(147, 197, 253, 1);
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
 }
 
 .mobile-menu-popover .mobile-menu-link.is-active {
-  background: rgba(59, 130, 246, 0.3);
   color: rgba(147, 197, 253, 1);
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
