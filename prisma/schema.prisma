@@ -61,6 +61,7 @@ model Insight {
   tradingEnabled  Boolean       @default(false)
   marketVolume    Float?
   lastMarketSync  DateTime?
+  featuredDate    DateTime?     // Date when this insight is featured as Daily Challenge
   events          Event[]
   creator         Creator?      @relation(fields: [creatorId], references: [id])
   stamp           Stamp?        @relation(fields: [stampId], references: [id])
@@ -75,6 +76,7 @@ model Insight {
   @@index([lastMarketSync])
   @@index([status, deadline, marketVolume])
   @@index([deadline])
+  @@index([featuredDate])
   @@index([createdAt, category, status]) // Composite index for feed queries
   @@map("insights")
 }

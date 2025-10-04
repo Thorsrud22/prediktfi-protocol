@@ -7,6 +7,7 @@ import { useOptimizedFetch } from '../hooks/useOptimizedFetch';
 import { ErrorBoundary, FeedErrorFallback } from '../components/ui/ErrorBoundary';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { trackPageLoad, usePerformanceTracking } from '../utils/performance';
+import DailyChallenge from '../components/DailyChallenge';
 
 // Utility functions for category display
 const getCategoryIcon = (category: string) => {
@@ -764,6 +765,20 @@ const FeedPage = memo(() => {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Daily Challenge - Featured Hero Section */}
+          <div className="mb-12">
+            <DailyChallenge />
+          </div>
+
+          {/* Divider */}
+          <div className="mb-8 flex items-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+            <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+              Latest Predictions
+            </span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
           </div>
 
           {/* Loading State – only when nothing to show yet */}

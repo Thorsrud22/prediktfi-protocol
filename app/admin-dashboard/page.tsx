@@ -8,7 +8,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { BarChart3, Monitor, Target, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { BarChart3, Monitor, Target, TrendingUp, AlertTriangle, CheckCircle, Calendar } from 'lucide-react';
 
 export default function AdminDashboardHome() {
   return (
@@ -80,6 +80,27 @@ export default function AdminDashboardHome() {
               className="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
             >
               View PMF Analytics
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Daily Challenge Manager */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Calendar className="h-5 w-5 mr-2" />
+              Daily Challenges
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">
+              Manage featured Daily Challenges to boost user engagement
+            </p>
+            <Link
+              href="/admin-dashboard/daily-challenge"
+              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Manage Challenges
             </Link>
           </CardContent>
         </Card>
