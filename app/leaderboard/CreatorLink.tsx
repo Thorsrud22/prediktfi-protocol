@@ -33,9 +33,9 @@ export default function CreatorLink({ href, handle, rank, selectedPeriod, childr
   };
 
   return (
-    <Link 
+    <Link
       href={href}
-      className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
+      className="text-sm font-medium text-slate-100 hover:text-sky-300 transition-colors"
       prefetch={true}
       onClick={handleClick}
     >
