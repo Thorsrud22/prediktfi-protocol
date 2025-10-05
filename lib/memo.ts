@@ -35,16 +35,18 @@ export function createMemoPayload(
   deadline: Date,
   resolverRef: string
 ): MemoPayload {
-  const deadlineISO = deadline.toISOString();
+  const safeDeadline = normalizeDeadline(deadline);
+  const safePredictionId = normalizePredictionId(predictionId);
+  const deadlineISO = safeDeadline.toISOString();
   const fullHash = generatePredictionHash(canonical, deadlineISO, resolverRef);
-  
+
   const payload: MemoPayload = {
     t: 'predikt.v1',
-    pid: predictionId,
+    pid: safePredictionId,
     h: fullHash, // Full 64-char hash for strong verification
     d: deadlineISO.split('T')[0]  // Date only (YYYY-MM-DD)
   };
-  
+
   return payload;
 }
 
@@ -122,22 +124,39 @@ export function generateSolanaMemo(
   hash: string;
   size: number;
 } {
-  const payload = createMemoPayload(
+  const safeDeadline = normalizeDeadline(deadline);
+
+  let payload = createMemoPayload(
     predictionId,
     canonical,
-    deadline,
+    safeDeadline,
     resolverRef
   );
-  
-  const serialized = serializeMemoPayload(payload);
-  const fullHash = generatePredictionHash(canonical, deadline.toISOString(), resolverRef);
-  const size = getMemoSize(payload);
-  
+
+  let serialized = serializeMemoPayload(payload);
+  let size = getMemoSize(payload);
+
+  if (size > 180 && Buffer.byteLength(predictionId, 'utf8') <= 180) {
+    const compressedId = compressPredictionId(predictionId);
+    if (compressedId !== payload.pid) {
+      payload = createMemoPayload(
+        compressedId,
+        canonical,
+        safeDeadline,
+        resolverRef
+      );
+      serialized = serializeMemoPayload(payload);
+      size = getMemoSize(payload);
+    }
+  }
+
   // Validate size constraint
   if (size > 180) {
     throw new Error(`Memo payload too large: ${size} bytes (max 180)`);
   }
-  
+
+  const fullHash = generatePredictionHash(canonical, safeDeadline.toISOString(), resolverRef);
+
   return {
     payload,
     serialized,
@@ -183,6 +202,34 @@ export function normalizeHashInput(
   const normalizedCanonical = canonical.trim();
   const normalizedDeadline = deadlineISO.trim();
   const normalizedResolver = resolverRef.trim();
-  
+
   return `${normalizedCanonical}|${normalizedDeadline}|${normalizedResolver}`;
+}
+
+function normalizeDeadline(deadline: Date): Date {
+  if (!(deadline instanceof Date) || Number.isNaN(deadline.getTime())) {
+    return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  }
+
+  return new Date(deadline.getTime());
+}
+
+function normalizePredictionId(predictionId: string): string {
+  const trimmed = (predictionId ?? '').trim();
+  if (!trimmed) {
+    return 'predikt';
+  }
+
+  return trimmed;
+}
+
+function compressPredictionId(predictionId: string): string {
+  const normalized = normalizePredictionId(predictionId);
+  if (Buffer.byteLength(normalized, 'utf8') <= 96) {
+    return normalized;
+  }
+
+  const hash = crypto.createHash('sha256').update(normalized, 'utf8').digest('hex');
+  const prefix = normalized.slice(0, 32).trim();
+  return `${prefix ? prefix + ':' : ''}${hash.slice(0, 32)}`;
 }

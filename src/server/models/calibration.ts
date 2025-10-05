@@ -201,7 +201,16 @@ export function calculateCalibration(
   }));
   
   const brierScore = calculateBrierScore(brierPredictions);
-  const status = getCalibrationStatus(brierScore);
+  let status = getCalibrationStatus(brierScore);
+
+  if (status === 'Poor' && maturedN > 0) {
+    const variance = brierScore * (1 - brierScore);
+    const margin = Math.sqrt(Math.max(variance, CALIBRATION_CONFIG.EPSILON) / maturedN);
+
+    if (brierScore - margin <= CALIBRATION_CONFIG.BRIER_FAIR) {
+      status = 'Fair';
+    }
+  }
   
   // Create bins if we have enough data
   const bins = maturedN >= CALIBRATION_CONFIG.BINS_MIN_N 

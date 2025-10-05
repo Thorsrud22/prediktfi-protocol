@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { trackServer } from '@/lib/analytics';
-import { checkWalletRateLimit, getWalletIdentifier } from '@/lib/rate-limit-wallet';
+import { checkWalletRateLimit, getWalletIdentifier } from '../../lib/rate-limit-wallet';
 
 interface RateLimit {
   count: number;

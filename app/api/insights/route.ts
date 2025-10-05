@@ -2,11 +2,27 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { Connection } from '@solana/web3.js';
+import { MEMO_PROGRAM_ID } from '../../lib/solana';
 import { InsightRequestSchema } from './_schemas';
 import { checkAuthAndQuota } from './_auth';
 import { insightsCache } from './_cache';
 import { runPipeline } from './_pipeline';
 import { checkAntiGaming, logAntiGamingViolation, getAntiGamingStatus } from '../../lib/anti-gaming';
+
+const INSIGHTS_RATE_LIMIT_WINDOW = 60 * 1000;
+const INSIGHTS_RATE_LIMIT_MAX = 5;
+
+const insightsRateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function cleanupInsightsRateLimits() {
+  const now = Date.now();
+  for (const [key, value] of insightsRateLimitStore.entries()) {
+    if (now > value.resetTime) {
+      insightsRateLimitStore.delete(key);
+    }
+  }
+}
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -143,12 +159,147 @@ export async function POST(request: NextRequest) {
 
 // Keep the old GET endpoint for backward compatibility (Solana verification)
 export async function GET(request: NextRequest) {
-  return NextResponse.json(
-    { 
-      error: 'Method not supported in E8.1',
-      message: 'Use POST for insights generation. GET is deprecated.',
-      migration: 'Switch to POST /api/insights with InsightRequest body'
-    },
-    { status: 405 }
+  const url = new URL(request.url);
+  const signature = url.searchParams.get('sig');
+
+  if (!signature) {
+    return NextResponse.json({ error: 'Missing signature parameter' }, { status: 400 });
+  }
+
+  cleanupInsightsRateLimits();
+
+  const clientIp = getClientIp(request);
+  const rateLimitKey = `${clientIp}:${signature}`;
+  const rateLimitStatus = insightsRateLimitStore.get(rateLimitKey);
+  const now = Date.now();
+
+  if (!rateLimitStatus || now > rateLimitStatus.resetTime) {
+    insightsRateLimitStore.set(rateLimitKey, {
+      count: 1,
+      resetTime: now + INSIGHTS_RATE_LIMIT_WINDOW
+    });
+  } else if (rateLimitStatus.count >= INSIGHTS_RATE_LIMIT_MAX) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+  } else {
+    rateLimitStatus.count += 1;
+    insightsRateLimitStore.set(rateLimitKey, rateLimitStatus);
+  }
+
+  try {
+    const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+    const connection = new Connection(rpcUrl, 'confirmed');
+    const transaction = await connection.getTransaction(signature, {
+      maxSupportedTransactionVersion: 0
+    });
+
+    if (!transaction) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 422 });
+    }
+
+    const message: any = transaction.transaction?.message ?? {};
+    const accountKeys = message.staticAccountKeys || message.accountKeys || [];
+    const instructions = message.compiledInstructions || message.instructions || [];
+
+    const memoInstruction = instructions.find((instruction: any) => {
+      const programId = resolveProgramId(instruction, accountKeys);
+      return programId === MEMO_PROGRAM_ID.toBase58();
+    });
+
+    if (!memoInstruction) {
+      return NextResponse.json({ error: 'No memo instruction found' }, { status: 422 });
+    }
+
+    const memoRaw = decodeInstructionData(memoInstruction.data);
+
+    if (!memoRaw) {
+      return NextResponse.json({ error: 'Invalid memo format' }, { status: 422 });
+    }
+
+    let memoJson: any;
+    try {
+      memoJson = JSON.parse(memoRaw);
+    } catch {
+      return NextResponse.json({ error: 'Invalid memo format' }, { status: 422 });
+    }
+
+    if (memoJson?.kind !== 'insight') {
+      return NextResponse.json({ error: 'Memo does not contain insight data' }, { status: 422 });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      signature,
+      memo: memoJson,
+      slot: transaction.slot
+    });
+  } catch (error) {
+    console.error('Insight verification error:', error);
+    return NextResponse.json({ error: 'Failed to verify transaction' }, { status: 422 });
+  }
+}
+
+function getClientIp(request: NextRequest): string {
+  return (
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown'
   );
+}
+
+function resolveProgramId(instruction: any, accountKeys: any[]): string | null {
+  if (!instruction) {
+    return null;
+  }
+
+  if (typeof instruction.programId === 'string') {
+    return instruction.programId;
+  }
+
+  if (instruction.programId?.toBase58) {
+    return instruction.programId.toBase58();
+  }
+
+  if (typeof instruction.programIdIndex === 'number') {
+    const programAccount = accountKeys[instruction.programIdIndex];
+    if (typeof programAccount === 'string') {
+      return programAccount;
+    }
+    if (programAccount?.toBase58) {
+      return programAccount.toBase58();
+    }
+    if (programAccount?.pubkey?.toBase58) {
+      return programAccount.pubkey.toBase58();
+    }
+  }
+
+  return null;
+}
+
+function decodeInstructionData(data: unknown): string | null {
+  if (typeof data === 'string') {
+    try {
+      return Buffer.from(data, 'base64').toString('utf8');
+    } catch {
+      return data;
+    }
+  }
+
+  if (data instanceof Uint8Array) {
+    return Buffer.from(data).toString('utf8');
+  }
+
+  if (Array.isArray(data)) {
+    return Buffer.from(data).toString('utf8');
+  }
+
+  if (typeof data === 'object' && data !== null) {
+    if (Buffer.isBuffer(data)) {
+      return data.toString('utf8');
+    }
+    if ('data' in data && Array.isArray((data as any).data)) {
+      return Buffer.from((data as any).data).toString('utf8');
+    }
+  }
+
+  return null;
 }
