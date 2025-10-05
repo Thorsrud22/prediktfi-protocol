@@ -1,8 +1,10 @@
 import { Metadata } from 'next';
-import { LeaderboardResponse } from '../api/leaderboard/route';
 import Link from 'next/link';
+import { unstable_cache } from 'next/cache';
+import { getLeaderboard } from '../../lib/score';
 import ScoreTooltip from '../components/ScoreTooltip';
 import CreatorLink from './CreatorLink';
+import { LeaderboardResponse } from '../api/leaderboard/route';
 
 export const metadata: Metadata = {
   title: 'Leaderboard | PrediktFi',
@@ -14,34 +16,43 @@ export const metadata: Metadata = {
   },
 };
 
+const getCachedLeaderboard = unstable_cache(
+  async (period: 'all' | '90d', limit = 50): Promise<LeaderboardResponse> => {
+    const leaderboard = await getLeaderboard(period, limit);
+
+    return {
+      leaderboard,
+      meta: {
+        period,
+        limit,
+        total: leaderboard.length,
+        generatedAt: new Date().toISOString(),
+      },
+    };
+  },
+  ['leaderboard-page'],
+  {
+    revalidate: 300,
+    tags: ['leaderboard'],
+  }
+);
+
 interface LeaderboardPageProps {
   searchParams: Promise<{ period?: string }>;
-}
-
-async function getLeaderboard(period: 'all' | '90d' = 'all'): Promise<LeaderboardResponse | null> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/leaderboard?period=${period}`, {
-      next: { revalidate: 300 } // Cache for 5 minutes
-    });
-    
-    if (!response.ok) {
-      return null;
-    }
-    
-    return response.json();
-  } catch (error) {
-    console.error('Failed to fetch leaderboard:', error);
-    return null;
-  }
 }
 
 export default async function LeaderboardPage({ searchParams }: LeaderboardPageProps) {
   const { period = 'all' } = await searchParams;
   const selectedPeriod = period === '90d' ? '90d' : 'all';
-  
-  const leaderboardData = await getLeaderboard(selectedPeriod);
-  
+
+  let leaderboardData: LeaderboardResponse | null = null;
+
+  try {
+    leaderboardData = await getCachedLeaderboard(selectedPeriod);
+  } catch (error) {
+    console.error('Failed to load leaderboard:', error);
+  }
+
   if (!leaderboardData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
