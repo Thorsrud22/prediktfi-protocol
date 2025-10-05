@@ -137,45 +137,50 @@ export default function AppPillNav() {
 
   return (
     <>
-      {/* Main Navigation */}
+      {/* Brand Chip */}
       <div
         className={`fixed top-3 left-4 sm:left-6 z-50 transition-transform duration-300 ${
           isScrolled ? 'scale-[0.98]' : 'scale-100'
         }`}
       >
-        <div className="flex items-center gap-3">
-          <Logo />
-          
-          {/* Pill Nav - Outer wrapper with ring */}
-          <div className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${isScrolled ? 'backdrop-blur-lg shadow-xl' : ''}`}>
-            {/* Inner wrapper with overflow-hidden to clip animated pill */}
-            <div className="rounded-full overflow-hidden">
-              <ul
-                ref={navListRef}
-                className="relative flex items-center gap-1 whitespace-nowrap overflow-x-auto px-1"
-              >
-                <span
-                  ref={indicatorRef}
-                  aria-hidden
-                  className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-sky-500/25 to-cyan-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,.20)] transition-[transform,width,opacity] duration-300 ease-out"
-                  style={{ width: 0, transform: 'translateX(0)', opacity: 0 }}
-                />
-                {navItems.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(item.href + '/');
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className="relative inline-flex h-10 md:h-11 items-center justify-center rounded-full px-4 text-sm font-semibold leading-none text-white/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide"
-                        aria-current={active ? 'page' : undefined}
-                      >
-                        <span className="relative z-10 translate-y-[0.5px]">{item.label}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+        <Logo />
+      </div>
+
+      {/* Main Navigation */}
+      <div
+        className={`fixed top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${
+          isScrolled ? 'scale-[0.98]' : 'scale-100'
+        }`}
+      >
+        {/* Pill Nav - Outer wrapper with ring */}
+        <div className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${isScrolled ? 'backdrop-blur-lg shadow-xl' : ''}`}>
+          {/* Inner wrapper with overflow-hidden to clip animated pill */}
+          <div className="rounded-full overflow-hidden">
+            <ul
+              ref={navListRef}
+              className="relative flex items-center gap-1 whitespace-nowrap overflow-x-auto px-1"
+            >
+              <span
+                ref={indicatorRef}
+                aria-hidden
+                className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-sky-500/25 to-cyan-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,.20)] transition-[transform,width,opacity] duration-300 ease-out"
+                style={{ width: 0, transform: 'translateX(0)', opacity: 0 }}
+              />
+              {navItems.map((item) => {
+                const active = pathname === item.href || pathname.startsWith(item.href + '/');
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="relative inline-flex h-10 md:h-11 items-center justify-center rounded-full px-4 text-sm font-semibold leading-none text-white/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide"
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      <span className="relative z-10 translate-y-[0.5px]">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </div>
       </div>
