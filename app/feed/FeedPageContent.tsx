@@ -34,6 +34,8 @@ const getCategoryColor = (category: string) => {
   return colors[category.toLowerCase()] || 'from-gray-500 to-slate-500';
 };
 
+const IS_DEV_ENV = process.env.NODE_ENV !== 'production';
+
 // Extended type for items that can come from server API
 type ExtendedFeedItem = FeedItem & {
   author?: { handle: string };
@@ -134,12 +136,14 @@ function mapIntentToFeedItem(v2Intent: any): LocalOverlayItem {
   };
 
   // Console logging for testing
-  console.log('[Feed:test] mapped item', {
-    title: mappedItem.title,
-    subtitle: mappedItem.subtitle,
-    probability: mappedItem.probability,
-    confidence: mappedItem.confidence,
-  });
+  if (IS_DEV_ENV) {
+    console.log('[Feed:test] mapped item', {
+      title: mappedItem.title,
+      subtitle: mappedItem.subtitle,
+      probability: mappedItem.probability,
+      confidence: mappedItem.confidence,
+    });
+  }
 
   return mappedItem;
 }
@@ -494,8 +498,11 @@ const FeedPage = memo(() => {
 
   // Load local items after mount
   useEffect(() => {
-    setLocalItems(loadLocalFeed());
-    console.log('[Feed:boot] local=', loadLocalFeed().length);
+    const items = loadLocalFeed();
+    setLocalItems(items);
+    if (IS_DEV_ENV) {
+      console.log('[Feed:boot] local=', items.length);
+    }
   }, []);
 
   // Load local overlay items from v2 intents after mount - memoized
@@ -506,7 +513,9 @@ const FeedPage = memo(() => {
 
   useEffect(() => {
     setLocalOverlayItems(memoizedLocalOverlay);
-    console.log('[Feed:boot] localOverlay=', memoizedLocalOverlay.length);
+    if (IS_DEV_ENV) {
+      console.log('[Feed:boot] localOverlay=', memoizedLocalOverlay.length);
+    }
   }, [memoizedLocalOverlay]);
 
   // Force loading to false after reasonable timeout to prevent infinite spinners
@@ -572,12 +581,14 @@ const FeedPage = memo(() => {
     // Sort by creation time (newest first)
     const sorted = deduped.sort((a, b) => b.createdAt - a.createdAt);
 
-    console.log('[Feed:merge]', {
-      local: localItems.length,
-      overlay: normalizedOverlay.length,
-      server: normalizedServer.length,
-      merged: sorted.length,
-    });
+    if (IS_DEV_ENV) {
+      console.log('[Feed:merge]', {
+        local: localItems.length,
+        overlay: normalizedOverlay.length,
+        server: normalizedServer.length,
+        merged: sorted.length,
+      });
+    }
 
     return sorted;
   }, [serverItems, localItems, localOverlayItems]);
@@ -587,23 +598,48 @@ const FeedPage = memo(() => {
     if (!merged.length) return [];
 
     const cat = String(currentFilter || 'all').toLowerCase();
+    const normalizedQuery = debouncedSearchQuery.trim().toLowerCase();
 
     // Apply category filter first (most selective)
     let result = cat === 'all' ? merged : merged.filter(it => it.category === cat);
 
+    if (normalizedQuery) {
+      result = result.filter(item => {
+        const titleMatch = item.title?.toLowerCase().includes(normalizedQuery);
+        const subtitleMatch = hasSubtitle(item)
+          ? item.subtitle.toLowerCase().includes(normalizedQuery)
+          : false;
+        const questionMatch =
+          'question' in item && typeof item.question === 'string'
+            ? item.question.toLowerCase().includes(normalizedQuery)
+            : false;
+        const authorHandle = item.author?.handle ?? item.creator?.handle ?? '';
+        const authorMatch = authorHandle.toLowerCase().includes(normalizedQuery);
+
+        return titleMatch || subtitleMatch || questionMatch || authorMatch;
+      });
+    }
+
     // Apply "Mine" filter if active (less selective, apply after category)
     if (showMine) {
       result = result.filter(
-        it => it.source === 'wallet' || (it as ExtendedFeedItem).author?.handle?.includes('You'),
+        it => {
+          if (it.source === 'wallet') return true;
+          const authorHandle = it.author?.handle ?? it.creator?.handle;
+          return typeof authorHandle === 'string' && authorHandle.toLowerCase().includes('you');
+        },
       );
     }
 
-    console.log('[Feed:visible]', { cat, showMine, len: result.length });
     return result;
-  }, [merged, currentFilter, showMine]);
+  }, [merged, currentFilter, showMine, debouncedSearchQuery]);
 
   // Debug logging for loading states
   useEffect(() => {
+    if (!IS_DEV_ENV) {
+      return;
+    }
+
     console.log('[Feed:debug]', {
       loading,
       hasServerData: !!feedData,
