@@ -1,0 +1,28 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="orbGlow" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#F4F9FF"/>
+      <stop offset="35%" stop-color="#B7DAFF"/>
+      <stop offset="70%" stop-color="#6CB7FF"/>
+      <stop offset="100%" stop-color="#3C6FD8"/>
+    </radialGradient>
+    <linearGradient id="base" x1="30" y1="132" x2="130" y2="132">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1F2937"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect x="32" y="118" width="96" height="20" rx="10" fill="url(#base)"/>
+  <rect x="44" y="110" width="72" height="18" rx="9" fill="#0B1220" opacity="0.9"/>
+  <ellipse cx="80" cy="72" rx="60" ry="60" fill="url(#orbGlow)" filter="url(#glow)"/>
+  <ellipse cx="60" cy="60" rx="12" ry="10" fill="#FFFFFF" fill-opacity="0.65"/>
+  <ellipse cx="94" cy="42" rx="8" ry="6" fill="#FFFFFF" fill-opacity="0.45"/>
+  <ellipse cx="110" cy="76" rx="6" ry="5" fill="#FFFFFF" fill-opacity="0.35"/>
+  <path d="M40 120C40 103 54 90 72 90H88C106 90 120 103 120 120" stroke="#1E293B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

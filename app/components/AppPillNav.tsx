@@ -121,27 +121,28 @@ export default function AppPillNav() {
       className="group flex items-center gap-3 rounded-full bg-white/5 px-2.5 py-1.5 pr-4 backdrop-blur-md ring-1 ring-inset ring-white/10 transition-all hover:bg-white/10 hover:ring-white/20"
       aria-label="Predikt home"
     >
-      <span className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-[0_10px_30px_rgba(15,118,230,0.35)] ring-1 ring-white/30 transition-transform group-hover:scale-105">
+      <span className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900/60 ring-1 ring-white/20 shadow-[0_12px_30px_rgba(59,130,246,0.35)] transition-transform group-hover:scale-105">
         <Image
-          src="/icon.svg"
+          src="/images/predikt-orb.svg"
           alt="Predikt logo"
           width={40}
           height={40}
-          className="h-full w-full"
+          className="h-full w-full object-contain"
           priority
         />
       </span>
-      <span className="flex flex-col leading-tight">
-        <span className="text-sm font-semibold text-white tracking-wide">Predikt</span>
-        <span className="text-[10px] uppercase text-slate-300">Prediction Studio</span>
-      </span>
+      <span className="text-base font-semibold tracking-tight text-white">Predikt</span>
     </Link>
   );
 
   return (
     <>
       {/* Main Navigation */}
-      <div className={`fixed top-3 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${isScrolled ? 'scale-95' : 'scale-100'}`}>
+      <div
+        className={`fixed top-3 left-4 sm:left-6 z-50 transition-transform duration-300 ${
+          isScrolled ? 'scale-[0.98]' : 'scale-100'
+        }`}
+      >
         <div className="flex items-center gap-3">
           <Logo />
           
