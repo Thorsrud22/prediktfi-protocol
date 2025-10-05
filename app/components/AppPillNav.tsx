@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider';
 import { useIsPro } from '../lib/use-plan';
 
@@ -117,49 +118,69 @@ export default function AppPillNav() {
   const Logo = () => (
     <Link
       href="/feed"
-      className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center font-bold text-slate-900 text-lg hover:scale-105 transition-transform"
+      className="group flex items-center gap-3 rounded-full bg-white/5 px-2.5 py-1.5 pr-4 backdrop-blur-md ring-1 ring-inset ring-white/10 transition-all hover:bg-white/10 hover:ring-white/20"
+      aria-label="Predikt home"
     >
-      N
+      <span className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900/60 ring-1 ring-white/20 shadow-[0_12px_30px_rgba(59,130,246,0.35)] transition-transform group-hover:scale-105">
+        <Image
+          src="/images/predikt-orb.svg"
+          alt="Predikt logo"
+          width={40}
+          height={40}
+          className="h-full w-full object-contain"
+          priority
+        />
+      </span>
+      <span className="text-base font-semibold tracking-tight text-white">Predikt</span>
     </Link>
   );
 
   return (
     <>
+      {/* Brand Chip */}
+      <div
+        className={`fixed top-3 left-4 sm:left-6 z-50 transition-transform duration-300 ${
+          isScrolled ? 'scale-[0.98]' : 'scale-100'
+        }`}
+      >
+        <Logo />
+      </div>
+
       {/* Main Navigation */}
-      <div className={`fixed top-3 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${isScrolled ? 'scale-95' : 'scale-100'}`}>
-        <div className="flex items-center gap-3">
-          <Logo />
-          
-          {/* Pill Nav - Outer wrapper with ring */}
-          <div className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${isScrolled ? 'backdrop-blur-lg shadow-xl' : ''}`}>
-            {/* Inner wrapper with overflow-hidden to clip animated pill */}
-            <div className="rounded-full overflow-hidden">
-              <ul
-                ref={navListRef}
-                className="relative flex items-center gap-1 whitespace-nowrap overflow-x-auto px-1"
-              >
-                <span
-                  ref={indicatorRef}
-                  aria-hidden
-                  className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-sky-500/25 to-cyan-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,.20)] transition-[transform,width,opacity] duration-300 ease-out"
-                  style={{ width: 0, transform: 'translateX(0)', opacity: 0 }}
-                />
-                {navItems.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(item.href + '/');
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className="relative inline-flex h-10 md:h-11 items-center justify-center rounded-full px-4 text-sm font-semibold leading-none text-white/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide"
-                        aria-current={active ? 'page' : undefined}
-                      >
-                        <span className="relative z-10 translate-y-[0.5px]">{item.label}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+      <div
+        className={`fixed top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${
+          isScrolled ? 'scale-[0.98]' : 'scale-100'
+        }`}
+      >
+        {/* Pill Nav - Outer wrapper with ring */}
+        <div className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${isScrolled ? 'backdrop-blur-lg shadow-xl' : ''}`}>
+          {/* Inner wrapper with overflow-hidden to clip animated pill */}
+          <div className="rounded-full overflow-hidden">
+            <ul
+              ref={navListRef}
+              className="relative flex items-center gap-1 whitespace-nowrap overflow-x-auto px-1"
+            >
+              <span
+                ref={indicatorRef}
+                aria-hidden
+                className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-sky-500/25 to-cyan-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,.20)] transition-[transform,width,opacity] duration-300 ease-out"
+                style={{ width: 0, transform: 'translateX(0)', opacity: 0 }}
+              />
+              {navItems.map((item) => {
+                const active = pathname === item.href || pathname.startsWith(item.href + '/');
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="relative inline-flex h-10 md:h-11 items-center justify-center rounded-full px-4 text-sm font-semibold leading-none text-white/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide"
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      <span className="relative z-10 translate-y-[0.5px]">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </div>
       </div>
