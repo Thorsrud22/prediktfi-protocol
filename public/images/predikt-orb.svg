@@ -1,0 +1,54 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="orbGradient" cx="50%" cy="36%" r="70%">
+      <stop offset="0%" stop-color="#7DF9FF" />
+      <stop offset="45%" stop-color="#3FA9F5" />
+      <stop offset="100%" stop-color="#0A2463" />
+    </radialGradient>
+    <radialGradient id="orbHighlight" cx="46%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85" />
+      <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="baseGradient" x1="40" y1="120" x2="160" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#041326" />
+      <stop offset="0.4" stop-color="#0C274C" />
+      <stop offset="1" stop-color="#103562" />
+    </linearGradient>
+    <linearGradient id="baseRim" x1="40" y1="124" x2="160" y2="124" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#67E8F9" stop-opacity="0.2" />
+      <stop offset="0.5" stop-color="#22D3EE" stop-opacity="0.55" />
+      <stop offset="1" stop-color="#60A5FA" stop-opacity="0.2" />
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="100" cy="72" rx="68" ry="60" fill="url(#orbGradient)" />
+  <ellipse cx="96" cy="64" rx="40" ry="34" fill="url(#orbHighlight)" />
+  <ellipse cx="100" cy="76" rx="68" ry="60" stroke="#64D8FF" stroke-opacity="0.25" stroke-width="2" />
+
+  <path
+    d="M40 120C40 126 52 132 68 132H132C148 132 160 126 160 120V132H40Z"
+    fill="url(#baseGradient)"
+  />
+  <path
+    d="M40 120C40 124 50 128 64 128H136C150 128 160 124 160 120"
+    stroke="url(#baseRim)"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M40 132H160"
+    stroke="#020817"
+    stroke-opacity="0.35"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <path
+    d="M60 136H140"
+    stroke="#0EA5E9"
+    stroke-opacity="0.25"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+</svg>
