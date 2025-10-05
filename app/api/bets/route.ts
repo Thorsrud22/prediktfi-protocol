@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
     const connection = new Connection(rpcUrl, "confirmed");
     
     // Get treasury address
-    const treasuryAddress = process.env.SOLANA_TREASURY;
+    const treasuryAddress = process.env.SOLANA_TREASURY || process.env.NEXT_PUBLIC_TREASURY;
     if (!treasuryAddress) {
       throw new Error("SOLANA_TREASURY environment variable not set");
     }
@@ -238,7 +238,13 @@ export async function POST(req: NextRequest) {
 
   const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
   const connection = new Connection(rpcUrl, "confirmed");
-  const treasury = new PublicKey(process.env.SOLANA_TREASURY!);
+  const treasuryKey = process.env.SOLANA_TREASURY || process.env.NEXT_PUBLIC_TREASURY;
+
+  if (!treasuryKey) {
+    return createErrorResponse("CONFIG_ERROR", "Treasury address not configured", 500);
+  }
+
+  const treasury = new PublicKey(treasuryKey);
 
   const tx = await connection.getParsedTransaction(signature, {
     maxSupportedTransactionVersion: 0,

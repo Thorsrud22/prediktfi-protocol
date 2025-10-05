@@ -24,12 +24,36 @@ export interface TextResolutionResult {
   reasoning: string;
 }
 
+const CONTRADICTION_KEYWORDS = new Set([
+  'fail',
+  'failed',
+  'failing',
+  'cancel',
+  'cancelled',
+  'canceled',
+  'halted',
+  'stopped',
+  'deny',
+  'denied',
+  'rejected',
+  'reject',
+  'no',
+  'not',
+  'never',
+  'false',
+  'void'
+]);
+
 /**
  * Normalize text for comparison
  */
 function normalizeText(text: string, caseSensitive = false): string {
+  if (typeof text !== 'string') {
+    return '';
+  }
+
   let normalized = text.trim();
-  
+
   if (!caseSensitive) {
     normalized = normalized.toLowerCase();
   }
@@ -79,21 +103,24 @@ export async function resolveTextInsight(
   actualText?: string
 ): Promise<TextResolutionResult> {
   const startTime = Date.now();
-  
+
   try {
     console.log(`📝 Resolving text insight: "${canonical}"`);
     console.log(`   Expected: "${config.expect}"`);
-    
+
     // For now, we'll use a simple approach where actualText is provided
     // In a real implementation, this might come from external sources
     const textToCheck = actualText || '';
-    
+
+    const expectedRaw = typeof config.expect === 'string' ? config.expect : '';
+    const hasExpectedText = expectedRaw.trim().length > 0;
+
     if (!textToCheck) {
       return {
         proposed: null,
         confidence: 0,
         evidence: {
-          expectedText: config.expect,
+          expectedText: expectedRaw,
           actualText: '',
           matchType: 'none',
           timestamp: new Date().toISOString()
@@ -101,10 +128,24 @@ export async function resolveTextInsight(
         reasoning: 'No actual text provided for comparison'
       };
     }
-    
-    const normalizedExpected = normalizeText(config.expect, config.caseSensitive);
+
+    if (!hasExpectedText) {
+      return {
+        proposed: null,
+        confidence: 0,
+        evidence: {
+          expectedText: expectedRaw,
+          actualText: textToCheck,
+          matchType: 'none',
+          timestamp: new Date().toISOString()
+        },
+        reasoning: 'No meaningful keywords found in expected text'
+      };
+    }
+
+    const normalizedExpected = normalizeText(expectedRaw, config.caseSensitive);
     const normalizedActual = normalizeText(textToCheck, config.caseSensitive);
-    
+
     let proposed: 'YES' | 'NO' | null = null;
     let confidence = 0;
     let matchType: 'exact' | 'partial' | 'keyword' | 'none' = 'none';
@@ -126,11 +167,24 @@ export async function resolveTextInsight(
       }
     }
     // Substring match (case sensitive check)
-    else if (config.caseSensitive ? textToCheck.includes(config.expect) : normalizedActual.includes(normalizedExpected)) {
+    else if (config.caseSensitive) {
+      if (expectedRaw.length > 0 && textToCheck.includes(expectedRaw)) {
+        proposed = 'YES';
+        confidence = 0.95;
+        matchType = 'exact';
+        reasoning = `Exact substring match found: "${expectedRaw}"`;
+      } else {
+        proposed = 'NO';
+        confidence = 0.2;
+        matchType = 'none';
+        reasoning = 'Case-sensitive match not found';
+      }
+    }
+    else if (normalizedExpected.length > 0 && normalizedActual.includes(normalizedExpected)) {
       proposed = 'YES';
       confidence = 0.95;
       matchType = 'exact';
-      reasoning = `Exact substring match found: "${config.expect}"`;
+      reasoning = `Exact substring match found: "${normalizedExpected}"`;
     }
     // Partial match (expected text contains actual text)
     else if (normalizedExpected.includes(normalizedActual) && normalizedActual.length > 3) {
@@ -143,10 +197,10 @@ export async function resolveTextInsight(
     else if (config.keywords && config.keywords.length > 0) {
       const actualKeywords = extractKeywords(normalizedActual);
       const keywordResult = keywordMatch(config.keywords, actualKeywords);
-      
+
       matchedKeywords = keywordResult.matchedKeywords;
       confidence = keywordResult.confidence;
-      
+
       if (confidence >= 0.8) {
         proposed = 'YES';
         matchType = 'keyword';
@@ -169,13 +223,13 @@ export async function resolveTextInsight(
     else {
       const expectedKeywords = extractKeywords(normalizedExpected);
       const actualKeywords = extractKeywords(normalizedActual);
-      
+
       if (expectedKeywords.length === 0) {
         return {
           proposed: null,
           confidence: 0,
           evidence: {
-            expectedText: config.expect,
+            expectedText: expectedRaw,
             actualText: textToCheck,
             matchType: 'none',
             timestamp: new Date().toISOString()
@@ -183,22 +237,29 @@ export async function resolveTextInsight(
           reasoning: 'No meaningful keywords found in expected text'
         };
       }
-      
+
       const keywordResult = keywordMatch(expectedKeywords, actualKeywords);
       matchedKeywords = keywordResult.matchedKeywords;
       confidence = keywordResult.confidence;
-      
-      if (confidence >= 0.7) {
+      const contradictionKeywords = Array.from(new Set(actualKeywords.filter(word => CONTRADICTION_KEYWORDS.has(word))));
+
+      if (contradictionKeywords.length > 0 && confidence < 0.5) {
+        proposed = 'NO';
+        matchType = 'none';
+        confidence = Math.max(0.2, Math.min(confidence || 0.2, 0.25));
+        reasoning = `Contradictory keywords found: ${contradictionKeywords.join(', ')}`;
+      } else if (confidence >= 0.7) {
         proposed = 'YES';
         matchType = 'keyword';
         reasoning = `Strong keyword match (${Math.round(confidence * 100)}%): ${matchedKeywords.join(', ')}`;
-      } else if (confidence >= 0.4) {
+      } else if (confidence >= 0.2) {
         proposed = null; // Ambiguous
         matchType = 'keyword';
         reasoning = `Moderate keyword match (${Math.round(confidence * 100)}%) - manual review recommended`;
       } else if (confidence > 0.1) {
         proposed = 'NO';
         matchType = 'none';
+        confidence = Math.min(confidence, 0.25);
         reasoning = `Weak keyword match (${Math.round(confidence * 100)}%)`;
       } else {
         proposed = 'NO';
@@ -214,7 +275,7 @@ export async function resolveTextInsight(
       proposed,
       confidence,
       evidence: {
-        expectedText: config.expect,
+        expectedText: expectedRaw,
         actualText: textToCheck,
         matchedKeywords: matchedKeywords.length > 0 ? matchedKeywords : undefined,
         matchType,
@@ -233,7 +294,7 @@ export async function resolveTextInsight(
       proposed: null,
       confidence: 0,
       evidence: {
-        expectedText: config.expect,
+        expectedText: expectedRaw,
         actualText: actualText || '',
         matchType: 'none',
         timestamp: new Date().toISOString()

@@ -45,32 +45,44 @@ export function normalizePrediction(
     resolverConfig = {}
   } = options;
 
+  const safeQuestion = typeof question === 'string' ? question : '';
+  const safeDeadline = ensureValidDeadline(deadline);
+
   // Extract canonical components from question
-  const canonical = extractCanonical(question, deadline);
-  
+  const canonical = extractCanonical(safeQuestion, safeDeadline);
+
   // Generate resolver reference
   const resolverRef = generateResolverRef(resolverKind, resolverConfig, canonical);
 
   return {
     canonical,
     p,
-    deadline,
+    deadline: safeDeadline,
     resolverKind,
     resolverRef
   };
+}
+
+function ensureValidDeadline(deadline: Date): Date {
+  if (!(deadline instanceof Date) || Number.isNaN(deadline.getTime())) {
+    return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  }
+
+  return new Date(deadline.getTime());
 }
 
 /**
  * Extract canonical form from natural language question
  */
 function extractCanonical(question: string, deadline: Date): string {
-  const q = question.toLowerCase().trim();
-  const deadlineStr = deadline.toISOString().split('T')[0]; // YYYY-MM-DD format
+  const raw = typeof question === 'string' ? question : '';
+  const q = raw.toLowerCase().trim();
+  const deadlineStr = ensureValidDeadline(deadline).toISOString().split('T')[0]; // YYYY-MM-DD format
 
   // Price prediction patterns
   if (q.includes('bitcoin') || q.includes('btc')) {
-    const priceMatch = q.match(/(\$?[\d,]+k?|\$?[\d,]+,?\d*)/);
-    const price = priceMatch ? parsePrice(priceMatch[1]) : 100000;
+  const priceMatch = q.match(/(\$?[\d,]+k?|\$?[\d,]+,?\d*)/);
+  const price = priceMatch ? parsePrice(priceMatch[1]) : 100000;
     
     const comparator = extractComparator(q);
     return `BTC close ${comparator} ${price} USD on ${deadlineStr}`;
@@ -109,7 +121,7 @@ function extractCanonical(question: string, deadline: Date): string {
     .replace(/\s+/g, ' ')
     .trim()
     .substring(0, 100); // Limit length
-    
+
   return `"${cleanQuestion}" resolves true on ${deadlineStr}`;
 }
 
@@ -141,13 +153,15 @@ function parsePrice(priceStr: string): number {
   let normalized = priceStr
     .replace(/[$,]/g, '')
     .toLowerCase();
-  
+
   // Handle 'k' suffix (thousands)
   if (normalized.endsWith('k')) {
-    return parseFloat(normalized.slice(0, -1)) * 1000;
+    const value = parseFloat(normalized.slice(0, -1));
+    return Number.isFinite(value) ? value * 1000 : 0;
   }
-  
-  return parseFloat(normalized);
+
+  const value = parseFloat(normalized);
+  return Number.isFinite(value) ? value : 0;
 }
 
 /**
@@ -160,27 +174,21 @@ function generateResolverRef(
 ): string {
   switch (resolverKind) {
     case 'price':
-      const priceConfig = config.price || extractPriceConfigFromCanonical(canonical);
+      const priceConfig = config.price
+        ? { ...extractPriceConfigFromCanonical(canonical), ...config.price }
+        : extractPriceConfigFromCanonical(canonical);
       if (!priceConfig) {
         throw new Error('Unable to extract price configuration');
       }
-      return JSON.stringify({
-        asset: priceConfig.asset,
-        source: priceConfig.source,
-        field: priceConfig.field
-      });
-      
+      return JSON.stringify(priceConfig);
+
     case 'url':
       const urlConfig = config.url || { href: 'https://example.com/verify' };
-      return JSON.stringify({
-        href: urlConfig.href
-      });
-      
+      return JSON.stringify(urlConfig);
+
     case 'text':
       const textConfig = config.text || { expect: canonical };
-      return JSON.stringify({
-        expect: textConfig.expect
-      });
+      return JSON.stringify(textConfig.expect ? textConfig : { ...textConfig, expect: canonical });
       
     default:
       throw new Error(`Unknown resolver kind: ${resolverKind}`);
