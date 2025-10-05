@@ -55,6 +55,8 @@ export default function LeaderboardClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [minPredictions, setMinPredictions] = useState(3);
+  const baseWrapperClass = 'min-h-screen bg-[#0B1220] py-12';
+  const containerClass = 'max-w-6xl mx-auto px-4';
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -95,8 +97,8 @@ export default function LeaderboardClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-12">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className={baseWrapperClass}>
+        <div className={containerClass}>
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Top Forecasters
@@ -115,8 +117,8 @@ export default function LeaderboardClient() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-12">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className={baseWrapperClass}>
+        <div className={containerClass}>
           <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-8 text-center">
             <div className="text-red-400 mb-4">
               <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,8 +145,8 @@ export default function LeaderboardClient() {
 
   if (!data || !data.leaderboard || data.leaderboard.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-12">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className={baseWrapperClass}>
+        <div className={containerClass}>
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Top Forecasters
@@ -179,8 +181,8 @@ export default function LeaderboardClient() {
   const restOfLeaderboard = data.leaderboard.slice(3);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-12">
-      <div className="max-w-6xl mx-auto px-4">
+    <div className={baseWrapperClass}>
+      <div className={containerClass}>
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">

@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider';
 import { useIsPro } from '../lib/use-plan';
 
@@ -117,9 +118,23 @@ export default function AppPillNav() {
   const Logo = () => (
     <Link
       href="/feed"
-      className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center font-bold text-slate-900 text-lg hover:scale-105 transition-transform"
+      className="group flex items-center gap-3 rounded-full bg-white/5 px-2.5 py-1.5 pr-4 backdrop-blur-md ring-1 ring-inset ring-white/10 transition-all hover:bg-white/10 hover:ring-white/20"
+      aria-label="Predikt home"
     >
-      N
+      <span className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-[0_10px_30px_rgba(15,118,230,0.35)] ring-1 ring-white/30 transition-transform group-hover:scale-105">
+        <Image
+          src="/icon.svg"
+          alt="Predikt logo"
+          width={40}
+          height={40}
+          className="h-full w-full"
+          priority
+        />
+      </span>
+      <span className="flex flex-col leading-tight">
+        <span className="text-sm font-semibold text-white tracking-wide">Predikt</span>
+        <span className="text-[10px] uppercase text-slate-300">Prediction Studio</span>
+      </span>
     </Link>
   );
 
