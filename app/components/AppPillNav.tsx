@@ -3,7 +3,6 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
 import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider';
 import { useIsPro } from '../lib/use-plan';
 
@@ -15,7 +14,8 @@ export default function AppPillNav() {
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const walletDropdownRef = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+  const navListRef = useRef<HTMLUListElement>(null);
 
   // Close wallet dropdown when clicking outside
   useEffect(() => {
@@ -36,13 +36,70 @@ export default function AppPillNav() {
 
   // Scroll detection
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let frame = -1;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (frame === -1) {
+        frame = window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 50);
+          frame = -1;
+        });
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (frame !== -1) {
+        window.cancelAnimationFrame(frame);
+      }
+    };
   }, []);
+
+  // Update animated indicator position when the active link changes
+  useEffect(() => {
+    const indicator = indicatorRef.current;
+    const list = navListRef.current;
+    if (!indicator || !list) return;
+
+    const updateIndicator = () => {
+      const activeLink = list.querySelector<HTMLAnchorElement>('a[aria-current="page"]');
+      if (!activeLink) {
+        indicator.style.opacity = '0';
+        return;
+      }
+
+      const listRect = list.getBoundingClientRect();
+      const activeRect = activeLink.getBoundingClientRect();
+      const left = activeRect.left - listRect.left;
+
+      indicator.style.transform = `translateX(${left}px)`;
+      indicator.style.width = `${activeRect.width}px`;
+      indicator.style.opacity = '1';
+    };
+
+    updateIndicator();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        window.requestAnimationFrame(updateIndicator);
+      });
+
+      resizeObserver.observe(list);
+    }
+
+    const handleResize = () => window.requestAnimationFrame(updateIndicator);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [pathname]);
 
   function shortAddress(addr: string) {
     return `${addr.slice(0, 4)}...${addr.slice(-3)}`;
@@ -77,7 +134,16 @@ export default function AppPillNav() {
           <div className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${isScrolled ? 'backdrop-blur-lg shadow-xl' : ''}`}>
             {/* Inner wrapper with overflow-hidden to clip animated pill */}
             <div className="rounded-full overflow-hidden">
-              <ul className="flex items-center gap-1 whitespace-nowrap overflow-x-auto px-1">
+              <ul
+                ref={navListRef}
+                className="relative flex items-center gap-1 whitespace-nowrap overflow-x-auto px-1"
+              >
+                <span
+                  ref={indicatorRef}
+                  aria-hidden
+                  className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-sky-500/25 to-cyan-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,.20)] transition-[transform,width,opacity] duration-300 ease-out"
+                  style={{ width: 0, transform: 'translateX(0)', opacity: 0 }}
+                />
                 {navItems.map((item) => {
                   const active = pathname === item.href || pathname.startsWith(item.href + '/');
                   return (
@@ -87,17 +153,6 @@ export default function AppPillNav() {
                         className="relative inline-flex h-10 md:h-11 items-center justify-center rounded-full px-4 text-sm font-semibold leading-none text-white/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide"
                         aria-current={active ? 'page' : undefined}
                       >
-                        {active && (
-                          <motion.span
-                            layoutId="active-pill"
-                            className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-r from-sky-500/25 to-cyan-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,.20)]"
-                            transition={
-                              reduce
-                                ? { duration: 0 }
-                                : { type: 'spring', stiffness: 500, damping: 38, mass: 0.4 }
-                            }
-                          />
-                        )}
                         <span className="relative z-10 translate-y-[0.5px]">{item.label}</span>
                       </Link>
                     </li>
