@@ -137,32 +137,42 @@ export async function GET(
     const latestDay = latestRecord?.day;
     const latestScore = latestRecord?.score ?? creator.score;
 
-    console.time(`creatorProfile:ranksAndPending:${id}`);
-    const [pendingInsights, overallRankCount, period90dRankCount] = await Promise.all([
-      prisma.insight.count({
-        where: {
-          creatorId: id,
-          status: { in: ['OPEN', 'COMMITTED'] }
-        }
-      }),
-      prisma.creator.count({
-        where: {
-          score: { gte: creator.score },
-          insights: {
-            some: {
-              status: 'RESOLVED'
+    const pendingInsightsPromise = prisma.insight.count({
+      where: {
+        creatorId: id,
+        status: { in: ['OPEN', 'COMMITTED'] }
+      }
+    });
+
+    const overallRankCountPromise =
+      resolvedInsights === 0
+        ? Promise.resolve(0)
+        : prisma.creator.count({
+            where: {
+              score: { gte: creator.score },
+              insights: {
+                some: {
+                  status: 'RESOLVED'
+                }
+              }
             }
-          }
-        }
-      }),
-      latestDay
-        ? prisma.creatorDaily.count({
+          });
+
+    const period90dRankCountPromise =
+      resolvedInsights === 0 || !latestDay
+        ? Promise.resolve(0)
+        : prisma.creatorDaily.count({
             where: {
               day: latestDay,
               score: { gte: latestScore }
             }
-          })
-        : Promise.resolve(0)
+          });
+
+    console.time(`creatorProfile:ranksAndPending:${id}`);
+    const [pendingInsights, overallRankCount, period90dRankCount] = await Promise.all([
+      pendingInsightsPromise,
+      overallRankCountPromise,
+      period90dRankCountPromise
     ]);
     console.timeEnd(`creatorProfile:ranksAndPending:${id}`);
     
