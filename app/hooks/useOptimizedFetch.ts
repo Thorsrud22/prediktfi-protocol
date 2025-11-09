@@ -100,8 +100,9 @@ export function useOptimizedFetch<T>(
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Fetch failed';
       
-      // Only log non-404 errors to console
-      if (!errorMessage.includes('404')) {
+      // Only log errors that are not HTTP client/server errors (skip 4xx and 5xx)
+      const isHttpError = errorMessage.includes('HTTP 4') || errorMessage.includes('HTTP 5');
+      if (!isHttpError) {
         console.error('Fetch error:', errorMessage);
       }
       

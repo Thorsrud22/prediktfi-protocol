@@ -1,20 +1,23 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cachedFetch } from '@/app/lib/request-cache';
 
-// Only preload data for the NEXT likely page, not everything
+// Aggressive preloading - preload ALL likely pages
 const PAGE_PRELOADS: Record<string, string[]> = {
-  '/': ['/api/feed?limit=5'], // Home -> likely go to feed
-  '/studio': ['/api/studio/templates'], // Studio -> templates
-  '/feed': [], // Feed already loads its own data
-  '/advisor': [], // Advisor pages load on demand
+  '/': ['/api/feed?limit=10'], // Home -> likely go to feed
+  '/studio': ['/api/studio/templates', '/api/profile'], // Studio -> templates
+  '/feed': ['/api/insights/trending'], // Feed -> trending insights
+  '/advisor': ['/api/advisor/history'], // Advisor pages load history
+  '/leaderboard': ['/api/leaderboard?limit=20'], // Leaderboard -> top 20
 };
 
 export default function RoutePreloader() {
   const pathname = usePathname();
+  const router = useRouter();
   const preloadedRef = useRef(new Set<string>());
+  const preloadedPagesRef = useRef(new Set<string>());
   const preloadTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -23,10 +26,10 @@ export default function RoutePreloader() {
       clearTimeout(preloadTimerRef.current);
     }
 
-    // Preload critical routes in the background after page is interactive
+    // Preload critical routes in the background IMMEDIATELY
     const preloadRoutes = async () => {
-      // Wait for page to be fully interactive (3s delay)
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Reduced wait time - start preloading after only 1 second
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Get routes to preload based on current page
       const routesToPreload = PAGE_PRELOADS[pathname] || [];
@@ -36,10 +39,10 @@ export default function RoutePreloader() {
       
       if (newRoutes.length === 0) return;
 
-      console.log('🚀 Preloading routes:', newRoutes);
+      console.log('🚀 Aggressively preloading routes:', newRoutes);
       
-      // Preload one at a time with delays
-      for (const route of newRoutes) {
+      // Preload ALL routes in parallel for maximum speed
+      const preloadPromises = newRoutes.map(async route => {
         try {
           // Use the cached fetch for better deduplication
           await cachedFetch(route, {
@@ -47,7 +50,7 @@ export default function RoutePreloader() {
               'X-Preload': 'true' // Mark as preload request
             }
           }, {
-            staleTime: 120000, // 2 minute cache for preloaded data
+            staleTime: 300000, // 5 minute cache for preloaded data
             dedupe: true,
           });
           
@@ -57,10 +60,10 @@ export default function RoutePreloader() {
           // Silently fail - preloading is optional
           console.debug(`Preload failed for ${route}`);
         }
-        
-        // Delay between preloads to avoid overwhelming
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+      });
+
+      // Wait for all preloads to complete
+      await Promise.all(preloadPromises);
     };
 
     preloadTimerRef.current = setTimeout(() => {
@@ -74,7 +77,7 @@ export default function RoutePreloader() {
     };
   }, [pathname]);
 
-  // Preload page chunks when hovering over navigation links
+  // Aggressive prefetching: Preload pages INSTANTLY on hover
   useEffect(() => {
     const hoverTimers = new Map<string, NodeJS.Timeout>();
 
@@ -89,15 +92,19 @@ export default function RoutePreloader() {
       if (link && link.href.startsWith(window.location.origin)) {
         const path = new URL(link.href).pathname;
         
-        // Don't start preloading immediately - wait 300ms
-        if (!hoverTimers.has(path)) {
+        // Instant prefetch - NO delay! Like Xeris
+        if (!hoverTimers.has(path) && !preloadedPagesRef.current.has(path)) {
           const timer = setTimeout(() => {
+            // Prefetch the Next.js page chunk immediately
+            router.prefetch(path);
+            preloadedPagesRef.current.add(path);
+            
             // Preload the page data if it's in our preload map
             const routes = PAGE_PRELOADS[path];
             if (routes && routes.length > 0) {
               routes.forEach(route => {
                 if (!preloadedRef.current.has(route)) {
-                  cachedFetch(route, {}, { staleTime: 120000, dedupe: true })
+                  cachedFetch(route, {}, { staleTime: 300000, dedupe: true })
                     .then(() => {
                       preloadedRef.current.add(route);
                     })
@@ -108,7 +115,7 @@ export default function RoutePreloader() {
               });
             }
             hoverTimers.delete(path);
-          }, 300);
+          }, 50); // Minimal 50ms delay - instant feel!
           hoverTimers.set(path, timer);
         }
       }
@@ -142,7 +149,25 @@ export default function RoutePreloader() {
       // Clear all pending timers
       hoverTimers.forEach(timer => clearTimeout(timer));
     };
-  }, []);
+  }, [router]);
+
+  // Prefetch critical pages on mount (similar to SPA behavior)
+  useEffect(() => {
+    const criticalPages = ['/feed', '/studio', '/advisor', '/leaderboard'];
+    
+    // Prefetch critical pages after 2 seconds
+    const prefetchTimer = setTimeout(() => {
+      criticalPages.forEach(page => {
+        if (!preloadedPagesRef.current.has(page)) {
+          router.prefetch(page);
+          preloadedPagesRef.current.add(page);
+        }
+      });
+      console.log('✅ Prefetched critical pages:', criticalPages);
+    }, 2000);
+
+    return () => clearTimeout(prefetchTimer);
+  }, [router]);
 
   return null; // This component renders nothing
 }
