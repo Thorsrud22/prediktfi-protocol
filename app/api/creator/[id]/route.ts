@@ -62,23 +62,27 @@ export async function GET(
       );
     }
     
-    // Get creator with insights
+    console.time(`creatorProfile:fetchCreator:${id}`);
     const creator = await prisma.creator.findUnique({
       where: { id },
-      include: {
-        insights: {
-          where: {
-            status: 'RESOLVED'
-          },
-          include: {
-            outcomes: {
-              orderBy: { decidedAt: 'desc' },
-              take: 1
-            }
+      select: {
+        id: true,
+        handle: true,
+        score: true,
+        accuracy: true,
+        brierMean: true,
+        insightsCount: true,
+        createdAt: true,
+        lastScoreUpdate: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            insights: true
           }
         }
       }
     });
+    console.timeEnd(`creatorProfile:fetchCreator:${id}`);
     
     if (!creator) {
       return NextResponse.json(
@@ -91,17 +95,27 @@ export async function GET(
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
     
-    const dailyRecords = await prisma.creatorDaily.findMany({
-      where: {
-        creatorId: id,
-        day: {
-          gte: ninetyDaysAgo
+    console.time(`creatorProfile:dailyRecords:${id}`);
+    const [dailyRecords, resolvedInsights] = await Promise.all([
+      prisma.creatorDaily.findMany({
+        where: {
+          creatorId: id,
+          day: {
+            gte: ninetyDaysAgo
+          }
+        },
+        orderBy: {
+          day: 'asc'
         }
-      },
-      orderBy: {
-        day: 'asc'
-      }
-    });
+      }),
+      prisma.insight.count({
+        where: {
+          creatorId: id,
+          status: 'RESOLVED'
+        }
+      })
+    ]);
+    console.timeEnd(`creatorProfile:dailyRecords:${id}`);
     
     // Calculate current score components from latest daily record
     const latestRecord = dailyRecords[dailyRecords.length - 1];
@@ -118,16 +132,49 @@ export async function GET(
     };
     
     // Calculate stats
-    const totalInsights = creator.insights.length;
-    const resolvedInsights = creator.insights.filter(insight => 
-      insight.outcomes.length > 0
-    ).length;
-    const pendingInsights = await prisma.insight.count({
+    const totalInsights = creator._count.insights;
+
+    const latestDay = latestRecord?.day;
+    const latestScore = latestRecord?.score ?? creator.score;
+
+    const pendingInsightsPromise = prisma.insight.count({
       where: {
         creatorId: id,
         status: { in: ['OPEN', 'COMMITTED'] }
       }
     });
+
+    const overallRankCountPromise =
+      resolvedInsights === 0
+        ? Promise.resolve(0)
+        : prisma.creator.count({
+            where: {
+              score: { gte: creator.score },
+              insights: {
+                some: {
+                  status: 'RESOLVED'
+                }
+              }
+            }
+          });
+
+    const period90dRankCountPromise =
+      resolvedInsights === 0 || !latestDay
+        ? Promise.resolve(0)
+        : prisma.creatorDaily.count({
+            where: {
+              day: latestDay,
+              score: { gte: latestScore }
+            }
+          });
+
+    console.time(`creatorProfile:ranksAndPending:${id}`);
+    const [pendingInsights, overallRankCount, period90dRankCount] = await Promise.all([
+      pendingInsightsPromise,
+      overallRankCountPromise,
+      period90dRankCountPromise
+    ]);
+    console.timeEnd(`creatorProfile:ranksAndPending:${id}`);
     
     const maturedInsights = latestRecord?.maturedN || 0;
     const isProvisionalFlag = isProvisional(maturedInsights);
@@ -144,29 +191,8 @@ export async function GET(
     }));
     
     // Calculate ranks
-    const allCreators = await prisma.creator.findMany({
-      where: {
-        insights: {
-          some: {
-            status: 'RESOLVED'
-          }
-        }
-      },
-      orderBy: { score: 'desc' }
-    });
-    
-    const overallRank = allCreators.findIndex(c => c.id === creator.id) + 1;
-    
-    // For 90d rank, use the latest daily record score
-    const latestScore = latestRecord?.score || creator.score;
-    const creators90d = await prisma.creatorDaily.findMany({
-      where: {
-        day: latestRecord?.day || new Date(),
-        score: { gte: latestScore }
-      },
-      orderBy: { score: 'desc' }
-    });
-    const period90dRank = creators90d.length;
+    const overallRank = overallRankCount;
+    const period90dRank = latestDay ? period90dRankCount : overallRankCount;
     
     const response: CreatorProfileResponse = {
       creator: {
