@@ -27,6 +27,42 @@ interface AIAnalysis {
   lastUpdated: string;
 }
 
+export interface PredictionReflectionInput {
+  insightId?: string;
+  question: string;
+  predictedOutcome: string;
+  actualOutcome: string;
+  predictedProbability?: number;
+  actualProbability?: number;
+  resolutionDate?: string;
+  timeframe?: string;
+  category?: string;
+  notes?: string;
+}
+
+export interface PredictionReflection {
+  insightId?: string;
+  summary: string;
+  verdict: 'accurate' | 'missed' | 'inconclusive';
+  accuracyScore: number;
+  confidenceGap: number;
+  calibration: 'well_calibrated' | 'overconfident' | 'underconfident' | 'unknown';
+  improvementSuggestions: string[];
+  reinforcementPoints: string[];
+  nextActions: string[];
+  metrics: {
+    predictedProbability?: number;
+    actualProbability?: number;
+    absoluteError?: number;
+    resolutionDate?: string;
+    category?: string;
+    timeframe?: string;
+    outcome: string;
+  };
+  generatedAt: string;
+  notes?: string;
+}
+
 export class PredictionAnalyzer {
   private openai: OpenAI | null = null;
 
@@ -64,6 +100,24 @@ export class PredictionAnalyzer {
     } catch (error) {
       console.error('AI Analysis failed or timed out:', error);
       return this.getEnhancedMockAnalysis(predictionTemplate, category, timeframe);
+    }
+  }
+
+  async reflectPrediction(input: PredictionReflectionInput): Promise<PredictionReflection> {
+    if (!this.openai) {
+      return this.getMockReflection(input);
+    }
+
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Reflection timeout')), 2000);
+      });
+
+      const reflectionPromise = this.performReflection(input);
+      return await Promise.race([reflectionPromise, timeoutPromise]);
+    } catch (error) {
+      console.error('AI reflection failed or timed out:', error);
+      return this.getMockReflection(input);
     }
   }
 
@@ -453,5 +507,283 @@ Focus on being realistic and data-driven. Consider:
       templates[category as keyof typeof templates] ||
       `Analysis of ${prediction} shows ${confidence}% confidence with ${recommendation.toLowerCase()} outlook based on available data and historical patterns.`
     );
+  }
+
+  private async performReflection(input: PredictionReflectionInput): Promise<PredictionReflection> {
+    const prompt = this.buildReflectionPrompt(input);
+
+    const response = await this.openai!.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are an accuracy coach for forecasters. Respond with valid JSON including summary, verdict, accuracyScore (0-100), confidenceGap (0-100), calibration (well_calibrated/overconfident/underconfident/unknown), improvementSuggestions (array of strings), reinforcementPoints (array of strings), nextActions (array of strings).',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      max_tokens: 650,
+    });
+
+    const parsed = JSON.parse(response.choices[0].message.content || '{}');
+    const base = this.getMockReflection(input);
+
+    return {
+      insightId: input.insightId,
+      summary: parsed.summary || base.summary,
+      verdict: parsed.verdict || base.verdict,
+      accuracyScore: this.boundNumber(parsed.accuracyScore, 0, 100, base.accuracyScore),
+      confidenceGap: this.boundNumber(parsed.confidenceGap, 0, 100, base.confidenceGap),
+      calibration: this.validateCalibration(parsed.calibration) || base.calibration,
+      improvementSuggestions: this.ensureStringArray(parsed.improvementSuggestions, base.improvementSuggestions),
+      reinforcementPoints: this.ensureStringArray(parsed.reinforcementPoints, base.reinforcementPoints),
+      nextActions: this.ensureStringArray(parsed.nextActions, base.nextActions),
+      metrics: base.metrics,
+      generatedAt: new Date().toISOString(),
+      notes: input.notes,
+    };
+  }
+
+  private buildReflectionPrompt(input: PredictionReflectionInput): string {
+    const predictedProbability = this.describeProbability(input.predictedProbability);
+    const actualProbability = this.describeProbability(input.actualProbability, input.actualOutcome);
+    const resolvedAt = input.resolutionDate
+      ? new Date(input.resolutionDate).toISOString()
+      : 'unknown resolution time';
+
+    return `
+Prediction review request for journal reflection.
+
+QUESTION: ${input.question}
+PREDICTED OUTCOME STATEMENT: ${input.predictedOutcome}
+PREDICTED PROBABILITY: ${predictedProbability}
+ACTUAL OUTCOME: ${input.actualOutcome}
+ACTUAL PROBABILITY ESTIMATE: ${actualProbability}
+CATEGORY: ${input.category || 'uncategorized'}
+TIMEFRAME: ${input.timeframe || 'unspecified'}
+RESOLVED AT: ${resolvedAt}
+NOTES: ${input.notes || 'none provided'}
+
+Compare the prediction with the outcome. Identify calibration issues, highlight what went well, and provide concrete improvement suggestions for the next forecast. Keep answers concise and actionable.`;
+  }
+
+  private getMockReflection(input: PredictionReflectionInput): PredictionReflection {
+    const predicted = this.normalizeProbability(input.predictedProbability);
+    const actual = this.resolveActualProbability(input.actualOutcome, input.actualProbability);
+    const absoluteError = this.calculateAbsoluteError(predicted, actual);
+    const confidenceGap = Math.round((absoluteError ?? 0) * 100);
+    const verdict = this.deriveVerdict(predicted, actual, input.actualOutcome);
+    const calibration = this.deriveCalibration(predicted, actual);
+
+    const improvementSuggestions = this.generateImprovementSuggestions(verdict, calibration, input.category);
+    const reinforcementPoints = this.generateReinforcementPoints(verdict, input.category);
+    const nextActions = this.generateNextActions(verdict, calibration, input.timeframe);
+
+    return {
+      insightId: input.insightId,
+      summary: this.generateReflectionSummary(verdict, input.question, confidenceGap),
+      verdict,
+      accuracyScore: Math.max(0, 100 - confidenceGap),
+      confidenceGap,
+      calibration,
+      improvementSuggestions,
+      reinforcementPoints,
+      nextActions,
+      metrics: {
+        predictedProbability: predicted ?? undefined,
+        actualProbability: actual ?? undefined,
+        absoluteError: absoluteError ?? undefined,
+        resolutionDate: input.resolutionDate,
+        category: input.category,
+        timeframe: input.timeframe,
+        outcome: input.actualOutcome,
+      },
+      generatedAt: new Date().toISOString(),
+      notes: input.notes,
+    };
+  }
+
+  private ensureStringArray(value: unknown, fallback: string[]): string[] {
+    if (!Array.isArray(value)) {
+      return fallback;
+    }
+    return value
+      .map(item => (typeof item === 'string' ? item.trim() : ''))
+      .filter(item => item.length > 0);
+  }
+
+  private boundNumber(value: unknown, min: number, max: number, fallback: number): number {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+      return fallback;
+    }
+    return Math.min(Math.max(value, min), max);
+  }
+
+  private validateCalibration(value: unknown): PredictionReflection['calibration'] | null {
+    if (value === 'well_calibrated' || value === 'overconfident' || value === 'underconfident' || value === 'unknown') {
+      return value;
+    }
+    return null;
+  }
+
+  private describeProbability(probability?: number, outcome?: string): string {
+    if (probability === undefined || probability === null || Number.isNaN(probability)) {
+      if (outcome === 'INVALID') {
+        return 'not applicable (invalid resolution)';
+      }
+      return 'not specified';
+    }
+
+    const normalized = this.normalizeProbability(probability);
+    if (normalized === null) {
+      return 'not specified';
+    }
+    const percent = Math.round(normalized * 100);
+    return `${percent}%`;
+  }
+
+  private normalizeProbability(probability?: number): number | null {
+    if (probability === undefined || probability === null || Number.isNaN(probability)) {
+      return null;
+    }
+    if (probability > 1) {
+      return Math.min(Math.max(probability / 100, 0), 1);
+    }
+    return Math.min(Math.max(probability, 0), 1);
+  }
+
+  private resolveActualProbability(outcome: string, probability?: number): number | null {
+    if (probability !== undefined && probability !== null) {
+      return this.normalizeProbability(probability);
+    }
+
+    if (outcome === 'YES') return 1;
+    if (outcome === 'NO') return 0;
+    if (outcome === 'INVALID') return 0.5;
+    return null;
+  }
+
+  private calculateAbsoluteError(predicted: number | null, actual: number | null): number | null {
+    if (predicted === null || actual === null) {
+      return null;
+    }
+    return Math.abs(predicted - actual);
+  }
+
+  private deriveVerdict(
+    predicted: number | null,
+    actual: number | null,
+    outcome: string,
+  ): PredictionReflection['verdict'] {
+    if (outcome === 'INVALID') {
+      return 'inconclusive';
+    }
+    if (predicted === null || actual === null) {
+      return 'inconclusive';
+    }
+
+    const predictionDirection = predicted >= 0.5 ? 'YES' : 'NO';
+    const actualDirection = actual >= 0.5 ? 'YES' : 'NO';
+    return predictionDirection === actualDirection ? 'accurate' : 'missed';
+  }
+
+  private deriveCalibration(predicted: number | null, actual: number | null): PredictionReflection['calibration'] {
+    if (predicted === null || actual === null) {
+      return 'unknown';
+    }
+
+    const delta = actual - predicted;
+    if (Math.abs(delta) <= 0.1) {
+      return 'well_calibrated';
+    }
+    return delta > 0 ? 'underconfident' : 'overconfident';
+  }
+
+  private generateImprovementSuggestions(
+    verdict: PredictionReflection['verdict'],
+    calibration: PredictionReflection['calibration'],
+    category?: string,
+  ): string[] {
+    const base: string[] = [];
+
+    if (verdict === 'missed') {
+      base.push('Review resolution evidence to understand mismatched assumptions.');
+      base.push('Document leading indicators that would have signaled the correct outcome earlier.');
+    } else if (verdict === 'accurate') {
+      base.push('Capture what worked in this forecast and reuse the checklist.');
+    } else {
+      base.push('Clarify resolution criteria up front to avoid inconclusive results.');
+    }
+
+    if (calibration === 'overconfident') {
+      base.push('Track historical probabilities to recalibrate confidence on similar questions.');
+    } else if (calibration === 'underconfident') {
+      base.push('Increase conviction when evidence strongly supports your view.');
+    }
+
+    if (category === 'crypto') {
+      base.push('Incorporate on-chain activity and macro risk events into your monitoring routine.');
+    }
+
+    return Array.from(new Set(base)).slice(0, 4);
+  }
+
+  private generateReinforcementPoints(
+    verdict: PredictionReflection['verdict'],
+    category?: string,
+  ): string[] {
+    const points: string[] = [];
+    if (verdict === 'accurate') {
+      points.push('Good alignment between your thesis and the eventual outcome.');
+    } else if (verdict === 'missed') {
+      points.push('Baseline research provided a foundation even though calibration slipped.');
+    } else {
+      points.push('Captured a nuanced situation worth refining for future forecasts.');
+    }
+
+    if (category === 'stocks') {
+      points.push('Sector analysis inputs were well structured.');
+    }
+
+    return Array.from(new Set(points)).slice(0, 3);
+  }
+
+  private generateNextActions(
+    verdict: PredictionReflection['verdict'],
+    calibration: PredictionReflection['calibration'],
+    timeframe?: string,
+  ): string[] {
+    const actions: string[] = [];
+
+    if (verdict === 'missed') {
+      actions.push('Schedule a 15 minute retro to update your forecasting checklist.');
+    }
+
+    if (calibration === 'overconfident') {
+      actions.push('Commit to tracking probability distributions for the next five predictions.');
+    } else if (calibration === 'underconfident') {
+      actions.push('Record evidence strength to justify higher conviction levels.');
+    }
+
+    if (timeframe) {
+      actions.push(`Prepare next forecast before the ${timeframe} window begins.`);
+    }
+
+    return Array.from(new Set(actions)).slice(0, 3);
+  }
+
+  private generateReflectionSummary(
+    verdict: PredictionReflection['verdict'],
+    question: string,
+    confidenceGap: number,
+  ): string {
+    const verdictText =
+      verdict === 'accurate' ? 'was on target' : verdict === 'missed' ? 'missed the mark' : 'was inconclusive';
+    return `Your call on "${question}" ${verdictText} with a confidence gap of ${confidenceGap} points.`;
   }
 }

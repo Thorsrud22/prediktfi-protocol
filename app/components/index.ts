@@ -14,6 +14,7 @@ export { default as EnhancedMarketCard } from "./features/EnhancedMarketCard";
 // Layout Components
 export { default as EnhancedHero } from "./EnhancedHero";
 export { default as EnhancedNavbar } from "./EnhancedNavbar";
+export { default as JournalTimeline } from "./journal/JournalTimeline";
 
 // Providers
 export { ThemeProvider, useTheme } from "./providers/ThemeProvider";
