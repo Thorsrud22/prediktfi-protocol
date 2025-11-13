@@ -4,7 +4,6 @@
  */
 
 import { prisma } from '../app/lib/prisma';
-import { Decimal } from '@prisma/client/runtime/library';
 
 export interface BrierScoreResult {
   score: number;
@@ -21,6 +20,15 @@ export interface CalibrationBin {
   count: number;         // Number of predictions in bin
   deviation: number;     // |predicted - actual|
 }
+
+export interface PersonalMetricsPeriod {
+  from: Date;
+  to: Date;
+  metrics: BrierScoreResult;
+  calibration: CalibrationBin[];
+}
+
+export type PersonalMetrics = Record<'7d' | '30d' | '90d', PersonalMetricsPeriod>;
 
 export interface ProfileAggregates {
   totalInsights: number;
@@ -189,6 +197,91 @@ export function calculateCalibrationBins(predictions: Array<{
   }
   
   return bins;
+}
+
+function resolvedTimestamp(
+  insight: {
+    deadline: Date | null;
+    horizon: Date;
+    createdAt: Date;
+  },
+  outcome?: { decidedAt: Date | null }
+): Date {
+  if (outcome?.decidedAt) {
+    return outcome.decidedAt;
+  }
+  if (insight.deadline) {
+    return insight.deadline;
+  }
+  return insight.horizon ?? insight.createdAt;
+}
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+export async function getPersonalMetrics(creatorId: string): Promise<PersonalMetrics> {
+  const now = new Date();
+
+  const insights = await prisma.insight.findMany({
+    where: {
+      creatorId,
+      status: 'RESOLVED'
+    },
+    include: {
+      outcomes: {
+        orderBy: { decidedAt: 'desc' },
+        take: 1
+      }
+    }
+  });
+
+  const periods: Array<{ label: '7d' | '30d' | '90d'; days: number }> = [
+    { label: '7d', days: 7 },
+    { label: '30d', days: 30 },
+    { label: '90d', days: 90 }
+  ];
+
+  const metrics = periods.reduce((acc, period) => {
+    const from = new Date(now.getTime() - period.days * DAY_IN_MS);
+
+    const predictions = insights
+      .filter(insight => insight.outcomes.length > 0)
+      .filter(insight => {
+        const outcome = insight.outcomes[0];
+        const resolvedAt = resolvedTimestamp(
+          {
+            deadline: insight.deadline ?? null,
+            horizon: insight.horizon,
+            createdAt: insight.createdAt
+          },
+          { decidedAt: outcome.decidedAt }
+        );
+        return resolvedAt >= from && resolvedAt <= now;
+      })
+      .map(insight => {
+        const outcome = insight.outcomes[0];
+        const predicted = insight.p != null
+          ? (typeof insight.p === 'number' ? insight.p : insight.p.toNumber())
+          : (typeof insight.probability === 'number'
+            ? insight.probability
+            : insight.probability?.toNumber() ?? 0);
+
+        return {
+          predicted,
+          actual: outcome.result as 'YES' | 'NO' | 'INVALID'
+        };
+      });
+
+    acc[period.label] = {
+      from,
+      to: now,
+      metrics: calculateBrierMetrics(predictions),
+      calibration: calculateCalibrationBins(predictions)
+    };
+
+    return acc;
+  }, {} as PersonalMetrics);
+
+  return metrics;
 }
 
 /**
