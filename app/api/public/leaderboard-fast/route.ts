@@ -1,245 +1,153 @@
 /**
- * Optimized Public Leaderboard API v2
- * GET /api/public/leaderboard-fast - Get creator leaderboard with caching and performance monitoring
+ * Optimized Public Leaderboard API v2 backed by Redis cache
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-// Simple in-memory cache implementation
-interface CacheEntry<T> {
-    data: T;
-    etag: string;
-    expiresAt: number;
-}
+import { performance } from 'perf_hooks';
+import { prisma } from '../../../lib/prisma';
+import {
+  LeaderboardPeriod,
+  MAX_CACHE_LIMIT,
+  buildResponseFromPayload,
+  getCachedLeaderboardSlice,
+  refreshLeaderboardPeriod,
+} from '../../../../src/server/leaderboard/leaderboard-cache';
+import type {
+  LeaderboardResponse as LeaderboardResponseType,
+  LeaderboardItem as LeaderboardItemType,
+} from '../../../../src/server/leaderboard/leaderboard-cache';
 
-const cache = new Map<string, CacheEntry<any>>();
-
-function getCached<T>(key: string): CacheEntry<T> | null {
-    const entry = cache.get(key);
-    if (!entry) return null;
-    
-    if (Date.now() > entry.expiresAt) {
-        cache.delete(key);
-        return null;
-    }
-    
-    return entry;
-}
-
-function setCached<T>(key: string, data: T, ttlMs: number): CacheEntry<T> {
-    const etag = createHash('sha256').update(JSON.stringify(data)).digest('hex').substring(0, 16);
-    const entry: CacheEntry<T> = {
-        data,
-        etag,
-        expiresAt: Date.now() + ttlMs
-    };
-    
-    cache.set(key, entry);
-    return entry;
-}
-
-function generateCacheKey(prefix: string, params: any): string {
-    return `${prefix}:${createHash('sha256').update(JSON.stringify(params)).digest('hex').substring(0, 16)}`;
-}
-import { createHash } from 'crypto';
-
-const prisma = new PrismaClient();
+const VARIANT = 'leaderboard-fast';
 
 const LeaderboardQuerySchema = z.object({
-  period: z.enum(['7d', '30d', '90d', 'all']).optional().default('30d'),
-  limit: z.coerce.number().min(1).max(100).default(100),
+  period: z.enum(['7d', '30d', '90d', 'all']).default('30d'),
+  limit: z.coerce.number().min(1).max(MAX_CACHE_LIMIT).default(100),
   offset: z.coerce.number().min(0).default(0),
 });
 
-export interface LeaderboardItem {
-  creatorIdHashed: string;
-  score: number;
-  accuracy: number;
-  consistency: number;
-  volumeScore: number;
-  recencyScore: number;
-  maturedN: number;
-  topBadge?: 'top1' | 'top2' | 'top3';
-  trend?: 'up' | 'down' | 'flat';
-  isProvisional: boolean;
-}
+export type LeaderboardItem = LeaderboardItemType;
+export type LeaderboardResponse = LeaderboardResponseType;
 
-export interface LeaderboardResponse {
+function responseHeaders({
+  etag,
+  cacheStatus,
+  generatedAt,
+  durationMs,
+}: {
   etag: string;
+  cacheStatus: 'HIT' | 'MISS' | 'BYPASS';
   generatedAt: string;
-  period: string;
-  items: LeaderboardItem[];
-  meta: {
-    total: number;
-    limit: number;
-    offset: number;
-    hasMore: boolean;
-  };
+  durationMs: number;
+}) {
+  return {
+    ETag: etag,
+    'Cache-Control': 'public, max-age=30, s-maxage=180, stale-while-revalidate=300',
+    'X-Cache': cacheStatus,
+    'X-Cache-Backend': cacheStatus === 'HIT' ? 'redis' : 'prisma',
+    'X-Generated-At': generatedAt,
+    'X-Response-Time': durationMs.toFixed(2),
+  } as Record<string, string>;
 }
 
-/**
- * Hash creator ID for privacy
- */
-function hashCreatorId(creatorId: string): string {
-  return createHash('sha256').update(creatorId).digest('hex').substring(0, 16);
-}
+export async function GET(request: NextRequest) {
+  const startedAt = performance.now();
 
-async function getLeaderboardData(
-  params: z.infer<typeof LeaderboardQuerySchema>,
-): Promise<LeaderboardResponse> {
-  const { period, limit, offset } = params;
+  try {
+    const { searchParams } = new URL(request.url);
+    const queryResult = LeaderboardQuerySchema.safeParse({
+      period: searchParams.get('period') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+      offset: searchParams.get('offset') ?? undefined,
+    });
 
-  // Calculate date filter based on period
-  const now = new Date();
-  let dateFilter: Date | undefined;
-
-  if (period !== 'all') {
-    const days = { '7d': 7, '30d': 30, '90d': 90 }[period];
-    dateFilter = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-  }
-
-  // Optimized query with indexed fields
-  const whereClause = dateFilter
-    ? {
-        createdAt: { gte: dateFilter },
-        maturedAt: { not: null },
-      }
-    : {
-        maturedAt: { not: null },
-      };
-
-  // Use raw query for better performance on large datasets
-  const items = await prisma.$queryRaw<any[]>`
-    SELECT 
-      "creatorId",
-      AVG(CASE WHEN "isCorrect" THEN 1.0 ELSE 0.0 END) as accuracy,
-      COUNT(*) as total_predictions,
-      COUNT(CASE WHEN "maturedAt" IS NOT NULL THEN 1 END) as matured_count
-    FROM "Intent" i
-    WHERE ${dateFilter ? `i."createdAt" >= ${dateFilter.toISOString()}` : '1=1'}
-      AND i."maturedAt" IS NOT NULL
-    GROUP BY "creatorId"
-    HAVING COUNT(CASE WHEN "maturedAt" IS NOT NULL THEN 1 END) >= 5
-    ORDER BY 
-      AVG(CASE WHEN "isCorrect" THEN 1.0 ELSE 0.0 END) DESC,
-      COUNT(*) DESC
-    LIMIT ${limit}
-    OFFSET ${offset}
-  `;
-
-  // Get total count for pagination
-  const totalResult = await prisma.$queryRaw<[{ count: bigint }]>`
-    SELECT COUNT(DISTINCT "creatorId") as count
-    FROM "Intent" i
-    WHERE ${dateFilter ? `i."createdAt" >= ${dateFilter.toISOString()}` : '1=1'}
-      AND i."maturedAt" IS NOT NULL
-    GROUP BY "creatorId"
-    HAVING COUNT(CASE WHEN "maturedAt" IS NOT NULL THEN 1 END) >= 5
-  `;
-
-  const total = Number(totalResult[0]?.count || 0);
-
-  // Transform results
-  const leaderboardItems: LeaderboardItem[] = items.map((item, index) => {
-    const accuracy = Number(item.accuracy) || 0;
-    const maturedN = Number(item.matured_count) || 0;
-
-    // Simple scoring algorithm - can be enhanced
-    const score = accuracy * 100;
-    const consistency = Math.min(maturedN / 20, 1); // Consistency based on number of predictions
-
-    // Assign badges for top 3
-    let topBadge: 'top1' | 'top2' | 'top3' | undefined;
-    if (offset === 0) {
-      if (index === 0) topBadge = 'top1';
-      else if (index === 1) topBadge = 'top2';
-      else if (index === 2) topBadge = 'top3';
+    if (!queryResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid query parameters',
+          details: queryResult.error.errors,
+        },
+        { status: 400 }
+      );
     }
 
-    return {
-      creatorIdHashed: hashCreatorId(item.creatorId),
-      score: Math.round(score * 100) / 100,
-      accuracy: Math.round(accuracy * 10000) / 100, // Convert to percentage
-      consistency: Math.round(consistency * 100) / 100,
-      volumeScore: Math.min(maturedN / 10, 10), // Volume score out of 10
-      recencyScore: 1, // Simplified - could analyze recent activity
-      maturedN,
-      topBadge,
-      trend: 'flat', // Simplified - would need historical data
-      isProvisional: maturedN < 10,
+    const { period, limit, offset } = queryResult.data as {
+      period: LeaderboardPeriod;
+      limit: number;
+      offset: number;
     };
-  });
 
-  const generatedAt = new Date().toISOString();
-  const etag = createHash('sha256')
-    .update(JSON.stringify({ items: leaderboardItems, generatedAt }))
-    .digest('hex')
-    .substring(0, 16);
+    const allowCache = offset + limit <= MAX_CACHE_LIMIT;
+    const ifNoneMatch = request.headers.get('if-none-match');
+    let cacheStatus: 'HIT' | 'MISS' | 'BYPASS' = allowCache ? 'MISS' : 'BYPASS';
 
-  return {
-    etag,
-    generatedAt,
-    period,
-    items: leaderboardItems,
-    meta: {
-      total,
-      limit,
-      offset,
-      hasMore: offset + limit < total,
-    },
-  };
-}
+    if (allowCache) {
+      const cachedPayload = await getCachedLeaderboardSlice(period, limit, offset);
+      if (cachedPayload) {
+        const cachedResponse = buildResponseFromPayload(cachedPayload, limit, offset);
+        cacheStatus = 'HIT';
+        if (ifNoneMatch && ifNoneMatch === cachedResponse.etag) {
+          return new NextResponse(null, {
+            status: 304,
+            headers: {
+              ETag: cachedResponse.etag,
+              'X-Cache': cacheStatus,
+              'X-Cache-Backend': 'redis',
+              'X-Generated-At': cachedResponse.generatedAt,
+            },
+          });
+        }
 
-async function handleRequest(request: NextRequest): Promise<Response> {
-  try {
-    const url = new URL(request.url);
-    const params = LeaderboardQuerySchema.parse(Object.fromEntries(url.searchParams));
+        const durationMs = performance.now() - startedAt;
+        console.log(
+          `[${VARIANT}] cache=HIT period=${period} limit=${limit} offset=${offset} durationMs=${durationMs.toFixed(2)}`
+        );
 
-    // Generate cache key
-    const cacheKey = generateCacheKey('leaderboard', params);
-
-    // Check cache first
-    const cached = getCached<LeaderboardResponse>(cacheKey);
-    
-    // Check if client has current version
-    const clientEtag = request.headers.get('if-none-match');
-    if (cached) {
-      if (clientEtag && clientEtag === cached.etag) {
-        return new NextResponse(null, {
-          status: 304,
-          headers: { ETag: cached.etag },
+        return NextResponse.json(cachedResponse, {
+          headers: responseHeaders({
+            etag: cachedResponse.etag,
+            cacheStatus,
+            generatedAt: cachedResponse.generatedAt,
+            durationMs,
+          }),
         });
       }
-      
-      return NextResponse.json(cached.data, {
-        status: 200,
+    }
+
+    const rebuilt = await refreshLeaderboardPeriod(prisma, period);
+    if (!rebuilt) {
+      throw new Error('Unable to build leaderboard payload');
+    }
+
+    const responsePayload = buildResponseFromPayload(rebuilt, limit, offset);
+
+    if (ifNoneMatch && ifNoneMatch === responsePayload.etag) {
+      return new NextResponse(null, {
+        status: 304,
         headers: {
-          ETag: cached.etag,
-          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
-          'X-Cache': 'HIT',
+          ETag: responsePayload.etag,
+          'X-Cache': cacheStatus,
+          'X-Cache-Backend': 'prisma',
+          'X-Generated-At': responsePayload.generatedAt,
         },
       });
     }
 
-    // Generate fresh data
-    const data = await getLeaderboardData(params);
+    const durationMs = performance.now() - startedAt;
+    console.log(
+      `[${VARIANT}] cache=${cacheStatus} period=${period} limit=${limit} offset=${offset} durationMs=${durationMs.toFixed(2)}`
+    );
 
-    // Cache for 5 minutes
-    const cacheEntry = setCached(cacheKey, data, 5 * 60 * 1000);
-
-    return NextResponse.json(data, {
-      status: 200,
-      headers: {
-        ETag: cacheEntry.etag,
-        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
-        'X-Cache': 'MISS',
-      },
+    return NextResponse.json(responsePayload, {
+      headers: responseHeaders({
+        etag: responsePayload.etag,
+        cacheStatus,
+        generatedAt: responsePayload.generatedAt,
+        durationMs,
+      }),
     });
   } catch (error) {
-    console.error('Leaderboard API error:', error);
+    console.error('Leaderboard fast API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
-export const GET = handleRequest;
