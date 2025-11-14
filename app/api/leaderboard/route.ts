@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getLeaderboard } from '../../../lib/score';
+import { getLeaderboard, getLeaderboardWithPercentiles, LeaderboardPercentiles } from '../../../lib/score';
 
 const LeaderboardQuerySchema = z.object({
   period: z.string().optional().transform(val => {
@@ -37,6 +37,7 @@ export interface LeaderboardResponse {
     total: number;
     generatedAt: string;
   };
+  percentiles: LeaderboardPercentiles;
 }
 
 export async function GET(request: NextRequest) {
@@ -73,8 +74,8 @@ export async function GET(request: NextRequest) {
     console.log(`📋 Generating leaderboard (period: ${period}, limit: ${limit})`);
     
     // Get leaderboard data from score module
-    const leaderboard = await getLeaderboard(period, limit);
-    
+    const { leaderboard, percentiles } = await getLeaderboardWithPercentiles(period, limit);
+
     const response: LeaderboardResponse = {
       leaderboard,
       meta: {
@@ -82,7 +83,8 @@ export async function GET(request: NextRequest) {
         limit,
         total: leaderboard.length,
         generatedAt: new Date().toISOString()
-      }
+      },
+      percentiles,
     };
     
     const processingTime = Date.now() - startTime;

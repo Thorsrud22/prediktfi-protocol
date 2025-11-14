@@ -256,7 +256,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause based on filter, category, and search query
-    const whereClause: any = {};
+    const whereClause: any = {
+      visibility: 'PUBLIC',
+    };
 
     // Handle legacy filter parameter
     if (filter !== 'all') {
@@ -380,6 +382,7 @@ export async function GET(request: NextRequest) {
       confidence: insight.confidence,
       stamped: insight.stamped,
       createdAt: insight.createdAt.toISOString(),
+      visibility: insight.visibility,
       creator: insight.creator
         ? {
             handle: insight.creator.handle,

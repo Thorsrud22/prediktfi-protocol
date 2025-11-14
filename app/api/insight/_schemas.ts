@@ -7,6 +7,7 @@ export const CreateInsightSchema = z.object({
   deadline: z.string().optional(), // ISO UTC date or datetime
   resolverKind: z.enum(['price', 'url', 'text']).default('price'),
   resolverRef: z.string().min(1).optional(),
+  visibility: z.enum(['public', 'followers', 'private']).default('public'),
 });
 
 export const CommitInsightSchema = z.object({
@@ -34,6 +35,7 @@ export interface CreateInsightResponse {
     resolverRef: string;
     status: string;
     createdAt: string;
+    visibility: 'public' | 'followers' | 'private';
   };
   commitPayload: {
     t: 'predikt.v1';

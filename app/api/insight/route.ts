@@ -26,6 +26,10 @@ export async function POST(request: NextRequest) {
             // Parse and validate request body
             const body = await request.json();
             const validatedData = CreateInsightSchema.parse(body);
+            const visibility = (validatedData.visibility || 'public').toUpperCase() as
+              | 'PUBLIC'
+              | 'FOLLOWERS'
+              | 'PRIVATE';
 
             // Step a) Normalize the raw text into canonical form
             const normalized = normalizePrediction(validatedData.rawText, {
@@ -72,6 +76,7 @@ export async function POST(request: NextRequest) {
                 resolverKind: normalized.resolverKind.toUpperCase() as any,
                 resolverRef: normalized.resolverRef,
                 status: 'OPEN',
+                visibility,
               },
             });
 
@@ -108,6 +113,7 @@ export async function POST(request: NextRequest) {
                 resolverRef: normalized.resolverRef,
                 status: 'OPEN',
                 createdAt: insight.createdAt.toISOString(),
+                visibility: validatedData.visibility || 'public',
               },
               commitPayload,
               publicUrl: `/i/${insightId}`,
@@ -156,6 +162,7 @@ async function buildInsightResponse(insight: any): Promise<CreateInsightResponse
       resolverRef: insight.resolverRef,
       status: insight.status,
       createdAt: insight.createdAt.toISOString(),
+      visibility: (insight.visibility || 'PUBLIC').toLowerCase(),
     },
     commitPayload: {
       t: 'predikt.v1',
@@ -209,6 +216,7 @@ async function getInsightHandler(request: NextRequest) {
       resolverKind: insight.resolverKind?.toLowerCase() || 'price',
       resolverRef: insight.resolverRef || '{}',
       status: insight.status || 'OPEN',
+      visibility: (insight.visibility || 'PUBLIC').toLowerCase(),
       memoSig: insight.memoSig,
       slot: insight.slot,
       createdAt: insight.createdAt.toISOString(),

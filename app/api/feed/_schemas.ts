@@ -24,6 +24,7 @@ export interface FeedInsight {
   confidence: number;
   stamped: boolean;
   createdAt: string;
+  visibility: 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE';
   creator?: {
     handle: string;
     score: number;

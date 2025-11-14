@@ -62,6 +62,7 @@ model Insight {
   marketVolume    Float?
   lastMarketSync  DateTime?
   featuredDate    DateTime?     // Date when this insight is featured as Daily Challenge
+  visibility      InsightVisibility @default(PUBLIC)
   events          Event[]
   creator         Creator?      @relation(fields: [creatorId], references: [id])
   stamp           Stamp?        @relation(fields: [stampId], references: [id])
@@ -78,6 +79,7 @@ model Insight {
   @@index([deadline])
   @@index([featuredDate])
   @@index([createdAt, category, status]) // Composite index for feed queries
+  @@index([visibility])
   @@map("insights")
 }
 
@@ -585,6 +587,12 @@ enum InsightStatus {
   OPEN
   COMMITTED
   RESOLVED
+}
+
+enum InsightVisibility {
+  PUBLIC
+  FOLLOWERS
+  PRIVATE
 }
 
 enum OutcomeResult {

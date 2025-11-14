@@ -35,6 +35,19 @@ export interface ProfileAggregates {
   };
 }
 
+export interface PercentileBand {
+  p25: number;
+  p50: number;
+  p75: number;
+  p90: number;
+}
+
+export interface LeaderboardPercentiles {
+  score: PercentileBand;
+  accuracy: PercentileBand;
+  brier: PercentileBand;
+}
+
 /**
  * Calculate Brier score for a single insight
  * Brier Score = (p - o)² where p = predicted probability, o = actual outcome (0 or 1)
@@ -323,7 +336,7 @@ export async function updateProfileAggregates(creatorId: string): Promise<Profil
  */
 export async function updateAllProfileAggregates(): Promise<void> {
   console.log('🔄 Starting batch profile aggregates update...');
-  
+
   // Get all creators with insights
   const creators = await prisma.creator.findMany({
     where: {
@@ -353,6 +366,111 @@ export async function updateAllProfileAggregates(): Promise<void> {
   }
   
   console.log(`🏁 Batch update completed: ${updated} updated, ${failed} failed`);
+}
+
+function computePercentile(values: number[], percentile: number): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const index = (sorted.length - 1) * percentile;
+  const lower = Math.floor(index);
+  const upper = Math.ceil(index);
+
+  if (lower === upper) {
+    return sorted[lower];
+  }
+
+  const weight = index - lower;
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * weight;
+}
+
+function buildPercentileBand(values: number[]): PercentileBand {
+  const sanitized = values.filter(value => Number.isFinite(value));
+  if (sanitized.length === 0) {
+    return { p25: 0, p50: 0, p75: 0, p90: 0 };
+  }
+
+  return {
+    p25: computePercentile(sanitized, 0.25),
+    p50: computePercentile(sanitized, 0.5),
+    p75: computePercentile(sanitized, 0.75),
+    p90: computePercentile(sanitized, 0.9),
+  };
+}
+
+export async function getLeaderboardPercentiles(
+  period: 'all' | '90d' = 'all'
+): Promise<LeaderboardPercentiles> {
+  if (period === '90d') {
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const records = await prisma.creatorDaily.findMany({
+      where: {
+        day: {
+          gte: ninetyDaysAgo,
+        },
+      },
+      orderBy: { day: 'desc' },
+      distinct: ['creatorId'],
+      select: {
+        score: true,
+        accuracy: true,
+        brierMean: true,
+      },
+    });
+
+    const scoreValues = records.map(record => record.score ?? 0);
+    const accuracyValues = records.map(record => record.accuracy ?? 0);
+    const brierValues = records
+      .map(record => record.brierMean ?? 0)
+      .filter(value => Number.isFinite(value));
+
+    return {
+      score: buildPercentileBand(scoreValues),
+      accuracy: buildPercentileBand(accuracyValues),
+      brier: buildPercentileBand(brierValues),
+    };
+  }
+
+  const creators = await prisma.creator.findMany({
+    where: {
+      score: { gt: 0 },
+      insights: {
+        some: {
+          status: 'RESOLVED',
+        },
+      },
+    },
+    select: {
+      score: true,
+      accuracy: true,
+      brierMean: true,
+    },
+  });
+
+  const scoreValues = creators.map(creator => creator.score ?? 0);
+  const accuracyValues = creators.map(creator => creator.accuracy ?? 0);
+  const brierValues = creators
+    .map(creator => creator.brierMean ?? 0)
+    .filter(value => Number.isFinite(value));
+
+  return {
+    score: buildPercentileBand(scoreValues),
+    accuracy: buildPercentileBand(accuracyValues),
+    brier: buildPercentileBand(brierValues),
+  };
+}
+
+export async function getLeaderboardWithPercentiles(
+  period: 'all' | '90d' = 'all',
+  limit = 50,
+) {
+  const [leaderboard, percentiles] = await Promise.all([
+    getLeaderboard(period, limit),
+    getLeaderboardPercentiles(period),
+  ]);
+
+  return { leaderboard, percentiles };
 }
 
 /**
