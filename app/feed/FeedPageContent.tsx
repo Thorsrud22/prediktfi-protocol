@@ -93,6 +93,15 @@ function deriveFromSideAndAsset(side?: string, assetSymbol?: string): string {
   return `${sideText} ${asset}`;
 }
 
+function formatPercent(value: number, digits = 1) {
+  const clamped = Math.max(0, Math.min(1, value));
+  return `${(clamped * 100).toFixed(digits)}%`;
+}
+
+function formatBinLabel(bin: number) {
+  return `${bin * 10}-${(bin + 1) * 10}%`;
+}
+
 function mapIntentToFeedItem(v2Intent: any): LocalOverlayItem {
   const assetSymbol =
     v2Intent.payload?.assetSymbol ||
@@ -213,6 +222,7 @@ interface FeedInsight {
   stamped: boolean;
   status?: 'OPEN' | 'COMMITTED' | 'RESOLVED';
   createdAt: string;
+  visibility?: 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE' | 'public' | 'followers' | 'private';
   creator?: {
     handle: string;
     score: number;
@@ -239,6 +249,37 @@ interface FeedResponse {
   category: string;
   sort: string;
   timeframe: string;
+}
+
+interface SharedLessonsResponse {
+  updatedAt: string;
+  totals: {
+    publicInsights: number;
+    resolvedPublicInsights: number;
+    includedPredictions: number;
+  };
+  metrics: {
+    averageBrier: number;
+    reliability: number;
+    resolution: number;
+    uncertainty: number;
+  };
+  calibration: Array<{
+    bin: number;
+    predicted: number;
+    actual: number;
+    count: number;
+    deviation: number;
+  }>;
+  highlights: Array<{
+    bin: number;
+    label: string;
+    count: number;
+    predicted: number;
+    actual: number;
+    deviation: number;
+    tendency: 'overconfidence' | 'underconfidence';
+  }>;
 }
 
 // Memoized insight card component for better performance
@@ -377,10 +418,26 @@ const FeedPage = memo(() => {
     retryDelay: 30000, // 30 second delay between retries
   });
 
+  const {
+    data: sharedLessons,
+    loading: sharedLessonsLoading,
+    error: sharedLessonsError,
+  } = useOptimizedFetch<SharedLessonsResponse>('/api/insight/public-lessons', {
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 15 * 60 * 1000,
+    retries: 0,
+  });
+
   // Extract server items from feed data with immediate fallback
   const serverItems = useMemo(() => {
     if (feedData?.insights) {
-      return feedData.insights;
+      return feedData.insights.filter(insight => {
+        const visibility = typeof insight.visibility === 'string'
+          ? insight.visibility.toUpperCase()
+          : 'PUBLIC';
+
+        return visibility === 'PUBLIC';
+      });
     }
 
     // If loading for more than 2 seconds with no data, show demo data
@@ -453,6 +510,16 @@ const FeedPage = memo(() => {
     return [];
   }, [feedData, loading, mounted]);
 
+  const topCalibrationBins = useMemo(() => {
+    if (!sharedLessons?.calibration?.length) return [];
+    return [...sharedLessons.calibration]
+      .filter(bin => bin.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4);
+  }, [sharedLessons]);
+
+  const lessonHighlights = useMemo(() => sharedLessons?.highlights ?? [], [sharedLessons]);
+
   // Robust normalization utilities
   const num = (v: any, d = 0) => {
     const n = typeof v === 'string' ? Number(v.replace('%', '')) : Number(v);
@@ -469,7 +536,12 @@ const FeedPage = memo(() => {
     return 'general';
   };
 
-  function normalizeServerItemToFeedItem(s: any): ExtendedFeedItem {
+  function normalizeServerItemToFeedItem(s: any): ExtendedFeedItem | null {
+    const visibility = typeof s.visibility === 'string' ? s.visibility.toUpperCase() : 'PUBLIC';
+    if (visibility !== 'PUBLIC') {
+      return null;
+    }
+
     return {
       id: s.id || s._id || s.slug || crypto.randomUUID(),
       createdAt: Number.isFinite(s.createdAt)
@@ -536,7 +608,9 @@ const FeedPage = memo(() => {
       return [];
     }
 
-    const normalizedServer = (serverItems || []).map(normalizeServerItemToFeedItem);
+    const normalizedServer = (serverItems || [])
+      .map(normalizeServerItemToFeedItem)
+      .filter((item): item is ExtendedFeedItem => item != null);
 
     // Convert local items to extended format
     const normalizedLocal = localItems.map(item => ({ ...item } as ExtendedFeedItem));
@@ -614,6 +688,9 @@ const FeedPage = memo(() => {
       apiUrl: apiUrl.substring(0, 50) + '...',
       mounted,
       hasError: !!fetchError,
+      sharedLessonsLoaded: !!sharedLessons,
+      sharedLessonsPredictions: sharedLessons?.totals.includedPredictions ?? 0,
+      sharedLessonsError,
     });
   }, [
     loading,
@@ -625,6 +702,8 @@ const FeedPage = memo(() => {
     apiUrl,
     mounted,
     fetchError,
+    sharedLessons,
+    sharedLessonsError,
   ]);
 
   // No need for manual loading - useOptimizedFetch handles this automatically
@@ -730,6 +809,142 @@ const FeedPage = memo(() => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 py-8">
+          {sharedLessonsLoading && !sharedLessons && (
+            <div className="mb-10 rounded-2xl border border-slate-700/50 bg-slate-800/40 p-6 animate-pulse">
+              <div className="h-6 w-48 bg-slate-700/60 rounded mb-4"></div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[0, 1, 2].map(key => (
+                  <div key={key} className="h-24 rounded-xl bg-slate-700/40"></div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sharedLessonsError && !sharedLessons && (
+            <div className="mb-10 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+              Shared lessons are temporarily unavailable. Aggregated calibration stats will return soon.
+            </div>
+          )}
+
+          {sharedLessons && (
+            <section className="mb-10 rounded-2xl border border-cyan-500/20 bg-slate-800/50 p-6 shadow-lg shadow-cyan-500/10 backdrop-blur-sm">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-semibold text-white">Shared Lessons</h2>
+                  <p className="text-sm text-blue-200/80">
+                    Anonymized calibration highlights from recent public predictions.
+                  </p>
+                </div>
+                <div className="text-xs text-blue-200/60">
+                  Updated {new Date(sharedLessons.updatedAt).toLocaleString()}
+                </div>
+              </div>
+
+              {sharedLessons.totals.includedPredictions === 0 ? (
+                <p className="mt-6 text-sm text-blue-200/70">
+                  We need more resolved public predictions before we can surface shared lessons. Check back soon!
+                </p>
+              ) : (
+                <>
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-4">
+                      <div className="text-xs uppercase tracking-wide text-blue-200/70">Public insights</div>
+                      <div className="mt-2 text-2xl font-semibold text-white">
+                        {sharedLessons.totals.publicInsights.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-blue-200/60">
+                        {sharedLessons.totals.resolvedPublicInsights.toLocaleString()} resolved
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-4">
+                      <div className="text-xs uppercase tracking-wide text-emerald-200/80">Average Brier</div>
+                      <div className="mt-2 text-2xl font-semibold text-emerald-300">
+                        {sharedLessons.metrics.averageBrier.toFixed(3)}
+                      </div>
+                      <div className="text-xs text-blue-200/60">
+                        Reliability {sharedLessons.metrics.reliability.toFixed(3)}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-4">
+                      <div className="text-xs uppercase tracking-wide text-blue-200/70">Shared predictions</div>
+                      <div className="mt-2 text-2xl font-semibold text-white">
+                        {sharedLessons.totals.includedPredictions.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-blue-200/60">
+                        Uncertainty {sharedLessons.metrics.uncertainty.toFixed(3)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {lessonHighlights.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-semibold text-blue-100 mb-3">Calibration highlights</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {lessonHighlights.map(highlight => (
+                          <div
+                            key={`highlight-${highlight.bin}`}
+                            className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-4"
+                          >
+                            <div className="flex items-center justify-between text-xs text-blue-200/70">
+                              <span>{highlight.label}</span>
+                              <span>{highlight.count.toLocaleString()} insights</span>
+                            </div>
+                            <div className="mt-3 text-lg font-semibold text-white">
+                              {formatPercent(highlight.predicted)} → {formatPercent(highlight.actual)}
+                            </div>
+                            <div className="text-xs text-blue-200/70 capitalize">
+                              {highlight.tendency === 'overconfidence' ? 'Overconfident' : 'Underconfident'} cohort
+                            </div>
+                            <div className="mt-3 h-2 rounded-full bg-slate-800 overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
+                                style={{ width: `${Math.min(100, Math.max(0, highlight.predicted * 100))}%` }}
+                              ></div>
+                            </div>
+                            <div className="mt-1 h-2 rounded-full bg-slate-800 overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-emerald-400 to-teal-500"
+                                style={{ width: `${Math.min(100, Math.max(0, highlight.actual * 100))}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {topCalibrationBins.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-semibold text-blue-100 mb-3">Confidence bands</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        {topCalibrationBins.map(bin => (
+                          <div
+                            key={`band-${bin.bin}`}
+                            className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-4"
+                          >
+                            <div className="flex items-center justify-between text-xs text-blue-200/70">
+                              <span>{formatBinLabel(bin.bin)}</span>
+                              <span>{bin.count.toLocaleString()} samples</span>
+                            </div>
+                            <div className="mt-3 text-lg font-semibold text-white">
+                              {formatPercent(bin.predicted)} predicted
+                            </div>
+                            <div className="text-xs text-blue-200/70">
+                              Actual {formatPercent(bin.actual)}
+                            </div>
+                            <div className="mt-2 text-xs text-blue-200/60">
+                              Gap {(Math.abs(bin.predicted - bin.actual) * 100).toFixed(1)} pts
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+
           {/* Enhanced Filters */}
           <div className="mb-8">
             <div className="flex flex-wrap gap-3">
