@@ -9,12 +9,13 @@ import {
   ScoreCalculationParams,
   SCORE 
 } from '../../../app/lib/creatorScore';
-import { 
-  winsorize, 
-  winsorizedMean, 
-  winsorizedStd, 
-  getAlphaForSampleSize 
+import {
+  winsorize,
+  winsorizedMean,
+  winsorizedStd,
+  getAlphaForSampleSize
 } from '../../../app/lib/winsorize';
+import { refreshLeaderboardCache } from '../leaderboard/leaderboard-cache';
 
 const prisma = new PrismaClient();
 
@@ -407,6 +408,13 @@ export async function rollupCreatorDailyRange(
       console.log(`   Sample size: ${notionalValues.length} creators`);
     }
     
+    try {
+      await refreshLeaderboardCache(prisma);
+      console.log('✅ Leaderboard cache refreshed after rollup');
+    } catch (cacheError) {
+      console.error('⚠️ Failed to refresh leaderboard cache after rollup', cacheError);
+    }
+
     return {
       processed,
       errors,
