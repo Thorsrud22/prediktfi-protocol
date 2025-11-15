@@ -29,7 +29,7 @@ const CACHE_KEY = 'topCreators7d:v1';
 const TTL = 300000; // 5 minutes in milliseconds
 
 interface CacheEntry {
-  data: Map<string, number>;
+  data: Record<string, number>;
   timestamp: number;
 }
 

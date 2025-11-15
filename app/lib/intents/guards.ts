@@ -4,11 +4,12 @@
  */
 
 import { Guards, Size } from './schema';
-import { 
-  checkAssetLossCap, 
-  checkDailyLossCap, 
+import {
+  checkAssetLossCap,
+  checkDailyLossCap as checkDailyLossCapRisk,
   checkRunawayDay,
-  RiskViolation 
+  RiskViolation,
+  PortfolioSnapshot as RiskPortfolioSnapshot
 } from './risk-management';
 
 export interface GuardViolation {
@@ -17,14 +18,7 @@ export interface GuardViolation {
   severity: 'warning' | 'error';
 }
 
-export interface PortfolioSnapshot {
-  totalValueUsd: number;
-  holdings: Array<{
-    asset: string;
-    valueUsd: number;
-    amount: number;
-  }>;
-}
+export type PortfolioSnapshot = RiskPortfolioSnapshot;
 
 export interface MarketData {
   price: number;
@@ -60,7 +54,7 @@ export function checkPositionLimit(
 /**
  * Check daily loss cap guard
  */
-export function checkDailyLossCap(
+export function checkDailyLossCapGuard(
   portfolio: PortfolioSnapshot,
   guards: Guards,
   dailyPnL?: number
@@ -194,7 +188,7 @@ export function runGuards(
   // Check all guards
   const checks = [
     checkPositionLimit(size, portfolio, guards),
-    checkDailyLossCap(portfolio, guards, dailyPnL),
+    checkDailyLossCapGuard(portfolio, guards, dailyPnL),
     checkLiquidity(marketData, guards),
     checkSlippageCap(estimatedSlippageBps, guards, estimatedImpactBps),
     checkExpiry(guards)
@@ -247,13 +241,14 @@ export async function runGuardsEnhanced(
     }
     
     // Check per-asset loss cap
-    const assetCheck = await checkAssetLossCap(walletId, size.asset || 'SOL', portfolio, tradeLossUsd);
+    const assetSymbol = size.token ?? portfolio.holdings[0]?.asset ?? 'SOL';
+    const assetCheck = await checkAssetLossCap(walletId, assetSymbol, portfolio, tradeLossUsd);
     if (assetCheck) {
       violations.push(assetCheck);
     }
     
     // Check global daily loss cap
-    const dailyCheck = await checkDailyLossCap(walletId, portfolio, tradeLossUsd);
+    const dailyCheck = await checkDailyLossCapRisk(walletId, portfolio, tradeLossUsd);
     if (dailyCheck) {
       violations.push(dailyCheck);
     }

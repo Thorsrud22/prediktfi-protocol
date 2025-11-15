@@ -220,36 +220,19 @@ export const chaosConfig: ChaosConfig = {
 export const chaosService = new ChaosService(chaosConfig);
 
 /**
- * Decorator for chaos testing
- */
-export function WithChaos(serviceName: string) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
-    const method = descriptor.value;
-    
-    descriptor.value = async function (...args: any[]) {
-      // Maybe inject chaos
-      const chaosInjected = await chaosService.maybeExecuteChaos(serviceName);
-      
-      if (chaosInjected) {
-        // Chaos was injected, the scenario handled the failure
-        // We still execute the original method to test resilience
-      }
-      
-      return method.apply(this, args);
-    };
-    
-    return descriptor;
-  };
-}
-
-/**
  * Price API with chaos testing
  */
 export class ChaosPriceAPI {
-  @WithChaos('price-api')
   async getPrice(symbol: string): Promise<number> {
+    // Maybe inject chaos before executing the primary logic
+    const chaosInjected = await chaosService.maybeExecuteChaos('price-api');
+
+    if (chaosInjected) {
+      // Chaos was injected, but we continue to execute the method to observe behaviour under stress
+    }
+
     // This method will have chaos injected based on configuration
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 100));
     
