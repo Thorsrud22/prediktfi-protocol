@@ -247,14 +247,14 @@ export function validateCalibration(
   resolution: number;
   uncertainty: number;
 } {
-  const actuals = actualOutcomes.map(b => b ? 1 : 0);
+  const actuals = actualOutcomes.map<number>(b => (b ? 1 : 0));
   const brierScoreValue = brierScore(calibratedProbs, actuals);
   
   // Reliability: mean((prediction - bin_mean)^2)
   // Resolution: mean((bin_mean - overall_mean)^2)
   // Uncertainty: overall_mean * (1 - overall_mean)
   
-  const overallMean = actuals.reduce((sum, a) => sum + a, 0) / actuals.length;
+  const overallMean = actuals.reduce<number>((sum, a) => sum + a, 0) / actuals.length;
   const uncertainty = overallMean * (1 - overallMean);
   
   // Simple binning for reliability calculation
@@ -274,7 +274,7 @@ export function validateCalibration(
     if (binIndices.length > 0) {
       const binProbs = binIndices.map(idx => calibratedProbs[idx]);
       const binActuals = binIndices.map(idx => actuals[idx]);
-      const binMean = binActuals.reduce((sum, a) => sum + a, 0) / binActuals.length;
+      const binMean = binActuals.reduce<number>((sum, a) => sum + a, 0) / binActuals.length;
       const binProbMean = binProbs.reduce((sum, p) => sum + p, 0) / binProbs.length;
       
       // Reliability: mean((prediction - bin_mean)^2) for this bin

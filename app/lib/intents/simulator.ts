@@ -3,7 +3,7 @@
  * Calculates expected outcomes and risk metrics
  */
 
-import { getQuote, getMarketData, estimateSlippage, calculateTradeSize, getTokenMint } from '../aggregators/jupiter';
+import { getMarketData, estimateSlippage, calculateTradeSize, getTokenMint } from '../aggregators/jupiter';
 import { quoteCache } from '../aggregators/quote-cache';
 import { latencyMonitor } from '../monitoring/latency';
 import { Size, Guards } from './schema';
@@ -30,6 +30,8 @@ export interface WalletSnapshot {
     valueUsd: number;
   }>;
 }
+
+type MarketData = Awaited<ReturnType<typeof getMarketData>>;
 
 /**
  * Simulate trading intent
@@ -66,8 +68,11 @@ export async function simulateIntent(
     // Get Jupiter quote
     const inputMint = side === 'BUY' ? getTokenMint(quoteToken) : getTokenMint(base);
     const outputMint = side === 'BUY' ? getTokenMint(base) : getTokenMint(quoteToken);
-    const inputAmount = side === 'BUY' ? tradeSizeTokens : tradeSizeTokens;
-    
+    const inputAmount = Number(tradeSizeTokens);
+    if (Number.isNaN(inputAmount)) {
+      throw new Error('Invalid trade size calculated for simulation');
+    }
+
     const jupiterQuote = await quoteCache.getQuote(
       inputMint,
       outputMint,

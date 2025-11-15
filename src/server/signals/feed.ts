@@ -12,10 +12,9 @@ import { telemetry } from '../../lib/telemetry';
 import { getStaleButServeable } from '../../lib/cache/signalsL2';
 
 // Set up undici keep-alive agent for better performance
-setGlobalDispatcher(new Agent({ 
-  keepAlive: true, 
-  keepAliveTimeout: 10_000, 
-  connections: 100 
+setGlobalDispatcher(new Agent({
+  keepAliveTimeout: 10_000,
+  connections: 100
 }));
 
 export interface MarketSignal {
@@ -287,7 +286,10 @@ export async function getMarketSignals(pair?: string): Promise<SignalsFeedData> 
     const stale = getStaleButServeable(now);
     if (stale) {
       console.log('Serving stale data due to circuit breaker');
-      return stale.payload;
+      return {
+        items: stale.payload,
+        updatedAt: new Date(stale.ts).toISOString()
+      };
     }
     
     // If no stale data available, return empty but don't cache it

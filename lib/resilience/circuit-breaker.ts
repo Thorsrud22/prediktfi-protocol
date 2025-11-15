@@ -155,7 +155,7 @@ export class CircuitBreaker {
    */
   private logCircuitBreakerEvent(event: string, metadata: Record<string, any>): void {
     // Integration with tracing system
-    import('./tracing').then(({ tracing }) => {
+    import('../observability/tracing').then(({ tracing }) => {
       tracing.withSpan(
         `circuit_breaker.${event.toLowerCase()}`,
         async () => {

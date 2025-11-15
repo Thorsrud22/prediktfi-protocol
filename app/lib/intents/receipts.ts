@@ -22,6 +22,10 @@ export interface SimulationResult {
   };
   simConfidence: number;
   quoteTimestamp: number;
+  quoteToFillDeviation?: {
+    deviationBps: number;
+    logged: boolean;
+  };
   historicalAccuracy?: {
     accuracy: number;
     confidence: string;
@@ -49,6 +53,19 @@ export async function createReceipt(
   notes?: string
 ) {
   try {
+    const normalizedSlippageBps = (() => {
+      if (!payload) {
+        return null;
+      }
+
+      if (status === 'executed') {
+        return (payload as ExecutionResult).slippageBps;
+      }
+
+      const { estSlippageBps } = payload as SimulationResult;
+      return estSlippageBps ?? null;
+    })();
+
     const receipt = await prisma.intentReceipt.create({
       data: {
         intentId,
@@ -58,7 +75,7 @@ export async function createReceipt(
         txSig: status === 'executed' && payload ? (payload as ExecutionResult).txSig : null,
         realizedPx: status === 'executed' && payload ? (payload as ExecutionResult).realizedPrice : null,
         feesUsd: payload ? (payload as SimulationResult | ExecutionResult).feesUsd : null,
-        slippageBps: payload ? (payload as SimulationResult | ExecutionResult).slippageBps : null,
+        slippageBps: normalizedSlippageBps,
         blockTime: status === 'executed' && payload ? (payload as ExecutionResult).blockTime : null,
         notes
       }

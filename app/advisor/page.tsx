@@ -2,7 +2,6 @@
 import React, { Suspense, lazy } from 'react'
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider'
 import Link from 'next/link'
-import { FastPageLoader } from '../components/PageLoader'
 
 // If there are heavy components, we can lazy load them
 // const HeavyAdvisorComponent = lazy(() => import('../components/advisor/HeavyComponent'));
