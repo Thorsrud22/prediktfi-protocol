@@ -2,6 +2,15 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Prediction studio redirect from legacy market", () => {
   test("shows studio entry form after redirect", async ({ page }) => {
+    await page.context().addCookies([
+      {
+        name: "predikt_auth",
+        value: "authenticated",
+        domain: "localhost",
+        path: "/",
+      },
+    ]);
+
     await page.goto("/market/1");
 
     // Legacy market routes immediately redirect to the studio experience

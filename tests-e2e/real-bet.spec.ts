@@ -2,6 +2,15 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Studio experience smoke test", () => {
   test("example questions populate the prompt", async ({ page }) => {
+    await page.context().addCookies([
+      {
+        name: "predikt_auth",
+        value: "authenticated",
+        domain: "localhost",
+        path: "/",
+      },
+    ]);
+
     await page.goto("/market/1");
 
     // The legacy market route redirects to the studio; wait for it before interacting
