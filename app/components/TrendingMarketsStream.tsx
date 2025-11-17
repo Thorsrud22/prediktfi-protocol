@@ -7,7 +7,7 @@ import { SkeletonCard } from './ui/Skeleton';
 
 interface TrendingMarket {
   id: string;
-  type: 'PREDIKT' | 'POLYMARKET' | 'KALSHI';
+  type: 'PREDIKT' | 'KALSHI';
   title: string;
   probability: number;
   volume: number;
@@ -47,16 +47,16 @@ const TrendingMarketsStream = memo(function TrendingMarketsStream({
     },
     {
       id: 'fallback-2',
-      type: 'POLYMARKET',
-      title: 'Bitcoin will hit $100k by end of 2024',
-      probability: 0.72,
-      volume: 125000,
-      deadline: new Date(2024, 11, 31).toISOString(),
-      creator: 'crypto_expert',
+      type: 'KALSHI',
+      title: 'Fed will hold rates in Q4',
+      probability: 0.44,
+      volume: 42000,
+      deadline: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000).toISOString(),
+      creator: 'macro_observer',
       creatorId: 'creator-2',
-      creatorScore: 4.5,
+      creatorScore: 4.2,
       status: 'ACTIVE',
-      url: 'https://polymarket.com'
+      url: 'https://kalshi.com'
     },
     // Add more fallback markets...
   ];
@@ -114,7 +114,6 @@ const TrendingMarketsStream = memo(function TrendingMarketsStream({
   const getTypeColor = useCallback((type: string) => {
     switch (type) {
       case 'PREDIKT': return 'bg-blue-500/20 text-blue-300';
-      case 'POLYMARKET': return 'bg-purple-500/20 text-purple-300';
       case 'KALSHI': return 'bg-green-500/20 text-green-300';
       default: return 'bg-gray-500/20 text-gray-300';
     }

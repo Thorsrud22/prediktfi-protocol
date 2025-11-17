@@ -4,37 +4,14 @@
  */
 
 import { ExternalMarket, MarketMatchScore } from './types';
-import { polymarketClient } from './polymarket';
 
 export class MarketMatcher {
   /**
    * Find matching external markets for an insight
    */
   async findMatchingMarkets(insight: any): Promise<MarketMatchScore[]> {
-    const matches: MarketMatchScore[] = [];
-
-    try {
-      // Search Polymarket
-      const polyResults = await polymarketClient.searchMarkets(insight.question, 5);
-      
-      for (const market of polyResults.markets) {
-        const score = this.calculateSimilarity(insight, market);
-        if (score.similarity > 0.3) { // Only include decent matches
-          matches.push(score);
-        }
-      }
-
-      // TODO: Add Kalshi search here
-      // const kalshiResults = await kalshiClient.searchMarkets(insight.question, 5);
-
-      // Sort by similarity score
-      matches.sort((a, b) => b.similarity - a.similarity);
-      
-      return matches.slice(0, 3); // Return top 3 matches
-    } catch (error) {
-      console.error('Market matching error:', error);
-      return [];
-    }
+    // External market integrations are disabled for now
+    return [];
   }
 
   /**

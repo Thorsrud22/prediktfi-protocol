@@ -40,7 +40,7 @@ interface CircuitBreakerState {
 const circuitBreakers = new Map<string, CircuitBreakerState>();
 
 // Initialize circuit breakers for known sources
-const SOURCES = ['polymarket', 'fear_greed', 'funding'];
+const SOURCES = ['fear_greed', 'funding'];
 
 SOURCES.forEach(source => {
   if (!circuitBreakers.has(source)) {

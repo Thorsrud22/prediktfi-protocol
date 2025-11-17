@@ -34,32 +34,15 @@ async function testAdapters() {
       console.log('✅ Binance Funding API: Working');
       console.log(`   BTC funding rate: ${data.lastFundingRate}\n`);
     } else {
-      console.log(`❌ Binance Funding API: Failed with status ${response.status}\n`);
-    }
-  } catch (error) {
-    console.log(`❌ Binance Funding API: Error - ${error.message}\n`);
+    console.log(`❌ Binance Funding API: Failed with status ${response.status}\n`);
   }
-
-  // Test Polymarket API (should gracefully fail or work if custom URL set)
-  try {
-    console.log('Testing Polymarket API...');
-    const response = await fetch('https://api.polymarket.com/markets?active=true&limit=3');
-    if (response.ok) {
-      const data = await response.json();
-      console.log('✅ Polymarket API: Working');
-    } else {
-      console.log(
-        `❌ Polymarket API: Failed with status ${response.status} (expected - will use mock data)\n`,
-      );
-    }
-  } catch (error) {
-    console.log(`❌ Polymarket API: Error - ${error.message} (expected - will use mock data)\n`);
-  }
+} catch (error) {
+  console.log(`❌ Binance Funding API: Error - ${error.message}\n`);
+}
 
   console.log('📋 Summary:');
   console.log('- Fear & Greed API should work (no authentication required)');
   console.log('- Binance Funding API should work (fixed URL)');
-  console.log('- Polymarket API will use mock data (API endpoint changed/removed)');
   console.log('\n✅ API fixes should resolve 401/404 errors in the application!');
 }
 

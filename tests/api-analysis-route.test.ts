@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { NextRequest } from 'next/server';
+import { POST } from '../app/api/analysis/route';
 
 describe('Analysis API Route', () => {
-  const API_BASE = process.env.NODE_ENV === 'test' ? 'http://localhost:3000' : '';
-
-  it('should return 501 not implemented for valid request', async () => {
-    const response = await fetch(`${API_BASE}/api/analysis`, {
+  it('should return mock analysis for valid request', async () => {
+    const req = new NextRequest('http://localhost:3000/api/analysis', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -16,16 +16,18 @@ describe('Analysis API Route', () => {
       }),
     });
 
-    expect(response.status).toBe(501);
+    const response = await POST(req);
+
+    expect(response.status).toBe(200);
 
     const data = await response.json();
-    expect(data.error).toBe('not implemented');
-    expect(data.input).toBeDefined();
     expect(data.input.assetId).toBe('bitcoin');
+    expect(data.probability).toBeDefined();
+    expect(data.interval).toBeDefined();
   });
 
   it('should return 422 for missing required fields', async () => {
-    const response = await fetch(`${API_BASE}/api/analysis`, {
+    const req = new NextRequest('http://localhost:3000/api/analysis', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -35,6 +37,8 @@ describe('Analysis API Route', () => {
       }),
     });
 
+    const response = await POST(req);
+
     expect(response.status).toBe(422);
 
     const data = await response.json();
@@ -42,13 +46,15 @@ describe('Analysis API Route', () => {
   });
 
   it('should return 400 for invalid JSON', async () => {
-    const response = await fetch(`${API_BASE}/api/analysis`, {
+    const req = new NextRequest('http://localhost:3000/api/analysis', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: 'invalid json',
     });
+
+    const response = await POST(req);
 
     expect(response.status).toBe(400);
 

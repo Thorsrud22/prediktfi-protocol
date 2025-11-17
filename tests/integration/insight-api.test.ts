@@ -1,7 +1,53 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest';
 import { NextRequest } from 'next/server';
-import { POST, GET } from '../../app/api/insight/route';
-import { prisma } from '../../app/lib/prisma';
+
+const insights = new Map<string, any>();
+const creators = new Map<string, any>();
+let insightCounter = 1;
+let creatorCounter = 1;
+
+const prismaMock = {
+  insight: {
+    deleteMany: vi.fn(async () => {
+      const count = insights.size;
+      insights.clear();
+      return { count };
+    }),
+    create: vi.fn(async ({ data }: any) => {
+      const id = data.id || `insight-${insightCounter++}`;
+      const record = { id, ...data };
+      insights.set(id, record);
+      return record;
+    }),
+    findUnique: vi.fn(async ({ where }: any) => {
+      return insights.get(where?.id) || null;
+    }),
+  },
+  creator: {
+    deleteMany: vi.fn(async () => {
+      const count = creators.size;
+      creators.clear();
+      return { count };
+    }),
+    create: vi.fn(async ({ data }: any) => {
+      const id = data.id || `creator-${creatorCounter++}`;
+      const record = { id, ...data };
+      creators.set(id, record);
+      return record;
+    }),
+    findUnique: vi.fn(async ({ where }: any) => {
+      if (where?.id) return creators.get(where.id) || null;
+      if (where?.handle) {
+        for (const creator of creators.values()) {
+          if (creator.handle === where.handle) return creator;
+        }
+      }
+      return null;
+    }),
+  },
+};
+
+vi.mock('../../app/lib/prisma', () => ({ prisma: prismaMock }));
 
 // Mock the insights pipeline
 vi.mock('../../app/api/insights/_pipeline', () => ({
@@ -40,6 +86,16 @@ vi.mock('../../app/api/insights/_auth', () => ({
     remaining: 9,
   }),
 }));
+
+let POST: any;
+let GET: any;
+const prisma = prismaMock;
+
+beforeAll(async () => {
+  const mod = await import('../../app/api/insight/route');
+  POST = mod.POST;
+  GET = mod.GET;
+});
 
 describe('Insight API Integration', () => {
   beforeEach(async () => {

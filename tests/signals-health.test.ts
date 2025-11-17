@@ -5,41 +5,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '@/app/api/ops/signals-health/route';
 
-// Mock telemetry
-const mockTelemetry = {
-  getAllMetrics: vi.fn(() => ({
-    polymarket: {
-      success_rate: 0.95,
-      timeout_rate: 0.02,
-      p95_ms: 150,
-      last_ok_ts: '2025-01-09T12:00:00Z',
-      total_calls: 100,
-      success_calls: 95,
-      timeout_calls: 2,
-      response_times: [100, 120, 150, 180, 200]
-    },
-    fear_greed: {
-      success_rate: 0.98,
-      timeout_rate: 0.01,
-      p95_ms: 120,
-      last_ok_ts: '2025-01-09T12:00:00Z',
-      total_calls: 100,
-      success_calls: 98,
-      timeout_calls: 1,
-      response_times: [80, 100, 120, 140, 160]
-    }
-  }))
-};
+const { mockTelemetry, mockL2Cache } = vi.hoisted(() => ({
+  mockTelemetry: {
+    getAllMetrics: vi.fn(() => ({
+      fear_greed: {
+        success_rate: 0.98,
+        timeout_rate: 0.01,
+        p95_ms: 120,
+        last_ok_ts: '2025-01-09T12:00:00Z',
+        total_calls: 100,
+        success_calls: 98,
+        timeout_calls: 1,
+        response_times: [80, 100, 120, 140, 160]
+      },
+      funding: {
+        success_rate: 0.92,
+        timeout_rate: 0.05,
+        p95_ms: 180,
+        last_ok_ts: '2025-01-09T12:00:00Z',
+        total_calls: 90,
+        success_calls: 83,
+        timeout_calls: 4,
+        response_times: [120, 160, 180, 190, 200]
+      }
+    }))
+  },
+  mockL2Cache: {
+    getFresh: vi.fn(() => ({ etag: 'test-etag', payload: [], ts: Date.now() })),
+    getStaleButServeable: vi.fn(() => null)
+  }
+}));
 
 vi.mock('@/lib/telemetry', () => ({
   telemetry: mockTelemetry
 }));
-
-// Mock L2 cache
-const mockL2Cache = {
-  getFresh: vi.fn(() => ({ etag: 'test-etag', payload: [], ts: Date.now() })),
-  getStaleButServeable: vi.fn(() => null)
-};
 
 vi.mock('@/lib/cache/signalsL2', () => mockL2Cache);
 
@@ -93,14 +92,14 @@ describe('Signals Health API', () => {
     const response = await GET(request);
     
     const data = await response.json();
-    expect(data.per_source).toHaveLength(2); // polymarket and fear_greed
+    expect(data.per_source).toHaveLength(2); // fear_greed and funding
     
-    const polymarketSource = data.per_source.find((s: any) => s.name === 'polymarket');
-    expect(polymarketSource).toBeDefined();
-    expect(polymarketSource).toHaveProperty('success_rate');
-    expect(polymarketSource).toHaveProperty('timeout_rate');
-    expect(polymarketSource).toHaveProperty('p95_ms');
-    expect(polymarketSource).toHaveProperty('breaker_state');
+    const fearGreedSource = data.per_source.find((s: any) => s.name === 'fear_greed');
+    expect(fearGreedSource).toBeDefined();
+    expect(fearGreedSource).toHaveProperty('success_rate');
+    expect(fearGreedSource).toHaveProperty('timeout_rate');
+    expect(fearGreedSource).toHaveProperty('p95_ms');
+    expect(fearGreedSource).toHaveProperty('breaker_state');
   });
 
   it('should handle telemetry errors gracefully', async () => {

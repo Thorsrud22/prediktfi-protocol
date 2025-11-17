@@ -1,15 +1,16 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import { vi, beforeEach, describe, it, expect } from 'vitest';
 import { useTopCreators } from '../../src/lib/topCreatorsClient';
 
 // Mock fetch
-global.fetch = jest.fn();
+global.fetch = vi.fn() as any;
 
 // Mock localStorage
 const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
@@ -17,7 +18,7 @@ Object.defineProperty(window, 'localStorage', {
 
 describe('useTopCreators', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue(null);
   });
 
@@ -31,7 +32,7 @@ describe('useTopCreators', () => {
       meta: { period: '90d', limit: 50, total: 3, generatedAt: new Date().toISOString() }
     };
 
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    (fetch as any as vi.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
     });
@@ -84,7 +85,7 @@ describe('useTopCreators', () => {
       meta: { period: '90d', limit: 50, total: 2, generatedAt: new Date().toISOString() }
     };
 
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    (fetch as any as vi.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
     });
@@ -110,7 +111,7 @@ describe('useTopCreators', () => {
       meta: { period: '90d', limit: 50, total: 4, generatedAt: new Date().toISOString() }
     };
 
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    (fetch as any as vi.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
     });
@@ -128,7 +129,7 @@ describe('useTopCreators', () => {
   });
 
   it('should handle API errors gracefully', async () => {
-    (fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
+    (fetch as any as vi.Mock).mockRejectedValueOnce(new Error('API Error'));
 
     const { result } = renderHook(() => useTopCreators());
 
@@ -150,7 +151,7 @@ describe('useTopCreators', () => {
       meta: { period: '90d', limit: 50, total: 1, generatedAt: new Date().toISOString() }
     };
 
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    (fetch as any as vi.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
     });

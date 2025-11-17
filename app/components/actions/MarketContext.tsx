@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { loadSignalsClient, safeLocalStorageGet, safeLocalStorageSet, safeParse } from '../../lib/safe-fetch';
 
 interface MarketSignal {
-  type: 'polymarket' | 'fear_greed' | 'trend' | 'funding' | 'sentiment';
+  type: 'fear_greed' | 'trend' | 'funding' | 'sentiment';
   label: string;
   value?: number;
   prob?: number;
@@ -41,7 +41,6 @@ function formatTimeAgo(timestamp: string): string {
 function SignalItem({ signal }: { signal: MarketSignal }) {
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'polymarket': return 'text-purple-600 dark:text-purple-400';
       case 'fear_greed': return 'text-orange-600 dark:text-orange-400';
       case 'funding': return 'text-blue-600 dark:text-blue-400';
       case 'trend': return 'text-green-600 dark:text-green-400';
@@ -51,7 +50,6 @@ function SignalItem({ signal }: { signal: MarketSignal }) {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'polymarket': return '🎯';
       case 'fear_greed': return '😱';
       case 'funding': return '💰';
       case 'trend': return '📈';
