@@ -95,7 +95,8 @@ export async function fetchFunding(ctx: AdapterCtx): Promise<AdapterResult> {
       const symbol = entry?.symbol?.replace('USDT', '') || 'BTC';
       const rawRate = parseFloat(entry?.lastFundingRate);
       const fundingRate = Number.isFinite(rawRate) ? rawRate : 0;
-      const direction = fundingRate > 0.0001 ? 'up' : fundingRate < -0.0001 ? 'down' : 'neutral';
+      const direction: AdapterResult['items'][number]['direction'] =
+        fundingRate > 0.0001 ? 'up' : fundingRate < -0.0001 ? 'down' : 'neutral';
       const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
 
       return {
