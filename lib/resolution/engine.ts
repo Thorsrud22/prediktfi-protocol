@@ -157,7 +157,7 @@ async function resolveUrlInsight(insight: Insight): Promise<ResolutionResult> {
     const urlResult = await urlResolver(insight.canonical, config);
     
     // For automatic resolution, we only auto-resolve high confidence cases
-    if (urlResult.proposed && urlResult.confidence >= 0.9) {
+    if (urlResult.proposed && urlResult.confidence >= 0.9 && urlResult.evidence) {
       return {
         result: urlResult.proposed,
         evidenceUrl: urlResult.evidence.url,
@@ -175,8 +175,8 @@ async function resolveUrlInsight(insight: Insight): Promise<ResolutionResult> {
       // Low confidence or ambiguous - mark as requiring manual review
       return {
         result: 'INVALID',
-        evidenceMeta: { 
-          error: 'Requires manual review',
+        evidenceMeta: {
+          error: 'URL resolution not yet implemented',
           confidence: urlResult.confidence,
           reasoning: urlResult.reasoning,
           proposed: urlResult.proposed,
@@ -188,8 +188,8 @@ async function resolveUrlInsight(insight: Insight): Promise<ResolutionResult> {
   } catch (error) {
     return {
       result: 'INVALID',
-      evidenceMeta: { 
-        error: error instanceof Error ? error.message : 'URL resolution failed',
+      evidenceMeta: {
+        error: 'URL resolution not yet implemented',
         requiresManualReview: true
       },
       decidedBy: 'AGENT'
@@ -206,25 +206,27 @@ async function resolveTextInsight(insight: Insight): Promise<ResolutionResult> {
   
   try {
     const config = parseTextConfig(insight.resolverRef);
-    
+
     // For text resolution, we need actual text input - this would come from user input
     // For automatic resolution, we mark as requiring manual review
     const textResult = await textResolver(insight.canonical, config);
-    
+
     return {
       result: 'INVALID',
-      evidenceMeta: { 
-        error: 'Text resolution requires manual input',
+      evidenceMeta: {
+        error: 'Text resolution not yet implemented',
         expectedText: config.expect,
-        requiresManualReview: true
+        requiresManualReview: true,
+        proposed: textResult.proposed,
+        confidence: textResult.confidence
       },
       decidedBy: 'AGENT'
     };
   } catch (error) {
     return {
       result: 'INVALID',
-      evidenceMeta: { 
-        error: error instanceof Error ? error.message : 'Text resolution failed',
+      evidenceMeta: {
+        error: 'Text resolution not yet implemented',
         requiresManualReview: true
       },
       decidedBy: 'AGENT'

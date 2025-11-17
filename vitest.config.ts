@@ -18,9 +18,11 @@ export default defineConfig({
     ],
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './'),
-      '~/': path.resolve(__dirname, './'),
-    },
+    alias: [
+      { find: /^@\/lib/, replacement: path.resolve(__dirname, './src/lib') },
+      { find: /^@\/app/, replacement: path.resolve(__dirname, './app') },
+      { find: '@', replacement: path.resolve(__dirname, './') },
+      { find: '~/', replacement: path.resolve(__dirname, './') },
+    ],
   },
 });

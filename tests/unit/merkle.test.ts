@@ -56,6 +56,8 @@ describe('Merkle Tree', () => {
       
       expect(Array.isArray(proof)).toBe(true);
       expect(proof.length).toBeGreaterThan(0);
+      expect(proof[0]).toHaveProperty('hash');
+      expect(['left', 'right']).toContain(proof[0].position);
     });
 
     it('should verify valid proof', () => {

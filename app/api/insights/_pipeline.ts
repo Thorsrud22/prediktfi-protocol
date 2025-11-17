@@ -1,7 +1,7 @@
 import { InsightRequest, InsightResponse, PipelineContext } from './_schemas';
 import { fetchMultipleMarketData, getNewsData } from './_sources';
 import { computeIndicators } from './_indicators';
-import { trackServer } from '@/lib/analytics';
+import { trackServer } from '../../lib/analytics';
 
 // Helper function to simulate realistic processing delays
 function simulateDelay(minMs: number, maxMs: number): Promise<void> {

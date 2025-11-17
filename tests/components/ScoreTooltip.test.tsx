@@ -1,8 +1,8 @@
 import React from 'react';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import ScoreTooltip from '../../app/components/ScoreTooltip';
-import { expect } from 'chai';
 
 describe('ScoreTooltip', () => {
   const defaultProps = {

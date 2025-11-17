@@ -11,19 +11,6 @@ export async function GET(
     // Mock external markets that match the expected types
     const mockExternalMarkets: ExternalMarket[] = [
       {
-        platform: 'POLYMARKET',
-        marketId: 'btc-100k-2024',
-        question: 'Will Bitcoin reach $100,000 by end of 2024?',
-        yesPrice: 0.73,
-        noPrice: 0.27,
-        volume: 1250000,
-        liquidity: 85000,
-        endDate: '2024-12-31T23:59:59Z',
-        active: true,
-        url: 'https://polymarket.com/market/btc-100k-2024',
-        lastUpdated: new Date().toISOString()
-      },
-      {
         platform: 'KALSHI',
         marketId: 'eth-5k-q1-2025',
         question: 'Will Ethereum price exceed $5,000 in Q1 2025?',
@@ -34,6 +21,19 @@ export async function GET(
         endDate: '2025-03-31T23:59:59Z',
         active: true,
         url: 'https://kalshi.com/market/eth-5k-q1-2025',
+        lastUpdated: new Date().toISOString()
+      },
+      {
+        platform: 'KALSHI',
+        marketId: 'btc-hold-rate-2024',
+        question: 'Will the Fed hold rates through Q4?',
+        yesPrice: 0.56,
+        noPrice: 0.44,
+        volume: 310000,
+        liquidity: 18000,
+        endDate: '2024-12-31T23:59:59Z',
+        active: true,
+        url: 'https://kalshi.com',
         lastUpdated: new Date().toISOString()
       }
     ];

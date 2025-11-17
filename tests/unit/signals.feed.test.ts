@@ -84,7 +84,7 @@ describe('Market Signals Feed', () => {
         expect(signal).toHaveProperty('type');
         expect(signal).toHaveProperty('label');
         expect(signal).toHaveProperty('ts');
-        expect(['polymarket', 'fear_greed', 'trend', 'funding', 'sentiment']).toContain(signal.type);
+        expect(['fear_greed', 'trend', 'funding', 'sentiment']).toContain(signal.type);
       }
     });
 
@@ -147,17 +147,6 @@ describe('Market Signals Feed', () => {
         expect(fearGreedSignal.value).toBeTypeOf('number');
         expect(fearGreedSignal.value).toBeGreaterThanOrEqual(0);
         expect(fearGreedSignal.value).toBeLessThanOrEqual(100);
-      }
-    });
-
-    it('should include polymarket signals with probability', async () => {
-      const result = await getMarketSignals();
-      
-      const polymarketSignal = result.items.find(s => s.type === 'polymarket');
-      if (polymarketSignal) {
-        expect(polymarketSignal.prob).toBeTypeOf('number');
-        expect(polymarketSignal.prob).toBeGreaterThanOrEqual(0);
-        expect(polymarketSignal.prob).toBeLessThanOrEqual(1);
       }
     });
 

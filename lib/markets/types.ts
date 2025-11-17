@@ -1,10 +1,10 @@
 /**
  * Types for External Market Integration
- * Supports Polymarket and Kalshi integration
+ * Currently supports Kalshi integration
  */
 
 export interface ExternalMarket {
-  platform: 'POLYMARKET' | 'KALSHI';
+  platform: 'KALSHI';
   marketId: string;
   question: string;
   yesPrice: number;      // Current price for YES outcome (0-1)
@@ -28,20 +28,6 @@ export interface MarketSyncResult {
   updatedMarkets: number;
   errors: string[];
   lastSync: string;
-}
-
-export interface PolymarketMarket {
-  id: string;
-  question: string;
-  outcomes: Array<{
-    name: string;
-    price: string;
-  }>;
-  volume: string;
-  liquidity: string;
-  end_date_iso: string;
-  active: boolean;
-  slug: string;
 }
 
 export interface KalshiMarket {

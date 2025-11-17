@@ -15,8 +15,8 @@ describe('Technical Indicators', () => {
   describe('calculateSMA', () => {
     it('should calculate simple moving average correctly', () => {
       const sma5 = calculateSMA(samplePrices, 5);
-      // Last 5 prices: [105, 104, 106, 108, 107] = average 106
-      expect(sma5).toBeCloseTo(106, 1); // Average of last 5 prices
+      // Last 5 prices: [104, 106, 108, 107, 109] = average 106.8
+      expect(sma5).toBeCloseTo(106.8, 1); // Average of last 5 prices
     });
 
     it('should handle insufficient data', () => {

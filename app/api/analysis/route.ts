@@ -16,7 +16,15 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (err) {
+      return NextResponse.json(
+        { error: 'Invalid JSON' },
+        { status: 400 }
+      );
+    }
     const { assetId, vsCurrency, horizon } = body;
 
     // Basic validation

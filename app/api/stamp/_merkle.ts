@@ -50,12 +50,12 @@ export class MerkleTree {
     return lastLevel[0];
   }
   
-  getProof(index: number): string[] {
+  getProof(index: number): { hash: string; position: 'left' | 'right' }[] {
     if (index >= this.leaves.length) {
       throw new Error('Index out of bounds');
     }
     
-    const proof: string[] = [];
+    const proof: { hash: string; position: 'left' | 'right' }[] = [];
     let currentIndex = index;
     
     for (let level = 0; level < this.tree.length - 1; level++) {
@@ -64,7 +64,10 @@ export class MerkleTree {
       const siblingIndex = isRightNode ? currentIndex - 1 : currentIndex + 1;
       
       if (siblingIndex < currentLevel.length) {
-        proof.push(currentLevel[siblingIndex]);
+        proof.push({
+          hash: currentLevel[siblingIndex],
+          position: isRightNode ? 'left' : 'right'
+        });
       }
       
       currentIndex = Math.floor(currentIndex / 2);
@@ -73,13 +76,13 @@ export class MerkleTree {
     return proof;
   }
   
-  static verify(leaf: string, proof: string[], root: string): boolean {
+  static verify(leaf: string, proof: { hash: string; position: 'left' | 'right' }[], root: string): boolean {
     let currentHash = crypto.createHash('sha256').update(leaf).digest('hex');
     
-    for (const proofElement of proof) {
-      const combined = currentHash <= proofElement 
-        ? currentHash + proofElement 
-        : proofElement + currentHash;
+    for (const { hash: siblingHash, position } of proof) {
+      const combined = position === 'left'
+        ? siblingHash + currentHash
+        : currentHash + siblingHash;
       currentHash = crypto.createHash('sha256').update(combined).digest('hex');
     }
     

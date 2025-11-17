@@ -8,6 +8,7 @@ vi.mock("@solana/web3.js", () => ({
   Connection: vi.fn().mockImplementation(() => ({
     getParsedTransaction: mockGetParsedTransaction,
     getTransaction: mockGetTransaction,
+    getSignatureStatus: vi.fn().mockResolvedValue({ value: { confirmationStatus: "confirmed" } }),
   })),
   PublicKey: vi.fn().mockImplementation((key) => ({
     toBase58: () => key,
@@ -32,6 +33,8 @@ const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 // Mock environment variables
 vi.stubEnv("NEXT_PUBLIC_TREASURY", TREASURY_KEY);
 vi.stubEnv("NEXT_PUBLIC_CLUSTER", "devnet");
+vi.stubEnv("SOLANA_TREASURY", TREASURY_KEY);
+vi.stubEnv("SOLANA_RPC_URL", "https://api.devnet.solana.com");
 
 describe("API verification logic", () => {
   beforeEach(() => {
@@ -245,186 +248,13 @@ describe("Insights API verification", () => {
     vi.clearAllMocks();
   });
 
-  test("should verify valid insight transaction", async () => {
-    const insightMemo = {
-      kind: "insight",
-      topic: "crypto",
-      question: "Will Bitcoin reach 150k USD?",
-      horizon: "12months",
-      prob: 0.75,
-      drivers: ["Market sentiment", "Technical indicators"],
-      rationale: "Strong bullish indicators",
-      model: "baseline-v0",
-      scenarioId: "crypto-btc-150k-12m",
-      ts: "2025-09-02T18:43:57.023Z"
-    };
-
-    const mockTx = {
-      slot: 12345,
-      transaction: {
-        message: {
-          staticAccountKeys: [
-            { toBase58: () => "userWallet123" },
-            { toBase58: () => "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr", equals: (other: any) => other.toBase58() === "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr" },
-          ],
-          compiledInstructions: [
-            {
-              programIdIndex: 1,
-              data: Buffer.from(JSON.stringify(insightMemo)),
-            },
-          ],
-        },
-      },
-    };
-
-    mockGetTransaction.mockResolvedValue(mockTx);
-
+  test("GET endpoint is deprecated", async () => {
     const { GET } = await import("../../app/api/insights/route");
     const request = new NextRequest("http://localhost:3000/api/insights?sig=mockSig123");
-
     const response = await GET(request);
     const data = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(data.ok).toBe(true);
-    expect(data.signature).toBe("mockSig123");
-    expect(data.memo.kind).toBe("insight");
-    expect(data.memo.prob).toBe(0.75);
-    expect(data.slot).toBe(12345);
-  });
-
-  test("should reject transaction without memo instruction", async () => {
-    const mockTx = {
-      slot: 12345,
-      transaction: {
-        message: {
-          staticAccountKeys: [
-            { toBase58: () => "userWallet123" },
-            { toBase58: () => "SystemProgram", equals: (other: any) => other.toBase58() === "SystemProgram" },
-          ],
-          compiledInstructions: [
-            {
-              programIdIndex: 1,
-              data: Buffer.from("not memo"),
-            },
-          ],
-        },
-      },
-    };
-
-    mockGetTransaction.mockResolvedValue(mockTx);
-
-    const { GET } = await import("../../app/api/insights/route");
-    const request = new NextRequest("http://localhost:3000/api/insights?sig=mockSig123");
-
-    const response = await GET(request);
-    const data = await response.json();
-
-    expect(response.status).toBe(422);
-    expect(data.error).toBe("No memo instruction found");
-  });
-
-  test("should reject memo without insight kind", async () => {
-    const wrongMemo = {
-      kind: "bet", // Wrong kind
-      marketId: "test-market",
-      amount: 0.1,
-    };
-
-    const mockTx = {
-      slot: 12345,
-      transaction: {
-        message: {
-          staticAccountKeys: [
-            { toBase58: () => "userWallet123" },
-            { toBase58: () => "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr", equals: (other: any) => other.toBase58() === "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr" },
-          ],
-          compiledInstructions: [
-            {
-              programIdIndex: 1,
-              data: Buffer.from(JSON.stringify(wrongMemo)),
-            },
-          ],
-        },
-      },
-    };
-
-    mockGetTransaction.mockResolvedValue(mockTx);
-
-    const { GET } = await import("../../app/api/insights/route");
-    const request = new NextRequest("http://localhost:3000/api/insights?sig=mockSig123");
-
-    const response = await GET(request);
-    const data = await response.json();
-
-    expect(response.status).toBe(422);
-    expect(data.error).toBe("Memo does not contain insight data");
-  });
-
-  test("should reject request without signature", async () => {
-    const { GET } = await import("../../app/api/insights/route");
-    const request = new NextRequest("http://localhost:3000/api/insights"); // No sig param
-
-    const response = await GET(request);
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toBe("Missing signature parameter");
-  });
-
-  test("should enforce rate limiting", async () => {
-    const insightMemo = {
-      kind: "insight",
-      topic: "crypto",
-      question: "Test question",
-      horizon: "1year",
-      prob: 0.5,
-      drivers: ["Test"],
-      rationale: "Test rationale",
-      model: "mock-v0",
-      scenarioId: "test-scenario",
-      ts: "2025-09-02T18:43:57.023Z"
-    };
-
-    const mockTx = {
-      slot: 12345,
-      transaction: {
-        message: {
-          staticAccountKeys: [
-            { toBase58: () => "userWallet123" },
-            { toBase58: () => "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr", equals: (other: any) => other.toBase58() === "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr" },
-          ],
-          compiledInstructions: [
-            {
-              programIdIndex: 1,
-              data: Buffer.from(JSON.stringify(insightMemo)),
-            },
-          ],
-        },
-      },
-    };
-
-    mockGetTransaction.mockResolvedValue(mockTx);
-
-    const { GET } = await import("../../app/api/insights/route");
-
-    // Make 5 successful requests
-    for (let i = 0; i < 5; i++) {
-      const request = new NextRequest("http://localhost:3000/api/insights?sig=rateLimitSig", {
-        headers: { "x-forwarded-for": "192.168.1.1" }
-      });
-      const response = await GET(request);
-      expect(response.status).toBe(200);
-    }
-
-    // 6th request should be rate limited
-    const request = new NextRequest("http://localhost:3000/api/insights?sig=rateLimitSig", {
-      headers: { "x-forwarded-for": "192.168.1.1" }
-    });
-    const response = await GET(request);
-    const data = await response.json();
-
-    expect(response.status).toBe(429);
-    expect(data.error).toBe("Rate limit exceeded");
+    expect(response.status).toBe(405);
+    expect(data.error).toBe("Method not supported in E8.1");
   });
 });

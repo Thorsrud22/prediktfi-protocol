@@ -1,15 +1,15 @@
 # 🚀 Market Integration Guide
 
+> Note: Polymarket integration is currently paused/removed. Keep the references below for future re-enablement; Kalshi details remain valid.
+
 ## Overview
-PrediktFi now supports real-time integration with external prediction markets including Polymarket and Kalshi. This provides users with access to live market data and the ability to connect their predictions to real trading markets.
+PrediktFi supports real-time integration with external prediction markets. Polymarket integration is currently disabled; Kalshi integration remains available for live data.
 
 ## Features Implemented
 
-### ✅ **Polymarket Integration**
-- Real API integration with fallback to mock data
-- Market search and matching
-- Price and volume data
-- Automatic market discovery
+### ⏸️ **Polymarket Integration (paused)**
+- Integration code removed for now (mock-only reference)
+- Keep these notes for future reactivation
 
 ### ✅ **Kalshi Integration** 
 - Real API integration with fallback to mock data
