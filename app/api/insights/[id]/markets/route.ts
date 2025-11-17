@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { MarketMatchScore, ExternalMarket } from '../../../../lib/markets/types';
 
 export async function GET(
-  _request: Request,
-  context: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
-  const { id } = context.params;
+  const { id } = params;
 
   try {
     // Mock external markets that match the expected types
