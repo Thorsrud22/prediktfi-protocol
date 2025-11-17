@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest, RequestContext } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { MarketMatchScore, ExternalMarket } from '../../../../lib/markets/types';
 
 export async function GET(
   _request: NextRequest,
-  context: RequestContext<{ id: string }>
+  context: { params: { id: string } }
 ) {
   const { id } = context.params;
 
