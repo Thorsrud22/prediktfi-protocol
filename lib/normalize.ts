@@ -45,8 +45,16 @@ export function normalizePrediction(
     resolverConfig = {}
   } = options;
 
+  const safeQuestion = typeof question === 'string' ? question : '';
+  const safeDeadline = (() => {
+    const candidate = deadline instanceof Date ? deadline : new Date(deadline ?? Date.now());
+    return isNaN(candidate.getTime())
+      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      : candidate;
+  })();
+
   // Extract canonical components from question
-  const canonical = extractCanonical(question, deadline);
+  const canonical = extractCanonical(safeQuestion, safeDeadline);
   
   // Generate resolver reference
   const resolverRef = generateResolverRef(resolverKind, resolverConfig, canonical);
@@ -54,7 +62,7 @@ export function normalizePrediction(
   return {
     canonical,
     p,
-    deadline,
+    deadline: safeDeadline,
     resolverKind,
     resolverRef
   };
@@ -64,7 +72,7 @@ export function normalizePrediction(
  * Extract canonical form from natural language question
  */
 function extractCanonical(question: string, deadline: Date): string {
-  const q = question.toLowerCase().trim();
+  const q = (question || '').toLowerCase().trim();
   const deadlineStr = deadline.toISOString().split('T')[0]; // YYYY-MM-DD format
 
   // Price prediction patterns
@@ -109,6 +117,10 @@ function extractCanonical(question: string, deadline: Date): string {
     .replace(/\s+/g, ' ')
     .trim()
     .substring(0, 100); // Limit length
+
+  if (!cleanQuestion) {
+    return '"prediction" resolves true on ' + deadlineStr;
+  }
     
   return `"${cleanQuestion}" resolves true on ${deadlineStr}`;
 }
@@ -165,6 +177,7 @@ function generateResolverRef(
         throw new Error('Unable to extract price configuration');
       }
       return JSON.stringify({
+        ...priceConfig,
         asset: priceConfig.asset,
         source: priceConfig.source,
         field: priceConfig.field

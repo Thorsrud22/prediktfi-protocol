@@ -102,6 +102,20 @@ export async function resolveTextInsight(
       };
     }
     
+    if (!config.expect || config.expect.trim().length === 0) {
+      return {
+        proposed: null,
+        confidence: 0,
+        evidence: {
+          expectedText: config.expect,
+          actualText: textToCheck,
+          matchType: 'none',
+          timestamp: new Date().toISOString()
+        },
+        reasoning: 'No meaningful keywords found in expected text'
+      };
+    }
+
     const normalizedExpected = normalizeText(config.expect, config.caseSensitive);
     const normalizedActual = normalizeText(textToCheck, config.caseSensitive);
     
@@ -132,6 +146,13 @@ export async function resolveTextInsight(
       matchType = 'exact';
       reasoning = `Exact substring match found: "${config.expect}"`;
     }
+    // Case-sensitive paths should not fall back to keyword matching if no substring match
+    else if (config.caseSensitive) {
+      proposed = 'NO';
+      confidence = 0.2;
+      matchType = 'none';
+      reasoning = 'Case-sensitive comparison failed to find a match';
+    }
     // Partial match (expected text contains actual text)
     else if (normalizedExpected.includes(normalizedActual) && normalizedActual.length > 3) {
       proposed = 'YES';
@@ -158,6 +179,7 @@ export async function resolveTextInsight(
       } else if (confidence > 0) {
         proposed = null; // Ambiguous
         matchType = 'keyword';
+        confidence = Math.min(confidence, 0.25);
         reasoning = `Low keyword match (${Math.round(confidence * 100)}%) - manual review recommended`;
       } else {
         proposed = 'NO';
@@ -188,6 +210,9 @@ export async function resolveTextInsight(
       matchedKeywords = keywordResult.matchedKeywords;
       confidence = keywordResult.confidence;
       
+      const negativeSignals = ['fail', 'failed', 'cancel', 'cancelled', 'cancelled', 'bad', 'worse', 'decline'];
+      const hasNegative = actualKeywords.some(word => negativeSignals.some(neg => word.includes(neg)));
+
       if (confidence >= 0.7) {
         proposed = 'YES';
         matchType = 'keyword';
@@ -196,10 +221,18 @@ export async function resolveTextInsight(
         proposed = null; // Ambiguous
         matchType = 'keyword';
         reasoning = `Moderate keyword match (${Math.round(confidence * 100)}%) - manual review recommended`;
-      } else if (confidence > 0.1) {
-        proposed = 'NO';
-        matchType = 'none';
-        reasoning = `Weak keyword match (${Math.round(confidence * 100)}%)`;
+      } else if (confidence > 0) {
+        if (hasNegative) {
+          proposed = 'NO';
+          confidence = Math.min(confidence, 0.25);
+          matchType = 'none';
+          reasoning = `Weak keyword match (${Math.round(confidence * 100)}%) with negative signals`;
+        } else {
+          proposed = null;
+          confidence = Math.min(confidence, 0.25);
+          matchType = 'keyword';
+          reasoning = `Weak keyword match (${Math.round(confidence * 100)}%) - manual review recommended`;
+        }
       } else {
         proposed = 'NO';
         matchType = 'none';

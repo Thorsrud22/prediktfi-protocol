@@ -48,6 +48,15 @@ export function createMemoPayload(
   return payload;
 }
 
+function compactPredictionId(predictionId: string, hash: string): string {
+  const trimmed = predictionId.trim();
+  const suffix = hash.slice(0, 8);
+
+  if (trimmed.length <= 48) return trimmed;
+
+  return `${trimmed.slice(0, 40)}-${suffix}`;
+}
+
 /**
  * Serialize memo payload to JSON string
  */
@@ -122,22 +131,39 @@ export function generateSolanaMemo(
   hash: string;
   size: number;
 } {
-  const payload = createMemoPayload(
+  if (predictionId.length > 180) {
+    throw new Error(`Memo payload too large: predictionId length ${predictionId.length} exceeds limit`);
+  }
+
+  const deadlineISO = deadline.toISOString();
+  const fullHash = generatePredictionHash(canonical, deadlineISO, resolverRef);
+
+  let payload = createMemoPayload(
     predictionId,
     canonical,
     deadline,
     resolverRef
   );
-  
-  const serialized = serializeMemoPayload(payload);
-  const fullHash = generatePredictionHash(canonical, deadline.toISOString(), resolverRef);
-  const size = getMemoSize(payload);
-  
-  // Validate size constraint
+
+  let serialized = serializeMemoPayload(payload);
+  let size = getMemoSize(payload);
+
+  if (size > 180) {
+    payload = { ...payload, pid: compactPredictionId(predictionId, fullHash) };
+    serialized = serializeMemoPayload(payload);
+    size = getMemoSize(payload);
+  }
+
+  while (size > 180 && payload.pid.length > 8) {
+    payload = { ...payload, pid: payload.pid.slice(0, Math.max(8, payload.pid.length - 8)) };
+    serialized = serializeMemoPayload(payload);
+    size = getMemoSize(payload);
+  }
+
   if (size > 180) {
     throw new Error(`Memo payload too large: ${size} bytes (max 180)`);
   }
-  
+
   return {
     payload,
     serialized,
