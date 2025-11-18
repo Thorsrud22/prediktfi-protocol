@@ -3,13 +3,27 @@ import React from 'react'
 import Link from 'next/link'
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider'
 import { useRouter } from 'next/navigation'
+import Aurora from '../components/ui/Aurora'
 
 export default function PricingPage() {
   const { isConnected, publicKey } = useSimplifiedWallet()
   const router = useRouter()
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-5xl px-6 py-16">
+    <div className="relative min-h-screen bg-slate-950 text-slate-100">
+      {/* Aurora Background - Subtle Variant */}
+      <Aurora 
+        colorStops={['#6366f1', '#8b5cf6', '#d946ef']} // Indigo to purple gradient
+        amplitude={0.9}
+        blend={0.5}
+        speed={0.6}
+        variant="subtle"
+        className="fixed inset-0 -z-10"
+      />
+      
+      {/* Subtle gradient overlay */}
+      <div className="fixed inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/70 to-slate-950/90 -z-[9]" />
+      
+      <div className="relative z-10 mx-auto max-w-5xl px-6 py-16">
         <p className="text-center text-sm text-slate-400">
           No credit card required • Cancel anytime
         </p>

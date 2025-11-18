@@ -4,7 +4,6 @@
  */
 
 import { ExternalMarket, MarketMatchScore } from './types';
-import { polymarketClient } from './polymarket';
 import { kalshiClient } from './kalshi';
 
 export class MarketMatcher {
@@ -15,29 +14,12 @@ export class MarketMatcher {
     const matches: MarketMatchScore[] = [];
 
     try {
-      // Search both Polymarket and Kalshi in parallel
-      const [polyResults, kalshiResults] = await Promise.allSettled([
-        polymarketClient.searchMarkets(insight.question, 5),
-        kalshiClient.searchMarkets(insight.question, 5)
-      ]);
+      const kalshiResults = await kalshiClient.searchMarkets(insight.question, 5);
 
-      // Process Polymarket results
-      if (polyResults.status === 'fulfilled') {
-        for (const market of polyResults.value.markets) {
-          const score = this.calculateSimilarity(insight, market);
-          if (score.similarity > 0.3) { // Only include decent matches
-            matches.push(score);
-          }
-        }
-      }
-
-      // Process Kalshi results
-      if (kalshiResults.status === 'fulfilled') {
-        for (const market of kalshiResults.value.markets) {
-          const score = this.calculateSimilarity(insight, market);
-          if (score.similarity > 0.3) { // Only include decent matches
-            matches.push(score);
-          }
+      for (const market of kalshiResults.markets) {
+        const score = this.calculateSimilarity(insight, market);
+        if (score.similarity > 0.3) { // Only include decent matches
+          matches.push(score);
         }
       }
 

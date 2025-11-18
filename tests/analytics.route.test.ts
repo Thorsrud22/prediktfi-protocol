@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-
-const API_URL = process.env.VITEST_API_URL || 'http://localhost:3000';
+import { NextRequest } from 'next/server';
+import { POST, GET } from '../app/api/analytics/route';
 
 describe('/api/analytics', () => {
   it('returns 204 for valid analytics event', async () => {
-    const response = await fetch(`${API_URL}/api/analytics`, {
+    const req = new NextRequest('http://localhost:3000/api/analytics', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -15,11 +15,13 @@ describe('/api/analytics', () => {
       }),
     });
 
+    const response = await POST(req);
+
     expect(response.status).toBe(204);
   });
 
   it('returns 204 even for malformed requests', async () => {
-    const response = await fetch(`${API_URL}/api/analytics`, {
+    const req = new NextRequest('http://localhost:3000/api/analytics', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,13 +31,14 @@ describe('/api/analytics', () => {
       }),
     });
 
+    const response = await POST(req);
+
     expect(response.status).toBe(204);
   });
 
   it('returns 204 for GET requests (graceful handling)', async () => {
-    const response = await fetch(`${API_URL}/api/analytics`, {
-      method: 'GET',
-    });
+    const req = new NextRequest('http://localhost:3000/api/analytics', { method: 'GET' });
+    const response = await GET(req);
 
     expect(response.status).toBe(204);
   });

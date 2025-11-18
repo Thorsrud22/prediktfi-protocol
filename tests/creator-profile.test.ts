@@ -27,12 +27,12 @@ describe('Creator Profile API', () => {
       
       expect(response.status).toBe(400);
       const data = await response.json();
-      expect(data.error).toBe('Invalid query parameters');
+      expect(data.error).toBe('Period must be 30d or 90d');
     });
 
     it('should return 404 for non-existent creator', async () => {
       const request = new NextRequest('http://localhost:3000/api/public/creators/non-existent/history');
-      const response = await getHistory(request, { params: Promise.resolve({ id: 'non-existent') });
+      const response = await getHistory(request, { params: Promise.resolve({ id: 'non-existent' }) });
       
       expect(response.status).toBe(404);
       const data = await response.json();
@@ -80,7 +80,7 @@ describe('Creator Profile API', () => {
   describe('GET /api/public/creators/[id]/score', () => {
     it('should return 404 for non-existent creator', async () => {
       const request = new NextRequest('http://localhost:3000/api/public/creators/non-existent/score');
-      const response = await getScore(request, { params: Promise.resolve({ id: 'non-existent') });
+      const response = await getScore(request, { params: Promise.resolve({ id: 'non-existent' }) });
       
       expect(response.status).toBe(404);
       const data = await response.json();

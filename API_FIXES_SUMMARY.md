@@ -11,10 +11,10 @@ The application was experiencing HTTP 401 and "Failed to fetch" errors due to **
    - ❌ Wrong: `https://api.binance.com/api/v3/premiumIndex`
    - ✅ Fixed: `https://fapi.binance.com/fapi/v1/premiumIndex`
 
-2. **Polymarket API domain doesn't exist**
+2. **Polymarket integration deprioritized**
 
-   - ❌ Wrong: `https://api.polymarket.com/markets`
-   - ✅ Fixed: Now uses mock data when no custom URL is provided
+   - ❌ Issue: External API/domain was unreliable for our use case
+   - ✅ Fixed: Polymarket adapter removed; integration paused until needed
 
 3. **TypeScript errors with ETag handling**
    - ❌ Issue: `string | null` not assignable to `string | undefined`
@@ -28,13 +28,7 @@ The application was experiencing HTTP 401 and "Failed to fetch" errors due to **
 - Updated data parsing to handle single object instead of array
 - Fixed TypeScript ETag errors
 
-### 2. `/src/lib/adapters/polymarket.ts`
-
-- Added graceful fallback to mock data when no custom API URL is set
-- Fixed TypeScript ETag errors
-- Prevents 404/DNS errors from non-existent domain
-
-### 3. `/src/lib/adapters/fearGreed.ts`
+### 2. `/src/lib/adapters/fearGreed.ts`
 
 - Fixed TypeScript ETag errors
 - This API was already working correctly
@@ -45,7 +39,6 @@ The application was experiencing HTTP 401 and "Failed to fetch" errors due to **
 
 - **Fear & Greed API**: ✅ Working (no authentication required)
 - **Binance Funding API**: ✅ Working (fixed URL)
-- **Polymarket API**: ✅ Graceful fallback (uses mock data)
 
 ### Before Fixes:
 
@@ -78,8 +71,6 @@ The errors should now be resolved. If you continue to see issues:
 
 3. **Check browser console** - errors should be gone
 
-4. **For custom Polymarket API**: Set `NEXT_PUBLIC_PM_BASE` environment variable if you have access to a working Polymarket API
-
 ## 📝 Environment Variables (Optional)
 
 You can override the default APIs by setting these environment variables in `.env.local`:
@@ -90,13 +81,10 @@ NEXT_PUBLIC_FGI_BASE=https://api.alternative.me/fng/
 
 # Custom Funding API (optional)
 NEXT_PUBLIC_FUNDING_BASE=https://fapi.binance.com/fapi/v1/premiumIndex
-
-# Custom Polymarket API (optional)
-NEXT_PUBLIC_PM_BASE=https://your-polymarket-api.com/markets
 ```
 
 ## 🎯 Summary
 
-**The main issue was incorrect external API URLs causing 401/404 errors.** All external API calls have been fixed and now include proper error handling and graceful fallbacks.
+**The main issue was incorrect external API URLs causing 401/404 errors.** All active external API calls have been fixed and now include proper error handling and graceful fallbacks. Polymarket integration is currently disabled.
 
 The application should now load without the fetch errors you were experiencing! 🎉

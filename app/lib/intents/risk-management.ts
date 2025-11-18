@@ -195,7 +195,16 @@ export async function updateLossCaps(
     data: {
       dailyLossUsd: { increment: lossUsd },
       currentLossPct: {
-        increment: (lossUsd / portfolio.holdings.find(h => h.symbol === asset)?.valueUsd || 1) * 100
+        increment: (() => {
+          const holding = portfolio.holdings.find(h => h.symbol === asset);
+          const denominator = holding?.valueUsd ?? 0;
+
+          if (denominator <= 0) {
+            return 100;
+          }
+
+          return (lossUsd / denominator) * 100;
+        })()
       }
     }
   });

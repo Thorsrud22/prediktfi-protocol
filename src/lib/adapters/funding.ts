@@ -90,24 +90,22 @@ export async function fetchFunding(ctx: AdapterCtx): Promise<AdapterResult> {
       ctx.etagStore.set('funding', etag);
     }
 
-    // Normalize to our format
-    const items = [];
-    if (data && data.symbol) {
-      const symbol = data.symbol?.replace('USDT', '') || 'BTC';
-      const fundingRate = parseFloat(data.lastFundingRate) || 0;
-
-      // Convert funding rate to probability and direction
-      const absRate = Math.abs(fundingRate);
-      const direction = fundingRate > 0.0001 ? 'up' : fundingRate < -0.0001 ? 'down' : 'neutral';
+    const payload = Array.isArray(data) ? data : data ? [data] : [];
+    const items = payload.slice(0, 3).map(entry => {
+      const symbol = entry?.symbol?.replace('USDT', '') || 'BTC';
+      const rawRate = parseFloat(entry?.lastFundingRate);
+      const fundingRate = Number.isFinite(rawRate) ? rawRate : 0;
+      const direction: AdapterResult['items'][number]['direction'] =
+        fundingRate > 0.0001 ? 'up' : fundingRate < -0.0001 ? 'down' : 'neutral';
       const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
 
-      items.push({
+      return {
         type: 'funding' as const,
         label: `${symbol} funding ${arrow}`,
-        direction: direction as 'up' | 'down' | 'neutral',
+        direction,
         ts: ctx.now.toISOString(),
-      });
-    }
+      };
+    });
 
     ctx.telemetry.end('funding', { ok: true, timedOut: false, elapsedMs });
 

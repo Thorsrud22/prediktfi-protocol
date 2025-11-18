@@ -183,8 +183,8 @@ export function useWalletAuth() {
       const { nonce } = await nonceResponse.json();
       console.log('Step 1 complete: Received nonce:', nonce);
 
-      // Small delay to ensure nonce is properly stored
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Longer delay to ensure nonce is properly stored (especially important in dev)
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Step 2: Sign message
       console.log('Step 2: Signing message with wallet adapter');
@@ -219,6 +219,14 @@ export function useWalletAuth() {
       if (!verifyResponse.ok) {
         const error = await verifyResponse.json();
         console.error('Verification failed:', verifyResponse.status, error);
+        
+        // If nonce expired or invalid, try to re-authenticate once
+        if (verifyResponse.status === 401 && error.error?.includes('nonce')) {
+          console.log('Nonce issue detected, clearing cache and will retry on next attempt...');
+          localStorage.removeItem(cacheKey);
+          throw new Error('Session expired. Please try connecting again.');
+        }
+        
         throw new Error(error.error || 'Authentication failed');
       }
       console.log('Step 3 complete: Signature verified');

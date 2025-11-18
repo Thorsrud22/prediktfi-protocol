@@ -7,6 +7,12 @@ const nextConfig = {
   // Performance: External packages that should not be bundled
   serverExternalPackages: ['@solana/web3.js', '@coral-xyz/anchor'],
 
+  // Reactivity optimizations (experimental)
+  reactStrictMode: true,
+  
+  // Faster production builds with SWC minifier
+  swcMinify: true,
+
   // Performance optimizations
   webpack: (config, { dev, isServer }) => {
     if (dev) {
@@ -91,6 +97,18 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     optimizePackageImports: ['lucide-react', '@heroicons/react'],
+    // Enable React Server Components optimizations
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
+
+  // Aggressive prefetching and caching
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [16, 32, 48, 64, 96],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
 
   // Turbopack configuration
@@ -98,6 +116,30 @@ const nextConfig = {
     rules: {
       '*.svg': ['@svgr/webpack'],
     },
+  },
+
+  // Headers for aggressive caching
+  async headers() {
+    return [
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
   },
 };
 

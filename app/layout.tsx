@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import "../src/styles/design-tokens.css";
 import "@solana/wallet-adapter-react-ui/styles.css";
-import Navbar from "./components/Navbar";
+import AppPillNav from "./components/AppPillNav";
 import Footer from "./components/Footer";
 import SimplifiedWalletProvider from "./components/wallet/SimplifiedWalletProvider";
 import ToastProvider from "./components/ToastProvider";
@@ -15,6 +15,7 @@ import DebugProvider from "./providers/DebugProvider";
 import DebugOverlay from "./components/dev/DebugOverlay";
 import IntentStorageGuard from "./components/IntentStorageGuard";
 import AuthGuard from "./components/AuthGuard";
+import RoutePreloader from "./components/RoutePreloader";
 import { SITE } from "./config/site";
 import { getPlanFromRequest } from "./lib/plan";
 import { headers } from "next/headers";
@@ -27,6 +28,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const isProduction = process.env.NODE_ENV === 'production' && process.env.SOLANA_CLUSTER !== 'devnet';
@@ -206,15 +213,16 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-[#0F172A] text-slate-100`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased min-h-screen bg-[#0F172A] text-slate-100`}>
         <IntentStorageGuard />
         <AuthGuard>
           <SimplifiedWalletProvider>
             <ClientErrorBoundary>
               <ToastProvider>
                 <ConsentGate />
-                <Navbar />
-                <main className="flex min-h-screen flex-col">
+                <RoutePreloader />
+                <AppPillNav />
+                <main className="flex min-h-screen flex-col pt-24">
                   {children}
                 </main>
                 <Footer />

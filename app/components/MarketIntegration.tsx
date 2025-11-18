@@ -40,10 +40,30 @@ export default function MarketIntegration({
       const response = await fetch(`/api/insights/${insightId}/markets`);
       if (response.ok) {
         const data = await response.json();
-        setMarketData(data);
+        // Ensure we have the expected structure with fallbacks
+        const normalizedData: MarketData = {
+          suggestedMarkets: data.suggestedMarkets || [],
+          connectedMarkets: data.connectedMarkets || [],
+          tradingEnabled: data.tradingEnabled ?? true
+        };
+        setMarketData(normalizedData);
+      } else {
+        console.error('Failed to load market data: HTTP', response.status);
+        // Set empty data structure on error
+        setMarketData({
+          suggestedMarkets: [],
+          connectedMarkets: [],
+          tradingEnabled: false
+        });
       }
     } catch (error) {
       console.error('Failed to load market data:', error);
+      // Set empty data structure on error
+      setMarketData({
+        suggestedMarkets: [],
+        connectedMarkets: [],
+        tradingEnabled: false
+      });
     } finally {
       setLoading(false);
     }
@@ -86,7 +106,17 @@ export default function MarketIntegration({
     );
   }
 
-  if (!marketData || marketData.suggestedMarkets.length === 0) {
+  if (!marketData || !marketData.suggestedMarkets) {
+    return (
+      <div className={`p-4 border border-gray-200 rounded-lg ${className}`}>
+        <div className="text-sm text-gray-600">
+          Failed to load market data. Please try again.
+        </div>
+      </div>
+    );
+  }
+
+  if (marketData.suggestedMarkets.length === 0) {
     return (
       <div className={`p-4 border border-gray-100 rounded-lg bg-gray-50 ${className}`}>
         <p className="text-sm text-gray-600">
@@ -99,7 +129,7 @@ export default function MarketIntegration({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Connected Markets */}
-      {marketData.connectedMarkets.length > 0 && (
+      {marketData.connectedMarkets && marketData.connectedMarkets.length > 0 && (
         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
           <h4 className="font-medium text-green-900 mb-2 flex items-center">
             <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
@@ -127,10 +157,10 @@ export default function MarketIntegration({
         </h4>
         {marketData.suggestedMarkets.map((match, index) => (
           <MarketCard
-            key={match.market.marketId}
+            key={match.market?.marketId || `market-${index}`}
             match={match}
             onConnect={connectMarket}
-            isConnecting={connecting === match.market.marketId}
+            isConnecting={connecting === match.market?.marketId}
             ourProbability={probability}
           />
         ))}
@@ -149,8 +179,18 @@ interface MarketCardProps {
 function MarketCard({ match, onConnect, isConnecting, ourProbability }: MarketCardProps) {
   const { market, similarity, reasons } = match;
   
-  // Calculate probability difference
-  const probDiff = Math.abs(ourProbability - market.yesPrice);
+  // Safety checks
+  if (!market) {
+    return (
+      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <div className="text-sm text-gray-500">Invalid market data</div>
+      </div>
+    );
+  }
+  
+  // Calculate probability difference with safe fallback
+  const marketPrice = market.yesPrice || 0;
+  const probDiff = Math.abs(ourProbability - marketPrice);
   const probDiffPercent = (probDiff * 100).toFixed(1);
   
   return (
@@ -159,14 +199,14 @@ function MarketCard({ match, onConnect, isConnecting, ourProbability }: MarketCa
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">
-              {market.platform}
+              {market.platform || 'Unknown'}
             </span>
             <span className="text-xs text-gray-500">
-              {(similarity * 100).toFixed(0)}% match
+              {((similarity || 0) * 100).toFixed(0)}% match
             </span>
           </div>
           <h5 className="font-medium text-gray-900 text-sm leading-tight">
-            {market.question}
+            {market.question || 'No question available'}
           </h5>
         </div>
       </div>
@@ -176,7 +216,7 @@ function MarketCard({ match, onConnect, isConnecting, ourProbability }: MarketCa
         <div>
           <span className="font-medium">Market Price:</span>
           <div className="text-lg font-bold text-gray-900">
-            {(market.yesPrice * 100).toFixed(1)}%
+            {(marketPrice * 100).toFixed(1)}%
           </div>
         </div>
         <div>
@@ -202,7 +242,7 @@ function MarketCard({ match, onConnect, isConnecting, ourProbability }: MarketCa
       {/* Match Reasons */}
       <div className="mb-3">
         <div className="flex flex-wrap gap-1">
-          {reasons.map((reason, index) => (
+          {(reasons || []).map((reason, index) => (
             <span 
               key={index}
               className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
@@ -216,7 +256,7 @@ function MarketCard({ match, onConnect, isConnecting, ourProbability }: MarketCa
       {/* Actions */}
       <div className="flex justify-between items-center">
         <a
-          href={market.url}
+          href={market.url || '#'}
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-blue-600 hover:underline"
@@ -225,8 +265,8 @@ function MarketCard({ match, onConnect, isConnecting, ourProbability }: MarketCa
         </a>
         
         <button
-          onClick={() => onConnect(market.marketId, market.platform)}
-          disabled={isConnecting}
+          onClick={() => onConnect(market.marketId || '', market.platform || '')}
+          disabled={isConnecting || !market.marketId}
           className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
         >
           {isConnecting ? 'Connecting...' : 'Connect Market'}

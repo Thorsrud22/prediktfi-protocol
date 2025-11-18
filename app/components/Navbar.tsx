@@ -3,11 +3,14 @@
 import Link from "next/link";
 import FastLink from "./FastLink";
 import { SITE } from "../config/site";
-import { useEffect, useRef, useState, useCallback, memo, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, memo, useMemo, lazy, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { useIsPro } from "../lib/use-plan";
 import { isFeatureEnabled } from "../lib/flags";
-import SimplifiedConnectButton from "./wallet/SimplifiedConnectButton";
+import { useInstantRouter } from "./InstantRouter";
+
+// Lazy load the wallet component since it's heavy
+const SimplifiedConnectButton = lazy(() => import("./wallet/SimplifiedConnectButton"));
 
 // Extract constants to prevent recreating on each render
 const SCROLL_THRESHOLD = 10;
@@ -20,7 +23,7 @@ const MobileMenu = memo(function MobileMenu({
   pathname, 
   isPro, 
   isInsightPage,
-  panelRef 
+  panelRef
 }: {
   open: boolean;
   onClose: () => void;
@@ -32,9 +35,8 @@ const MobileMenu = memo(function MobileMenu({
   const navigationItems = useMemo(() => [
     { href: "/feed", label: "Feed", primary: true },
     { href: "/studio", label: "Studio", primary: true },
-    ...(isFeatureEnabled('ADVISOR') ? [{ href: "/advisor", label: "Advisor", primary: false }] : []),
-    ...(isFeatureEnabled('ACTIONS') ? [{ href: "/advisor/actions", label: "Actions", primary: false }] : []),
-    { href: "/pricing", label: "Pricing", primary: false },
+    { href: "/leaderboard", label: "Leaderboard", primary: true },
+    { href: "/my-predictions", label: "My Predictions", primary: true },
     { href: "/account", label: "Account", primary: false, showPro: true },
     ...(isPro ? [{ href: "/account/billing", label: "Billing", primary: false }] : []),
   ], [isPro]);
@@ -91,7 +93,13 @@ const MobileMenu = memo(function MobileMenu({
           <div className="space-y-2 mb-4">
             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Wallet</div>
             <div className="w-full">
-              <SimplifiedConnectButton />
+              <Suspense fallback={
+                <button className="w-full px-4 py-2 bg-slate-700 rounded-lg animate-pulse">
+                  <div className="h-5 bg-slate-600 rounded w-24 mx-auto"></div>
+                </button>
+              }>
+                <SimplifiedConnectButton />
+              </Suspense>
             </div>
           </div>
           
@@ -117,17 +125,6 @@ const MobileMenu = memo(function MobileMenu({
               </FastLink>
             ))}
           </div>
-          <Link
-            href="/studio"
-            className={`mt-2 inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all hover:translate-y-[-1px] focus-visible:ring-2 focus-visible:ring-blue-500/60 ${
-              isInsightPage 
-                ? "bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg" 
-                : "border border-slate-600 bg-transparent text-slate-100/80 opacity-80 hover:opacity-100"
-            }`}
-            onClick={onClose}
-          >
-            Open Studio
-          </Link>
         </nav>
       </div>
     </div>
@@ -149,19 +146,119 @@ const NavLink = memo(function NavLink({
   [key: string]: any;
 }) {
   const isActive = pathname === href;
+  const { instantNavigate, preloadOnHover, isTransitioning } = useInstantRouter();
   
   return (
-    <FastLink
+    <a
       href={href}
+      onClick={(e) => instantNavigate(href, e)}
+      onMouseEnter={() => preloadOnHover(href)}
       className={`flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
         isActive 
           ? 'text-white bg-blue-500/20 rounded-lg' 
-          : 'text-blue-200 hover:text-white hover:bg-blue-500/10 rounded-lg'
-      } ${className}`}
+          : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+      } ${isTransitioning ? 'opacity-70' : ''} ${className}`}
       {...props}
     >
       {children}
-    </FastLink>
+    </a>
+  );
+});
+
+// Account dropdown menu component
+const AccountDropdown = memo(function AccountDropdown({ 
+  pathname, 
+  isPro 
+}: {
+  pathname: string;
+  isPro: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { instantNavigate, preloadOnHover } = useInstantRouter();
+  
+  const isAccountPage = pathname.startsWith('/account') || pathname === '/my-predictions';
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => {
+          preloadOnHover('/account');
+          preloadOnHover('/my-predictions');
+        }}
+        className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+          isAccountPage
+            ? 'text-white bg-blue-500/20 rounded-lg' 
+            : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+        }`}
+      >
+        Account
+        {isPro && (
+          <span className="ml-1.5 inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            PRO
+          </span>
+        )}
+        <svg 
+          className={`ml-1 h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-700 bg-slate-900/95 backdrop-blur-md shadow-xl z-50">
+          <div className="py-1">
+            <a
+              href="/my-predictions"
+              onClick={(e) => {
+                instantNavigate('/my-predictions', e);
+                setIsOpen(false);
+              }}
+              className={`block px-4 py-2 text-sm transition-colors ${
+                pathname === '/my-predictions'
+                  ? 'text-white bg-blue-500/20'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              My Predictions
+            </a>
+            {isPro && (
+              <a
+                href="/account/billing"
+                onClick={(e) => {
+                  instantNavigate('/account/billing', e);
+                  setIsOpen(false);
+                }}
+                className={`block px-4 py-2 text-sm transition-colors ${
+                  pathname === '/account/billing'
+                    ? 'text-white bg-blue-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                Billing
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 });
 
@@ -173,6 +270,9 @@ export default function Navbar() {
   const isPro = useIsPro();
   const panelRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<Element | null>(null);
+
+  // Add InstantRouter for faster navigation
+  const { instantNavigate, preloadOnHover, isTransitioning } = useInstantRouter();
 
   // Memoize derived values
   const isInsightPage = useMemo(() => pathname.startsWith('/i/'), [pathname]);
@@ -275,61 +375,88 @@ export default function Navbar() {
 
         {/* Desktop nav - Optimized with memoized components */}
         <div className="hidden items-center gap-6 sm:flex">
-          <FastLink
+          <a
             href="/feed"
+            onClick={(e) => instantNavigate('/feed', e)}
+            onMouseEnter={() => preloadOnHover('/feed')}
             className={`flex h-14 items-center px-4 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
               pathname === '/feed' 
                 ? 'text-white bg-blue-500/20 rounded-lg' 
                 : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-            }`}
+            } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             Feed
-          </FastLink>
+          </a>
           
-          <FastLink
+          <a
             href="/studio"
+            onClick={(e) => instantNavigate('/studio', e)}
+            onMouseEnter={() => preloadOnHover('/studio')}
             className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
               pathname === '/studio' 
                 ? 'text-white bg-blue-500/20 rounded-lg' 
                 : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-            }`}
+            } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             Studio
-          </FastLink>
+          </a>
           
-          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-600">
-            {showAdvisor && (
-              <NavLink href="/advisor" pathname={pathname}>
-                Advisor
-              </NavLink>
+          <a
+            href="/leaderboard"
+            onClick={(e) => instantNavigate('/leaderboard', e)}
+            onMouseEnter={() => preloadOnHover('/leaderboard')}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+              pathname === '/leaderboard' 
+                ? 'text-white bg-blue-500/20 rounded-lg' 
+                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+            } ${isTransitioning ? 'opacity-70' : ''}`}
+          >
+            Leaderboard
+          </a>
+          
+          <a
+            href="/my-predictions"
+            onClick={(e) => instantNavigate('/my-predictions', e)}
+            onMouseEnter={() => preloadOnHover('/my-predictions')}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+              pathname === '/my-predictions' 
+                ? 'text-white bg-blue-500/20 rounded-lg' 
+                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+            } ${isTransitioning ? 'opacity-70' : ''}`}
+          >
+            My Predictions
+          </a>
+          
+          <a
+            href="/account"
+            onClick={(e) => instantNavigate('/account', e)}
+            onMouseEnter={() => preloadOnHover('/account')}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
+              pathname.startsWith('/account')
+                ? 'text-white bg-blue-500/20 rounded-lg' 
+                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+            } ${isTransitioning ? 'opacity-70' : ''}`}
+          >
+            Account
+            {isPro && (
+              <span className="ml-1.5 inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                PRO
+              </span>
             )}
-            {showActions && (
-              <NavLink href="/advisor/actions" pathname={pathname}>
-                Actions
-              </NavLink>
-            )}
-            <NavLink href="/pricing" pathname={pathname}>
-              Pricing
-            </NavLink>
-            <NavLink href="/account" pathname={pathname} className="gap-1.5">
-              Account
-              {isPro && (
-                <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  PRO
-                </span>
-              )}
-            </NavLink>
-            {mounted && isPro && (
-              <NavLink href="/account/billing" pathname={pathname}>
-                Billing
-              </NavLink>
-            )}
-          </div>
+          </a>
         </div>
         
         {/* Right side - Optimized with conditional rendering */}
         <div className="flex items-center gap-3">
-          {mounted && <SimplifiedConnectButton />}
+          {mounted && (
+            <Suspense fallback={
+              <button className="px-4 py-2 bg-slate-700 rounded-lg animate-pulse">
+                <div className="h-5 bg-slate-600 rounded w-20"></div>
+              </button>
+            }>
+              <SimplifiedConnectButton />
+            </Suspense>
+          )}
           {mounted && !isPro && (
             <Link
               href="/pay"
@@ -338,17 +465,6 @@ export default function Navbar() {
               Upgrade
             </Link>
           )}
-          <Link
-            href="/studio"
-            className={`inline-flex h-10 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
-              isInsightPage 
-                ? "bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg hover:shadow-xl" 
-                : "border border-slate-600 bg-transparent text-slate-100 hover:bg-slate-800"
-            }`}
-          >
-            <span className="hidden sm:inline">Open Studio</span>
-            <span className="sm:hidden">Studio</span>
-          </Link>
           <button
             type="button"
             className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-700 bg-slate-900/70 text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 hover:bg-slate-800/70 transition-colors"

@@ -1,5 +1,14 @@
 // In-memory store for nonces (in production, use Redis or database)
-const nonceStore = new Map<string, { nonce: string; expiresAt: number }>();
+// Use global to persist across hot reloads in development
+const globalForNonce = global as typeof globalThis & {
+  nonceStore?: Map<string, { nonce: string; expiresAt: number }>;
+};
+
+const nonceStore = globalForNonce.nonceStore ?? new Map<string, { nonce: string; expiresAt: number }>();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForNonce.nonceStore = nonceStore;
+}
 
 // Helper function to verify nonce
 export function verifyNonce(wallet: string, nonce: string): boolean {

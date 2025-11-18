@@ -93,6 +93,19 @@ interface CreatorLeaderboardData {
   provisionalToStable: number; // Number of creators who crossed 50 matured threshold
 }
 
+interface LeaderboardResponse {
+  items: Array<{
+    creatorIdHashed: string;
+    score: number;
+    accuracy: number;
+    consistency: number;
+    volumeScore: number;
+    recencyScore: number;
+    maturedN: number;
+    isProvisional: boolean;
+  }>;
+}
+
 interface WeeklyDigestData {
   weekStart: Date;
   weekEnd: Date;
@@ -190,18 +203,18 @@ async function fetchCreatorLeaderboardData(): Promise<CreatorLeaderboardData | n
       return null;
     }
     
-    const data7d = await response7d.json();
-    const data30d = await response30d.json();
+    const data7d = await response7d.json() as LeaderboardResponse;
+    const data30d = await response30d.json() as LeaderboardResponse;
     
     // Calculate movers (creators with biggest score changes)
     const movers: Array<{ creatorIdHashed: string; scoreChange: number; trend: 'up' | 'down' | 'flat' }> = [];
     
     // Create maps for easy lookup
-    const scores7d = new Map(data7d.items.map((item: any) => [item.creatorIdHashed, item.score]));
-    const scores30d = new Map(data30d.items.map((item: any) => [item.creatorIdHashed, item.score]));
+    const scores7d = new Map<string, number>(data7d.items.map(item => [item.creatorIdHashed, item.score]));
+    const scores30d = new Map<string, number>(data30d.items.map(item => [item.creatorIdHashed, item.score]));
     
     // Find creators with biggest changes
-    const allCreators = new Set([...scores7d.keys(), ...scores30d.keys()]);
+    const allCreators = new Set<string>([...scores7d.keys(), ...scores30d.keys()]);
     
     for (const creatorId of allCreators) {
       const score7d = scores7d.get(creatorId) || 0;
@@ -227,7 +240,7 @@ async function fetchCreatorLeaderboardData(): Promise<CreatorLeaderboardData | n
     ).length;
     
     return {
-      top5_7d: data7d.items.map((item: any) => ({
+      top5_7d: data7d.items.map(item => ({
         creatorIdHashed: item.creatorIdHashed,
         score: item.score,
         accuracy: item.accuracy,
@@ -237,7 +250,7 @@ async function fetchCreatorLeaderboardData(): Promise<CreatorLeaderboardData | n
         maturedN: item.maturedN,
         isProvisional: item.isProvisional
       })),
-      top5_30d: data30d.items.map((item: any) => ({
+      top5_30d: data30d.items.map(item => ({
         creatorIdHashed: item.creatorIdHashed,
         score: item.score,
         accuracy: item.accuracy,
@@ -278,7 +291,14 @@ export async function aggregateWeeklyMetrics(testMode = false): Promise<WeeklyDi
       timestamp: true,
       sessionId: true
     }
-  });
+  }) as Array<{
+    eventType: string;
+    modelIdHash: string | null;
+    intentId: string | null;
+    timestamp: Date;
+    sessionId: string | null;
+    variant?: 'primary_above' | 'inline_below';
+  }>;
   
   // Group events by model
   const modelMetrics = new Map<string, {
@@ -364,9 +384,9 @@ export async function aggregateWeeklyMetrics(testMode = false): Promise<WeeklyDi
         else abMetrics.bucketB.copyClicks++;
         
         // Track CTA variant if present
-        if (event.variant === 'primary_above') {
+        if ((event.variant) === 'primary_above') {
           ctaMetrics.primaryAbove.copyClicks++;
-        } else if (event.variant === 'inline_below') {
+        } else if ((event.variant) === 'inline_below') {
           ctaMetrics.inlineBelow.copyClicks++;
         }
         break;
@@ -499,7 +519,7 @@ export async function aggregateWeeklyMetrics(testMode = false): Promise<WeeklyDi
       viewToSignRate: overallViewToSignRate
     },
     abTestMetrics,
-    creatorLeaderboard
+    creatorLeaderboard: creatorLeaderboard ?? undefined
   };
 }
 

@@ -44,62 +44,81 @@ export class PredictionAnalyzer {
     category: string,
     timeframe: string,
   ): Promise<AIAnalysis> {
-    // If no OpenAI API key, return enhanced mock analysis
+    // If no OpenAI API key, return enhanced mock analysis immediately
     if (!this.openai) {
       console.log('OpenAI API key not configured, using enhanced mock analysis');
       return this.getEnhancedMockAnalysis(predictionTemplate, category, timeframe);
     }
 
     try {
-      // Fetch relevant market data
-      const marketData = await this.getMarketData(category, predictionTemplate);
-      const newsData = await this.getRelevantNews(category, predictionTemplate);
-
-      // Create comprehensive analysis context
-      const analysisPrompt = this.buildAnalysisPrompt(
-        predictionTemplate,
-        category,
-        timeframe,
-        marketData,
-        newsData,
-      );
-
-      console.log(`🤖 Running AI analysis for: ${predictionTemplate}`);
-
-      // Get AI analysis from GPT-4
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert financial analyst and prediction specialist with deep knowledge of cryptocurrency, stock markets, sports betting, and weather patterns. You analyze real-time data to provide accurate predictions with confidence scores. You must respond with valid JSON only.`,
-          },
-          {
-            role: 'user',
-            content: analysisPrompt,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.3, // Lower temperature for more consistent analysis
-        max_tokens: 1000,
+      // Set aggressive timeout for faster response
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Analysis timeout')), 2000); // 2 second timeout
       });
 
-      const analysis = JSON.parse(response.choices[0].message.content || '{}');
-
-      return {
-        confidence: Math.min(Math.max(analysis.confidence || 50, 30), 95), // Clamp between 30-95%
-        recommendation: analysis.recommendation || 'Neutral',
-        reasoning: analysis.reasoning || 'Analysis completed with available data sources',
-        factors: analysis.factors || ['Market data analysis', 'Historical patterns'],
-        dataPoints: marketData.length + newsData.length + Math.floor(Math.random() * 500) + 200,
-        riskLevel: analysis.riskLevel || this.calculateRiskLevel(category, timeframe),
-        timeHorizon: timeframe,
-        lastUpdated: new Date().toISOString(),
-      };
+      // Run analysis with timeout
+      const analysisPromise = this.performAnalysis(predictionTemplate, category, timeframe);
+      
+      const analysis = await Promise.race([analysisPromise, timeoutPromise]);
+      return analysis;
     } catch (error) {
-      console.error('AI Analysis failed:', error);
+      console.error('AI Analysis failed or timed out:', error);
       return this.getEnhancedMockAnalysis(predictionTemplate, category, timeframe);
     }
+  }
+
+  private async performAnalysis(
+    predictionTemplate: string,
+    category: string,
+    timeframe: string,
+  ): Promise<AIAnalysis> {
+    // Fetch market data with timeout (parallel execution)
+    const [marketData, newsData] = await Promise.all([
+      this.getMarketData(category, predictionTemplate).catch(() => [] as MarketData[]),
+      this.getRelevantNews(category, predictionTemplate).catch(() => [] as NewsData[]),
+    ]);
+
+    // Create comprehensive analysis context
+    const analysisPrompt = this.buildAnalysisPrompt(
+      predictionTemplate,
+      category,
+      timeframe,
+      marketData,
+      newsData,
+    );
+
+    console.log(`🤖 Running AI analysis for: ${predictionTemplate}`);
+
+    // Get AI analysis from GPT-4 with shorter timeout
+    const response = await this.openai!.chat.completions.create({
+      model: 'gpt-3.5-turbo', // Use faster model
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert financial analyst. Respond with valid JSON only with these fields: confidence (number 30-95), recommendation (Bullish/Bearish/Neutral), reasoning (string), factors (array of 3-4 strings), riskLevel (Low/Medium/High).`,
+        },
+        {
+          role: 'user',
+          content: analysisPrompt,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 500, // Reduced tokens for faster response
+    });
+
+    const analysis = JSON.parse(response.choices[0].message.content || '{}');
+
+    return {
+      confidence: Math.min(Math.max(analysis.confidence || 50, 30), 95),
+      recommendation: analysis.recommendation || 'Neutral',
+      reasoning: analysis.reasoning || 'Analysis completed with available data sources',
+      factors: analysis.factors || ['Market data analysis', 'Historical patterns'],
+      dataPoints: marketData.length + newsData.length + Math.floor(Math.random() * 500) + 200,
+      riskLevel: analysis.riskLevel || this.calculateRiskLevel(category, timeframe),
+      timeHorizon: timeframe,
+      lastUpdated: new Date().toISOString(),
+    };
   }
 
   private buildAnalysisPrompt(
@@ -174,12 +193,20 @@ Focus on being realistic and data-driven. Consider:
     if (symbols.length === 0) return [];
 
     try {
-      // Use CoinGecko API for free crypto data
+      // Use CoinGecko API with aggressive timeout
       const symbolIds = symbols.map(s => s.toLowerCase()).join(',');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5 second timeout
+      
       const response = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${symbolIds}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`,
-        { headers: { Accept: 'application/json' } },
+        { 
+          headers: { Accept: 'application/json' },
+          signal: controller.signal,
+        },
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.log('CoinGecko API failed, using mock data');
@@ -196,7 +223,11 @@ Focus on being realistic and data-driven. Consider:
         marketCap: values.usd_market_cap,
       }));
     } catch (error) {
-      console.error('Failed to fetch crypto data:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('CoinGecko API timeout, using mock data');
+      } else {
+        console.error('Failed to fetch crypto data:', error);
+      }
       return this.getMockCryptoData(symbols);
     }
   }

@@ -1,17 +1,22 @@
 /**
- * Integration tests for signals feed
+ * Integration tests for signals feed (fear & greed + funding sources)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getMarketSignals } from './feed';
+import { getMarketSignals, clearSignalsCache } from './feed';
 
-// Mock adapters
-const mockFetchPolymarket = vi.fn();
-const mockFetchFearGreed = vi.fn();
-const mockFetchFunding = vi.fn();
-
-vi.mock('../../lib/adapters/polymarket', () => ({
-  fetchPolymarket: mockFetchPolymarket
+const { mockFetchFearGreed, mockFetchFunding, mockTelemetry, mockEtagStore } = vi.hoisted(() => ({
+  mockFetchFearGreed: vi.fn(),
+  mockFetchFunding: vi.fn(),
+  mockTelemetry: {
+    start: vi.fn(() => ({ startTime: Date.now() })),
+    end: vi.fn(),
+    getAllMetrics: vi.fn(() => ({}))
+  },
+  mockEtagStore: {
+    get: vi.fn(),
+    set: vi.fn()
+  }
 }));
 
 vi.mock('../../lib/adapters/fearGreed', () => ({
@@ -22,22 +27,9 @@ vi.mock('../../lib/adapters/funding', () => ({
   fetchFunding: mockFetchFunding
 }));
 
-// Mock telemetry
-const mockTelemetry = {
-  start: vi.fn(() => ({ startTime: Date.now() })),
-  end: vi.fn(),
-  getAllMetrics: vi.fn(() => ({}))
-};
-
 vi.mock('../../lib/telemetry', () => ({
   telemetry: mockTelemetry
 }));
-
-// Mock etag store
-const mockEtagStore = {
-  get: vi.fn(),
-  set: vi.fn()
-};
 
 vi.mock('../../lib/cache/etagStore', () => ({
   etagStore: mockEtagStore
@@ -46,6 +38,7 @@ vi.mock('../../lib/cache/etagStore', () => ({
 describe('getMarketSignals integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearSignalsCache();
     vi.useFakeTimers();
   });
 
@@ -53,95 +46,48 @@ describe('getMarketSignals integration', () => {
     vi.useRealTimers();
   });
 
-  it('should aggregate results from all adapters successfully', async () => {
-    // Mock all adapters returning data
-    mockFetchPolymarket.mockResolvedValue({
-      items: [
-        { type: 'polymarket', label: 'ETH > $4000', prob: 0.62, ts: '2025-09-09T12:00:00Z' }
-      ],
-      ok: true,
-      timedOut: false
-    });
-
+  it('aggregates results from adapters', async () => {
     mockFetchFearGreed.mockResolvedValue({
-      items: [
-        { type: 'fear_greed', label: 'Greed (72)', value: 72, ts: '2025-09-09T12:00:00Z' }
-      ],
+      items: [{ type: 'fear_greed', label: 'Greed (72)', value: 72, ts: '2025-09-09T12:00:00Z' }],
       ok: true,
       timedOut: false
     });
 
     mockFetchFunding.mockResolvedValue({
-      items: [
-        { type: 'funding', label: 'BTC funding ↑', direction: 'up', ts: '2025-09-09T12:00:00Z' }
-      ],
+      items: [{ type: 'funding', label: 'BTC funding ↑', direction: 'up', ts: '2025-09-09T12:00:00Z' }],
       ok: true,
       timedOut: false
     });
 
     const result = await getMarketSignals('SOL/USDC');
 
-    expect(result.items).toHaveLength(3);
-    expect(result.items[0].type).toBe('polymarket');
-    expect(result.items[1].type).toBe('fear_greed');
-    expect(result.items[2].type).toBe('funding');
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0].type).toBe('fear_greed');
+    expect(result.items[1].type).toBe('funding');
     expect(result.updatedAt).toBeDefined();
   });
 
-  it('should handle mixed results (200, 304, timeout)', async () => {
-    // Mock 200 OK
-    mockFetchPolymarket.mockResolvedValue({
-      items: [
-        { type: 'polymarket', label: 'ETH > $4000', prob: 0.62, ts: '2025-09-09T12:00:00Z' }
-      ],
+  it('handles mixed results (ok + timeout)', async () => {
+    mockFetchFearGreed.mockResolvedValue({
+      items: [{ type: 'fear_greed', label: 'Greed (72)', value: 72, ts: '2025-09-09T12:00:00Z' }],
       ok: true,
       timedOut: false
     });
 
-    // Mock 304 Not Modified
-    mockFetchFearGreed.mockResolvedValue({
-      items: [],
-      ok: true,
-      timedOut: false,
-      etag: 'cached-etag'
-    });
-
-    // Mock timeout
-    mockFetchFunding.mockImplementation(() => new Promise(resolve => {
-      // Never resolves, will timeout
-    }));
+    mockFetchFunding.mockImplementation(() => new Promise(() => {})); // never resolves
 
     const promise = getMarketSignals('SOL/USDC');
-    
-    // Advance timers to trigger timeout
     vi.advanceTimersByTime(1000);
-    
+
     const result = await promise;
 
-    expect(result.items).toHaveLength(1); // Only polymarket data
-    expect(result.items[0].type).toBe('polymarket');
-    expect(result.updatedAt).toBeDefined();
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].type).toBe('fear_greed');
   });
 
-  it('should handle all adapters failing', async () => {
-    // Mock all adapters failing
-    mockFetchPolymarket.mockResolvedValue({
-      items: [],
-      ok: false,
-      timedOut: false
-    });
-
-    mockFetchFearGreed.mockResolvedValue({
-      items: [],
-      ok: false,
-      timedOut: false
-    });
-
-    mockFetchFunding.mockResolvedValue({
-      items: [],
-      ok: false,
-      timedOut: false
-    });
+  it('handles all adapters failing', async () => {
+    mockFetchFearGreed.mockResolvedValue({ items: [], ok: false, timedOut: false });
+    mockFetchFunding.mockResolvedValue({ items: [], ok: false, timedOut: false });
 
     const result = await getMarketSignals('SOL/USDC');
 
@@ -149,53 +95,33 @@ describe('getMarketSignals integration', () => {
     expect(result.updatedAt).toBeDefined();
   });
 
-  it('should respect total timeout budget', async () => {
-    // Mock all adapters timing out
-    mockFetchPolymarket.mockImplementation(() => new Promise(resolve => {
-      // Never resolves
-    }));
-    mockFetchFearGreed.mockImplementation(() => new Promise(resolve => {
-      // Never resolves
-    }));
-    mockFetchFunding.mockImplementation(() => new Promise(resolve => {
-      // Never resolves
-    }));
+  it('respects total timeout budget', async () => {
+    mockFetchFearGreed.mockImplementation(() => new Promise(() => {}));
+    mockFetchFunding.mockImplementation(() => new Promise(() => {}));
 
     const promise = getMarketSignals('SOL/USDC');
-    
-    // Advance timers to trigger total timeout (1200ms)
     vi.advanceTimersByTime(1300);
-    
+
     const result = await promise;
 
     expect(result.items).toHaveLength(0);
     expect(result.updatedAt).toBeDefined();
   });
 
-  it('should limit total items to 5', async () => {
-    // Mock adapters returning more than 5 items total
-    mockFetchPolymarket.mockResolvedValue({
-      items: [
-        { type: 'polymarket', label: 'Market 1', prob: 0.5, ts: '2025-09-09T12:00:00Z' },
-        { type: 'polymarket', label: 'Market 2', prob: 0.6, ts: '2025-09-09T12:00:00Z' },
-        { type: 'polymarket', label: 'Market 3', prob: 0.7, ts: '2025-09-09T12:00:00Z' }
-      ],
-      ok: true,
-      timedOut: false
-    });
-
+  it('limits total items to 5', async () => {
     mockFetchFearGreed.mockResolvedValue({
-      items: [
-        { type: 'fear_greed', label: 'Greed (72)', value: 72, ts: '2025-09-09T12:00:00Z' }
-      ],
+      items: [{ type: 'fear_greed', label: 'Greed (72)', value: 72, ts: '2025-09-09T12:00:00Z' }],
       ok: true,
       timedOut: false
     });
 
     mockFetchFunding.mockResolvedValue({
       items: [
-        { type: 'funding', label: 'BTC funding ↑', direction: 'up', ts: '2025-09-09T12:00:00Z' },
-        { type: 'funding', label: 'ETH funding ↓', direction: 'down', ts: '2025-09-09T12:00:00Z' }
+        { type: 'funding', label: 'Market 1', direction: 'up', ts: '2025-09-09T12:00:00Z' },
+        { type: 'funding', label: 'Market 2', direction: 'up', ts: '2025-09-09T12:00:00Z' },
+        { type: 'funding', label: 'Market 3', direction: 'up', ts: '2025-09-09T12:00:00Z' },
+        { type: 'funding', label: 'Market 4', direction: 'up', ts: '2025-09-09T12:00:00Z' },
+        { type: 'funding', label: 'Market 5', direction: 'up', ts: '2025-09-09T12:00:00Z' }
       ],
       ok: true,
       timedOut: false
@@ -203,54 +129,61 @@ describe('getMarketSignals integration', () => {
 
     const result = await getMarketSignals('SOL/USDC');
 
-    expect(result.items).toHaveLength(5); // Limited to 5
-    expect(result.updatedAt).toBeDefined();
+    expect(result.items).toHaveLength(5);
   });
 
-  it('should use cache for subsequent calls', async () => {
-    // First call
-    mockFetchPolymarket.mockResolvedValue({
-      items: [
-        { type: 'polymarket', label: 'ETH > $4000', prob: 0.62, ts: '2025-09-09T12:00:00Z' }
-      ],
+  it('uses cache for subsequent calls', async () => {
+    mockFetchFearGreed.mockResolvedValue({
+      items: [{ type: 'fear_greed', label: 'Greed (72)', value: 72, ts: '2025-09-09T12:00:00Z' }],
       ok: true,
       timedOut: false
     });
 
-    const result1 = await getMarketSignals('SOL/USDC');
-    expect(result1.items).toHaveLength(1);
+    mockFetchFunding.mockResolvedValue({
+      items: [{ type: 'funding', label: 'BTC funding ↑', direction: 'up', ts: '2025-09-09T12:00:00Z' }],
+      ok: true,
+      timedOut: false
+    });
 
-    // Second call should use cache (no new adapter calls)
+    const first = await getMarketSignals('SOL/USDC');
+    expect(first.items).toHaveLength(2);
+
     vi.clearAllMocks();
-    const result2 = await getMarketSignals('SOL/USDC');
-    expect(result2.items).toHaveLength(1);
-    expect(mockFetchPolymarket).not.toHaveBeenCalled();
+    const second = await getMarketSignals('SOL/USDC');
+    expect(second.items).toHaveLength(2);
+    expect(mockFetchFearGreed).not.toHaveBeenCalled();
+    expect(mockFetchFunding).not.toHaveBeenCalled();
   });
 
-  it('should handle different trading pairs', async () => {
-    mockFetchPolymarket.mockResolvedValue({
-      items: [
-        { type: 'polymarket', label: 'ETH > $4000', prob: 0.62, ts: '2025-09-09T12:00:00Z' }
-      ],
+  it('uses separate caches for different pairs', async () => {
+    mockFetchFearGreed.mockResolvedValue({
+      items: [{ type: 'fear_greed', label: 'Greed (72)', value: 72, ts: '2025-09-09T12:00:00Z' }],
+      ok: true,
+      timedOut: false
+    });
+    mockFetchFunding.mockResolvedValue({
+      items: [{ type: 'funding', label: 'BTC funding ↑', direction: 'up', ts: '2025-09-09T12:00:00Z' }],
       ok: true,
       timedOut: false
     });
 
-    // First call with SOL/USDC
     await getMarketSignals('SOL/USDC');
-    
-    // Second call with ETH/USDC should trigger fresh fetch
+
     vi.clearAllMocks();
-    mockFetchPolymarket.mockResolvedValue({
-      items: [
-        { type: 'polymarket', label: 'SOL > $300', prob: 0.45, ts: '2025-09-09T12:00:00Z' }
-      ],
+    mockFetchFearGreed.mockResolvedValue({
+      items: [{ type: 'fear_greed', label: 'Neutral (50)', value: 50, ts: '2025-09-09T12:00:00Z' }],
+      ok: true,
+      timedOut: false
+    });
+    mockFetchFunding.mockResolvedValue({
+      items: [{ type: 'funding', label: 'ETH funding ↓', direction: 'down', ts: '2025-09-09T12:00:00Z' }],
       ok: true,
       timedOut: false
     });
 
     const result = await getMarketSignals('ETH/USDC');
-    expect(result.items).toHaveLength(1);
-    expect(mockFetchPolymarket).toHaveBeenCalled();
+    expect(result.items).toHaveLength(2);
+    expect(mockFetchFearGreed).toHaveBeenCalled();
+    expect(mockFetchFunding).toHaveBeenCalled();
   });
 });

@@ -1,7 +1,10 @@
 'use client'
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider'
 import Link from 'next/link'
+
+// If there are heavy components, we can lazy load them
+// const HeavyAdvisorComponent = lazy(() => import('../components/advisor/HeavyComponent'));
 
 export default function AdvisorPage() {
   const { isConnected } = useSimplifiedWallet()

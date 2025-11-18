@@ -24,16 +24,16 @@ async function getTrendingMarkets(limit: number = 6) {
     },
     {
       id: 'server-2',
-      type: 'POLYMARKET' as const,
-      title: 'Bitcoin will hit $100k by end of 2024',
-      probability: 0.72,
-      volume: 125000,
-      deadline: new Date(2024, 11, 31).toISOString(),
-      creator: 'crypto_expert',
+      type: 'KALSHI' as const,
+      title: 'Fed will hold rates in Q4',
+      probability: 0.44,
+      volume: 42000,
+      deadline: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000).toISOString(),
+      creator: 'macro_observer',
       creatorId: 'creator-2',
-      creatorScore: 4.5,
+      creatorScore: 4.2,
       status: 'ACTIVE',
-      url: 'https://polymarket.com'
+      url: 'https://kalshi.com'
     }
   ].slice(0, limit);
 }

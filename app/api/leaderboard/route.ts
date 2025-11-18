@@ -5,11 +5,17 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getLeaderboard } from '../../../lib/score';
+import { getLeaderboard, getLeaderboardWithPercentiles, LeaderboardPercentiles } from '../../../lib/score';
 
 const LeaderboardQuerySchema = z.object({
-  period: z.enum(['all', '90d']).optional().default('all'),
-  limit: z.coerce.number().min(1).max(100).default(50)
+  period: z.string().optional().transform(val => {
+    if (val === '90d') return '90d';
+    return 'all';
+  }),
+  limit: z.string().optional().transform(val => {
+    const num = parseInt(val || '50', 10);
+    return Math.min(Math.max(num, 1), 100);
+  })
 });
 
 export interface LeaderboardResponse {
@@ -31,6 +37,7 @@ export interface LeaderboardResponse {
     total: number;
     generatedAt: string;
   };
+  percentiles: LeaderboardPercentiles;
 }
 
 export async function GET(request: NextRequest) {
@@ -39,23 +46,12 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     
-    // Parse and validate query parameters
-    const queryResult = LeaderboardQuerySchema.safeParse({
-      period: searchParams.get('period'),
-      limit: searchParams.get('limit')
-    });
+    // Parse query parameters with simple defaults
+    const periodParam = searchParams.get('period');
+    const limitParam = searchParams.get('limit');
     
-    if (!queryResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Invalid query parameters', 
-          details: queryResult.error.errors 
-        },
-        { status: 400 }
-      );
-    }
-    
-    const { period, limit } = queryResult.data;
+    const period: 'all' | '90d' = (periodParam === '90d') ? '90d' : 'all';
+    const limit = Math.min(Math.max(parseInt(limitParam || '50', 10), 1), 100);
     
     // Check for conditional requests (304 Not Modified)
     const ifModifiedSince = request.headers.get('if-modified-since');
@@ -78,8 +74,8 @@ export async function GET(request: NextRequest) {
     console.log(`📋 Generating leaderboard (period: ${period}, limit: ${limit})`);
     
     // Get leaderboard data from score module
-    const leaderboard = await getLeaderboard(period, limit);
-    
+    const { leaderboard, percentiles } = await getLeaderboardWithPercentiles(period, limit);
+
     const response: LeaderboardResponse = {
       leaderboard,
       meta: {
@@ -87,7 +83,8 @@ export async function GET(request: NextRequest) {
         limit,
         total: leaderboard.length,
         generatedAt: new Date().toISOString()
-      }
+      },
+      percentiles,
     };
     
     const processingTime = Date.now() - startTime;

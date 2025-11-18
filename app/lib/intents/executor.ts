@@ -5,7 +5,7 @@
 
 import { buildSwapTransaction, getQuote, getTokenMint } from '../aggregators/jupiter';
 import { ExecutionResult } from './receipts';
-import { Intent, Guards } from './schema';
+import { Intent, Guards, Size } from './schema';
 
 export interface ExecutionContext {
   intent: Intent;
@@ -22,9 +22,12 @@ export async function executeIntent(
 ): Promise<ExecutionResult> {
   try {
     const { intent, walletPublicKey, slippageBps, prioritizationFeeLamports } = context;
-    
+
     // Re-validate guards before execution
-    const guards = JSON.parse(intent.guardsJson) as Guards;
+    const guards: Guards =
+      typeof intent.guardsJson === 'string'
+        ? JSON.parse(intent.guardsJson)
+        : (intent.guardsJson as Guards);
     const now = new Date();
     const expiresAt = new Date(guards.expiresAt);
     
@@ -90,7 +93,10 @@ export async function executeIntent(
  * Calculate trade size from intent
  */
 function calculateTradeSize(intent: Intent): string {
-  const size = JSON.parse(intent.sizeJson);
+  const size =
+    typeof intent.sizeJson === 'string'
+      ? (JSON.parse(intent.sizeJson) as Size)
+      : (intent.sizeJson as unknown as Size);
   
   // For now, return a mock size
   // In production, this would calculate based on wallet balance
@@ -171,7 +177,10 @@ export async function isExecutionSafe(
   const errors: string[] = [];
   
   try {
-    const guards = JSON.parse(intent.guardsJson) as Guards;
+    const guards: Guards =
+      typeof intent.guardsJson === 'string'
+        ? JSON.parse(intent.guardsJson)
+        : (intent.guardsJson as Guards);
     
     // Check expiry
     const expiresAt = new Date(guards.expiresAt);

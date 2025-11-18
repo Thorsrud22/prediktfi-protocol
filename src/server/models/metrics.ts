@@ -209,7 +209,7 @@ async function fetchTradingData(query: MetricsQuery): Promise<{
     );
     
     // Check if trade has matured
-    const matured = isTradeMatured(receipt.blockTime, intent.expectedDur, now);
+    const matured = isTradeMatured(receipt.blockTime, intent.expectedDur ?? undefined, now);
     
     records.push({
       confidence: intent.confidence || 0.5, // Default confidence if missing
