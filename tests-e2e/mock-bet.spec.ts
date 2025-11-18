@@ -1,34 +1,38 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Mock bet flow", () => {
-  test.beforeEach(async ({ context }) => {
-    // Ensure mock mode during test
-    await context.addCookies([
-      // No cookies needed; relies on .env.local NEXT_PUBLIC_MOCK_TX=1
+test.describe("Prediction studio redirect from legacy market", () => {
+  test("shows studio entry form after redirect", async ({ page }) => {
+    await page.context().addCookies([
+      {
+        name: "predikt_auth",
+        value: "authenticated",
+        domain: "localhost",
+        path: "/",
+      },
     ]);
-  });
 
-  test("fee and net info appears when amount and side are selected", async ({
-    page,
-  }) => {
     await page.goto("/market/1");
-    
-    // Fill amount
-    const amountInput = page.getByPlaceholder("0.1");
-    await amountInput.fill("0.5");
-    
-    // Choose side
-    await page.getByRole('radiogroup').locator('label').filter({ hasText: 'YES' }).click();
-    
-    // Check that fee and net info is displayed (with live calculation format)
-    await expect(page.getByText(/Fee: 0\.010 SOL/)).toBeVisible();
-    await expect(page.getByText(/Net: 0\.490 SOL/)).toBeVisible();
-    
-    // Verify the button is in the expected state
-    const connectButton = page.getByRole("button", { name: /Connect wallet/i });
-    await expect(connectButton).toBeVisible();
-    
-    // Note: We can't test the actual bet placement without wallet connection
-    // in the CI environment, so we verify the prep state only
+
+    // Legacy market routes immediately redirect to the studio experience
+    await page.waitForURL("**/studio", { timeout: 10000 });
+    await page.waitForLoadState("networkidle");
+
+    // Wait for the studio hero to render so we know the page is ready
+    await page.waitForSelector('role=heading[name=/Prediction Studio/i]', { timeout: 20000 });
+    await expect(
+      page.getByRole("heading", { name: /Prediction Studio/i })
+    ).toBeVisible({ timeout: 20000 });
+
+    // Ensure the primary textarea is available and usable
+    const questionInput = page.getByPlaceholder(
+      "Bitcoin will reach $100,000 by December 31, 2024"
+    );
+    await expect(questionInput).toBeVisible({ timeout: 20000 });
+    await questionInput.click();
+    await questionInput.fill("Will SOL flip ETH by Q2 2025?");
+
+    // The generate button should be enabled once text is present
+    const generateButton = page.getByRole("button", { name: /Generate AI Analysis/i });
+    await expect(generateButton).toBeEnabled();
   });
 });

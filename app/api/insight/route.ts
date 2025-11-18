@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
         question,
         category: body.category || 'general',
         horizon: body.horizon,
+        analysisType: 'basic',
       });
       const id = ulid();
       const createdAt = new Date().toISOString();
@@ -70,9 +71,11 @@ export async function POST(request: NextRequest) {
         horizon: body.horizon ? new Date(body.horizon).toISOString() : undefined,
         stamped: false,
         modelVersion: 'e8.1',
+        creator: body.creatorHandle
+          ? { handle: body.creatorHandle, score: 0, accuracy: 0 }
+          : undefined,
       };
       if (body.creatorHandle) {
-        created.creator = { handle: body.creatorHandle, score: 0, accuracy: 0 };
         await prisma.creator.create?.({
           data: { handle: body.creatorHandle, score: 0, accuracy: 0, insightsCount: 1 },
         });

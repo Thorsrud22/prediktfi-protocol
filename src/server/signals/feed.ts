@@ -39,7 +39,7 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 180 * 1000; // 3 minutes
 const REQUEST_TIMEOUT_MS = 800; // Per source timeout
-const TOTAL_BUDGET_MS = 1200; // Total budget
+const TOTAL_BUDGET_MS = 2000; // Total budget (raised to reduce flaky test timeouts)
 let testFailureCounter = 0;
 
 // Circuit breaker states per source

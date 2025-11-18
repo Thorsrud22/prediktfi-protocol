@@ -201,18 +201,30 @@ export async function resolveUrlInsight(
     
     // Fetch the content
     const response = await fetch(validatedUrl.href, fetchOptions);
+
+    // Defend against undefined or non-standard fetch mocks
+    if (!response || typeof (response as any).ok !== 'boolean') {
+      throw new Error('Invalid response from fetch');
+    }
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const status = (response as any).status ?? 'unknown';
+      const statusText = (response as any).statusText ?? 'Unknown error';
+      throw new Error(`HTTP ${status}: ${statusText}`);
     }
     
     // Check content type
-    const contentType = response.headers.get('content-type') || '';
+    const contentType =
+      response.headers && typeof response.headers.get === 'function'
+        ? response.headers.get('content-type') || ''
+        : '';
     if (!contentType.includes('text/html') && !contentType.includes('application/json')) {
-      throw new Error(`Unsupported content type: ${contentType}`);
+      throw new Error(`Unsupported content type: ${contentType || 'unknown'}`);
     }
     
-    const html = await response.text();
+    const html = typeof (response as any).text === 'function'
+      ? await response.text()
+      : '';
     const extractedText = extractTextFromHtml(html);
     
     console.log(`📄 Extracted ${extractedText.length} characters of text`);

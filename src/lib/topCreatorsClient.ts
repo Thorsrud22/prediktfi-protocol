@@ -65,9 +65,14 @@ export function useTopCreators() {
 
       // Fetch fresh data
       const response = await fetch('/api/leaderboard?period=90d&limit=50');
+
+      if (!response || typeof (response as any).ok !== 'boolean') {
+        throw new Error('Failed to fetch leaderboard: no response');
+      }
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch leaderboard: ${response.status}`);
+        const status = (response as any).status ?? 'unknown';
+        throw new Error(`Failed to fetch leaderboard: ${status}`);
       }
 
       const data: TopCreatorsResponse = await response.json();
