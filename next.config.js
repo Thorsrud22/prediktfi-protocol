@@ -1,3 +1,8 @@
+// Ensure Webpack chunks built for the browser can attach to a global in Node (e.g., during SSG)
+if (typeof globalThis.self === 'undefined') {
+  globalThis.self = globalThis;
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
