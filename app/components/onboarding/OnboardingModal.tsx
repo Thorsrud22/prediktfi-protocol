@@ -29,38 +29,37 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
 
   const steps = [
     {
-      title: 'Welcome to Predikt',
-      icon: '👋',
+      title: 'Define Your Parameters',
+      icon: '📐',
       content: (
         <div className="space-y-4">
           <p className="text-lg text-blue-100">
-            Build a <strong className="text-white">verifiable track record</strong> of your predictions on Solana blockchain.
+            Input your project's core constraints—<strong className="text-white">team size, budget, target sector</strong> (DeFi, Infra, Gaming), and technical resources.
           </p>
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
             <p className="text-blue-200 text-sm">
-              💡 Every prediction you make is timestamped and immutable. 
-              Over time, this builds a reputation that proves your forecasting ability.
+              💡 We treat your idea as a serious engineering problem. The more specific your constraints, the more accurate the validation.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3 pt-2">
             <div className="text-center">
+              <div className="text-3xl mb-1">🏗️</div>
+              <div className="text-xs text-gray-300">Structure Idea</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-1">⚙️</div>
+              <div className="text-xs text-gray-300">Set Constraints</div>
+            </div>
+            <div className="text-center">
               <div className="text-3xl mb-1">🎯</div>
-              <div className="text-xs text-gray-300">Make predictions</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl mb-1">⛓️</div>
-              <div className="text-xs text-gray-300">Commit on-chain</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl mb-1">📈</div>
-              <div className="text-xs text-gray-300">Build reputation</div>
+              <div className="text-xs text-gray-300">Target Market</div>
             </div>
           </div>
         </div>
       ),
     },
     {
-      title: 'How It Works',
+      title: 'Rigorous Stress-Testing',
       icon: '⚡',
       content: (
         <div className="space-y-5">
@@ -69,13 +68,9 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
               1
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-white mb-1">Make a Prediction</h4>
+              <h4 className="font-semibold text-white mb-1">Market Simulation</h4>
               <p className="text-sm text-blue-200">
-                State what you believe will happen with a specific deadline.
-                <br />
-                <span className="text-blue-300 italic">
-                  Example: "Bitcoin will reach $100,000 by December 31, 2024"
-                </span>
+                Our AI simulates your project against current market conditions and competitor saturation.
               </p>
             </div>
           </div>
@@ -85,9 +80,9 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
               2
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-white mb-1">Get AI Analysis</h4>
+              <h4 className="font-semibold text-white mb-1">Risk Analysis</h4>
               <p className="text-sm text-blue-200">
-                Our AI analyzes your prediction and suggests a probability with reasoning and key factors.
+                We identify weak points in your tokenomics, go-to-market strategy, and technical feasibility.
               </p>
             </div>
           </div>
@@ -97,9 +92,9 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
               3
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-white mb-1">Commit to Blockchain</h4>
+              <h4 className="font-semibold text-white mb-1">Success Probability</h4>
               <p className="text-sm text-blue-200">
-                Your prediction is timestamped on Solana. It's permanent, verifiable, and builds your track record.
+                Get a calculated success score based on 50+ vectors of analysis.
               </p>
             </div>
           </div>
@@ -107,41 +102,37 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
       ),
     },
     {
-      title: 'Building Your Reputation',
-      icon: '🏆',
+      title: 'Launch, Pivot, or Kill',
+      icon: '🛡️',
       content: (
         <div className="space-y-4">
           <p className="text-blue-100">
-            When your prediction deadline passes, you mark it as resolved. Your <strong className="text-white">accuracy score</strong> updates automatically.
+            Receive a comprehensive <strong className="text-white">feasibility report</strong>. Make an informed decision to ship with confidence or pivot before burning capital.
           </p>
 
           <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="text-2xl">✓</div>
               <div>
-                <h4 className="font-semibold text-green-300 mb-1">Correct Predictions</h4>
+                <h4 className="font-semibold text-green-300 mb-1">Validated Launch</h4>
                 <p className="text-sm text-green-200">
-                  Increase your accuracy score and climb the leaderboard
+                  Ship with a clear roadmap and known risks mitigation strategies.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-4">
+          <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/30 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <div className="text-2xl">📊</div>
+              <div className="text-2xl">🔄</div>
               <div>
-                <h4 className="font-semibold text-blue-300 mb-1">Track Record</h4>
-                <p className="text-sm text-blue-200">
-                  All predictions are permanent - honest forecasting builds trust over time
+                <h4 className="font-semibold text-orange-300 mb-1">Strategic Pivot</h4>
+                <p className="text-sm text-orange-200">
+                  Use AI feedback to refine your concept and improve success probability.
                 </p>
               </div>
             </div>
           </div>
-
-          <p className="text-sm text-blue-300 pt-2">
-            💡 Your reputation is based on accuracy, not just winning. Even wrong predictions contribute to your calibration score!
-          </p>
         </div>
       ),
     },
@@ -202,9 +193,8 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
             {steps.map((_, index) => (
               <div
                 key={index}
-                className={`h-1 flex-1 rounded-full transition-all ${
-                  index <= currentStep ? 'bg-blue-500' : 'bg-white/20'
-                }`}
+                className={`h-1 flex-1 rounded-full transition-all ${index <= currentStep ? 'bg-blue-500' : 'bg-white/20'
+                  }`}
               />
             ))}
           </div>

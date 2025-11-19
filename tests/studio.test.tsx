@@ -37,7 +37,7 @@ describe('AI Idea Evaluator Studio', () => {
     it('renders the landing view initially', () => {
         render(<StudioPage />);
 
-        expect(screen.getByText('AI Idea Evaluator Studio')).toBeInTheDocument();
+        expect(screen.getByText(/AI Idea Evaluator Studio/i)).toBeInTheDocument();
         expect(screen.getByText(/Validate your crypto, memecoin, or web3 project ideas instantly/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Start new evaluation/i })).toBeInTheDocument();
     });
