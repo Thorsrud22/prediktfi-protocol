@@ -208,10 +208,10 @@ export default function AppPillNav() {
 
   const navItems = useMemo(
     () => [
-      { href: '/feed', label: 'FEED' },
       { href: '/studio', label: 'STUDIO' },
-      { href: '/leaderboard', label: 'LEADERBOARD' },
-      { href: '/my-predictions', label: 'MY PREDICTIONS' },
+      // { href: '/feed', label: 'FEED' }, // Legacy
+      // { href: '/leaderboard', label: 'LEADERBOARD' }, // Legacy
+      // { href: '/my-predictions', label: 'MY PREDICTIONS' }, // Legacy
       { href: '/account', label: 'ACCOUNT' },
     ],
     []
@@ -265,24 +265,21 @@ export default function AppPillNav() {
     <>
       {/* Brand Chip */}
       <div
-        className={`fixed top-3 left-4 sm:left-6 z-50 transition-transform duration-300 ${
-          isScrolled ? 'scale-[0.98]' : 'scale-100'
-        }`}
+        className={`fixed top-3 left-4 sm:left-6 z-50 transition-transform duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'
+          }`}
       >
         {Logo}
       </div>
 
       {/* Main Navigation */}
       <div
-        className={`fixed top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${
-          isScrolled ? 'scale-[0.98]' : 'scale-100'
-        }`}
+        className={`fixed top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'
+          }`}
       >
         {/* Pill Nav - Outer wrapper with ring */}
         <nav
-          className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${
-            isScrolled ? 'backdrop-blur-lg shadow-xl' : ''
-          }`}
+          className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${isScrolled ? 'backdrop-blur-lg shadow-xl' : ''
+            }`}
           aria-label="Main navigation"
         >
           {/* Inner wrapper with overflow-hidden to clip animated pill */}

@@ -134,7 +134,7 @@ export default function Aurora(props: AuroraProps) {
   );
   const propsRef = useRef<AuroraProps>({ ...props, colorStops: resolvedColorStops });
   propsRef.current = { ...props, colorStops: props.colorStops ?? resolvedColorStops };
-  
+
   // Adjust settings based on variant
   const isSubtle = variant === 'subtle';
   const effectiveAmplitude = isSubtle ? amplitude * 0.7 : amplitude;
@@ -148,12 +148,14 @@ export default function Aurora(props: AuroraProps) {
 
     let cleanup: (() => void) | undefined;
     let idleId: number | null = null;
+    let animationFrameId: number | null = null;
 
     const startAurora = () => {
       const renderer = new Renderer({
         alpha: true,
         premultipliedAlpha: true,
-        antialias: true
+        antialias: true,
+        dpr: 1, // Force low resolution for performance
       });
       const gl = renderer.gl;
       gl.clearColor(0, 0, 0, 0);
@@ -208,9 +210,22 @@ export default function Aurora(props: AuroraProps) {
       window.addEventListener('resize', resize);
       resize();
 
-      let animateId = 0;
+      // FPS Limiting Logic
+      const targetFPS = 30;
+      const frameInterval = 1000 / targetFPS;
+      let lastFrameTime = 0;
+      let isVisible = true;
+
       const update = (t: number) => {
-        animateId = requestAnimationFrame(update);
+        animationFrameId = requestAnimationFrame(update);
+
+        if (!isVisible) return;
+
+        const elapsed = t - lastFrameTime;
+        if (elapsed < frameInterval) return;
+
+        lastFrameTime = t - (elapsed % frameInterval);
+
         const { time = t * 0.01, speed = effectiveSpeed } = propsRef.current;
         program.uniforms.uTime.value = time * speed * 0.1;
         program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? effectiveAmplitude;
@@ -220,11 +235,21 @@ export default function Aurora(props: AuroraProps) {
         renderer.render({ scene: mesh });
       };
 
-      animateId = requestAnimationFrame(update);
+      animationFrameId = requestAnimationFrame(update);
+
+      // Intersection Observer to pause when off-screen
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          isVisible = entry.isIntersecting;
+        });
+      }, { threshold: 0 });
+
+      observer.observe(ctn);
 
       cleanup = () => {
-        cancelAnimationFrame(animateId);
+        if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
         window.removeEventListener('resize', resize);
+        observer.disconnect();
         if (ctn && gl.canvas.parentNode === ctn) {
           ctn.removeChild(gl.canvas);
         }

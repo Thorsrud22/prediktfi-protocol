@@ -231,7 +231,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
             >
               {isLastStep ? (
                 <Link href="/studio" className="flex items-center gap-2">
-                  Create First Prediction →
+                  Start Validation →
                 </Link>
               ) : (
                 'Next →'

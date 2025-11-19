@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 
 // Lazy load the heavy FeedPage component
 const FeedPageComponent = lazy(() => import('./FeedPageContent'));
+import LegacyFeaturePlaceholder from '../components/LegacyFeaturePlaceholder';
 
 // Loading skeleton for feed page
 function FeedPageSkeleton() {
@@ -56,8 +57,9 @@ function FeedPageSkeleton() {
 // Main page component with Suspense
 export default function FeedPage() {
   return (
-    <Suspense fallback={<FeedPageSkeleton />}>
-      <FeedPageComponent />
-    </Suspense>
+    <LegacyFeaturePlaceholder
+      title="Prediction Feed"
+      description="The public prediction feed is being updated to showcase validated ideas and projects."
+    />
   );
 }
