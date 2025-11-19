@@ -7,10 +7,11 @@ import { z } from 'zod';
 interface IdeaSubmissionFormProps {
     onSubmit: (data: IdeaSubmission) => void;
     isSubmitting: boolean;
+    initialData?: Partial<IdeaSubmission>;
 }
 
-export default function IdeaSubmissionForm({ onSubmit, isSubmitting }: IdeaSubmissionFormProps) {
-    const [formData, setFormData] = useState<Partial<IdeaSubmission>>({
+export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData }: IdeaSubmissionFormProps) {
+    const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
         projectType: undefined,
         teamSize: undefined,
@@ -75,8 +76,8 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting }: IdeaSubmi
                             type="button"
                             onClick={() => handleChange('projectType', type)}
                             className={`p-3 rounded-lg border text-sm transition-all ${formData.projectType === type
-                                    ? 'bg-blue-500 text-white border-blue-400'
-                                    : 'bg-white/5 text-blue-200 border-white/10 hover:bg-white/10'
+                                ? 'bg-blue-500 text-white border-blue-400'
+                                : 'bg-white/5 text-blue-200 border-white/10 hover:bg-white/10'
                                 }`}
                         >
                             {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
@@ -132,8 +133,8 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting }: IdeaSubmi
                             type="button"
                             onClick={() => toggleArrayItem('resources', resource)}
                             className={`px-4 py-2 rounded-full text-sm border transition-all ${formData.resources?.includes(resource)
-                                    ? 'bg-teal-500/20 text-teal-300 border-teal-500/50'
-                                    : 'bg-white/5 text-blue-200 border-white/10 hover:bg-white/10'
+                                ? 'bg-teal-500/20 text-teal-300 border-teal-500/50'
+                                : 'bg-white/5 text-blue-200 border-white/10 hover:bg-white/10'
                                 }`}
                         >
                             {resource.charAt(0).toUpperCase() + resource.slice(1)}
@@ -182,8 +183,8 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting }: IdeaSubmi
                             type="button"
                             onClick={() => handleChange('responseStyle', style.id)}
                             className={`p-3 rounded-lg border text-sm transition-all ${formData.responseStyle === style.id
-                                    ? 'bg-purple-500 text-white border-purple-400'
-                                    : 'bg-white/5 text-blue-200 border-white/10 hover:bg-white/10'
+                                ? 'bg-purple-500 text-white border-purple-400'
+                                : 'bg-white/5 text-blue-200 border-white/10 hover:bg-white/10'
                                 }`}
                         >
                             {style.label}
@@ -203,8 +204,8 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting }: IdeaSubmi
                             type="button"
                             onClick={() => toggleArrayItem('focusHints', hint)}
                             className={`px-3 py-1 rounded-full text-xs border transition-all ${formData.focusHints?.includes(hint)
-                                    ? 'bg-orange-500/20 text-orange-300 border-orange-500/50'
-                                    : 'bg-white/5 text-blue-200 border-white/10 hover:bg-white/10'
+                                ? 'bg-orange-500/20 text-orange-300 border-orange-500/50'
+                                : 'bg-white/5 text-blue-200 border-white/10 hover:bg-white/10'
                                 }`}
                         >
                             {hint}

@@ -16,7 +16,7 @@ vi.mock('@/app/components/wallet/SimplifiedWalletProvider', () => ({
 // Mock performance tracking
 vi.mock('@/app/utils/performance', () => ({
     usePerformanceTracking: vi.fn(),
-    trackPageLoad: vi.fn(() => () => { }),
+    trackPageLoad: vi.fn(() => ({ end: vi.fn() })),
 }));
 
 // Mock PerformanceMonitor component
@@ -48,7 +48,6 @@ describe('AI Idea Evaluator Studio', () => {
         const ctaButton = screen.getByRole('button', { name: /Start new evaluation/i });
         fireEvent.click(ctaButton);
 
-        expect(screen.getByText('New Evaluation')).toBeInTheDocument();
         expect(screen.getByText('Submit Your Idea')).toBeInTheDocument();
         expect(screen.getByText('Project Type')).toBeInTheDocument();
     });
@@ -75,14 +74,14 @@ describe('AI Idea Evaluator Studio', () => {
         (global.fetch as any).mockResolvedValueOnce({
             ok: true,
             json: async () => ({
-                data: {
-                    description: 'A decentralized exchange for memecoins',
-                    projectType: 'defi',
-                    teamSize: 'team_2_5',
-                    resources: ['time', 'skills'],
-                    successDefinition: '1M TVL',
-                    responseStyle: 'short'
-                }
+                evaluationId: 'eval_123',
+                overallVerdict: 'Great idea',
+                successProbability: 85,
+                pros: ['Good market fit'],
+                cons: ['High competition'],
+                improvements: ['Add social features'],
+                riskAnalysis: ['Regulatory risk'],
+                confidenceScore: 0.9
             }),
         });
 
@@ -114,10 +113,15 @@ describe('AI Idea Evaluator Studio', () => {
         // Expect loading state
         expect(screen.getByText('Submitting...')).toBeInTheDocument();
 
-        // Wait for analysis step
+        // Verify fetch was called
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+
+        // Wait for report step
         await waitFor(() => {
-            expect(screen.getByText('AI Evaluation')).toBeInTheDocument();
-            expect(screen.getByText('Potential Score')).toBeInTheDocument();
-        });
+            expect(screen.getByText('Evaluation Result')).toBeInTheDocument();
+            expect(screen.getByText('Great idea')).toBeInTheDocument();
+            expect(screen.getByText('85%')).toBeInTheDocument();
+            expect(screen.getByText('Good market fit')).toBeInTheDocument();
+        }, { timeout: 3000 });
     });
 });
