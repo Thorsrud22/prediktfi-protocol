@@ -101,65 +101,71 @@ export default function StudioPage() {
     <div className="min-h-screen bg-[#0B0F19] text-white selection:bg-blue-500/30">
       <PerformanceMonitor />
 
-      {/* Navigation Bar */}
-      <nav className="border-b border-white/10 bg-[#0B0F19]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-teal-400 rounded-lg flex items-center justify-center font-bold text-lg">
-                P
-              </div>
-              <span className="font-bold text-xl tracking-tight">Predikt.fi Studio</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => isConnected ? null : connect()}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isConnected
-                  ? 'bg-white/5 text-blue-200 border border-white/10'
-                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20'
-                  }`}
-              >
-                {isConnected ?
-                  `${publicKey?.slice(0, 4)}...${publicKey?.slice(-4)}` :
-                  'Connect Wallet'
-                }
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!isStarted ? (
           /* Landing View */
-          <div className="text-center py-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="inline-flex items-center justify-center p-2 bg-blue-500/10 rounded-full mb-8 border border-blue-500/20">
-              <span className="px-3 py-1 text-sm font-medium text-blue-400">✨ AI-Powered Analysis</span>
+          /* Landing View */
+          <div className="relative text-center py-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Background Glows */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+
+            <div className="inline-flex items-center justify-center px-4 py-1.5 bg-blue-500/10 rounded-full mb-8 border border-blue-500/20 backdrop-blur-sm">
+              <span className="text-sm font-medium text-blue-400 tracking-wide">✨ AI-POWERED ANALYSIS</span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 tracking-tight">
-              AI Idea Evaluator Studio
+
+            <h1 className="text-6xl md:text-8xl font-bold mb-8 tracking-tight">
+              <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/50">
+                AI Idea Evaluator
+              </span>
+              <br />
+              <span className="text-white">Studio</span>
             </h1>
-            <p className="text-xl text-blue-200/60 max-w-2xl mx-auto mb-12 leading-relaxed">
-              Validate your crypto, memecoin, or web3 project ideas instantly. Get comprehensive risk analysis, success probability, and strategic pivots.
+
+            <p className="text-xl md:text-2xl text-blue-200/70 max-w-3xl mx-auto mb-12 leading-relaxed font-light">
+              Validate your crypto, memecoin, or web3 project ideas instantly. <br className="hidden md:block" />
+              Get comprehensive risk analysis, success probability, and strategic pivots.
             </p>
+
             <button
               onClick={handleStart}
-              className="group relative px-8 py-4 bg-white text-black rounded-xl font-bold text-lg hover:scale-105 transition-all duration-200 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
+              className="group relative px-10 py-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl font-bold text-xl hover:shadow-2xl hover:shadow-blue-500/20 hover:scale-105 transition-all duration-300"
             >
-              Start new evaluation
-              <span className="absolute inset-0 rounded-xl ring-2 ring-white/20 group-hover:ring-white/40 transition-all"></span>
+              <span className="relative z-10 flex items-center gap-2">
+                Start New Evaluation
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </span>
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400 to-blue-300 opacity-0 group-hover:opacity-20 transition-opacity blur-lg"></div>
             </button>
 
             {/* Feature Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24 text-left">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-32 text-left">
               {[
-                { title: 'Instant Analysis', desc: 'Get immediate feedback on your project concept.' },
-                { title: 'Risk Assessment', desc: 'Identify potential pitfalls before you build.' },
-                { title: 'Strategic Pivots', desc: 'AI-suggested improvements to increase success chance.' }
+                {
+                  icon: '⚡️',
+                  title: 'Instant Analysis',
+                  desc: 'Get immediate feedback on your project concept with deep AI insights.'
+                },
+                {
+                  icon: '🛡️',
+                  title: 'Risk Assessment',
+                  desc: 'Identify potential pitfalls and security risks before you write a single line of code.'
+                },
+                {
+                  icon: '💡',
+                  title: 'Strategic Pivots',
+                  desc: 'Receive actionable suggestions to improve your product-market fit and tokenomics.'
+                }
               ].map((feature, i) => (
-                <div key={i} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                  <h3 className="font-bold text-lg mb-2 text-white">{feature.title}</h3>
-                  <p className="text-blue-200/60">{feature.desc}</p>
+                <div key={i} className="group p-8 rounded-3xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] hover:border-white/10 transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm">
+                  <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
+                    {feature.icon}
+                  </div>
+                  <h3 className="font-bold text-xl mb-3 text-white group-hover:text-blue-200 transition-colors">{feature.title}</h3>
+                  <p className="text-blue-200/50 leading-relaxed">{feature.desc}</p>
                 </div>
               ))}
             </div>

@@ -37,9 +37,16 @@ describe('AI Idea Evaluator Studio', () => {
     it('renders the landing view initially', () => {
         render(<StudioPage />);
 
-        expect(screen.getByText(/AI Idea Evaluator Studio/i)).toBeInTheDocument();
+        // Check for heading content
+        const heading = screen.getByRole('heading', { level: 1 });
+        expect(heading).toHaveTextContent(/AI Idea Evaluator/i);
+        expect(heading).toHaveTextContent(/Studio/i);
+
+        // Check for description (partial match is safer with <br> tags)
         expect(screen.getByText(/Validate your crypto, memecoin, or web3 project ideas instantly/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Start new evaluation/i })).toBeInTheDocument();
+
+        // Check for new button text (Title Case)
+        expect(screen.getByRole('button', { name: /Start New Evaluation/i })).toBeInTheDocument();
     });
 
     it('switches to evaluation flow when CTA is clicked', () => {
