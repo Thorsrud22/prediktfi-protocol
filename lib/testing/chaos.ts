@@ -32,9 +32,9 @@ export interface ChaosEvent {
 export class ChaosService {
   private events: ChaosEvent[] = [];
   private activeScenarios = new Set<string>();
-  
-  constructor(private config: ChaosConfig) {}
-  
+
+  constructor(private config: ChaosConfig) { }
+
   /**
    * Execute chaos scenario if conditions are met
    */
@@ -42,41 +42,41 @@ export class ChaosService {
     if (!this.config.enabled || !this.config.services.includes(serviceName)) {
       return false;
     }
-    
+
     // Check if we should inject chaos based on global failure rate
     if (Math.random() > this.config.failureRate) {
       return false;
     }
-    
+
     // Find applicable scenarios
-    const applicableScenarios = this.config.scenarios.filter(scenario => 
-      scenario.enabled && 
+    const applicableScenarios = this.config.scenarios.filter(scenario =>
+      scenario.enabled &&
       !this.activeScenarios.has(scenario.name) &&
       Math.random() < scenario.probability
     );
-    
+
     if (applicableScenarios.length === 0) {
       return false;
     }
-    
+
     // Select random scenario
     const scenario = applicableScenarios[Math.floor(Math.random() * applicableScenarios.length)];
-    
+
     console.log(`🔥 Executing chaos scenario: ${scenario.name} for service: ${serviceName}`);
-    
+
     return this.executeScenario(scenario);
   }
-  
+
   /**
    * Execute specific chaos scenario
    */
   private async executeScenario(scenario: ChaosScenario): Promise<boolean> {
     const startTime = Date.now();
     this.activeScenarios.add(scenario.name);
-    
+
     try {
       await scenario.execute();
-      
+
       const duration = Date.now() - startTime;
       const event: ChaosEvent = {
         scenario: scenario.name,
@@ -85,13 +85,13 @@ export class ChaosService {
         impact: scenario.impact,
         recovered: true
       };
-      
+
       this.events.push(event);
-      
+
       console.log(`🔥 Chaos scenario ${scenario.name} completed in ${duration}ms`);
-      
+
       return true;
-      
+
     } catch (error) {
       const duration = Date.now() - startTime;
       const event: ChaosEvent = {
@@ -101,18 +101,18 @@ export class ChaosService {
         impact: scenario.impact,
         recovered: false
       };
-      
+
       this.events.push(event);
-      
+
       console.error(`🔥 Chaos scenario ${scenario.name} failed:`, error);
-      
+
       return false;
-      
+
     } finally {
       this.activeScenarios.delete(scenario.name);
     }
   }
-  
+
   /**
    * Get chaos testing statistics
    */
@@ -124,10 +124,10 @@ export class ChaosService {
   } {
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
     const recentEvents = this.events.filter(event => event.timestamp.getTime() > oneHourAgo);
-    
-    const successRate = this.events.length > 0 ? 
+
+    const successRate = this.events.length > 0 ?
       (this.events.filter(e => e.recovered).length / this.events.length) * 100 : 100;
-    
+
     return {
       totalEvents: this.events.length,
       recentEvents: recentEvents.length,
@@ -153,7 +153,7 @@ export const chaosScenarios: ChaosScenario[] = [
       throw new Error('Price API temporarily unavailable');
     }
   },
-  
+
   {
     name: 'price_api_latency',
     description: 'Simulate high latency from price API',
@@ -166,7 +166,7 @@ export const chaosScenarios: ChaosScenario[] = [
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   },
-  
+
   {
     name: 'database_slow_query',
     description: 'Simulate slow database queries',
@@ -178,7 +178,7 @@ export const chaosScenarios: ChaosScenario[] = [
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   },
-  
+
   {
     name: 'network_partition',
     description: 'Simulate network partition/timeout',
@@ -190,7 +190,7 @@ export const chaosScenarios: ChaosScenario[] = [
       throw new Error('Network timeout');
     }
   },
-  
+
   {
     name: 'memory_pressure',
     description: 'Simulate memory pressure',
@@ -223,7 +223,7 @@ export const chaosService = new ChaosService(chaosConfig);
  * Price API with chaos testing
  */
 export class ChaosPriceAPI {
-  async getPrice(symbol: string): Promise<number> {
+  async getPrice(_symbol: string): Promise<number> {
     // Maybe inject chaos before executing the primary logic
     const chaosInjected = await chaosService.maybeExecuteChaos('price-api');
 
@@ -235,30 +235,30 @@ export class ChaosPriceAPI {
 
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 100));
-    
+
     // Return mock price
     return 50000 + Math.random() * 10000;
   }
-  
+
   /**
    * Resilient price fetch with fallback
    */
   async getPriceWithFallback(symbol: string): Promise<number> {
     try {
       return await this.getPrice(symbol);
-      
+
     } catch (error) {
       console.log(`🔄 Primary price API failed, trying fallback: ${error}`);
-      
+
       // Fallback to secondary source
       return this.getFallbackPrice(symbol);
     }
   }
-  
-  private async getFallbackPrice(symbol: string): Promise<number> {
+
+  private async getFallbackPrice(_symbol: string): Promise<number> {
     // Simulate fallback API call
     await new Promise(resolve => setTimeout(resolve, 200));
-    
+
     // Return slightly different price to simulate different source
     return 49000 + Math.random() * 12000;
   }
@@ -269,29 +269,29 @@ export class ChaosPriceAPI {
  */
 export async function testChaosEngineering(): Promise<void> {
   console.log('🧪 Testing chaos engineering setup...');
-  
+
   const priceAPI = new ChaosPriceAPI();
   const results = [];
-  
+
   // Run multiple requests to trigger chaos scenarios
   for (let i = 0; i < 20; i++) {
     try {
       const price = await priceAPI.getPriceWithFallback('bitcoin');
       results.push({ success: true, price });
-      
+
     } catch (error) {
       results.push({ success: false, error: (error as Error).message });
     }
   }
-  
+
   const successCount = results.filter(r => r.success).length;
   const successRate = (successCount / results.length) * 100;
-  
+
   console.log(`🧪 Chaos test results: ${successCount}/${results.length} successful (${successRate.toFixed(1)}%)`);
-  
+
   const chaosStats = chaosService.getStats();
   console.log('🔥 Chaos statistics:', chaosStats);
-  
+
   // Verify SLO compliance even with chaos
   if (successRate >= 95) {
     console.log('✅ System maintained SLO compliance under chaos conditions');

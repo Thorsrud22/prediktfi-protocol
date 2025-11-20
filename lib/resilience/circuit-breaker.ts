@@ -35,7 +35,7 @@ export class CircuitBreaker {
   private successes = 0;
   private lastFailureTime?: Date;
   private nextAttemptTime?: Date;
-  
+
   constructor(
     private name: string,
     private config: CircuitBreakerConfig = {
@@ -43,8 +43,8 @@ export class CircuitBreaker {
       recoveryTimeout: 30000, // 30 seconds
       monitoringPeriod: 60000  // 1 minute
     }
-  ) {}
-  
+  ) { }
+
   /**
    * Execute function with circuit breaker protection
    */
@@ -60,55 +60,55 @@ export class CircuitBreaker {
         );
       }
     }
-    
+
     try {
       const result = await fn();
       this.onSuccess();
       return result;
-      
+
     } catch (error) {
       this.onFailure(error);
       throw error;
     }
   }
-  
+
   /**
    * Handle successful execution
    */
   private onSuccess(): void {
     this.failures = 0;
     this.successes++;
-    
+
     if (this.state === 'HALF_OPEN') {
       this.state = 'CLOSED';
       console.log(`Circuit breaker ${this.name}: Reset to CLOSED state`);
     }
   }
-  
+
   /**
    * Handle failed execution
    */
   private onFailure(error: unknown): void {
     this.failures++;
     this.lastFailureTime = new Date();
-    
+
     // Check if this is an expected error that shouldn't count towards circuit breaking
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const isExpectedError = this.config.expectedErrors?.some(expected => 
+    const isExpectedError = this.config.expectedErrors?.some(expected =>
       errorMessage.includes(expected)
     );
-    
+
     if (isExpectedError) {
       console.log(`Circuit breaker ${this.name}: Expected error, not counting towards threshold`);
       return;
     }
-    
+
     if (this.failures >= this.config.failureThreshold) {
       this.state = 'OPEN';
       this.nextAttemptTime = new Date(Date.now() + this.config.recoveryTimeout);
-      
+
       console.log(`Circuit breaker ${this.name}: OPENED due to ${this.failures} failures. Recovery at ${this.nextAttemptTime.toISOString()}`);
-      
+
       // Log to observability system
       this.logCircuitBreakerEvent('OPENED', {
         failures: this.failures,
@@ -116,14 +116,14 @@ export class CircuitBreaker {
       });
     }
   }
-  
+
   /**
    * Check if circuit should attempt reset
    */
   private shouldAttemptReset(): boolean {
     return this.nextAttemptTime ? new Date() >= this.nextAttemptTime : false;
   }
-  
+
   /**
    * Get current circuit breaker statistics
    */
@@ -136,7 +136,7 @@ export class CircuitBreaker {
       nextAttemptTime: this.nextAttemptTime
     };
   }
-  
+
   /**
    * Manually reset circuit breaker
    */
@@ -146,14 +146,14 @@ export class CircuitBreaker {
     this.successes = 0;
     this.lastFailureTime = undefined;
     this.nextAttemptTime = undefined;
-    
+
     console.log(`Circuit breaker ${this.name}: Manually reset`);
   }
-  
+
   /**
    * Log circuit breaker events for observability
    */
-  private logCircuitBreakerEvent(event: string, metadata: Record<string, any>): void {
+  private logCircuitBreakerEvent(event: string, metadata: Record<string, unknown>): void {
     // Integration with tracing system
     import('../observability/tracing').then(({ tracing }) => {
       tracing.withSpan(
@@ -202,14 +202,14 @@ export async function withRetry<T>(
   }
 ): Promise<T> {
   let lastError: Error;
-  
+
   for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
     try {
       return await fn();
-      
+
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       if (attempt === config.maxAttempts) {
         throw new RetryableError(
           `Failed after ${config.maxAttempts} attempts: ${lastError.message}`,
@@ -217,19 +217,19 @@ export async function withRetry<T>(
           config.maxAttempts
         );
       }
-      
+
       // Calculate delay with exponential backoff
       const delay = Math.min(
         config.baseDelay * Math.pow(config.backoffFactor, attempt - 1),
         config.maxDelay
       );
-      
+
       console.log(`Retry attempt ${attempt}/${config.maxAttempts} failed: ${lastError.message}. Retrying in ${delay}ms`);
-      
+
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-  
+
   throw lastError!;
 }
 
@@ -243,14 +243,14 @@ export const circuitBreakers = {
     monitoringPeriod: 60000,
     expectedErrors: ['rate limit', 'quota exceeded']
   }),
-  
+
   urlResolver: new CircuitBreaker('url-resolver', {
     failureThreshold: 5,
     recoveryTimeout: 15000,
     monitoringPeriod: 60000,
     expectedErrors: ['timeout', 'connection refused']
   }),
-  
+
   database: new CircuitBreaker('database', {
     failureThreshold: 2,
     recoveryTimeout: 5000,
@@ -262,14 +262,14 @@ export const circuitBreakers = {
  * Decorator for automatic circuit breaker protection
  */
 export function WithCircuitBreaker(breakerName: keyof typeof circuitBreakers) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
-    
-    descriptor.value = async function (...args: any[]) {
+
+    descriptor.value = async function (...args: unknown[]) {
       const breaker = circuitBreakers[breakerName];
       return breaker.execute(() => method.apply(this, args));
     };
-    
+
     return descriptor;
   };
 }

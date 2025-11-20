@@ -29,14 +29,14 @@ export interface TextResolutionResult {
  */
 function normalizeText(text: string, caseSensitive = false): string {
   let normalized = text.trim();
-  
+
   if (!caseSensitive) {
     normalized = normalized.toLowerCase();
   }
-  
+
   // Normalize whitespace
   normalized = normalized.replace(/\s+/g, ' ');
-  
+
   return normalized;
 }
 
@@ -60,13 +60,13 @@ function keywordMatch(expected: string[], actual: string[]): {
   confidence: number;
 } {
   const matchedKeywords = expected.filter(expectedWord =>
-    actual.some(actualWord => 
+    actual.some(actualWord =>
       actualWord.includes(expectedWord) || expectedWord.includes(actualWord)
     )
   );
-  
+
   const confidence = expected.length > 0 ? matchedKeywords.length / expected.length : 0;
-  
+
   return { matchedKeywords, confidence };
 }
 
@@ -79,15 +79,15 @@ export async function resolveTextInsight(
   actualText?: string
 ): Promise<TextResolutionResult> {
   const startTime = Date.now();
-  
+
   try {
     console.log(`📝 Resolving text insight: "${canonical}"`);
     console.log(`   Expected: "${config.expect}"`);
-    
+
     // For now, we'll use a simple approach where actualText is provided
     // In a real implementation, this might come from external sources
     const textToCheck = actualText || '';
-    
+
     if (!textToCheck) {
       return {
         proposed: null,
@@ -101,7 +101,7 @@ export async function resolveTextInsight(
         reasoning: 'No actual text provided for comparison'
       };
     }
-    
+
     if (!config.expect || config.expect.trim().length === 0) {
       return {
         proposed: null,
@@ -118,13 +118,13 @@ export async function resolveTextInsight(
 
     const normalizedExpected = normalizeText(config.expect, config.caseSensitive);
     const normalizedActual = normalizeText(textToCheck, config.caseSensitive);
-    
+
     let proposed: 'YES' | 'NO' | null = null;
     let confidence = 0;
     let matchType: 'exact' | 'partial' | 'keyword' | 'none' = 'none';
     let reasoning = '';
     let matchedKeywords: string[] = [];
-    
+
     // Exact match
     if (config.exactMatch) {
       if (normalizedActual === normalizedExpected) {
@@ -164,10 +164,10 @@ export async function resolveTextInsight(
     else if (config.keywords && config.keywords.length > 0) {
       const actualKeywords = extractKeywords(normalizedActual);
       const keywordResult = keywordMatch(config.keywords, actualKeywords);
-      
+
       matchedKeywords = keywordResult.matchedKeywords;
       confidence = keywordResult.confidence;
-      
+
       if (confidence >= 0.8) {
         proposed = 'YES';
         matchType = 'keyword';
@@ -191,7 +191,7 @@ export async function resolveTextInsight(
     else {
       const expectedKeywords = extractKeywords(normalizedExpected);
       const actualKeywords = extractKeywords(normalizedActual);
-      
+
       if (expectedKeywords.length === 0) {
         return {
           proposed: null,
@@ -205,11 +205,11 @@ export async function resolveTextInsight(
           reasoning: 'No meaningful keywords found in expected text'
         };
       }
-      
+
       const keywordResult = keywordMatch(expectedKeywords, actualKeywords);
       matchedKeywords = keywordResult.matchedKeywords;
       confidence = keywordResult.confidence;
-      
+
       const negativeSignals = ['fail', 'failed', 'cancel', 'cancelled', 'cancelled', 'bad', 'worse', 'decline'];
       const hasNegative = actualKeywords.some(word => negativeSignals.some(neg => word.includes(neg)));
 
@@ -239,10 +239,10 @@ export async function resolveTextInsight(
         reasoning = 'No meaningful keywords found in expected text';
       }
     }
-    
+
     const tookMs = Date.now() - startTime;
     console.log(`✅ Text resolution completed in ${tookMs}ms: ${proposed || 'NO_PROPOSAL'}`);
-    
+
     return {
       proposed,
       confidence,
@@ -255,13 +255,13 @@ export async function resolveTextInsight(
       },
       reasoning
     };
-    
+
   } catch (error) {
     const tookMs = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     console.error(`❌ Text resolution failed after ${tookMs}ms:`, errorMessage);
-    
+
     return {
       proposed: null,
       confidence: 0,
@@ -289,7 +289,7 @@ export function parseTextConfig(resolverRef: string): TextResolverConfig {
       exactMatch: config.exactMatch || false,
       keywords: config.keywords
     };
-  } catch (error) {
+  } catch {
     throw new Error(`Invalid text resolver configuration: ${resolverRef}`);
   }
 }
@@ -305,7 +305,7 @@ export function simpleTextMatch(expected: string, actual: string, exactMatch = f
 } {
   const normalizedExpected = normalizeText(expected);
   const normalizedActual = normalizeText(actual);
-  
+
   if (exactMatch) {
     const matches = normalizedActual === normalizedExpected;
     return {
@@ -314,7 +314,7 @@ export function simpleTextMatch(expected: string, actual: string, exactMatch = f
       reasoning: matches ? 'Exact match' : 'No exact match'
     };
   }
-  
+
   if (normalizedActual.includes(normalizedExpected)) {
     return {
       matches: true,
@@ -322,15 +322,15 @@ export function simpleTextMatch(expected: string, actual: string, exactMatch = f
       reasoning: 'Substring match found'
     };
   }
-  
+
   const expectedKeywords = extractKeywords(normalizedExpected);
   const actualKeywords = extractKeywords(normalizedActual);
   const keywordResult = keywordMatch(expectedKeywords, actualKeywords);
-  
+
   return {
     matches: keywordResult.confidence >= 0.5,
     confidence: keywordResult.confidence,
-    reasoning: keywordResult.confidence >= 0.5 
+    reasoning: keywordResult.confidence >= 0.5
       ? `Keyword match (${Math.round(keywordResult.confidence * 100)}%): ${keywordResult.matchedKeywords.join(', ')}`
       : 'No significant matches found'
   };

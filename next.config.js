@@ -9,9 +9,8 @@ const nextConfig = {
 
   // Reactivity optimizations (experimental)
   reactStrictMode: true,
-  
-  // Faster production builds with SWC minifier
-  swcMinify: true,
+
+
 
   // Performance optimizations
   webpack: (config, { dev, isServer }) => {

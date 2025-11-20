@@ -10,7 +10,7 @@ export interface HealthCheckResult {
   status: 'healthy' | 'warning' | 'critical';
   responseTime: number;
   error?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   timestamp: Date;
 }
 
@@ -29,12 +29,12 @@ export interface SyntheticTestResult {
 export class SyntheticMonitor {
   private baseUrl: string;
   private cronKey: string;
-  
+
   constructor(baseUrl: string = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000') {
     this.baseUrl = baseUrl;
     this.cronKey = process.env.RESOLUTION_CRON_KEY || '';
   }
-  
+
   /**
    * Run comprehensive health check suite
    */
@@ -42,38 +42,38 @@ export class SyntheticMonitor {
     const startTime = Date.now();
     const checks: HealthCheckResult[] = [];
     const errors: string[] = [];
-    
+
     console.log('🔍 Starting synthetic monitoring health checks...');
-    
+
     try {
       // Basic endpoint health
       checks.push(await this.checkEndpointHealth('/api/healthz', 'System Health'));
       checks.push(await this.checkEndpointHealth('/api/feed', 'Feed API'));
       checks.push(await this.checkEndpointHealth('/api/leaderboard', 'Leaderboard API'));
-      
+
       // Admin endpoints (with auth)
       checks.push(await this.checkAdminEndpoint('/api/admin/metrics', 'Admin Metrics'));
-      
+
       // Resolution system health
       checks.push(await this.checkResolutionHealth());
-      
+
       // Score computation health
       checks.push(await this.checkScoreHealth());
-      
+
       // Database connectivity
       checks.push(await this.checkDatabaseHealth());
-      
+
       // External service dependencies
       checks.push(await this.checkExternalServices());
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       errors.push(`Health check suite failed: ${errorMessage}`);
     }
-    
+
     const duration = Date.now() - startTime;
     const success = checks.every(check => check.status !== 'critical') && errors.length === 0;
-    
+
     const result: SyntheticTestResult = {
       testName: 'comprehensive_health_check',
       success,
@@ -82,31 +82,31 @@ export class SyntheticMonitor {
       errors,
       timestamp: new Date()
     };
-    
+
     // Log results
     this.logSyntheticResults(result);
-    
+
     // Update SLO metrics
     this.updateSLOMetrics(result);
-    
+
     return result;
   }
-  
+
   /**
    * Check basic endpoint health
    */
   private async checkEndpointHealth(endpoint: string, name: string): Promise<HealthCheckResult> {
     const startTime = Date.now();
-    
+
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'HEAD',
         timeout: 5000
-      } as any);
-      
+      } as RequestInit & { timeout?: number });
+
       const responseTime = Date.now() - startTime;
       const status = response.ok ? 'healthy' : 'critical';
-      
+
       return {
         name,
         status,
@@ -117,11 +117,11 @@ export class SyntheticMonitor {
         },
         timestamp: new Date()
       };
-      
+
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       return {
         name,
         status: 'critical',
@@ -132,13 +132,13 @@ export class SyntheticMonitor {
       };
     }
   }
-  
+
   /**
    * Check admin endpoint with authentication
    */
   private async checkAdminEndpoint(endpoint: string, name: string): Promise<HealthCheckResult> {
     const startTime = Date.now();
-    
+
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'HEAD',
@@ -147,11 +147,11 @@ export class SyntheticMonitor {
           'X-Cron-Key': this.cronKey
         },
         timeout: 5000
-      } as any);
-      
+      } as RequestInit & { timeout?: number });
+
       const responseTime = Date.now() - startTime;
       const status = response.ok ? 'healthy' : 'warning';
-      
+
       return {
         name,
         status,
@@ -163,11 +163,11 @@ export class SyntheticMonitor {
         },
         timestamp: new Date()
       };
-      
+
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       return {
         name,
         status: 'warning', // Admin endpoints are less critical
@@ -178,13 +178,13 @@ export class SyntheticMonitor {
       };
     }
   }
-  
+
   /**
    * Check resolution system health
    */
   private async checkResolutionHealth(): Promise<HealthCheckResult> {
     const startTime = Date.now();
-    
+
     try {
       // Check resolution endpoint with dry-run
       const response = await fetch(`${this.baseUrl}/api/resolve/run`, {
@@ -193,11 +193,11 @@ export class SyntheticMonitor {
           'X-Cron-Key': this.cronKey
         },
         timeout: 10000
-      } as any);
-      
+      } as RequestInit & { timeout?: number });
+
       const responseTime = Date.now() - startTime;
       const status = response.ok ? 'healthy' : 'critical';
-      
+
       return {
         name: 'Resolution System',
         status,
@@ -208,11 +208,11 @@ export class SyntheticMonitor {
         },
         timestamp: new Date()
       };
-      
+
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       return {
         name: 'Resolution System',
         status: 'critical',
@@ -222,13 +222,13 @@ export class SyntheticMonitor {
       };
     }
   }
-  
+
   /**
    * Check score computation health
    */
   private async checkScoreHealth(): Promise<HealthCheckResult> {
     const startTime = Date.now();
-    
+
     try {
       // Check score recomputation endpoint
       const response = await fetch(`${this.baseUrl}/api/cron/recompute-scores`, {
@@ -237,11 +237,11 @@ export class SyntheticMonitor {
           'X-Cron-Key': this.cronKey
         },
         timeout: 10000
-      } as any);
-      
+      } as RequestInit & { timeout?: number });
+
       const responseTime = Date.now() - startTime;
       const status = response.ok ? 'healthy' : 'critical';
-      
+
       return {
         name: 'Score Computation',
         status,
@@ -252,11 +252,11 @@ export class SyntheticMonitor {
         },
         timestamp: new Date()
       };
-      
+
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       return {
         name: 'Score Computation',
         status: 'critical',
@@ -266,22 +266,22 @@ export class SyntheticMonitor {
       };
     }
   }
-  
+
   /**
    * Check database connectivity
    */
   private async checkDatabaseHealth(): Promise<HealthCheckResult> {
     const startTime = Date.now();
-    
+
     try {
       // Import Prisma client dynamically to avoid circular dependencies
       const { prisma } = await import('../../app/lib/prisma');
-      
+
       // Simple connectivity test
       await prisma.$queryRaw`SELECT 1`;
-      
+
       const responseTime = Date.now() - startTime;
-      
+
       return {
         name: 'Database Connectivity',
         status: 'healthy',
@@ -292,11 +292,11 @@ export class SyntheticMonitor {
         },
         timestamp: new Date()
       };
-      
+
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       return {
         name: 'Database Connectivity',
         status: 'critical',
@@ -306,20 +306,20 @@ export class SyntheticMonitor {
       };
     }
   }
-  
+
   /**
    * Check external service dependencies
    */
   private async checkExternalServices(): Promise<HealthCheckResult> {
     const startTime = Date.now();
     const services = [];
-    
+
     try {
       // Check CoinGecko API (primary price source)
       try {
         const response = await fetch('https://api.coingecko.com/api/v3/ping', {
           timeout: 5000
-        } as any);
+        } as RequestInit & { timeout?: number });
         services.push({
           name: 'CoinGecko',
           status: response.ok ? 'healthy' : 'warning',
@@ -332,12 +332,12 @@ export class SyntheticMonitor {
           error: error instanceof Error ? error.message : String(error)
         });
       }
-      
+
       const responseTime = Date.now() - startTime;
       const criticalFailures = services.filter(s => s.status === 'critical').length;
-      const status = criticalFailures > 0 ? 'critical' : 
-                    services.some(s => s.status === 'warning') ? 'warning' : 'healthy';
-      
+      const status = criticalFailures > 0 ? 'critical' :
+        services.some(s => s.status === 'warning') ? 'warning' : 'healthy';
+
       return {
         name: 'External Services',
         status,
@@ -349,11 +349,11 @@ export class SyntheticMonitor {
         },
         timestamp: new Date()
       };
-      
+
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       return {
         name: 'External Services',
         status: 'warning',
@@ -363,31 +363,31 @@ export class SyntheticMonitor {
       };
     }
   }
-  
+
   /**
    * Log synthetic test results
    */
   private logSyntheticResults(result: SyntheticTestResult): void {
     const { success, duration, checks, errors } = result;
-    
+
     console.log(`🔍 Synthetic monitoring completed: ${success ? '✅ PASS' : '❌ FAIL'} (${duration}ms)`);
-    
+
     // Log individual check results
     checks.forEach(check => {
-      const statusIcon = check.status === 'healthy' ? '✅' : 
-                        check.status === 'warning' ? '⚠️' : '❌';
+      const statusIcon = check.status === 'healthy' ? '✅' :
+        check.status === 'warning' ? '⚠️' : '❌';
       console.log(`  ${statusIcon} ${check.name}: ${check.responseTime}ms`);
-      
+
       if (check.error) {
         console.log(`    Error: ${check.error}`);
       }
     });
-    
+
     if (errors.length > 0) {
       console.log('❌ Synthetic monitoring errors:');
       errors.forEach(error => console.log(`  - ${error}`));
     }
-    
+
     // Send to observability system
     tracing.withSpan(
       'synthetic_monitoring.health_check',
@@ -404,7 +404,7 @@ export class SyntheticMonitor {
       }
     );
   }
-  
+
   /**
    * Update SLO metrics based on synthetic test results
    */
@@ -412,7 +412,7 @@ export class SyntheticMonitor {
     // Update uptime metrics
     const criticalFailures = result.checks.filter(c => c.status === 'critical').length;
     const isSystemDown = criticalFailures > 0;
-    
+
     // Record API latencies
     result.checks.forEach(check => {
       if (check.name.includes('API') || check.name.includes('System')) {
@@ -420,26 +420,26 @@ export class SyntheticMonitor {
         sloMonitor.recordRequest('synthetic', check.status === 'critical');
       }
     });
-    
+
     // Log uptime event
     if (isSystemDown) {
       console.log('🚨 System degradation detected by synthetic monitoring');
     }
   }
-  
+
   /**
    * Create test insight (dry-run for testing)
    */
   async createTestInsight(): Promise<HealthCheckResult> {
     const startTime = Date.now();
-    
+
     try {
       // This would create a test insight in dry-run mode
       // For now, just simulate the operation
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       const responseTime = Date.now() - startTime;
-      
+
       return {
         name: 'Test Insight Creation',
         status: 'healthy',
@@ -450,11 +450,11 @@ export class SyntheticMonitor {
         },
         timestamp: new Date()
       };
-      
+
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       return {
         name: 'Test Insight Creation',
         status: 'critical',

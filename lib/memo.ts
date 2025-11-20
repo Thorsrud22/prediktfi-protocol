@@ -37,14 +37,14 @@ export function createMemoPayload(
 ): MemoPayload {
   const deadlineISO = deadline.toISOString();
   const fullHash = generatePredictionHash(canonical, deadlineISO, resolverRef);
-  
+
   const payload: MemoPayload = {
     t: 'predikt.v1',
     pid: predictionId,
     h: fullHash, // Full 64-char hash for strong verification
     d: deadlineISO.split('T')[0]  // Date only (YYYY-MM-DD)
   };
-  
+
   return payload;
 }
 
@@ -70,7 +70,7 @@ export function serializeMemoPayload(payload: MemoPayload): string {
 export function parseMemoPayload(memoJson: string): MemoPayload | null {
   try {
     const parsed = JSON.parse(memoJson);
-    
+
     // Validate structure
     if (
       parsed.t === 'predikt.v1' &&
@@ -80,9 +80,9 @@ export function parseMemoPayload(memoJson: string): MemoPayload | null {
     ) {
       return parsed as MemoPayload;
     }
-    
+
     return null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -182,7 +182,7 @@ export function extractPredictionFromMemo(memoJson: string): {
 } | null {
   const payload = parseMemoPayload(memoJson);
   if (!payload) return null;
-  
+
   return {
     predictionId: payload.pid,
     hash: payload.h,
@@ -209,6 +209,6 @@ export function normalizeHashInput(
   const normalizedCanonical = canonical.trim();
   const normalizedDeadline = deadlineISO.trim();
   const normalizedResolver = resolverRef.trim();
-  
+
   return `${normalizedCanonical}|${normalizedDeadline}|${normalizedResolver}`;
 }

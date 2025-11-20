@@ -2,7 +2,7 @@
  * OpenTelemetry Tracing & Observability
  */
 
-import { trace, context, SpanStatusCode, SpanKind } from '@opentelemetry/api';
+import { trace, context, SpanStatusCode, SpanKind, Span } from '@opentelemetry/api';
 
 export interface TraceContext {
   traceId: string;
@@ -19,13 +19,13 @@ export interface SpanAttributes {
  */
 export class TracingService {
   private tracer = trace.getTracer('prediktfi-protocol', '1.0.0');
-  
+
   /**
    * Start a new span with automatic error handling
    */
   async withSpan<T>(
     name: string,
-    fn: (span: any) => Promise<T>,
+    fn: (span: Span) => Promise<T>,
     attributes?: SpanAttributes,
     kind: SpanKind = SpanKind.INTERNAL
   ): Promise<T> {
@@ -37,23 +37,23 @@ export class TracingService {
         ...attributes
       }
     });
-    
+
     const startTime = Date.now();
-    
+
     try {
       const result = await context.with(trace.setSpan(context.active(), span), () => fn(span));
-      
+
       span.setStatus({ code: SpanStatusCode.OK });
       span.setAttributes({
         'operation.success': true,
         'operation.duration_ms': Date.now() - startTime
       });
-      
+
       return result;
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       span.recordException(error as Error);
       span.setStatus({
         code: SpanStatusCode.ERROR,
@@ -64,14 +64,14 @@ export class TracingService {
         'operation.error': errorMessage,
         'operation.duration_ms': Date.now() - startTime
       });
-      
+
       throw error;
-      
+
     } finally {
       span.end();
     }
   }
-  
+
   /**
    * Trace API requests with automatic SLO recording
    */
@@ -85,36 +85,36 @@ export class TracingService {
       `${method} ${endpoint}`,
       async (span) => {
         const startTime = Date.now();
-        
+
         try {
           const result = await fn();
           const duration = Date.now() - startTime;
-          
+
           // Record SLO metrics
           const { sloMonitor } = await import('./slo');
           sloMonitor.recordLatency('api', duration);
           sloMonitor.recordRequest('api', false);
-          
+
           span.setAttributes({
             'http.status_code': 200,
             'http.response_time_ms': duration
           });
-          
+
           return result;
-          
+
         } catch (error) {
           const duration = Date.now() - startTime;
-          
+
           // Record error for SLO
           const { sloMonitor } = await import('./slo');
           sloMonitor.recordRequest('api', true);
-          
-          const statusCode = (error as any)?.status || 500;
+
+          const statusCode = (error as { status?: number })?.status || 500;
           span.setAttributes({
             'http.status_code': statusCode,
             'http.response_time_ms': duration
           });
-          
+
           throw error;
         }
       },
@@ -126,7 +126,7 @@ export class TracingService {
       SpanKind.SERVER
     );
   }
-  
+
   /**
    * Trace resolver operations
    */
@@ -145,7 +145,7 @@ export class TracingService {
       }
     );
   }
-  
+
   /**
    * Trace external API calls
    */
@@ -164,7 +164,7 @@ export class TracingService {
       SpanKind.CLIENT
     );
   }
-  
+
   /**
    * Trace database operations
    */
@@ -183,7 +183,7 @@ export class TracingService {
       }
     );
   }
-  
+
   /**
    * Add baggage to current trace context
    */
@@ -191,14 +191,14 @@ export class TracingService {
     // Implementation would depend on OpenTelemetry setup
     console.log(`Setting baggage: ${key}=${value}`);
   }
-  
+
   /**
    * Get current trace context
    */
   getCurrentTraceContext(): TraceContext | null {
     const activeSpan = trace.getActiveSpan();
     if (!activeSpan) return null;
-    
+
     const spanContext = activeSpan.spanContext();
     return {
       traceId: spanContext.traceId,
@@ -213,7 +213,7 @@ export const tracing = new TracingService();
 /**
  * Middleware for automatic API tracing
  */
-export function withTracing<T extends any[], R>(
+export function withTracing<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   name: string,
   attributes?: SpanAttributes
@@ -227,18 +227,18 @@ export function withTracing<T extends any[], R>(
  * Decorator for tracing class methods
  */
 export function Trace(name?: string, attributes?: SpanAttributes) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
-    const traceName = name || `${target.constructor.name}.${propertyName}`;
-    
-    descriptor.value = async function (...args: any[]) {
+    const traceName = name || `${(target as { constructor: { name: string } }).constructor.name}.${propertyName}`;
+
+    descriptor.value = async function (...args: unknown[]) {
       return tracing.withSpan(
         traceName,
         () => method.apply(this, args),
         attributes
       );
     };
-    
+
     return descriptor;
   };
 }

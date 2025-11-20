@@ -58,17 +58,17 @@ export function useOptimizedFetch<T>(
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request timed out');
       }
-      
+
       // Don't retry on 404 or other client errors (400-499)
-      const isClientError = error instanceof Error && 
+      const isClientError = error instanceof Error &&
         error.message.includes('HTTP 4');
-      
+
       if (attempt < retries && !isClientError) {
         const delay = retryDelay * Math.pow(2, attempt);
         await new Promise(resolve => setTimeout(resolve, delay));
         return fetchWithRetry(attempt + 1);
       }
-      
+
       throw error;
     }
   }, [url, enabled, staleTime, retries, retryDelay]);
@@ -80,7 +80,7 @@ export function useOptimizedFetch<T>(
     if (abortControllerRef.current) {
       try {
         abortControllerRef.current.abort();
-      } catch {}
+      } catch { }
     }
 
     updateState({ loading: true, error: null });
@@ -99,13 +99,13 @@ export function useOptimizedFetch<T>(
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Fetch failed';
-      
+
       // Only log errors that are not HTTP client/server errors (skip 4xx and 5xx)
       const isHttpError = errorMessage.includes('HTTP 4') || errorMessage.includes('HTTP 5');
       if (!isHttpError) {
         console.error('Fetch error:', errorMessage);
       }
-      
+
       updateState({
         loading: false,
         error: errorMessage,
@@ -151,11 +151,10 @@ export function useOptimizedFetch<T>(
       if (abortControllerRef.current) {
         try {
           abortControllerRef.current.abort();
-        } catch {}
+        } catch { }
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, enabled]); // Only depend on url and enabled, fetchData is accessed via closure
+  }, [url, enabled, fetchData]);
 
   return {
     ...state,

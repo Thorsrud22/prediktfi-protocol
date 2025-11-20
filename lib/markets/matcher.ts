@@ -6,11 +6,17 @@
 import { ExternalMarket, MarketMatchScore } from './types';
 import { kalshiClient } from './kalshi';
 
+interface MatcherInsight {
+  question: string;
+  deadline?: Date;
+  probability: number;
+}
+
 export class MarketMatcher {
   /**
    * Find matching external markets for an insight
    */
-  async findMatchingMarkets(insight: any): Promise<MarketMatchScore[]> {
+  async findMatchingMarkets(insight: MatcherInsight): Promise<MarketMatchScore[]> {
     const matches: MarketMatchScore[] = [];
 
     try {
@@ -25,7 +31,7 @@ export class MarketMatcher {
 
       // Sort by similarity score
       matches.sort((a, b) => b.similarity - a.similarity);
-      
+
       return matches.slice(0, 5); // Return top 5 matches
     } catch (error) {
       console.error('Market matching error:', error);
@@ -36,7 +42,7 @@ export class MarketMatcher {
   /**
    * Calculate similarity score between insight and market
    */
-  private calculateSimilarity(insight: any, market: ExternalMarket): MarketMatchScore {
+  private calculateSimilarity(insight: MatcherInsight, market: ExternalMarket): MarketMatchScore {
     let similarity = 0;
     const reasons: string[] = [];
 
@@ -87,10 +93,10 @@ export class MarketMatcher {
   private calculateTextSimilarity(text1: string, text2: string): number {
     const words1 = this.extractKeywords(text1);
     const words2 = this.extractKeywords(text2);
-    
+
     const intersection = words1.filter(word => words2.includes(word));
     const union = [...new Set([...words1, ...words2])];
-    
+
     return union.length > 0 ? intersection.length / union.length : 0;
   }
 
@@ -118,7 +124,7 @@ export class MarketMatcher {
   private calculateDateSimilarity(date1: Date, date2: Date): number {
     const diffMs = Math.abs(date1.getTime() - date2.getTime());
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
-    
+
     // Score decreases as dates get further apart
     if (diffDays <= 1) return 1.0;
     if (diffDays <= 7) return 0.9;

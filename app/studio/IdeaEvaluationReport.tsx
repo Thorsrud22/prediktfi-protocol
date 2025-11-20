@@ -43,37 +43,35 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
                     <div className="text-center">
                         <div className="text-5xl font-bold mb-1 text-blue-400">
-                            {Math.round(result.confidenceScore * 100)}%
+                            {Math.round(result.confidence)}%
                         </div>
                         <div className="text-sm text-blue-300 uppercase tracking-wider font-semibold">AI Confidence</div>
                     </div>
                 </div>
             </div>
 
+            {/* Dimension Scores */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {result.dimensionScores.map((dim) => (
+                    <div key={dim.id} className={`p-4 rounded-xl border ${getScoreBg(dim.score)} bg-opacity-10`}>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="font-semibold text-white">{dim.label}</span>
+                            <span className={`font-bold ${getScoreColor(dim.score)}`}>{dim.score}</span>
+                        </div>
+                        <p className="text-sm text-gray-300">{dim.comment}</p>
+                    </div>
+                ))}
+            </div>
+
             {/* Detailed Analysis Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Pros */}
-                <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-                    <h3 className="text-xl font-semibold text-green-400 mb-4 flex items-center">
-                        <span className="mr-2">✅</span> Strengths
-                    </h3>
-                    <ul className="space-y-3">
-                        {result.pros.map((item, index) => (
-                            <li key={index} className="flex items-start text-gray-300">
-                                <span className="mr-2 mt-1.5 w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></span>
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                {/* Cons */}
+                {/* Red Flags */}
                 <div className="bg-white/5 rounded-xl border border-white/10 p-6">
                     <h3 className="text-xl font-semibold text-red-400 mb-4 flex items-center">
-                        <span className="mr-2">⚠️</span> Risks & Challenges
+                        <span className="mr-2">⚠️</span> Red Flags
                     </h3>
                     <ul className="space-y-3">
-                        {result.cons.map((item, index) => (
+                        {result.redFlags.map((item, index) => (
                             <li key={index} className="flex items-start text-gray-300">
                                 <span className="mr-2 mt-1.5 w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0"></span>
                                 {item}
@@ -82,13 +80,13 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     </ul>
                 </div>
 
-                {/* Improvements */}
+                {/* Recommended Pivots */}
                 <div className="bg-white/5 rounded-xl border border-white/10 p-6">
                     <h3 className="text-xl font-semibold text-blue-400 mb-4 flex items-center">
-                        <span className="mr-2">💡</span> Strategic Pivots
+                        <span className="mr-2">💡</span> Recommended Pivots
                     </h3>
                     <ul className="space-y-3">
-                        {result.improvements.map((item, index) => (
+                        {result.recommendedPivots.map((item, index) => (
                             <li key={index} className="flex items-start text-gray-300">
                                 <span className="mr-2 mt-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
                                 {item}
@@ -97,19 +95,29 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     </ul>
                 </div>
 
-                {/* Risk Analysis */}
+                {/* Next Steps */}
                 <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-                    <h3 className="text-xl font-semibold text-orange-400 mb-4 flex items-center">
-                        <span className="mr-2">🛡️</span> Risk Analysis
+                    <h3 className="text-xl font-semibold text-green-400 mb-4 flex items-center">
+                        <span className="mr-2">🚀</span> Next Steps
                     </h3>
                     <ul className="space-y-3">
-                        {result.riskAnalysis.map((item, index) => (
+                        {result.nextSteps.map((item, index) => (
                             <li key={index} className="flex items-start text-gray-300">
-                                <span className="mr-2 mt-1.5 w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0"></span>
+                                <span className="mr-2 mt-1.5 w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></span>
                                 {item}
                             </li>
                         ))}
                     </ul>
+                </div>
+
+                {/* Risk Summary */}
+                <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+                    <h3 className="text-xl font-semibold text-orange-400 mb-4 flex items-center">
+                        <span className="mr-2">🛡️</span> Risk Summary
+                    </h3>
+                    <p className="text-gray-300 leading-relaxed">
+                        {result.riskSummary}
+                    </p>
                 </div>
             </div>
 

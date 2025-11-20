@@ -78,22 +78,22 @@ export function generateCSP(): string {
 export const SECURITY_HEADERS = {
   // Content Security Policy
   'Content-Security-Policy': generateCSP(),
-  
+
   // Referrer Policy
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  
+
   // X-Frame-Options (backup for frame-ancestors)
   'X-Frame-Options': 'DENY',
-  
+
   // X-Content-Type-Options
   'X-Content-Type-Options': 'nosniff',
-  
+
   // X-XSS-Protection
   'X-XSS-Protection': '1; mode=block',
-  
+
   // Strict Transport Security (HTTPS only)
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-  
+
   // Permissions Policy
   'Permissions-Policy': [
     'camera=()',
@@ -101,7 +101,7 @@ export const SECURITY_HEADERS = {
     'geolocation=()',
     'interest-cohort=()'
   ].join(', '),
-  
+
   // Cross-Origin Policies
   'Cross-Origin-Embedder-Policy': 'require-corp',
   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -114,16 +114,16 @@ export const SECURITY_HEADERS = {
 export function applySecurityHeaders(response: NextResponse): NextResponse {
   // Only apply HTTPS headers in production
   const isProduction = process.env.NODE_ENV === 'production';
-  
+
   Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
     // Skip HTTPS-only headers in development
     if (!isProduction && key === 'Strict-Transport-Security') {
       return;
     }
-    
+
     response.headers.set(key, value);
   });
-  
+
   return response;
 }
 
@@ -139,40 +139,40 @@ export interface RateLimitConfig {
 
 export class RateLimiter {
   private requests = new Map<string, number[]>();
-  
-  constructor(private config: RateLimitConfig) {}
-  
+
+  constructor(private config: RateLimitConfig) { }
+
   /**
    * Check if request should be rate limited
    */
   isRateLimited(identifier: string): boolean {
     const now = Date.now();
     const windowStart = now - this.config.windowMs;
-    
+
     // Get existing requests for this identifier
     const userRequests = this.requests.get(identifier) || [];
-    
+
     // Filter out old requests
     const recentRequests = userRequests.filter(timestamp => timestamp > windowStart);
-    
+
     // Update stored requests
     this.requests.set(identifier, recentRequests);
-    
+
     // Check if limit exceeded
     return recentRequests.length >= this.config.maxRequests;
   }
-  
+
   /**
    * Record a request
    */
   recordRequest(identifier: string): void {
     const now = Date.now();
     const userRequests = this.requests.get(identifier) || [];
-    
+
     userRequests.push(now);
     this.requests.set(identifier, userRequests);
   }
-  
+
   /**
    * Get remaining requests for identifier
    */
@@ -181,17 +181,17 @@ export class RateLimiter {
     const windowStart = now - this.config.windowMs;
     const userRequests = this.requests.get(identifier) || [];
     const recentRequests = userRequests.filter(timestamp => timestamp > windowStart);
-    
+
     return Math.max(0, this.config.maxRequests - recentRequests.length);
   }
-  
+
   /**
    * Clean up old request records
    */
   cleanup(): void {
     const now = Date.now();
     const cutoff = now - this.config.windowMs * 2; // Keep some extra history
-    
+
     this.requests.forEach((timestamps, identifier) => {
       const filtered = timestamps.filter(timestamp => timestamp > cutoff);
       if (filtered.length === 0) {
@@ -211,12 +211,12 @@ export const rateLimiters = {
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 100
   }),
-  
+
   admin: new RateLimiter({
     windowMs: 60 * 60 * 1000, // 1 hour
     maxRequests: 50
   }),
-  
+
   auth: new RateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 5
@@ -231,12 +231,12 @@ export interface AbuseEvent {
   identifier: string;
   endpoint: string;
   timestamp: Date;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 }
 
 export class AbuseDetector {
   private events: AbuseEvent[] = [];
-  
+
   /**
    * Log abuse event
    */
@@ -245,21 +245,21 @@ export class AbuseDetector {
       ...event,
       timestamp: new Date()
     };
-    
+
     this.events.push(fullEvent);
-    
+
     // Log to console (in production, send to monitoring system)
     console.log(`🚨 Abuse detected: ${event.type} from ${event.identifier} on ${event.endpoint}`, event.details);
-    
+
     // Keep only last 1000 events
     if (this.events.length > 1000) {
       this.events.shift();
     }
-    
+
     // Check for patterns
     this.detectAbusePatterns(event.identifier);
   }
-  
+
   /**
    * Detect abuse patterns
    */
@@ -267,14 +267,14 @@ export class AbuseDetector {
     const recentEvents = this.events
       .filter(event => event.identifier === identifier)
       .filter(event => Date.now() - event.timestamp.getTime() < 60 * 60 * 1000); // Last hour
-    
+
     if (recentEvents.length >= 10) {
       console.log(`🚨 High abuse activity detected from ${identifier}: ${recentEvents.length} events in last hour`);
-      
+
       // In production, this could trigger automatic blocking or alerts
     }
   }
-  
+
   /**
    * Get abuse statistics
    */
@@ -285,19 +285,19 @@ export class AbuseDetector {
   } {
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
     const recentEvents = this.events.filter(event => event.timestamp.getTime() > oneHourAgo);
-    
+
     // Count events by identifier
     const identifierCounts = new Map<string, number>();
     recentEvents.forEach(event => {
       identifierCounts.set(event.identifier, (identifierCounts.get(event.identifier) || 0) + 1);
     });
-    
+
     // Get top abusers
     const topAbusers = Array.from(identifierCounts.entries())
       .map(([identifier, count]) => ({ identifier, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
-    
+
     return {
       totalEvents: this.events.length,
       recentEvents: recentEvents.length,

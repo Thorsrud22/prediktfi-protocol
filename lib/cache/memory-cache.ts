@@ -9,7 +9,7 @@ export interface CacheEntry<T> {
 }
 
 // In-memory cache with TTL
-const cache = new Map<string, CacheEntry<any>>();
+const cache = new Map<string, CacheEntry<unknown>>();
 
 // Cache cleanup interval (5 minutes)
 setInterval(() => {
@@ -52,7 +52,7 @@ export function setCached<T>(
   return entry;
 }
 
-export function generateCacheKey(base: string, params: Record<string, any>): string {
+export function generateCacheKey(base: string, params: Record<string, unknown>): string {
   const sortedParams = Object.keys(params)
     .sort()
     .map(key => `${key}=${params[key]}`)

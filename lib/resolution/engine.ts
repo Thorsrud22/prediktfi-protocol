@@ -11,7 +11,7 @@ import { updateProfileAggregates } from '../score';
 export interface ResolutionResult {
   result: 'YES' | 'NO' | 'INVALID';
   evidenceUrl?: string;
-  evidenceMeta?: Record<string, any>;
+  evidenceMeta?: Record<string, unknown>;
   decidedBy: 'AGENT' | 'USER';
   confidence?: number;
 }
@@ -31,12 +31,12 @@ export interface Insight {
  */
 export async function resolveInsight(insight: Insight): Promise<ResolutionResult> {
   const startTime = Date.now();
-  
+
   try {
     console.log(`🔍 Resolving insight ${insight.id}: ${insight.canonical}`);
-    
+
     let result: ResolutionResult;
-    
+
     switch (insight.resolverKind) {
       case 'PRICE':
         result = await resolvePriceInsight(insight);
@@ -50,21 +50,21 @@ export async function resolveInsight(insight: Insight): Promise<ResolutionResult
       default:
         throw new Error(`Unknown resolver kind: ${insight.resolverKind}`);
     }
-    
+
     const tookMs = Date.now() - startTime;
     console.log(`✅ Resolved ${insight.id} as ${result.result} in ${tookMs}ms`);
-    
+
     return result;
-    
+
   } catch (error) {
     const tookMs = Date.now() - startTime;
     console.error(`❌ Failed to resolve ${insight.id} after ${tookMs}ms:`, error);
-    
+
     return {
       result: 'INVALID',
-      evidenceMeta: { 
+      evidenceMeta: {
         error: error instanceof Error ? error.message : 'Unknown error',
-        tookMs 
+        tookMs
       },
       decidedBy: 'AGENT'
     };
@@ -76,7 +76,7 @@ export async function resolveInsight(insight: Insight): Promise<ResolutionResult
  */
 async function resolvePriceInsight(insight: Insight): Promise<ResolutionResult> {
   const config = parsePriceConfig(insight.resolverRef);
-  
+
   // Extract comparison from canonical statement
   const comparison = parseCanonicalComparison(insight.canonical);
   if (!comparison) {
@@ -86,7 +86,7 @@ async function resolvePriceInsight(insight: Insight): Promise<ResolutionResult> 
       decidedBy: 'AGENT'
     };
   }
-  
+
   // Get price at deadline
   const priceResult = await getPriceAtCloseUTC(config.asset, insight.deadline, config);
   if (!priceResult) {
@@ -96,12 +96,12 @@ async function resolvePriceInsight(insight: Insight): Promise<ResolutionResult> 
       decidedBy: 'AGENT'
     };
   }
-  
+
   // Evaluate comparison
   const actualPrice = priceResult.price;
   const targetPrice = comparison.value;
   const operator = comparison.operator;
-  
+
   let isTrue = false;
   switch (operator) {
     case '>':
@@ -127,7 +127,7 @@ async function resolvePriceInsight(insight: Insight): Promise<ResolutionResult> 
         decidedBy: 'AGENT'
       };
   }
-  
+
   return {
     result: isTrue ? 'YES' : 'NO',
     evidenceUrl: `https://www.coingecko.com/en/coins/${config.asset.toLowerCase()}`,
@@ -151,11 +151,11 @@ async function resolvePriceInsight(insight: Insight): Promise<ResolutionResult> 
 async function resolveUrlInsight(insight: Insight): Promise<ResolutionResult> {
   // Import here to avoid circular dependencies
   const { resolveUrlInsight: urlResolver, parseUrlConfig } = await import('../resolvers/url');
-  
+
   try {
     const config = parseUrlConfig(insight.resolverRef);
     const urlResult = await urlResolver(insight.canonical, config);
-    
+
     // For automatic resolution, we only auto-resolve high confidence cases
     if (urlResult.proposed && urlResult.confidence >= 0.9 && urlResult.evidence) {
       return {
@@ -185,7 +185,7 @@ async function resolveUrlInsight(insight: Insight): Promise<ResolutionResult> {
         decidedBy: 'AGENT'
       };
     }
-  } catch (error) {
+  } catch {
     return {
       result: 'INVALID',
       evidenceMeta: {
@@ -203,7 +203,7 @@ async function resolveUrlInsight(insight: Insight): Promise<ResolutionResult> {
 async function resolveTextInsight(insight: Insight): Promise<ResolutionResult> {
   // Import here to avoid circular dependencies
   const { resolveTextInsight: textResolver, parseTextConfig } = await import('../resolvers/text');
-  
+
   try {
     const config = parseTextConfig(insight.resolverRef);
 
@@ -222,7 +222,7 @@ async function resolveTextInsight(insight: Insight): Promise<ResolutionResult> {
       },
       decidedBy: 'AGENT'
     };
-  } catch (error) {
+  } catch {
     return {
       result: 'INVALID',
       evidenceMeta: {
@@ -245,19 +245,19 @@ function parseCanonicalComparison(canonical: string): { operator: string; value:
     /(\w+)\s+(\w+)\s+(>=?|<=?|==?)\s+(\d+(?:\.\d+)?)/,
     /(\w+)\s+(>=?|<=?|==?)\s+(\d+(?:\.\d+)?)/
   ];
-  
+
   for (const pattern of patterns) {
     const match = canonical.match(pattern);
     if (match) {
       const operator = match[match.length - 2];
       const value = parseFloat(match[match.length - 1]);
-      
+
       if (!isNaN(value)) {
         return { operator, value };
       }
     }
   }
-  
+
   return null;
 }
 
@@ -266,7 +266,7 @@ function parseCanonicalComparison(canonical: string): { operator: string; value:
  */
 export async function processInsightResolution(insightId: string): Promise<void> {
   const startTime = Date.now();
-  
+
   try {
     // Fetch insight from database
     const insight = await prisma.insight.findUnique({
@@ -282,20 +282,20 @@ export async function processInsightResolution(insightId: string): Promise<void>
         status: true
       }
     });
-    
+
     if (!insight) {
       throw new Error(`Insight not found: ${insightId}`);
     }
-    
+
     if (insight.status === 'RESOLVED') {
       console.log(`⏭️ Insight ${insightId} already resolved`);
       return;
     }
-    
+
     if (!insight.canonical || !insight.p || !insight.deadline || !insight.resolverKind || !insight.resolverRef) {
       throw new Error(`Insight ${insightId} missing required fields for resolution`);
     }
-    
+
     // Convert to engine format
     const engineInsight: Insight = {
       id: insight.id,
@@ -306,10 +306,10 @@ export async function processInsightResolution(insightId: string): Promise<void>
       resolverRef: insight.resolverRef,
       status: insight.status as 'OPEN' | 'COMMITTED' | 'RESOLVED'
     };
-    
+
     // Resolve the insight
     const resolution = await resolveInsight(engineInsight);
-    
+
     // Save outcome to database
     await prisma.$transaction(async (tx) => {
       // Create outcome record
@@ -322,14 +322,14 @@ export async function processInsightResolution(insightId: string): Promise<void>
           decidedAt: new Date()
         }
       });
-      
+
       // Update insight status
       await tx.insight.update({
         where: { id: insight.id },
         data: { status: 'RESOLVED' }
       });
     });
-    
+
     // Update creator profile aggregates if insight has a creator
     if (insight.creatorId) {
       try {
@@ -339,7 +339,7 @@ export async function processInsightResolution(insightId: string): Promise<void>
         // Don't fail the resolution if profile update fails
       }
     }
-    
+
     // Log event
     const tookMs = Date.now() - startTime;
     createEvent(EVENT_TYPES.OUTCOME_RESOLVED, {
@@ -349,20 +349,20 @@ export async function processInsightResolution(insightId: string): Promise<void>
       tookMs,
       confidence: resolution.confidence
     });
-    
+
     console.log(`✅ Processed resolution for ${insightId}: ${resolution.result} (${tookMs}ms)`);
-    
+
   } catch (error) {
     const tookMs = Date.now() - startTime;
     console.error(`❌ Failed to process resolution for ${insightId} (${tookMs}ms):`, error);
-    
+
     // Log error event
     createEvent(EVENT_TYPES.SYSTEM_ERROR, {
       insightId,
       error: error instanceof Error ? error.message : 'Unknown error',
       tookMs
     });
-    
+
     throw error;
   }
 }
@@ -372,7 +372,7 @@ export async function processInsightResolution(insightId: string): Promise<void>
  */
 export async function findInsightsReadyForResolution(): Promise<string[]> {
   const now = new Date();
-  
+
   const insights = await prisma.insight.findMany({
     where: {
       status: {
@@ -397,8 +397,8 @@ export async function findInsightsReadyForResolution(): Promise<string[]> {
       deadline: 'asc'
     }
   });
-  
+
   console.log(`Found ${insights.length} insights ready for resolution`);
-  
+
   return insights.map(i => i.id);
 }

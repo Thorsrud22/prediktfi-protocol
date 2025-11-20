@@ -45,8 +45,8 @@ class CircuitBreaker {
   }
 
   private isOpen(): boolean {
-    return this.failures >= this.threshold && 
-           (Date.now() - this.lastFailureTime) < this.timeout;
+    return this.failures >= this.threshold &&
+      (Date.now() - this.lastFailureTime) < this.timeout;
   }
 
   private onSuccess(): void {
@@ -67,7 +67,7 @@ class CoinGeckoSource implements PriceSource {
 
   async getPriceAtClose(asset: string, date: Date): Promise<PriceResult | null> {
     const cacheKey = `${asset}-${date.toISOString().split('T')[0]}`;
-    
+
     // Check cache first
     const cached = this.cache.get(cacheKey);
     if (cached && cached.expires > Date.now()) {
@@ -80,9 +80,9 @@ class CoinGeckoSource implements PriceSource {
 
       // Format date as DD-MM-YYYY for CoinGecko API
       const dateStr = date.toLocaleDateString('en-GB');
-      
+
       const url = `https://api.coingecko.com/api/v3/coins/${coinId}/history?date=${dateStr}`;
-      
+
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'PrediktFi/1.0',
@@ -95,7 +95,7 @@ class CoinGeckoSource implements PriceSource {
       }
 
       const data = await response.json();
-      
+
       if (!data.market_data?.current_price?.usd) {
         return null;
       }
@@ -129,7 +129,7 @@ class CoinGeckoSource implements PriceSource {
       'LINK': 'chainlink',
       'UNI': 'uniswap'
     };
-    
+
     return mapping[asset.toUpperCase()] || null;
   }
 
@@ -153,13 +153,13 @@ class CoinCapSource implements PriceSource {
   async getPriceAtClose(asset: string, date: Date): Promise<PriceResult | null> {
     return this.circuitBreaker.execute(async () => {
       const assetId = asset.toLowerCase();
-      
+
       // CoinCap historical data endpoint
       const startTime = date.getTime();
       const endTime = startTime + 24 * 60 * 60 * 1000; // Next day
-      
+
       const url = `https://api.coincap.io/v2/assets/${assetId}/history?interval=h1&start=${startTime}&end=${endTime}`;
-      
+
       const response = await fetch(url, {
         signal: AbortSignal.timeout(10000)
       });
@@ -169,14 +169,14 @@ class CoinCapSource implements PriceSource {
       }
 
       const data = await response.json();
-      
+
       if (!data.data || data.data.length === 0) {
         return null;
       }
 
       // Get the last price of the day (closest to 23:59:59 UTC)
       const lastPrice = data.data[data.data.length - 1];
-      
+
       return {
         price: this.roundPrice(parseFloat(lastPrice.priceUsd), asset),
         timestamp: new Date(lastPrice.time),
@@ -199,17 +199,17 @@ class CoinCapSource implements PriceSource {
 
 // Main price resolution function
 export async function getPriceAtCloseUTC(
-  asset: string, 
+  asset: string,
   date: Date,
-  config?: PriceConfig
+  _config: PriceConfig
 ): Promise<PriceResult | null> {
   // Ensure we're working with UTC date at end of day
   const utcDate = new Date(date.toISOString().split('T')[0] + 'T23:59:59.999Z');
-  
+
   // Initialize sources based on config
-  const primarySource = process.env.PRICE_PRIMARY === 'coincap' ? 
+  const primarySource = process.env.PRICE_PRIMARY === 'coincap' ?
     new CoinCapSource() : new CoinGeckoSource();
-  const secondarySource = process.env.PRICE_SECONDARY === 'coingecko' ? 
+  const secondarySource = process.env.PRICE_SECONDARY === 'coingecko' ?
     new CoinGeckoSource() : new CoinCapSource();
 
   // Try primary source first
@@ -247,13 +247,13 @@ async function retryWithBackoff<T>(
   baseDelay = 1000
 ): Promise<T> {
   let lastError: Error;
-  
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error as Error;
-      
+
       if (attempt < maxRetries - 1) {
         const delay = baseDelay * Math.pow(2, attempt);
         console.log(`Retry ${attempt + 1}/${maxRetries} after ${delay}ms...`);
@@ -261,7 +261,7 @@ async function retryWithBackoff<T>(
       }
     }
   }
-  
+
   throw lastError!;
 }
 
@@ -275,7 +275,7 @@ export function parsePriceConfig(resolverRef: string): PriceConfig {
       field: config.field || 'close',
       currency: config.currency || 'USD'
     };
-  } catch (error) {
+  } catch {
     // Fallback to default config
     return {
       asset: 'BTC',

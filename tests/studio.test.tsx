@@ -81,14 +81,18 @@ describe('AI Idea Evaluator Studio', () => {
         (global.fetch as any).mockResolvedValueOnce({
             ok: true,
             json: async () => ({
-                evaluationId: 'eval_123',
-                overallVerdict: 'Great idea',
-                successProbability: 85,
-                pros: ['Good market fit'],
-                cons: ['High competition'],
-                improvements: ['Add social features'],
-                riskAnalysis: ['Regulatory risk'],
-                confidenceScore: 0.9
+                result: {
+                    overallVerdict: 'Great idea',
+                    successProbability: 85,
+                    confidence: 90,
+                    dimensionScores: [
+                        { id: 'market', label: 'Market', score: 80, comment: 'Good market fit' }
+                    ],
+                    redFlags: ['High competition'],
+                    recommendedPivots: ['Add social features'],
+                    nextSteps: ['Build MVP'],
+                    riskSummary: 'Regulatory risk'
+                }
             }),
         });
 
@@ -129,6 +133,7 @@ describe('AI Idea Evaluator Studio', () => {
             expect(screen.getByText('Great idea')).toBeInTheDocument();
             expect(screen.getByText('85%')).toBeInTheDocument();
             expect(screen.getByText('Good market fit')).toBeInTheDocument();
+            expect(screen.getByText('High competition')).toBeInTheDocument();
         }, { timeout: 3000 });
     });
 });

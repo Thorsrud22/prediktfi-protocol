@@ -8,31 +8,31 @@ export const EVENT_TYPES = {
   INSIGHT_VIEWED: 'insight_viewed',
   INSIGHT_SAVED: 'insight_saved',
   INSIGHT_UPDATED: 'insight_updated',
-  
+
   // Memo and blockchain
   MEMO_COMMITTED: 'memo_committed',
   MEMO_VERIFIED: 'memo_verified',
   STAMP_REQUESTED: 'stamp_requested',
   STAMP_COMPLETED: 'stamp_completed',
-  
+
   // Outcome resolution
   OUTCOME_RESOLVED: 'outcome_resolved',
   OUTCOME_DISPUTED: 'outcome_disputed',
   OUTCOME_VERIFIED: 'outcome_verified',
-  
+
   // Creator activity
   CREATOR_REGISTERED: 'creator_registered',
   CREATOR_UPDATED: 'creator_updated',
-  
+
   // Feed and discovery
   FEED_VIEWED: 'feed_viewed',
   SEARCH_PERFORMED: 'search_performed',
-  
+
   // User interactions
   PRICING_VIEWED: 'pricing_viewed',
   ACCOUNT_VIEWED: 'account_viewed',
   QUOTA_CHECK: 'quota_check',
-  
+
   // System events
   SYSTEM_ERROR: 'system_error',
   SYSTEM_WARNING: 'system_warning'
@@ -90,7 +90,7 @@ export interface QuotaCheckMeta {
  */
 export function createEvent(
   type: EventType,
-  meta: Record<string, any>,
+  meta: Record<string, unknown>,
   userId?: string,
   insightId?: string
 ) {

@@ -45,7 +45,7 @@ function isPrivateIP(hostname: string): boolean {
     /^fc00:/i,          // IPv6 unique local
     /^fd00:/i,          // IPv6 unique local
   ];
-  
+
   return privateRanges.some(pattern => pattern.test(hostname));
 }
 
@@ -54,23 +54,23 @@ function isPrivateIP(hostname: string): boolean {
  */
 function validateUrl(urlString: string): URL {
   let parsedUrl: URL;
-  
+
   try {
     parsedUrl = new URL(urlString);
-  } catch (error) {
+  } catch {
     throw new Error(`Invalid URL: ${urlString}`);
   }
-  
+
   // Only allow HTTP/HTTPS
   if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
     throw new Error(`Unsupported protocol: ${parsedUrl.protocol}`);
   }
-  
+
   // Block private IPs
   if (isPrivateIP(parsedUrl.hostname)) {
     throw new Error(`Private IP addresses are not allowed: ${parsedUrl.hostname}`);
   }
-  
+
   // Block common dangerous ports
   const dangerousPorts = ['22', '23', '25', '53', '80', '110', '143', '993', '995'];
   if (parsedUrl.port && dangerousPorts.includes(parsedUrl.port) && parsedUrl.protocol === 'http:') {
@@ -79,7 +79,7 @@ function validateUrl(urlString: string): URL {
       throw new Error(`Potentially dangerous port: ${parsedUrl.port}`);
     }
   }
-  
+
   return parsedUrl;
 }
 
@@ -120,7 +120,7 @@ function fuzzyMatch(expected: string, content: string): {
 } {
   const normalizedExpected = normalizeText(expected);
   const normalizedContent = normalizeText(content);
-  
+
   // Exact match
   if (normalizedContent.includes(normalizedExpected)) {
     return {
@@ -129,27 +129,27 @@ function fuzzyMatch(expected: string, content: string): {
       matchedText: expected
     };
   }
-  
+
   // Word-based matching
   const expectedWords = normalizedExpected.split(' ').filter(w => w.length > 2);
   const contentWords = normalizedContent.split(' ');
-  
+
   if (expectedWords.length === 0) {
     return { matches: false, confidence: 0 };
   }
-  
-  const matchedWords = expectedWords.filter(word => 
-    contentWords.some(contentWord => 
-      contentWord.includes(word) || 
+
+  const matchedWords = expectedWords.filter(word =>
+    contentWords.some(contentWord =>
+      contentWord.includes(word) ||
       word.includes(contentWord) ||
       // Also check for similar words (basic similarity)
-      (word.length > 3 && contentWord.length > 3 && 
-       (word.startsWith(contentWord.substring(0, 3)) || contentWord.startsWith(word.substring(0, 3))))
+      (word.length > 3 && contentWord.length > 3 &&
+        (word.startsWith(contentWord.substring(0, 3)) || contentWord.startsWith(word.substring(0, 3))))
     )
   );
-  
+
   const wordMatchRatio = matchedWords.length / expectedWords.length;
-  
+
   if (wordMatchRatio >= 0.7) {
     return {
       matches: true,
@@ -163,7 +163,7 @@ function fuzzyMatch(expected: string, content: string): {
       matchedText: matchedWords.join(' ')
     };
   }
-  
+
   return { matches: false, confidence: wordMatchRatio };
 }
 
@@ -175,11 +175,11 @@ export async function resolveUrlInsight(
   config: UrlResolverConfig
 ): Promise<UrlResolutionResult> {
   const startTime = Date.now();
-  
+
   try {
     // Validate URL for SSRF protection
     const validatedUrl = validateUrl(config.href);
-    
+
     // Set up fetch options
     const fetchOptions: RequestInit = {
       method: config.method || 'GET',
@@ -196,27 +196,27 @@ export async function resolveUrlInsight(
       redirect: 'follow',
       mode: 'cors'
     };
-    
+
     console.log(`🌐 Fetching URL: ${validatedUrl.href}`);
-    
+
     // Fetch the content
     const response = await fetch(validatedUrl.href, fetchOptions);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     // Check content type
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('text/html') && !contentType.includes('application/json')) {
       throw new Error(`Unsupported content type: ${contentType}`);
     }
-    
+
     const html = await response.text();
     const extractedText = extractTextFromHtml(html);
-    
+
     console.log(`📄 Extracted ${extractedText.length} characters of text`);
-    
+
     // If no expected text provided, we can't make a determination
     if (!config.expect) {
       return {
@@ -232,14 +232,14 @@ export async function resolveUrlInsight(
         reasoning: 'No expected text provided for comparison'
       };
     }
-    
+
     // Perform fuzzy matching
     const matchResult = fuzzyMatch(config.expect, extractedText);
-    
+
     // Determine proposal based on match
     let proposed: 'YES' | 'NO' | null = null;
     let reasoning = '';
-    
+
     if (matchResult.confidence >= 0.8) {
       proposed = 'YES';
       reasoning = `High confidence match found: "${matchResult.matchedText}" (${Math.round(matchResult.confidence * 100)}% confidence)`;
@@ -254,10 +254,10 @@ export async function resolveUrlInsight(
       proposed = 'NO';
       reasoning = `No matching text found for "${config.expect}"`;
     }
-    
+
     const tookMs = Date.now() - startTime;
     console.log(`✅ URL resolution completed in ${tookMs}ms: ${proposed || 'NO_PROPOSAL'}`);
-    
+
     return {
       proposed,
       confidence: matchResult.confidence,
@@ -271,13 +271,13 @@ export async function resolveUrlInsight(
       },
       reasoning
     };
-    
+
   } catch (error) {
     const tookMs = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     console.error(`❌ URL resolution failed after ${tookMs}ms:`, errorMessage);
-    
+
     return {
       proposed: null,
       confidence: 0,
@@ -307,7 +307,7 @@ export function parseUrlConfig(resolverRef: string): UrlResolverConfig {
       headers: config.headers,
       timeout: config.timeout || 15000
     };
-  } catch (error) {
+  } catch {
     throw new Error(`Invalid URL resolver configuration: ${resolverRef}`);
   }
 }

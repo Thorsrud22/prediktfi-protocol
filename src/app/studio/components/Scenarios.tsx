@@ -1,7 +1,7 @@
 // Display bull/bear/base case scenarios
 
 interface ScenariosProps {
-  scenarios?: any[]; // TODO: Type this with proper scenario data
+  scenarios?: unknown[]; // TODO: Type this with proper scenario data
 }
 
 export default function Scenarios({ scenarios }: ScenariosProps) {

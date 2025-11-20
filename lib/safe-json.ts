@@ -8,7 +8,7 @@
 /**
  * Safe JSON parsing with error handling
  */
-export function safeJsonParse<T = any>(jsonString: string, fallback?: T): T | null {
+export function safeJsonParse<T = unknown>(jsonString: string, fallback?: T): T | null {
   try {
     return JSON.parse(jsonString);
   } catch (error) {
@@ -20,8 +20,8 @@ export function safeJsonParse<T = any>(jsonString: string, fallback?: T): T | nu
 /**
  * Safe response.json() with content-type validation
  */
-export async function safeResponseJson<T = any>(
-  response: Response, 
+export async function safeResponseJson<T = unknown>(
+  response: Response,
   fallback?: T
 ): Promise<T | null> {
   try {
@@ -30,27 +30,27 @@ export async function safeResponseJson<T = any>(
       console.warn(`Response not OK: ${response.status} ${response.statusText}`);
       return fallback || null;
     }
-    
+
     // Check content-type
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       console.warn(`Expected JSON content-type, got: ${contentType}`);
       return fallback || null;
     }
-    
+
     // Check if response has content (not 204 No Content)
     if (response.status === 204) {
       console.warn('Response is 204 No Content, cannot parse JSON');
       return fallback || null;
     }
-    
+
     // Parse JSON
     const text = await response.text();
     if (!text.trim()) {
       console.warn('Response body is empty');
       return fallback || null;
     }
-    
+
     return JSON.parse(text);
   } catch (error) {
     console.warn('Response JSON parse error:', error);
@@ -61,14 +61,14 @@ export async function safeResponseJson<T = any>(
 /**
  * Safe fetch with JSON parsing
  */
-export async function safeFetchJson<T = any>(
-  url: string, 
+export async function safeFetchJson<T = unknown>(
+  url: string,
   options?: RequestInit,
   fallback?: T
 ): Promise<{ data: T | null; success: boolean; error?: string }> {
   try {
     const response = await fetch(url, options);
-    
+
     if (!response.ok) {
       return {
         data: fallback || null,
@@ -76,9 +76,9 @@ export async function safeFetchJson<T = any>(
         error: `HTTP ${response.status}: ${response.statusText}`
       };
     }
-    
+
     const data = await safeResponseJson<T>(response, fallback);
-    
+
     return {
       data,
       success: data !== null,
@@ -96,13 +96,13 @@ export async function safeFetchJson<T = any>(
 /**
  * Safe request body parsing for API routes
  */
-export async function safeParseRequestBody<T = any>(
+export async function safeParseRequestBody<T = unknown>(
   request: Request,
   fallback?: T
 ): Promise<{ data: T | null; success: boolean; error?: string }> {
   try {
     const text = await request.text();
-    
+
     if (!text.trim()) {
       return {
         data: fallback || null,
@@ -110,9 +110,9 @@ export async function safeParseRequestBody<T = any>(
         error: 'Request body is empty'
       };
     }
-    
+
     const data = safeJsonParse<T>(text, fallback);
-    
+
     return {
       data,
       success: data !== null,
@@ -131,8 +131,8 @@ export async function safeParseRequestBody<T = any>(
  * Validate JSON response structure
  */
 export function validateJsonStructure<T>(
-  data: any,
-  validator: (data: any) => data is T
+  data: unknown,
+  validator: (data: unknown) => data is T
 ): { isValid: boolean; data?: T; error?: string } {
   try {
     if (validator(data)) {
@@ -151,7 +151,7 @@ export function validateJsonStructure<T>(
 /**
  * Safe JSON stringify with error handling
  */
-export function safeJsonStringify<T = any>(
+export function safeJsonStringify<T = unknown>(
   data: T,
   fallback: string = '{}'
 ): string {

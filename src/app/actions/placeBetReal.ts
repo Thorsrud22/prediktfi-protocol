@@ -14,19 +14,19 @@ export async function placeBetReal(formData: FormData) {
     const walletPublicKey = formData.get("walletPublicKey") as string;
     const ref = formData.get("ref") as string || "";
     const creatorId = formData.get("creatorId") as string || "";
-    
+
     if (!marketId || !side || !amount || !walletPublicKey) {
       throw new Error("Missing required parameters");
     }
 
     // Get cluster from environment or default to devnet
     const cluster = process.env.SOLANA_CLUSTER || "devnet";
-    
+
     // Check consent for mainnet
     if (cluster === "mainnet-beta") {
       const cookieStore = await cookies();
       const consentCookie = cookieStore.get("predikt_consent_v1");
-      
+
       if (!consentCookie || consentCookie.value !== "true") {
         return {
           success: false,
@@ -45,18 +45,27 @@ export async function placeBetReal(formData: FormData) {
     if (!treasuryAddress) {
       throw new Error("SOLANA_TREASURY environment variable not set");
     }
-    
+
     const treasury = new PublicKey(treasuryAddress);
     const fromPubkey = new PublicKey(walletPublicKey);
 
+    interface MemoData {
+      marketId: string;
+      side: "YES" | "NO";
+      amount: number;
+      ts: number;
+      ref?: string;
+      creatorId?: string;
+    }
+
     // Create memo data with all required fields
-    const memoData: any = {
+    const memoData: MemoData = {
       marketId,
       side,
       amount,
       ts: Date.now(),
     };
-    
+
     // Only include ref and creatorId if they have values
     if (ref) {
       memoData.ref = ref;
@@ -70,7 +79,7 @@ export async function placeBetReal(formData: FormData) {
 
     // Create transaction with transfer and memo
     const transaction = new Transaction();
-    
+
     // Add transfer instruction
     transaction.add(
       SystemProgram.transfer({

@@ -55,7 +55,7 @@ export function normalizePrediction(
 
   // Extract canonical components from question
   const canonical = extractCanonical(safeQuestion, safeDeadline);
-  
+
   // Generate resolver reference
   const resolverRef = generateResolverRef(resolverKind, resolverConfig, canonical);
 
@@ -79,23 +79,23 @@ function extractCanonical(question: string, deadline: Date): string {
   if (q.includes('bitcoin') || q.includes('btc')) {
     const priceMatch = q.match(/(\$?[\d,]+k?|\$?[\d,]+,?\d*)/);
     const price = priceMatch ? parsePrice(priceMatch[1]) : 100000;
-    
+
     const comparator = extractComparator(q);
     return `BTC close ${comparator} ${price} USD on ${deadlineStr}`;
   }
-  
+
   if (q.includes('ethereum') || q.includes('eth')) {
     const priceMatch = q.match(/(\$?[\d,]+k?|\$?[\d,]+,?\d*)/);
     const price = priceMatch ? parsePrice(priceMatch[1]) : 5000;
-    
+
     const comparator = extractComparator(q);
     return `ETH close ${comparator} ${price} USD on ${deadlineStr}`;
   }
-  
+
   if (q.includes('solana') || q.includes('sol')) {
     const priceMatch = q.match(/(\$?[\d,]+k?|\$?[\d,]+,?\d*)/);
     const price = priceMatch ? parsePrice(priceMatch[1]) : 400;
-    
+
     const comparator = extractComparator(q);
     return `SOL close ${comparator} ${price} USD on ${deadlineStr}`;
   }
@@ -106,7 +106,7 @@ function extractCanonical(question: string, deadline: Date): string {
     const asset = assetMatch[1].toUpperCase();
     const priceMatch = q.match(/(\$?[\d,]+k?|\$?[\d,]+,?\d*)/);
     const price = priceMatch ? parsePrice(priceMatch[1]) : 1000;
-    
+
     const comparator = extractComparator(q);
     return `${asset} close ${comparator} ${price} USD on ${deadlineStr}`;
   }
@@ -121,7 +121,7 @@ function extractCanonical(question: string, deadline: Date): string {
   if (!cleanQuestion) {
     return '"prediction" resolves true on ' + deadlineStr;
   }
-    
+
   return `"${cleanQuestion}" resolves true on ${deadlineStr}`;
 }
 
@@ -130,7 +130,7 @@ function extractCanonical(question: string, deadline: Date): string {
  */
 function extractComparator(question: string): string {
   const q = question.toLowerCase();
-  
+
   if (q.includes('above') || q.includes('over') || q.includes('exceed') || q.includes('reach') || q.includes('hit')) {
     return '>=';
   }
@@ -140,7 +140,7 @@ function extractComparator(question: string): string {
   if (q.includes('exactly') || q.includes('equal')) {
     return '=';
   }
-  
+
   // Default to >= for price targets
   return '>=';
 }
@@ -150,15 +150,15 @@ function extractComparator(question: string): string {
  */
 function parsePrice(priceStr: string): number {
   // Remove currency symbols and normalize
-  let normalized = priceStr
+  const normalized = priceStr
     .replace(/[$,]/g, '')
     .toLowerCase();
-  
+
   // Handle 'k' suffix (thousands)
   if (normalized.endsWith('k')) {
     return parseFloat(normalized.slice(0, -1)) * 1000;
   }
-  
+
   return parseFloat(normalized);
 }
 
@@ -182,19 +182,19 @@ function generateResolverRef(
         source: priceConfig.source,
         field: priceConfig.field
       });
-      
+
     case 'url':
       const urlConfig = config.url || { href: 'https://example.com/verify' };
       return JSON.stringify({
         href: urlConfig.href
       });
-      
+
     case 'text':
       const textConfig = config.text || { expect: canonical };
       return JSON.stringify({
         expect: textConfig.expect
       });
-      
+
     default:
       throw new Error(`Unknown resolver kind: ${resolverKind}`);
   }
@@ -207,7 +207,7 @@ function extractPriceConfigFromCanonical(canonical: string): ResolverConfig['pri
   // Extract asset from canonical form like "BTC close >= 80000 USD on 2026-01-01"
   const assetMatch = canonical.match(/^(\w+)\s+/);
   const asset = assetMatch ? assetMatch[1] : 'BTC';
-  
+
   return {
     asset,
     source: 'coingecko',
@@ -224,7 +224,7 @@ export function validateCanonical(canonical: string): boolean {
     /^\w+\s+\w+\s+[><=]+\s+\d+\s+\w+\s+on\s+\d{4}-\d{2}-\d{2}$/, // Price pattern
     /^".+" resolves true on \d{4}-\d{2}-\d{2}$/ // Text pattern
   ];
-  
+
   return patterns.some(pattern => pattern.test(canonical));
 }
 
@@ -251,7 +251,7 @@ export function parseCanonical(canonical: string): {
       deadline: priceMatch[6]
     };
   }
-  
+
   // Text pattern: "question text" resolves true on YYYY-MM-DD
   const textMatch = canonical.match(/^"(.+)"\s+resolves\s+true\s+on\s+(\d{4}-\d{2}-\d{2})$/);
   if (textMatch) {
@@ -264,6 +264,6 @@ export function parseCanonical(canonical: string): {
       deadline: textMatch[2]
     };
   }
-  
+
   return null;
 }

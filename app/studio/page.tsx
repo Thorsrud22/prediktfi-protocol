@@ -52,8 +52,8 @@ export default function StudioPage() {
         throw new Error('Evaluation failed');
       }
 
-      const result = await response.json();
-      setEvaluationResult(result);
+      const responseData = await response.json();
+      setEvaluationResult(responseData.result);
       setCurrentStep('analysis');
     } catch (error) {
       console.error('Error evaluating idea:', error);

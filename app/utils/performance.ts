@@ -13,7 +13,7 @@ interface PerformanceMetric {
   type: 'page-load' | 'api-call' | 'component-render';
   url?: string;
   status?: 'success' | 'error' | 'timeout';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 class PerformanceMonitor {
@@ -50,10 +50,10 @@ class PerformanceMonitor {
           for (const entry of list.getEntries()) {
             this.recordMetric({
               name: 'FID',
-              duration: (entry as any).processingStart - entry.startTime,
+              duration: (entry as PerformanceEntry & { processingStart?: number }).processingStart ? ((entry as PerformanceEntry & { processingStart: number }).processingStart - entry.startTime) : 0,
               timestamp: Date.now(),
               type: 'page-load',
-              metadata: { value: (entry as any).processingStart - entry.startTime },
+              metadata: { value: (entry as PerformanceEntry & { processingStart?: number }).processingStart ? ((entry as PerformanceEntry & { processingStart: number }).processingStart - entry.startTime) : 0 },
             });
           }
         });
@@ -63,8 +63,8 @@ class PerformanceMonitor {
         const clsObserver = new PerformanceObserver(list => {
           let clsValue = 0;
           for (const entry of list.getEntries()) {
-            if (!(entry as any).hadRecentInput) {
-              clsValue += (entry as any).value;
+            if (!(entry as PerformanceEntry & { hadRecentInput?: boolean }).hadRecentInput) {
+              clsValue += (entry as PerformanceEntry & { value?: number }).value || 0;
             }
           }
           if (clsValue > 0) {
@@ -101,7 +101,7 @@ class PerformanceMonitor {
   startTimer(
     name: string,
     type: PerformanceMetric['type'] = 'component-render',
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
   ) {
     const startTime = performance.now();
 
@@ -125,7 +125,7 @@ class PerformanceMonitor {
   trackApiCall<T>(
     url: string,
     fetchPromise: Promise<T>,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
   ): Promise<T> {
     const timer = this.startTimer(`API: ${url}`, 'api-call', metadata);
 
@@ -218,7 +218,7 @@ export function trackPageLoad(pageName: string) {
 export function trackApiCall<T>(
   url: string,
   fetchPromise: Promise<T>,
-  metadata?: Record<string, any>,
+  metadata?: Record<string, unknown>,
 ) {
   return performanceMonitor.trackApiCall(url, fetchPromise, metadata);
 }
@@ -226,7 +226,7 @@ export function trackApiCall<T>(
 export function startTimer(
   name: string,
   type: PerformanceMetric['type'] = 'component-render',
-  metadata?: Record<string, any>,
+  metadata?: Record<string, unknown>,
 ) {
   return performanceMonitor.startTimer(name, type, metadata);
 }
@@ -236,7 +236,7 @@ export function getPerformanceReport() {
 }
 
 // React hook for component performance tracking
-export function usePerformanceTracking(componentName: string, dependencies: any[] = []) {
+export function usePerformanceTracking(componentName: string, _dependencies: unknown[] = []) {
   if (typeof window !== 'undefined') {
     const timer = performanceMonitor.startTimer(`Render: ${componentName}`, 'component-render');
 

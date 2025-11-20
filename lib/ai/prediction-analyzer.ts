@@ -58,7 +58,7 @@ export class PredictionAnalyzer {
 
       // Run analysis with timeout
       const analysisPromise = this.performAnalysis(predictionTemplate, category, timeframe);
-      
+
       const analysis = await Promise.race([analysisPromise, timeoutPromise]);
       return analysis;
     } catch (error) {
@@ -139,21 +139,19 @@ TIMEFRAME: ${timeframe}
 DATE: ${currentDate}
 
 MARKET DATA:
-${
-  marketData.length > 0
-    ? JSON.stringify(marketData.slice(0, 3), null, 2)
-    : 'Limited market data available'
-}
+${marketData.length > 0
+        ? JSON.stringify(marketData.slice(0, 3), null, 2)
+        : 'Limited market data available'
+      }
 
 RECENT NEWS SENTIMENT:
-${
-  newsData.length > 0
-    ? newsData
-        .slice(0, 5)
-        .map(n => `- ${n.title} (${n.sentiment})`)
-        .join('\n')
-    : 'No recent news available'
-}
+${newsData.length > 0
+        ? newsData
+          .slice(0, 5)
+          .map(n => `- ${n.title} (${n.sentiment})`)
+          .join('\n')
+        : 'No recent news available'
+      }
 
 ANALYSIS REQUIREMENTS:
 - Provide confidence score (30-95% range)
@@ -197,10 +195,10 @@ Focus on being realistic and data-driven. Consider:
       const symbolIds = symbols.map(s => s.toLowerCase()).join(',');
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5 second timeout
-      
+
       const response = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${symbolIds}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`,
-        { 
+        {
           headers: { Accept: 'application/json' },
           signal: controller.signal,
         },
@@ -215,12 +213,12 @@ Focus on being realistic and data-driven. Consider:
 
       const data = await response.json();
 
-      return Object.entries(data).map(([id, values]: [string, any]) => ({
+      return Object.entries(data).map(([id, values]) => ({
         symbol: id.toUpperCase(),
-        price: values.usd || 0,
-        change24h: values.usd_24h_change || 0,
-        volume: values.usd_24h_vol || 0,
-        marketCap: values.usd_market_cap,
+        price: (values as { usd?: number }).usd || 0,
+        change24h: (values as { usd_24h_change?: number }).usd_24h_change || 0,
+        volume: (values as { usd_24h_vol?: number }).usd_24h_vol || 0,
+        marketCap: (values as { usd_market_cap?: number }).usd_market_cap,
       }));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -258,9 +256,8 @@ Focus on being realistic and data-driven. Consider:
     }));
   }
 
-  private async getRelevantNews(category: string, prediction: string): Promise<NewsData[]> {
+  private async getRelevantNews(category: string, _prediction: string): Promise<NewsData[]> {
     // Mock news data with realistic sentiment
-    const keywords = this.extractKeywords(prediction);
     const mockNews: NewsData[] = [
       {
         title: `${category} market shows strong momentum`,
@@ -420,33 +417,29 @@ Focus on being realistic and data-driven. Consider:
     recommendation: string,
   ): string {
     const templates = {
-      crypto: `Based on current market analysis, ${prediction.toLowerCase()} shows ${recommendation.toLowerCase()} signals. Technical indicators suggest ${confidence}% probability with key support/resistance levels and volume patterns indicating ${
-        recommendation === 'Bullish'
-          ? 'upward momentum'
-          : recommendation === 'Bearish'
+      crypto: `Based on current market analysis, ${prediction.toLowerCase()} shows ${recommendation.toLowerCase()} signals. Technical indicators suggest ${confidence}% probability with key support/resistance levels and volume patterns indicating ${recommendation === 'Bullish'
+        ? 'upward momentum'
+        : recommendation === 'Bearish'
           ? 'downward pressure'
           : 'sideways consolidation'
-      }.`,
+        }.`,
 
-      stocks: `Fundamental and technical analysis of ${prediction} indicates ${confidence}% confidence in a ${recommendation.toLowerCase()} outlook. Market conditions, earnings expectations, and sector trends support this assessment with ${
-        recommendation === 'Bullish'
-          ? 'positive catalysts ahead'
-          : recommendation === 'Bearish'
+      stocks: `Fundamental and technical analysis of ${prediction} indicates ${confidence}% confidence in a ${recommendation.toLowerCase()} outlook. Market conditions, earnings expectations, and sector trends support this assessment with ${recommendation === 'Bullish'
+        ? 'positive catalysts ahead'
+        : recommendation === 'Bearish'
           ? 'headwinds expected'
           : 'mixed signals balancing out'
-      }.`,
+        }.`,
 
-      weather: `Meteorological models show ${confidence}% accuracy for ${prediction.toLowerCase()}. Atmospheric conditions, seasonal patterns, and satellite data converge on this forecast with ${
-        recommendation === 'Bullish' ? 'favorable conditions' : 'challenging conditions'
-      } expected.`,
+      weather: `Meteorological models show ${confidence}% accuracy for ${prediction.toLowerCase()}. Atmospheric conditions, seasonal patterns, and satellite data converge on this forecast with ${recommendation === 'Bullish' ? 'favorable conditions' : 'challenging conditions'
+        } expected.`,
 
-      sports: `Statistical analysis of ${prediction} suggests ${confidence}% probability based on team form, historical matchups, and current conditions. ${
-        recommendation === 'Bullish'
-          ? 'Favorable odds'
-          : recommendation === 'Bearish'
+      sports: `Statistical analysis of ${prediction} suggests ${confidence}% probability based on team form, historical matchups, and current conditions. ${recommendation === 'Bullish'
+        ? 'Favorable odds'
+        : recommendation === 'Bearish'
           ? 'Challenging circumstances'
           : 'Evenly matched contest'
-      } with key performance indicators supporting this assessment.`,
+        } with key performance indicators supporting this assessment.`,
     };
 
     return (

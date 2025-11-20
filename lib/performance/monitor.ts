@@ -66,11 +66,11 @@ export function getPerformanceStats() {
   };
 }
 
-export function withPerformanceTracking<T extends (...args: any[]) => Promise<Response>>(
+export function withPerformanceTracking<T extends (...args: any[]) => Promise<Response>>( // eslint-disable-line @typescript-eslint/no-explicit-any
   endpoint: string,
   handler: T,
 ): T {
-  return (async (...args: any[]) => {
+  return (async (...args: Parameters<T>) => {
     const startTime = performance.now();
     try {
       const response = await handler(...args);
