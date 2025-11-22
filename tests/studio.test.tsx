@@ -82,16 +82,40 @@ describe('AI Idea Evaluator Studio', () => {
             ok: true,
             json: async () => ({
                 result: {
-                    overallVerdict: 'Great idea',
-                    successProbability: 85,
-                    confidence: 90,
-                    dimensionScores: [
-                        { id: 'market', label: 'Market', score: 80, comment: 'Good market fit' }
-                    ],
-                    redFlags: ['High competition'],
-                    recommendedPivots: ['Add social features'],
-                    nextSteps: ['Build MVP'],
-                    riskSummary: 'Regulatory risk'
+                    overallScore: 85,
+                    summary: {
+                        title: 'Great Idea Title',
+                        oneLiner: 'A decentralized exchange for memecoins',
+                        mainVerdict: 'Great idea with potential'
+                    },
+                    technical: {
+                        feasibilityScore: 90,
+                        keyRisks: ['Smart contract risk'],
+                        requiredComponents: ['Solana Program'],
+                        comments: 'Technically sound'
+                    },
+                    tokenomics: {
+                        tokenNeeded: true,
+                        designScore: 70,
+                        mainIssues: [],
+                        suggestions: []
+                    },
+                    market: {
+                        marketFitScore: 80,
+                        targetAudience: ['Degens'],
+                        competitorSignals: [],
+                        goToMarketRisks: ['High competition']
+                    },
+                    execution: {
+                        complexityLevel: 'medium',
+                        founderReadinessFlags: [],
+                        estimatedTimeline: '3 months'
+                    },
+                    recommendations: {
+                        mustFixBeforeBuild: [],
+                        recommendedPivots: ['Add social features'],
+                        niceToHaveLater: []
+                    }
                 }
             }),
         });
@@ -129,10 +153,9 @@ describe('AI Idea Evaluator Studio', () => {
 
         // Wait for report step
         await waitFor(() => {
-            expect(screen.getByText('Evaluation Result')).toBeInTheDocument();
-            expect(screen.getByText('Great idea')).toBeInTheDocument();
-            expect(screen.getByText('85%')).toBeInTheDocument();
-            expect(screen.getByText('Good market fit')).toBeInTheDocument();
+            expect(screen.getByText('Great Idea Title')).toBeInTheDocument();
+            expect(screen.getByText('85')).toBeInTheDocument();
+            expect(screen.getByText('Technically sound')).toBeInTheDocument();
             expect(screen.getByText('High competition')).toBeInTheDocument();
         }, { timeout: 3000 });
     });

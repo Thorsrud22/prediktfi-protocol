@@ -1,0 +1,17 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": "..",
+        "types": [
+            "vitest/globals",
+            "node"
+        ]
+    },
+    "include": [
+        "**/*.ts",
+        "**/*.tsx",
+        "../app/**/*.ts",
+        "../src/**/*.ts",
+        "../lib/**/*.ts"
+    ]
+}

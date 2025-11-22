@@ -1,6 +1,47 @@
 import { createMocks } from 'node-mocks-http';
-import { POST } from '@/app/api/idea-evaluator/evaluate/route';
+import { POST } from '../../app/api/idea-evaluator/evaluate/route';
 import { NextRequest } from 'next/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock the evaluateIdea function to avoid requiring OpenAI API key in tests
+vi.mock('@/lib/ai/evaluator', () => ({
+    evaluateIdea: vi.fn().mockResolvedValue({
+        overallScore: 85,
+        summary: {
+            title: "Test Evaluation",
+            oneLiner: "A test evaluation response.",
+            mainVerdict: "This is a test verdict."
+        },
+        technical: {
+            feasibilityScore: 90,
+            keyRisks: ["Test risk 1", "Test risk 2"],
+            requiredComponents: ["Component 1", "Component 2"],
+            comments: "Test technical comments."
+        },
+        tokenomics: {
+            tokenNeeded: true,
+            designScore: 70,
+            mainIssues: ["Issue 1", "Issue 2"],
+            suggestions: ["Suggestion 1", "Suggestion 2"]
+        },
+        market: {
+            marketFitScore: 75,
+            targetAudience: ["Audience 1", "Audience 2"],
+            competitorSignals: ["Competitor 1", "Competitor 2"],
+            goToMarketRisks: ["Risk 1", "Risk 2"]
+        },
+        execution: {
+            complexityLevel: "medium" as const,
+            founderReadinessFlags: [],
+            estimatedTimeline: "3-4 months"
+        },
+        recommendations: {
+            mustFixBeforeBuild: ["Fix 1"],
+            recommendedPivots: ["Pivot 1"],
+            niceToHaveLater: ["Nice to have 1"]
+        }
+    })
+}));
 
 // Helper to create a NextRequest with JSON body
 function createJsonRequest(body: any): NextRequest {
@@ -30,9 +71,10 @@ describe('/api/idea-evaluator/evaluate', () => {
 
         expect(res.status).toBe(200);
         expect(data).toHaveProperty('result');
-        expect(data.result).toHaveProperty('overallVerdict');
-        expect(data.result).toHaveProperty('successProbability');
-        expect(data.result.dimensionScores).toHaveLength(6);
+        expect(data.result).toHaveProperty('overallScore');
+        expect(data.result).toHaveProperty('summary');
+        expect(data.result.summary).toHaveProperty('title');
+        expect(data.result.technical).toHaveProperty('feasibilityScore');
     });
 
     it('returns 400 for invalid payload', async () => {
