@@ -53,7 +53,7 @@ describe('Logistic Regression', () => {
     ];
 
     const predictions = predictProba(model, testData);
-    
+
     // Check monotonicity - higher odds_mid should give higher probability
     for (let i = 1; i < predictions.length; i++) {
       expect(predictions[i]).toBeGreaterThanOrEqual(predictions[i - 1]);
@@ -63,7 +63,7 @@ describe('Logistic Regression', () => {
   it('should predict binary outcomes correctly', () => {
     const model = fit(mockData, mockLabels, {
       learningRate: 0.1,
-      maxIterations: 20,
+      maxIterations: 50,
     });
 
     const predictions = predict(model, mockData);
@@ -96,7 +96,7 @@ describe('Logistic Regression', () => {
     });
 
     const validation = validateModel(model, mockData, mockLabels);
-    
+
     expect(validation.accuracy).toBeGreaterThan(0.5); // Should be better than random
     expect(validation.logLoss).toBeGreaterThan(0);
     expect(validation.brierScore).toBeGreaterThan(0);
@@ -110,7 +110,7 @@ describe('Logistic Regression', () => {
     });
 
     const importance = getFeatureImportance(model);
-    
+
     expect(Object.keys(importance)).toHaveLength(8);
     expect(importance.odds_mid).toBeGreaterThan(0);
     expect(importance.fgi).toBeGreaterThan(0);

@@ -200,3 +200,39 @@ describe('calibrateScore', () => {
         expect(calibrated.overallScore).toBe(75);
     });
 });
+
+import { buildIdeaContextSummary } from '../../src/lib/ai/evaluator';
+import { IdeaSubmission } from '../../src/lib/ideaSchema';
+
+describe('buildIdeaContextSummary', () => {
+    const baseIdea: IdeaSubmission = {
+        description: "A test project description.",
+        projectType: "defi",
+        teamSize: "team_2_5",
+        resources: ["developer", "designer"],
+        successDefinition: "Launch on mainnet.",
+        responseStyle: "full",
+        focusHints: []
+    };
+
+    it('formats context summary correctly with all fields', () => {
+        const summary = buildIdeaContextSummary(baseIdea);
+        expect(summary).toContain("Project Type: defi");
+        expect(summary).toContain("Team Size: team_2_5");
+        expect(summary).toContain("Resources: developer, designer");
+        expect(summary).toContain("Success Goal (6-12m): Launch on mainnet.");
+        expect(summary).toContain("Response Style: full");
+    });
+
+    it('includes focus hints when present', () => {
+        const ideaWithHints = { ...baseIdea, focusHints: ["Scalability", "Security"] };
+        const summary = buildIdeaContextSummary(ideaWithHints);
+        expect(summary).toContain("Focus Hints: Scalability, Security");
+    });
+
+    it('omits focus hints when empty', () => {
+        const ideaNoHints = { ...baseIdea, focusHints: [] };
+        const summary = buildIdeaContextSummary(ideaNoHints);
+        expect(summary).not.toContain("Focus Hints:");
+    });
+});
