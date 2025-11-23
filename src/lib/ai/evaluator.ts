@@ -2,6 +2,21 @@ import { IdeaSubmission } from "@/lib/ideaSchema";
 import { IdeaEvaluationResult } from "@/lib/ideaEvaluationTypes";
 import { openai } from "@/lib/openaiClient";
 
+const VALIDATOR_SYSTEM_PROMPT = `You are The Validator, a strict evaluator for Web3, crypto and AI project ideas.
+
+Your job is not to motivate the founder. Your job is to stress-test the idea and highlight risks, gaps and unrealistic assumptions.
+
+Always evaluate along these axes:
+- Technical feasibility
+- Tokenomics (and whether a token is needed at all)
+- Market and real users
+- Execution difficulty
+- Clear recommendations (must-fix before build and possible pivots)
+
+Always return a JSON object that matches the IdeaEvaluationResult type used in this project.
+Do not output anything outside the JSON.
+If the idea is mostly hype or a meme coin with no real value, say it clearly in the JSON fields and lower the scores.`;
+
 /**
  * Evaluates an idea using OpenAI GPT-5.1.
  * 
@@ -9,18 +24,10 @@ import { openai } from "@/lib/openaiClient";
  * @returns A promise that resolves to the evaluation result.
  */
 export async function evaluateIdea(input: IdeaSubmission): Promise<IdeaEvaluationResult> {
-  const systemPrompt = `You are "The Validator", an expert AI idea evaluator specializing in Web3, crypto, and AI projects.
+  const userContent = `Idea Submission:
+${JSON.stringify(input, null, 2)}
 
-Your role is to provide brutally honest, actionable feedback on startup ideas. Analyze projects across multiple dimensions:
-- Technical feasibility
-- Tokenomics design
-- Market fit and competition
-- Execution complexity
-- Go-to-market risks
-
-Provide a comprehensive evaluation with specific scores, risks, and recommendations. Be direct and constructive.
-
-Return your evaluation as a JSON object matching this structure:
+IMPORTANT: You MUST return the result as a JSON object with the EXACT following structure. Do not use any other schema.
 {
   "overallScore": <number 0-100>,
   "summary": {
@@ -58,23 +65,12 @@ Return your evaluation as a JSON object matching this structure:
   }
 }`;
 
-  const userContent = `Project Type: ${input.projectType}
-Team Size: ${input.teamSize}
-Resources: ${input.resources.join(", ")}
-Success Definition: ${input.successDefinition}
-Response Style: ${input.responseStyle}
-${input.focusHints ? `Focus Hints: ${input.focusHints.join(", ")}` : ""}
-${input.attachments ? `Attachments: ${input.attachments}` : ""}
-
-Idea Description:
-${input.description}`;
-
   try {
     // @ts-ignore - responses API might not be in the types yet
     const response = await openai().responses.create({
       model: "gpt-5.1",
       input: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
         { role: "user", content: userContent }
       ],
       text: {
