@@ -129,6 +129,9 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
       throw new Error("Invalid response structure from OpenAI");
     }
 
+    // Post-process the score with opinionated rules
+    result = calibrateScore(result);
+
     return result;
   } catch (error) {
     console.error("Error evaluating idea with OpenAI:", error);
@@ -136,4 +139,51 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
       `Failed to evaluate idea: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
+}
+
+/**
+ * Adjusts the overall score based on specific rules to handle edge cases
+ * like meme coins (cap score) or strong infra ideas (boost score).
+ * 
+ * @param result The raw evaluation result from the model
+ * @returns The adjusted evaluation result
+ */
+export function calibrateScore(result: IdeaEvaluationResult): IdeaEvaluationResult {
+  const newResult = { ...result };
+
+  // Rule 1: Cap hype / meme ideas
+  // If it looks like a meme coin or pure hype, cap the score at 40.
+  const lowerSummary = (newResult.summary.oneLiner + " " + newResult.summary.mainVerdict).toLowerCase();
+  const isMemeOrHype =
+    lowerSummary.includes("meme") ||
+    lowerSummary.includes("memecoin") ||
+    lowerSummary.includes("pure hype") ||
+    lowerSummary.includes("no real utility") ||
+    lowerSummary.includes("speculative");
+
+  if (isMemeOrHype) {
+    // Cap at 40
+    if (newResult.overallScore > 40) {
+      newResult.overallScore = 40;
+    }
+  }
+
+  // Rule 2: Don't under-score strong infra ideas
+  // If technical and market are strong (>= 75), and token is not needed, ensure score is decent (60-90).
+  const isStrongTech = newResult.technical.feasibilityScore >= 75;
+  const isStrongMarket = newResult.market.marketFitScore >= 75;
+  const noTokenNeeded = newResult.tokenomics.tokenNeeded === false;
+
+  if (isStrongTech && isStrongMarket && noTokenNeeded) {
+    // Boost to at least 60
+    if (newResult.overallScore < 60) {
+      newResult.overallScore = 60;
+    }
+    // Cap at 90 (don't let it get too crazy just because it's solid infra)
+    if (newResult.overallScore > 90) {
+      newResult.overallScore = 90;
+    }
+  }
+
+  return newResult;
 }
