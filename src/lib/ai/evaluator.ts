@@ -70,17 +70,37 @@ export function buildIdeaContextSummary(idea: IdeaSubmission): string {
   return parts.join('\n');
 }
 
+import { MarketSnapshot } from "@/lib/market/types";
+
+// ... existing imports
+
 /**
  * Evaluates an idea using OpenAI GPT-5.1.
  * 
  * @param input The idea submission data.
+ * @param options Optional configuration including market context.
  * @returns A promise that resolves to the evaluation result.
  */
-export async function evaluateIdea(input: IdeaSubmission): Promise<IdeaEvaluationResult> {
+export async function evaluateIdea(
+  input: IdeaSubmission,
+  options?: { market?: MarketSnapshot }
+): Promise<IdeaEvaluationResult> {
   const contextSummary = buildIdeaContextSummary(input);
+
+  let marketContext = "";
+  if (options?.market && options.market.source !== 'fallback') {
+    marketContext = `
+Market Context (Live Snapshot):
+${JSON.stringify(options.market, null, 2)}
+Use this context to judge timing and market fit.
+`;
+  }
 
   const userContent = `Idea Context:
 ${contextSummary}
+${marketContext}
+
+Idea Submission:
 
 Idea Submission:
 ${JSON.stringify(input, null, 2)}

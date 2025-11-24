@@ -91,8 +91,8 @@ describe('Logistic Regression', () => {
 
   it('should validate model performance', () => {
     const model = fit(mockData, mockLabels, {
-      learningRate: 0.1,
-      maxIterations: 20,
+      learningRate: 0.5,
+      maxIterations: 100,
     });
 
     const validation = validateModel(model, mockData, mockLabels);
