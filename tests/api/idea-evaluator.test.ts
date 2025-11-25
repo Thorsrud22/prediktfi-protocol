@@ -221,7 +221,7 @@ describe('calibrateScore', () => {
 
         const calibrated = calibrateScore({
             rawResult: infraResult,
-            projectType: 'infra_ai'
+            projectType: 'ai'
         });
         expect(calibrated.overallScore).toBe(60);
     });
@@ -237,7 +237,7 @@ describe('calibrateScore', () => {
 
         const calibrated = calibrateScore({
             rawResult: infraResult,
-            projectType: 'infra_ai'
+            projectType: 'ai'
         });
         expect(calibrated.overallScore).toBe(90);
     });
