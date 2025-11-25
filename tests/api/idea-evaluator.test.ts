@@ -138,14 +138,19 @@ describe('calibrateScore', () => {
         }
     };
 
-    it('caps score at 40 for meme coins', () => {
+    it('penalizes low quality memecoins with risks', () => {
         const memeResult = {
             ...baseResult,
-            overallScore: 85,
+            overallScore: 60,
             summary: {
                 ...baseResult.summary,
-                oneLiner: "The ultimate memecoin for dogs.",
-                mainVerdict: "Pure hype, no utility."
+                oneLiner: "A risky memecoin.",
+                mainVerdict: "High risk."
+            },
+            market: {
+                ...baseResult.market,
+                marketFitScore: 40, // Weak market fit penalty (-10)
+                goToMarketRisks: ["Potential scam"] // Risk penalty (-20)
             }
         };
 
@@ -153,7 +158,38 @@ describe('calibrateScore', () => {
             rawResult: memeResult,
             projectType: 'memecoin'
         });
-        expect(calibrated.overallScore).toBe(40);
+
+        // 60 - 20 (risk) - 10 (weak market) = 30
+        expect(calibrated.overallScore).toBe(30);
+    });
+
+    it('preserves score for high quality memecoins', () => {
+        const memeResult = {
+            ...baseResult,
+            overallScore: 75,
+            summary: {
+                ...baseResult.summary,
+                oneLiner: "A community-driven memecoin.",
+                mainVerdict: "Strong community."
+            },
+            market: {
+                ...baseResult.market,
+                marketFitScore: 80, // Strong market fit
+                goToMarketRisks: ["Volatility"] // No legal/scam keywords
+            },
+            technical: {
+                ...baseResult.technical,
+                keyRisks: ["Smart contract bugs"] // No legal/scam keywords
+            }
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: memeResult,
+            projectType: 'memecoin'
+        });
+
+        // Should remain 75 as no penalties apply
+        expect(calibrated.overallScore).toBe(75);
     });
 
     it('does not cap score if meme coin score is already low', () => {

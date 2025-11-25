@@ -254,10 +254,37 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     lowerSummary.includes("speculative");
 
   if (isMemeOrHype) {
-    // Cap at 40
-    if (newResult.overallScore > 40) {
-      newResult.overallScore = 40;
+    // Start with the raw score
+    let score = newResult.overallScore;
+
+    // Penalty 1: IP / Legal Risk
+    // If the model flagged specific risks in text, apply a heavy penalty
+    const riskText = [
+      ...(newResult.technical.keyRisks || []),
+      ...(newResult.market.goToMarketRisks || [])
+    ].join(" ").toLowerCase();
+
+    const hasLegalRisk =
+      riskText.includes("legal") ||
+      riskText.includes("copyright") ||
+      riskText.includes("ip infringement") ||
+      riskText.includes("trademark") ||
+      riskText.includes("scam");
+
+    if (hasLegalRisk) {
+      score -= 20;
     }
+
+    // Penalty 2: Weak Narrative / Differentiation
+    // Use marketFitScore as a proxy for narrative strength
+    if (newResult.market.marketFitScore < 50) {
+      score -= 10;
+    }
+
+    // Apply bounds
+    // Cap at 90 (conservative for memecoins)
+    // Floor at 10
+    newResult.overallScore = Math.max(10, Math.min(90, score));
   }
 
   // Rule 2: Don't under-score strong infra ideas
