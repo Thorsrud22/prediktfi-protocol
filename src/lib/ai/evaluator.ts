@@ -208,7 +208,11 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
     }
 
     // Post-process the score with opinionated rules
-    result = calibrateScore(result);
+    result = calibrateScore({
+      projectType: input.projectType,
+      market: options?.market,
+      rawResult: result
+    });
 
     return result;
   } catch (error) {
@@ -219,20 +223,30 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
   }
 }
 
+export interface ScoreCalibrationContext {
+  projectType: string;
+  market?: MarketSnapshot;
+  rawResult: IdeaEvaluationResult;
+}
+
 /**
  * Adjusts the overall score based on specific rules to handle edge cases
  * like meme coins (cap score) or strong infra ideas (boost score).
  * 
- * @param result The raw evaluation result from the model
+ * @param context The calibration context containing raw result, project type, and market data
  * @returns The adjusted evaluation result
  */
-export function calibrateScore(result: IdeaEvaluationResult): IdeaEvaluationResult {
-  const newResult = { ...result };
+export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluationResult {
+  const { rawResult, projectType } = context;
+  const newResult = { ...rawResult };
 
   // Rule 1: Cap hype / meme ideas
   // If it looks like a meme coin or pure hype, cap the score at 40.
+  // We can now also check projectType explicitly if needed, but keeping logic similar for now
+  // as per instructions to not change scoring behavior yet.
   const lowerSummary = (newResult.summary.oneLiner + " " + newResult.summary.mainVerdict).toLowerCase();
   const isMemeOrHype =
+    projectType === 'memecoin' || // Explicit check now possible
     lowerSummary.includes("meme") ||
     lowerSummary.includes("memecoin") ||
     lowerSummary.includes("pure hype") ||

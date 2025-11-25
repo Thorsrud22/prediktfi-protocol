@@ -149,7 +149,10 @@ describe('calibrateScore', () => {
             }
         };
 
-        const calibrated = calibrateScore(memeResult);
+        const calibrated = calibrateScore({
+            rawResult: memeResult,
+            projectType: 'memecoin'
+        });
         expect(calibrated.overallScore).toBe(40);
     });
 
@@ -164,7 +167,10 @@ describe('calibrateScore', () => {
             }
         };
 
-        const calibrated = calibrateScore(memeResult);
+        const calibrated = calibrateScore({
+            rawResult: memeResult,
+            projectType: 'memecoin'
+        });
         expect(calibrated.overallScore).toBe(30);
     });
 
@@ -177,7 +183,10 @@ describe('calibrateScore', () => {
             tokenomics: { ...baseResult.tokenomics, tokenNeeded: false }
         };
 
-        const calibrated = calibrateScore(infraResult);
+        const calibrated = calibrateScore({
+            rawResult: infraResult,
+            projectType: 'infra_ai'
+        });
         expect(calibrated.overallScore).toBe(60);
     });
 
@@ -190,13 +199,19 @@ describe('calibrateScore', () => {
             tokenomics: { ...baseResult.tokenomics, tokenNeeded: false }
         };
 
-        const calibrated = calibrateScore(infraResult);
+        const calibrated = calibrateScore({
+            rawResult: infraResult,
+            projectType: 'infra_ai'
+        });
         expect(calibrated.overallScore).toBe(90);
     });
 
     it('leaves score unchanged for standard ideas', () => {
         const standardResult = { ...baseResult, overallScore: 75 };
-        const calibrated = calibrateScore(standardResult);
+        const calibrated = calibrateScore({
+            rawResult: standardResult,
+            projectType: 'defi'
+        });
         expect(calibrated.overallScore).toBe(75);
     });
 });

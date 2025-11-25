@@ -5,6 +5,7 @@ import { trackServer } from '../../lib/analytics';
 
 // Helper function to simulate realistic processing delays
 function simulateDelay(minMs: number, maxMs: number): Promise<void> {
+  if (process.env.NODE_ENV === 'test') return Promise.resolve();
   const delay = Math.random() * (maxMs - minMs) + minMs;
   return new Promise(resolve => setTimeout(resolve, delay));
 }
@@ -418,8 +419,8 @@ function generateRationale(
         ? 'technical indicators, sentiment analysis, fundamental data, and market intelligence'
         : 'technical indicators and market sentiment'
       : isAdvanced
-      ? 'available data sources, contextual analysis, and comprehensive research'
-      : 'available evidence and contextual factors';
+        ? 'available data sources, contextual analysis, and comprehensive research'
+        : 'available evidence and contextual factors';
   sections.push(
     `**Data Quality Assessment**\nAnalysis incorporates ${dataQualityPercent}% quality data from ${dataSources}.`,
   );
@@ -451,9 +452,8 @@ function generateRationale(
 
     // Additional technical details for advanced analysis
     if (isAdvanced && Number.isFinite(indicators?.sma20) && Number.isFinite(indicators?.sma50)) {
-      technicalText += ` Moving averages show ${
-        indicators.sma20 > indicators.sma50 ? 'bullish' : 'bearish'
-      } crossover pattern.`;
+      technicalText += ` Moving averages show ${indicators.sma20 > indicators.sma50 ? 'bullish' : 'bearish'
+        } crossover pattern.`;
     }
     if (Number.isFinite(indicators?.atr)) {
       technicalText += ` ATR indicates ${indicators.atr > 0.05 ? 'high' : 'moderate'} volatility.`;
@@ -534,8 +534,7 @@ function generateRationale(
 
   if (riskFactors.length > 0) {
     sections.push(
-      `**Risk Assessment**\nKey uncertainty: ${riskFactors[0]}. ${
-        riskFactors.length > 1 ? `Additional factors: ${riskFactors.slice(1).join(', ')}.` : ''
+      `**Risk Assessment**\nKey uncertainty: ${riskFactors[0]}. ${riskFactors.length > 1 ? `Additional factors: ${riskFactors.slice(1).join(', ')}.` : ''
       }`,
     );
   }
