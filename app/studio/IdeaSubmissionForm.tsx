@@ -62,6 +62,13 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         }
     };
 
+    const formatProjectTypeLabel = (type: string) => {
+        if (type === 'infra_ai') return 'AI';
+        return type
+            .replace('_', ' ')
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+    };
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-8">
             <h2 className="text-2xl font-bold text-white mb-6">Submit Your Idea</h2>
@@ -80,7 +87,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 : 'bg-white/5 text-blue-200 border-white/10 hover:bg-white/10'
                                 }`}
                         >
-                            {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                            {formatProjectTypeLabel(type)}
                         </button>
                     ))}
                 </div>

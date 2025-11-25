@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const ideaSubmissionSchema = z.object({
     description: z.string().min(10, 'Description must be at least 10 characters long'),
-    projectType: z.enum(['memecoin', 'defi', 'nft', 'game', 'ai', 'other'], {
+    projectType: z.enum(['memecoin', 'defi', 'nft', 'game', 'infra_ai', 'other'], {
         errorMap: () => ({ message: 'Please select a project type' }),
     }),
     teamSize: z.enum(['solo', 'team_2_5', 'team_6_plus'], {
