@@ -221,7 +221,7 @@ describe('calibrateScore', () => {
 
         const calibrated = calibrateScore({
             rawResult: infraResult,
-            projectType: 'infra_ai'
+            projectType: 'ai'
         });
         expect(calibrated.overallScore).toBe(60);
     });
@@ -237,18 +237,56 @@ describe('calibrateScore', () => {
 
         const calibrated = calibrateScore({
             rawResult: infraResult,
-            projectType: 'infra_ai'
+            projectType: 'ai'
         });
         expect(calibrated.overallScore).toBe(90);
     });
 
     it('leaves score unchanged for standard ideas', () => {
-        const standardResult = { ...baseResult, overallScore: 75 };
+        const standardResult = {
+            ...baseResult,
+            overallScore: 75,
+            market: { ...baseResult.market, targetAudience: ["DeFi Users"] }
+        };
         const calibrated = calibrateScore({
             rawResult: standardResult,
             projectType: 'defi'
         });
         expect(calibrated.overallScore).toBe(75);
+    });
+
+    it('penalizes risky DeFi ideas (complex, no security)', () => {
+        const riskyDefi = {
+            ...baseResult,
+            overallScore: 80,
+            execution: { ...baseResult.execution, complexityLevel: 'high' as const },
+            technical: { ...baseResult.technical, keyRisks: ["Smart contract complexity"], comments: "Very complex logic" },
+            market: { ...baseResult.market, targetAudience: ["Everyone"] } // Vague audience
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: riskyDefi,
+            projectType: 'defi'
+        });
+        // 80 - 5 = 75
+        expect(calibrated.overallScore).toBe(75);
+    });
+
+    it('rewards secure DeFi ideas (simple/medium, security aware)', () => {
+        const secureDefi = {
+            ...baseResult,
+            overallScore: 80,
+            execution: { ...baseResult.execution, complexityLevel: 'medium' as const },
+            technical: { ...baseResult.technical, keyRisks: ["Audit pending"], comments: "Security first approach" },
+            market: { ...baseResult.market, targetAudience: ["DeFi Traders", "Yield Farmers"] }
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: secureDefi,
+            projectType: 'defi'
+        });
+        // 80 + 5 = 85
+        expect(calibrated.overallScore).toBe(85);
     });
 });
 

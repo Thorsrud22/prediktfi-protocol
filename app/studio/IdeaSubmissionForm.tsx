@@ -63,7 +63,8 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     };
 
     const formatProjectTypeLabel = (type: string) => {
-        if (type === 'infra_ai') return 'AI';
+        if (type === 'ai') return 'AI';
+        if (type === 'defi') return 'DeFi';
         return type
             .replace('_', ' ')
             .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -77,7 +78,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
             <div>
                 <label className="block text-blue-200 mb-2 font-medium">Project Type</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {['memecoin', 'defi', 'nft', 'game', 'infra_ai', 'other'].map((type) => (
+                    {['memecoin', 'defi', 'ai', 'other'].map((type) => (
                         <button
                             key={type}
                             type="button"

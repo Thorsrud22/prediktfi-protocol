@@ -126,7 +126,7 @@ describe('AI Idea Evaluator Studio', () => {
         fireEvent.click(screen.getByRole('button', { name: /Start new evaluation/i }));
 
         // Fill form
-        fireEvent.click(screen.getByText('Defi')); // Project Type
+        fireEvent.click(screen.getByText('DeFi')); // Project Type
 
         const descriptionInput = screen.getByPlaceholderText('Describe your project in a few sentences...');
         fireEvent.change(descriptionInput, { target: { value: 'A decentralized exchange for memecoins on Solana' } });

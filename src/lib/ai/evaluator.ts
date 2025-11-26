@@ -287,6 +287,42 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     newResult.overallScore = Math.max(10, Math.min(90, score));
   }
 
+  // Rule 1.5: DeFi Calibration
+  // Adjust scores for DeFi projects based on security awareness and complexity.
+  if (projectType === 'defi') {
+    let score = newResult.overallScore;
+    const riskText = [
+      ...(newResult.technical.keyRisks || []),
+      ...(newResult.technical.comments ? [newResult.technical.comments] : []),
+      ...(newResult.market.goToMarketRisks || [])
+    ].join(" ").toLowerCase();
+
+    const hasSecurityKeywords =
+      riskText.includes("audit") ||
+      riskText.includes("security") ||
+      riskText.includes("regulation") ||
+      riskText.includes("compliance");
+
+    const isComplex = newResult.execution.complexityLevel === 'high';
+    const isSimpleOrMedium = newResult.execution.complexityLevel === 'low' || newResult.execution.complexityLevel === 'medium';
+    const hasSpecificAudience = newResult.market.targetAudience && newResult.market.targetAudience.length > 0 && newResult.market.targetAudience[0].length > 3; // Basic check for non-empty
+
+    // Negative Adjustment (-5)
+    // Complex but no security mentions, OR token needed but vague audience
+    if ((isComplex && !hasSecurityKeywords) || (newResult.tokenomics.tokenNeeded && !hasSpecificAudience)) {
+      score -= 5;
+    }
+
+    // Positive Adjustment (+5)
+    // Simple/Medium complexity AND security aware AND specific audience
+    if (isSimpleOrMedium && hasSecurityKeywords && hasSpecificAudience) {
+      score += 5;
+    }
+
+    // Bounds 10-95
+    newResult.overallScore = Math.max(10, Math.min(95, score));
+  }
+
   // Rule 2: Don't under-score strong infra ideas
   // If technical and market are strong (>= 75), and token is not needed, ensure score is decent (60-90).
   const isStrongTech = newResult.technical.feasibilityScore >= 75;
