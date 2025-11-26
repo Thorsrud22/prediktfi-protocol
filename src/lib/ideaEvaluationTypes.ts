@@ -39,4 +39,6 @@ export type IdeaEvaluationResult = {
     recommendedPivots: string[];
     niceToHaveLater: string[];
   };
+
+  calibrationNotes?: string[];
 };

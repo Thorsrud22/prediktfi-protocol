@@ -115,7 +115,8 @@ describe('AI Idea Evaluator Studio', () => {
                         mustFixBeforeBuild: [],
                         recommendedPivots: ['Add social features'],
                         niceToHaveLater: []
-                    }
+                    },
+                    calibrationNotes: ['DeFi: +5 for security awareness']
                 }
             }),
         });
@@ -157,6 +158,10 @@ describe('AI Idea Evaluator Studio', () => {
             expect(screen.getByText('85')).toBeInTheDocument();
             expect(screen.getByText('Technically sound')).toBeInTheDocument();
             expect(screen.getByText('High competition')).toBeInTheDocument();
+
+            // Check for calibration notes
+            expect(screen.getByText('Why this score?')).toBeInTheDocument();
+            expect(screen.getByText('DeFi: +5 for security awareness')).toBeInTheDocument();
         }, { timeout: 3000 });
     });
 });

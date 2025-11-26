@@ -239,6 +239,7 @@ export interface ScoreCalibrationContext {
 export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluationResult {
   const { rawResult, projectType } = context;
   const newResult = { ...rawResult };
+  const calibrationNotes: string[] = [];
 
   // Rule 1: Cap hype / meme ideas
   // If it looks like a meme coin or pure hype, cap the score at 40.
@@ -273,12 +274,14 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
 
     if (hasLegalRisk) {
       score -= 20;
+      calibrationNotes.push("Memecoin: -20 due to legal/IP risks or scam indicators.");
     }
 
     // Penalty 2: Weak Narrative / Differentiation
     // Use marketFitScore as a proxy for narrative strength
     if (newResult.market.marketFitScore < 50) {
       score -= 10;
+      calibrationNotes.push("Memecoin: -10 due to weak narrative or market fit.");
     }
 
     // Apply bounds
@@ -311,12 +314,14 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     // Complex but no security mentions, OR token needed but vague audience
     if ((isComplex && !hasSecurityKeywords) || (newResult.tokenomics.tokenNeeded && !hasSpecificAudience)) {
       score -= 5;
+      calibrationNotes.push("DeFi: -5 due to high complexity without security plan or vague audience.");
     }
 
     // Positive Adjustment (+5)
     // Simple/Medium complexity AND security aware AND specific audience
     if (isSimpleOrMedium && hasSecurityKeywords && hasSpecificAudience) {
       score += 5;
+      calibrationNotes.push("DeFi: +5 for security awareness and clear target audience.");
     }
 
     // Bounds 10-95
@@ -333,12 +338,15 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     // Boost to at least 60
     if (newResult.overallScore < 60) {
       newResult.overallScore = 60;
+      calibrationNotes.push("Infra/AI: Boosted to 60 (strong tech/market without token).");
     }
     // Cap at 90 (don't let it get too crazy just because it's solid infra)
     if (newResult.overallScore > 90) {
       newResult.overallScore = 90;
+      calibrationNotes.push("Infra/AI: Capped at 90.");
     }
   }
 
+  newResult.calibrationNotes = calibrationNotes;
   return newResult;
 }

@@ -43,6 +43,20 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
                     <p className="text-gray-300 italic">"{result.summary.mainVerdict}"</p>
                 </div>
+
+                {result.calibrationNotes && result.calibrationNotes.length > 0 && (
+                    <div className="mt-6 text-left bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                        <h4 className="text-sm font-bold text-blue-300 mb-2 uppercase tracking-wider">Why this score?</h4>
+                        <ul className="space-y-1">
+                            {result.calibrationNotes.map((note, i) => (
+                                <li key={i} className="text-sm text-blue-100 flex items-start">
+                                    <span className="mr-2 text-blue-400">•</span>
+                                    {note}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
 
             {/* Dimension Scores */}

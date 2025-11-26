@@ -161,6 +161,8 @@ describe('calibrateScore', () => {
 
         // 60 - 20 (risk) - 10 (weak market) = 30
         expect(calibrated.overallScore).toBe(30);
+        expect(calibrated.calibrationNotes).toContain("Memecoin: -20 due to legal/IP risks or scam indicators.");
+        expect(calibrated.calibrationNotes).toContain("Memecoin: -10 due to weak narrative or market fit.");
     });
 
     it('preserves score for high quality memecoins', () => {
@@ -190,6 +192,7 @@ describe('calibrateScore', () => {
 
         // Should remain 75 as no penalties apply
         expect(calibrated.overallScore).toBe(75);
+        expect(calibrated.calibrationNotes).toEqual([]);
     });
 
     it('does not cap score if meme coin score is already low', () => {
@@ -224,6 +227,7 @@ describe('calibrateScore', () => {
             projectType: 'ai'
         });
         expect(calibrated.overallScore).toBe(60);
+        expect(calibrated.calibrationNotes).toContain("Infra/AI: Boosted to 60 (strong tech/market without token).");
     });
 
     it('caps score at 90 for strong infra ideas', () => {
@@ -270,6 +274,7 @@ describe('calibrateScore', () => {
         });
         // 80 - 5 = 75
         expect(calibrated.overallScore).toBe(75);
+        expect(calibrated.calibrationNotes).toContain("DeFi: -5 due to high complexity without security plan or vague audience.");
     });
 
     it('rewards secure DeFi ideas (simple/medium, security aware)', () => {
@@ -287,6 +292,7 @@ describe('calibrateScore', () => {
         });
         // 80 + 5 = 85
         expect(calibrated.overallScore).toBe(85);
+        expect(calibrated.calibrationNotes).toContain("DeFi: +5 for security awareness and clear target audience.");
     });
 });
 
