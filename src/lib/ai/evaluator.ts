@@ -274,14 +274,14 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
 
     if (hasLegalRisk) {
       score -= 20;
-      calibrationNotes.push("Memecoin: -20 due to legal/IP risks or scam indicators.");
+      calibrationNotes.push("Memecoin: minus points for heavy dependence on one celebrity/brand without a twist.");
     }
 
     // Penalty 2: Weak Narrative / Differentiation
     // Use marketFitScore as a proxy for narrative strength
     if (newResult.market.marketFitScore < 50) {
       score -= 10;
-      calibrationNotes.push("Memecoin: -10 due to weak narrative or market fit.");
+      calibrationNotes.push("Memecoin: minus points for weak or generic meme narrative.");
     }
 
     // Apply bounds
@@ -314,14 +314,14 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     // Complex but no security mentions, OR token needed but vague audience
     if ((isComplex && !hasSecurityKeywords) || (newResult.tokenomics.tokenNeeded && !hasSpecificAudience)) {
       score -= 5;
-      calibrationNotes.push("DeFi: -5 due to high complexity without security plan or vague audience.");
+      calibrationNotes.push("DeFi: minus points for high complexity and no audit/security plan mentioned.");
     }
 
     // Positive Adjustment (+5)
     // Simple/Medium complexity AND security aware AND specific audience
     if (isSimpleOrMedium && hasSecurityKeywords && hasSpecificAudience) {
       score += 5;
-      calibrationNotes.push("DeFi: +5 for security awareness and clear target audience.");
+      calibrationNotes.push("DeFi: plus points for explicit audit/security thinking and a concrete target user.");
     }
 
     // Bounds 10-95
@@ -338,12 +338,12 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     // Boost to at least 60
     if (newResult.overallScore < 60) {
       newResult.overallScore = 60;
-      calibrationNotes.push("Infra/AI: Boosted to 60 (strong tech/market without token).");
+      calibrationNotes.push("AI: plus points for a clear pain point and realistic data/infra story.");
     }
     // Cap at 90 (don't let it get too crazy just because it's solid infra)
     if (newResult.overallScore > 90) {
       newResult.overallScore = 90;
-      calibrationNotes.push("Infra/AI: Capped at 90.");
+      calibrationNotes.push("AI: capped at 90 to maintain realism.");
     }
   }
 

@@ -47,6 +47,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 {result.calibrationNotes && result.calibrationNotes.length > 0 && (
                     <div className="mt-6 text-left bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                         <h4 className="text-sm font-bold text-blue-300 mb-2 uppercase tracking-wider">Why this score?</h4>
+                        <p className="text-xs text-blue-200/60 mb-3">
+                            These calibration notes come from PrediktFi’s deterministic scoring rules on top of the AI model.
+                        </p>
                         <ul className="space-y-1">
                             {result.calibrationNotes.map((note, i) => (
                                 <li key={i} className="text-sm text-blue-100 flex items-start">

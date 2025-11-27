@@ -116,7 +116,7 @@ describe('AI Idea Evaluator Studio', () => {
                         recommendedPivots: ['Add social features'],
                         niceToHaveLater: []
                     },
-                    calibrationNotes: ['DeFi: +5 for security awareness']
+                    calibrationNotes: ['DeFi: plus points for explicit audit/security thinking and a concrete target user.']
                 }
             }),
         });
@@ -161,7 +161,7 @@ describe('AI Idea Evaluator Studio', () => {
 
             // Check for calibration notes
             expect(screen.getByText('Why this score?')).toBeInTheDocument();
-            expect(screen.getByText('DeFi: +5 for security awareness')).toBeInTheDocument();
+            expect(screen.getByText('DeFi: plus points for explicit audit/security thinking and a concrete target user.')).toBeInTheDocument();
         }, { timeout: 3000 });
     });
 });
