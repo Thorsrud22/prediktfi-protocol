@@ -44,4 +44,8 @@ export type IdeaEvaluationResult = {
   };
 
   calibrationNotes?: string[];
+
+  launchReadinessScore?: number;
+  launchReadinessLabel?: 'low' | 'medium' | 'high';
+  launchReadinessSignals?: string[];
 };

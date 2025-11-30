@@ -141,7 +141,10 @@ describe('calibrateScore', () => {
             mustFixBeforeBuild: [],
             recommendedPivots: [],
             niceToHaveLater: []
-        }
+        },
+        launchReadinessScore: 50,
+        launchReadinessLabel: "medium",
+        launchReadinessSignals: []
     };
 
     it('penalizes low quality memecoins with risks', () => {
@@ -227,7 +230,8 @@ describe('calibrateScore', () => {
             technical: {
                 ...baseResult.technical,
                 keyRisks: ["Smart contract bugs"] // No legal/scam keywords
-            }
+            },
+            launchReadinessSignals: ["Liquidity locked", "Community plan"]
         };
 
         const calibrated = calibrateScore({
@@ -235,9 +239,16 @@ describe('calibrateScore', () => {
             projectType: 'memecoin'
         });
 
-        // Should remain 75 as no penalties apply
+        // Should remain 75 as no penalties apply (bonus applies to launch score, but overall score is already high enough that +5 boost logic might not trigger if launch score isn't super high, or maybe it does?)
+        // Wait, launch score starts at 50. +10 = 60.
+        // Overall 75. Launch 60.
+        // Boost condition: Overall 50-70 AND Launch >= 80.
+        // 75 is > 70. So no boost.
+        // Penalty condition: Overall >= 70 AND Launch < 40.
+        // 60 is > 40. So no penalty.
+        // So overall score remains 75.
         expect(calibrated.overallScore).toBe(75);
-        expect(calibrated.calibrationNotes).toEqual([]);
+        expect(calibrated.calibrationNotes).toContain("Launch: plus points for clear LP and community plan.");
     });
 
     it('does not cap score if meme coin score is already low', () => {
@@ -281,7 +292,8 @@ describe('calibrateScore', () => {
             overallScore: 95,
             technical: { ...baseResult.technical, feasibilityScore: 90 },
             market: { ...baseResult.market, marketFitScore: 90 },
-            tokenomics: { ...baseResult.tokenomics, tokenNeeded: false }
+            tokenomics: { ...baseResult.tokenomics, tokenNeeded: false },
+            launchReadinessSignals: ["MVP ready", "Data pipeline built"]
         };
 
         const calibrated = calibrateScore({
@@ -295,7 +307,8 @@ describe('calibrateScore', () => {
         const standardResult = {
             ...baseResult,
             overallScore: 75,
-            market: { ...baseResult.market, targetAudience: ["DeFi Users"] }
+            market: { ...baseResult.market, targetAudience: ["DeFi Users"] },
+            launchReadinessSignals: ["Audit planned"]
         };
         const calibrated = calibrateScore({
             rawResult: standardResult,
@@ -317,8 +330,8 @@ describe('calibrateScore', () => {
             rawResult: riskyDefi,
             projectType: 'defi'
         });
-        // 80 - 5 (base) - 5 (execution) = 70
-        expect(calibrated.overallScore).toBe(70);
+        // 80 - 5 (base) - 5 (execution) - 5 (launch mismatch) = 65
+        expect(calibrated.overallScore).toBe(65);
         expect(calibrated.calibrationNotes).toContain("DeFi: minus points for high complexity and no audit/security plan mentioned.");
     });
 
@@ -328,7 +341,8 @@ describe('calibrateScore', () => {
             overallScore: 80,
             execution: { ...baseResult.execution, complexityLevel: 'medium' as const },
             technical: { ...baseResult.technical, keyRisks: ["Audit pending"], comments: "Security first approach" },
-            market: { ...baseResult.market, targetAudience: ["DeFi Traders", "Yield Farmers"] }
+            market: { ...baseResult.market, targetAudience: ["DeFi Traders", "Yield Farmers"] },
+            launchReadinessSignals: ["Audit planned", "User acquisition"]
         };
 
         const calibrated = calibrateScore({
@@ -381,7 +395,8 @@ describe('calibrateScore', () => {
             overallScore: 80,
             execution: { ...baseResult.execution, complexityLevel: 'medium' as const },
             technical: { ...baseResult.technical, keyRisks: ["Audit pending"], comments: "Security first" },
-            market: { ...baseResult.market, targetAudience: ["DeFi Traders"] }
+            market: { ...baseResult.market, targetAudience: ["DeFi Traders"] },
+            launchReadinessSignals: ["Audit planned", "User acquisition"]
         };
 
         const calibrated = calibrateScore({
@@ -487,6 +502,153 @@ describe('calibrateScore', () => {
 
         expect(calibrated.execution.executionRiskScore).toBe(80); // 70 + 10
         expect(calibrated.calibrationNotes).toContain("Execution: plus points for strong technical/ML background.");
+    });
+
+
+    // Launch Readiness Tests
+
+    it('penalizes memecoin with no LP plan', () => {
+        const weakMeme = {
+            ...baseResult,
+            overallScore: 60,
+            launchReadinessScore: 50,
+            launchReadinessSignals: ["Viral marketing only", "No money for pool"]
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: weakMeme,
+            projectType: 'memecoin'
+        });
+
+        expect(calibrated.launchReadinessScore).toBe(30); // 50 - 20
+        expect(calibrated.launchReadinessLabel).toBe('low');
+        expect(calibrated.calibrationNotes).toContain("Launch (memecoin): minus points for no LP or anti-rug thinking.");
+    });
+
+    it('boosts memecoin with LP and community plan', () => {
+        const strongMeme = {
+            ...baseResult,
+            overallScore: 60,
+            launchReadinessScore: 60,
+            launchReadinessSignals: ["Locked LP", "Community treasury", "Viral content"]
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: strongMeme,
+            projectType: 'memecoin'
+        });
+
+        expect(calibrated.launchReadinessScore).toBe(70); // 60 + 10
+        expect(calibrated.launchReadinessLabel).toBe('high');
+        expect(calibrated.calibrationNotes).toContain("Launch: plus points for clear LP and community plan.");
+    });
+
+    it('penalizes DeFi with no audit plan', () => {
+        const weakDefi = {
+            ...baseResult,
+            overallScore: 70,
+            launchReadinessScore: 50,
+            launchReadinessSignals: ["Just code", "No external review"]
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: weakDefi,
+            projectType: 'defi'
+        });
+
+        expect(calibrated.launchReadinessScore).toBe(35); // 50 - 15
+        expect(calibrated.launchReadinessLabel).toBe('low');
+        expect(calibrated.calibrationNotes).toContain("Launch: minus points for no security/audit plan.");
+    });
+
+    it('boosts DeFi with audit and GTM', () => {
+        const strongDefi = {
+            ...baseResult,
+            overallScore: 70,
+            launchReadinessScore: 70,
+            launchReadinessSignals: ["Audit scheduled", "User acquisition plan"]
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: strongDefi,
+            projectType: 'defi'
+        });
+
+        expect(calibrated.launchReadinessScore).toBe(80); // 70 + 10
+        expect(calibrated.calibrationNotes).toContain("Launch: plus points for security plan and clear GTM.");
+    });
+
+    it('penalizes AI project with vague MVP', () => {
+        const weakAI = {
+            ...baseResult,
+            overallScore: 70,
+            launchReadinessScore: 50,
+            launchReadinessSignals: ["Vague idea", "Next OpenAI"]
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: weakAI,
+            projectType: 'ai'
+        });
+
+        expect(calibrated.launchReadinessScore).toBe(35); // 50 - 15
+        expect(calibrated.launchReadinessLabel).toBe('low');
+        expect(calibrated.calibrationNotes).toContain("Launch: minus points for vague MVP/data plan.");
+    });
+
+    it('boosts AI project with realistic MVP and data', () => {
+        const strongAI = {
+            ...baseResult,
+            overallScore: 70,
+            launchReadinessScore: 70,
+            launchReadinessSignals: ["MVP ready", "Data pipeline built"]
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: strongAI,
+            projectType: 'ai'
+        });
+
+        expect(calibrated.launchReadinessScore).toBe(80); // 70 + 10
+        expect(calibrated.calibrationNotes).toContain("Launch: plus points for realistic MVP scope and data plan.");
+    });
+
+    it('nudges overall score down for severe launch mismatch', () => {
+        const mismatched = {
+            ...baseResult,
+            overallScore: 80, // Strong idea
+            launchReadinessScore: 30, // Terrible launch
+            launchReadinessSignals: ["No plan"]
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: mismatched,
+            projectType: 'other'
+        });
+
+        // 80 - 5 = 75
+        expect(calibrated.overallScore).toBe(75);
+        expect(calibrated.calibrationNotes).toContain("Overall: minus points for severe lack of launch readiness despite good idea.");
+    });
+
+    it('nudges overall score up for exceptional launch readiness', () => {
+        const mismatched = {
+            ...baseResult,
+            overallScore: 60, // Modest idea
+            launchReadinessScore: 80, // Excellent launch
+            launchReadinessSignals: ["MVP ready", "Data pipeline built"] // Signals needed to avoid penalty
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: mismatched,
+            projectType: 'ai'
+        });
+
+        // 60 + 5 = 65
+        // Note: AI boost (+10 to launch score) applies first -> 80 + 10 = 90
+        // Then overall boost check: overall 60 (50-70 range) and launch 90 (>=80) -> +5
+        expect(calibrated.overallScore).toBe(65);
+        expect(calibrated.calibrationNotes).toContain("Overall: plus points for exceptional launch readiness.");
     });
 });
 

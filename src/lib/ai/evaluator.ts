@@ -143,7 +143,10 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
     "mustFixBeforeBuild": ["<item1>", "<item2>"],
     "recommendedPivots": ["<pivot1>", "<pivot2>"],
     "niceToHaveLater": ["<item1>", "<item2>"]
-  }
+  },
+  "launchReadinessScore": <number 0-100>,
+  "launchReadinessLabel": "low" | "medium" | "high",
+  "launchReadinessSignals": ["<signal1>", "<signal2>"]
 }`;
 
   try {
@@ -448,6 +451,83 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     if (hasMLBackground) {
       newResult.execution.executionRiskScore = Math.min(100, newResult.execution.executionRiskScore + 10);
       calibrationNotes.push("Execution: plus points for strong technical/ML background.");
+    }
+  }
+
+
+
+  // Rule 4: Launch Readiness Calibration
+  // Adjust launchReadinessScore and overallScore based on launch signals
+  if (newResult.launchReadinessScore !== undefined) {
+    const launchSignals = (newResult.launchReadinessSignals || []).join(" ").toLowerCase();
+
+    // Memecoin Launch Rules
+    if (projectType === 'memecoin') {
+      const hasLiquidityPlan = launchSignals.includes("liquidity") || launchSignals.includes("lp") || launchSignals.includes("treasury");
+      const hasCommunityPlan = launchSignals.includes("community") || launchSignals.includes("content") || launchSignals.includes("viral");
+
+      if (!hasLiquidityPlan) {
+        newResult.launchReadinessScore = Math.max(0, newResult.launchReadinessScore! - 20);
+        newResult.launchReadinessLabel = 'low';
+        calibrationNotes.push("Launch (memecoin): minus points for no LP or anti-rug thinking.");
+      }
+
+      if (hasLiquidityPlan && hasCommunityPlan) {
+        newResult.launchReadinessScore = Math.min(100, newResult.launchReadinessScore! + 10);
+        calibrationNotes.push("Launch: plus points for clear LP and community plan.");
+      }
+    }
+
+    // DeFi Launch Rules
+    if (projectType === 'defi') {
+      const hasAudit = launchSignals.includes("audit") || launchSignals.includes("security");
+      const hasGTM = launchSignals.includes("user") || launchSignals.includes("acquisition") || launchSignals.includes("market");
+
+      if (!hasAudit) {
+        newResult.launchReadinessScore = Math.max(0, newResult.launchReadinessScore! - 15);
+        if (newResult.launchReadinessScore < 40) newResult.launchReadinessLabel = 'low';
+        calibrationNotes.push("Launch: minus points for no security/audit plan.");
+      }
+
+      if (hasAudit && hasGTM) {
+        newResult.launchReadinessScore = Math.min(100, newResult.launchReadinessScore! + 10);
+        calibrationNotes.push("Launch: plus points for security plan and clear GTM.");
+      }
+    }
+
+    // AI/Other Launch Rules
+    if (projectType === 'ai' || projectType === 'other') {
+      const hasMVP = launchSignals.includes("mvp") || launchSignals.includes("prototype") || launchSignals.includes("demo");
+      const hasData = launchSignals.includes("data") || launchSignals.includes("dataset") || launchSignals.includes("infra");
+      const isVague = launchSignals.includes("vague") || launchSignals.includes("unclear");
+
+      if (isVague || (!hasMVP && !hasData)) {
+        newResult.launchReadinessScore = Math.max(0, newResult.launchReadinessScore! - 15);
+        newResult.launchReadinessLabel = 'low';
+        calibrationNotes.push("Launch: minus points for vague MVP/data plan.");
+      }
+
+      if (hasMVP && hasData) {
+        newResult.launchReadinessScore = Math.min(100, newResult.launchReadinessScore! + 10);
+        calibrationNotes.push("Launch: plus points for realistic MVP scope and data plan.");
+      }
+    }
+
+    // Update Label based on final score
+    if (newResult.launchReadinessScore! >= 70) newResult.launchReadinessLabel = 'high';
+    else if (newResult.launchReadinessScore! >= 40) newResult.launchReadinessLabel = 'medium';
+    else newResult.launchReadinessLabel = 'low';
+
+    // Nudge Overall Score based on Launch Readiness mismatch
+    // Strong idea (>=70) but terrible launch (<40) -> Penalty
+    if (newResult.overallScore >= 70 && newResult.launchReadinessScore! < 40) {
+      newResult.overallScore -= 5;
+      calibrationNotes.push("Overall: minus points for severe lack of launch readiness despite good idea.");
+    }
+    // Modest idea (50-70) but excellent launch (>=80) -> Boost
+    if (newResult.overallScore >= 50 && newResult.overallScore < 70 && newResult.launchReadinessScore! >= 80) {
+      newResult.overallScore += 5;
+      calibrationNotes.push("Overall: plus points for exceptional launch readiness.");
     }
   }
 
