@@ -36,7 +36,10 @@ vi.mock('../../src/lib/ai/evaluator', async (importOriginal) => {
             execution: {
                 complexityLevel: "medium" as const,
                 founderReadinessFlags: [],
-                estimatedTimeline: "3-4 months"
+                estimatedTimeline: "3-4 months",
+                executionRiskScore: 70,
+                executionRiskLabel: "medium" as const,
+                executionSignals: ["Some experience"]
             },
             recommendations: {
                 mustFixBeforeBuild: ["Fix 1"],
@@ -129,7 +132,10 @@ describe('calibrateScore', () => {
         execution: {
             complexityLevel: "medium",
             founderReadinessFlags: [],
-            estimatedTimeline: ""
+            estimatedTimeline: "",
+            executionRiskScore: 50,
+            executionRiskLabel: "medium",
+            executionSignals: []
         },
         recommendations: {
             mustFixBeforeBuild: [],
@@ -162,7 +168,46 @@ describe('calibrateScore', () => {
         // 60 - 20 (risk) - 10 (weak market) = 30
         expect(calibrated.overallScore).toBe(30);
         expect(calibrated.calibrationNotes).toContain("Memecoin: minus points for heavy dependence on one celebrity/brand without a twist.");
+        expect(calibrated.calibrationNotes).toContain("Memecoin: minus points for heavy dependence on one celebrity/brand without a twist.");
         expect(calibrated.calibrationNotes).toContain("Memecoin: minus points for weak or generic meme narrative.");
+    });
+
+    it('applies market-aware penalty for memecoins in crowded market', () => {
+        const crowdedMarket = {
+            timestamp: new Date().toISOString(),
+            btcDominance: 35, // < 40
+            solPriceUsd: 100,
+            source: 'coingecko' as const
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: { ...baseResult, overallScore: 60 },
+            projectType: 'memecoin',
+            market: crowdedMarket
+        });
+
+        // 60 - 3 = 57
+        expect(calibrated.overallScore).toBe(57);
+        expect(calibrated.calibrationNotes).toContain("Memecoin: minus points for launching into an extremely crowded memecoin cycle.");
+    });
+
+    it('applies market-aware boost for memecoins in quiet market', () => {
+        const quietMarket = {
+            timestamp: new Date().toISOString(),
+            btcDominance: 65, // > 60
+            solPriceUsd: 100,
+            source: 'coingecko' as const
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: { ...baseResult, overallScore: 60 },
+            projectType: 'memecoin',
+            market: quietMarket
+        });
+
+        // 60 + 3 = 63
+        expect(calibrated.overallScore).toBe(63);
+        expect(calibrated.calibrationNotes).toContain("Memecoin: plus points for launching during a quieter cycle (contrarian).");
     });
 
     it('preserves score for high quality memecoins', () => {
@@ -272,8 +317,8 @@ describe('calibrateScore', () => {
             rawResult: riskyDefi,
             projectType: 'defi'
         });
-        // 80 - 5 = 75
-        expect(calibrated.overallScore).toBe(75);
+        // 80 - 5 (base) - 5 (execution) = 70
+        expect(calibrated.overallScore).toBe(70);
         expect(calibrated.calibrationNotes).toContain("DeFi: minus points for high complexity and no audit/security plan mentioned.");
     });
 
@@ -292,7 +337,156 @@ describe('calibrateScore', () => {
         });
         // 80 + 5 = 85
         expect(calibrated.overallScore).toBe(85);
+        expect(calibrated.overallScore).toBe(85);
         expect(calibrated.calibrationNotes).toContain("DeFi: plus points for explicit audit/security thinking and a concrete target user.");
+    });
+
+    it('applies market-aware penalty for complex DeFi in risk-off market', () => {
+        const riskOffMarket = {
+            timestamp: new Date().toISOString(),
+            btcDominance: 65, // > 60
+            solPriceUsd: 100,
+            source: 'coingecko' as const
+        };
+
+        const complexDefi = {
+            ...baseResult,
+            overallScore: 70,
+            execution: { ...baseResult.execution, complexityLevel: 'high' as const },
+            technical: { ...baseResult.technical, keyRisks: [], comments: "Risky code" },
+            market: { ...baseResult.market, targetAudience: ["Users"] }
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: complexDefi,
+            projectType: 'defi',
+            market: riskOffMarket
+        });
+
+        // 70 - 5 (base logic) - 3 (market logic) - 5 (execution penalty) = 57
+        expect(calibrated.overallScore).toBe(57);
+        expect(calibrated.calibrationNotes).toContain("DeFi: minus points for high complexity during risk-off market conditions.");
+    });
+
+    it('applies market-aware boost for secure DeFi in risk-on market', () => {
+        const riskOnMarket = {
+            timestamp: new Date().toISOString(),
+            btcDominance: 35, // < 40
+            solPriceUsd: 100,
+            source: 'coingecko' as const
+        };
+
+        const secureDefi = {
+            ...baseResult,
+            overallScore: 80,
+            execution: { ...baseResult.execution, complexityLevel: 'medium' as const },
+            technical: { ...baseResult.technical, keyRisks: ["Audit pending"], comments: "Security first" },
+            market: { ...baseResult.market, targetAudience: ["DeFi Traders"] }
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: secureDefi,
+            projectType: 'defi',
+            market: riskOnMarket
+        });
+
+        // 80 + 5 (base logic) + 3 (market logic) = 88
+        expect(calibrated.overallScore).toBe(88);
+        expect(calibrated.calibrationNotes).toContain("DeFi: plus points for launching during favorable risk-on market conditions.");
+    });
+
+    // Execution Risk Tests
+
+    it('penalizes anon memecoin team with no track record', () => {
+        const anonMeme = {
+            ...baseResult,
+            overallScore: 60,
+            execution: {
+                ...baseResult.execution,
+                executionRiskScore: 50,
+                executionSignals: ["Anon team", "First project"],
+                founderReadinessFlags: []
+            }
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: anonMeme,
+            projectType: 'memecoin'
+        });
+
+        expect(calibrated.execution.executionRiskScore).toBe(40); // 50 - 10
+        expect(calibrated.execution.executionRiskLabel).toBe('high');
+        expect(calibrated.calibrationNotes).toContain("Execution: minus points for anon team with no prior shipped products.");
+    });
+
+    it('boosts memecoin team with track record', () => {
+        const proMeme = {
+            ...baseResult,
+            overallScore: 60,
+            execution: {
+                ...baseResult.execution,
+                executionRiskScore: 70,
+                executionSignals: ["Shipped 3 projects", "Previous exit"],
+                founderReadinessFlags: []
+            }
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: proMeme,
+            projectType: 'memecoin'
+        });
+
+        expect(calibrated.execution.executionRiskScore).toBe(80); // 70 + 10
+        expect(calibrated.calibrationNotes).toContain("Execution: plus points for proven domain experience and previous launches.");
+    });
+
+    it('penalizes complex DeFi with no experience/audit', () => {
+        const riskyDefi = {
+            ...baseResult,
+            overallScore: 70,
+            execution: {
+                ...baseResult.execution,
+                complexityLevel: 'high' as const,
+                executionRiskScore: 60,
+                executionSignals: ["First time founders"],
+                founderReadinessFlags: []
+            },
+            technical: { ...baseResult.technical, comments: "Risky code" } // Avoid "security" keyword
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: riskyDefi,
+            projectType: 'defi'
+        });
+
+        // Execution score: 60 - 15 = 45
+        expect(calibrated.execution.executionRiskScore).toBe(45);
+        expect(calibrated.execution.executionRiskLabel).toBe('high');
+        // Overall score: 70 - 5 (base penalty) - 5 (execution penalty) = 60
+        expect(calibrated.overallScore).toBe(60);
+        expect(calibrated.calibrationNotes).toContain("Execution: minus points for complex DeFi protocol without specific experience or audits.");
+    });
+
+    it('boosts AI project with ML background', () => {
+        const strongAI = {
+            ...baseResult,
+            overallScore: 70,
+            execution: {
+                ...baseResult.execution,
+                complexityLevel: 'high' as const,
+                executionRiskScore: 70,
+                executionSignals: ["Ex-Google ML Engineer", "PhD in AI"],
+                founderReadinessFlags: []
+            }
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: strongAI,
+            projectType: 'ai'
+        });
+
+        expect(calibrated.execution.executionRiskScore).toBe(80); // 70 + 10
+        expect(calibrated.calibrationNotes).toContain("Execution: plus points for strong technical/ML background.");
     });
 });
 

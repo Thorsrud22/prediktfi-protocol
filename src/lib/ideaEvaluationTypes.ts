@@ -32,6 +32,9 @@ export type IdeaEvaluationResult = {
     complexityLevel: 'low' | 'medium' | 'high';
     founderReadinessFlags: string[];
     estimatedTimeline: string;
+    executionRiskScore: number;
+    executionRiskLabel: 'low' | 'medium' | 'high';
+    executionSignals: string[];
   };
 
   recommendations: {

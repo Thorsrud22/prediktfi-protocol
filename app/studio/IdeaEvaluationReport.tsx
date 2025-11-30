@@ -63,7 +63,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
             </div>
 
             {/* Dimension Scores */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-xl border ${getScoreBg(result.technical.feasibilityScore)} bg-opacity-10`}>
                     <div className="flex justify-between items-center mb-2">
                         <span className="font-semibold text-white">Technical Feasibility</span>
@@ -86,6 +86,26 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         <span className={`font-bold ${getScoreColor(result.market.marketFitScore)}`}>{result.market.marketFitScore}</span>
                     </div>
                     <p className="text-sm text-gray-300">Complexity: {result.execution.complexityLevel}</p>
+                </div>
+
+                <div className={`p-4 rounded-xl border ${getScoreBg(result.execution.executionRiskScore)} bg-opacity-10`}>
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold text-white">Execution & Team</span>
+                        <span className={`font-bold ${getScoreColor(result.execution.executionRiskScore)}`}>{result.execution.executionRiskScore}</span>
+                    </div>
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-300">Risk Level:</span>
+                        <span className={`text-sm font-bold uppercase ${result.execution.executionRiskLabel === 'high' ? 'text-red-400' :
+                                result.execution.executionRiskLabel === 'medium' ? 'text-yellow-400' : 'text-green-400'
+                            }`}>
+                            {result.execution.executionRiskLabel}
+                        </span>
+                    </div>
+                    <ul className="space-y-1">
+                        {(result.execution.executionSignals || []).slice(0, 2).map((signal, i) => (
+                            <li key={i} className="text-xs text-gray-400 truncate">• {signal}</li>
+                        ))}
+                    </ul>
                 </div>
             </div>
 

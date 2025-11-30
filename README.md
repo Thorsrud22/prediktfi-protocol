@@ -491,6 +491,9 @@ ENABLE_ANALYTICS=true
 NEXT_PUBLIC_ENABLE_ADMIN=true
 ADMIN_USER=admin
 ADMIN_PASS=secure_password
+
+# AI Features
+OPENAI_API_KEY=sk-...
 ```
 
 ### Vercel Deployment

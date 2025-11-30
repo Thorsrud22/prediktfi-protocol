@@ -134,7 +134,10 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
   "execution": {
     "complexityLevel": "low" | "medium" | "high",
     "founderReadinessFlags": ["<flag1>", "<flag2>"],
-    "estimatedTimeline": "<timeline>"
+    "estimatedTimeline": "<timeline>",
+    "executionRiskScore": <number 0-100>,
+    "executionRiskLabel": "low" | "medium" | "high",
+    "executionSignals": ["<signal1>", "<signal2>"]
   },
   "recommendations": {
     "mustFixBeforeBuild": ["<item1>", "<item2>"],
@@ -238,7 +241,10 @@ export interface ScoreCalibrationContext {
  */
 export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluationResult {
   const { rawResult, projectType } = context;
-  const newResult = { ...rawResult };
+  const newResult = {
+    ...rawResult,
+    execution: { ...rawResult.execution } // Deep copy execution to avoid mutation
+  };
   const calibrationNotes: string[] = [];
 
   // Rule 1: Cap hype / meme ideas
@@ -288,6 +294,26 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     // Cap at 90 (conservative for memecoins)
     // Floor at 10
     newResult.overallScore = Math.max(10, Math.min(90, score));
+
+    // Market-Aware Calibration (Memecoin)
+    // Use btcDominance as a proxy for market cycle if available
+    if (context.market && context.market.source !== 'fallback') {
+      const { btcDominance } = context.market;
+
+      // Crowded / Alt Season (BTC Dominance < 40%)
+      // High competition, harder to stand out
+      if (btcDominance < 40) {
+        newResult.overallScore -= 3;
+        calibrationNotes.push("Memecoin: minus points for launching into an extremely crowded memecoin cycle.");
+      }
+
+      // Quiet / Risk Off (BTC Dominance > 60%)
+      // Contrarian play, less noise
+      if (btcDominance > 60) {
+        newResult.overallScore += 3;
+        calibrationNotes.push("Memecoin: plus points for launching during a quieter cycle (contrarian).");
+      }
+    }
   }
 
   // Rule 1.5: DeFi Calibration
@@ -326,6 +352,25 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
 
     // Bounds 10-95
     newResult.overallScore = Math.max(10, Math.min(95, score));
+
+    // Market-Aware Calibration (DeFi)
+    if (context.market && context.market.source !== 'fallback') {
+      const { btcDominance } = context.market;
+
+      // Weak Market / Risk Off (BTC Dominance > 60%)
+      // Harder for complex DeFi to get traction/liquidity
+      if (btcDominance > 60 && isComplex) {
+        newResult.overallScore -= 3;
+        calibrationNotes.push("DeFi: minus points for high complexity during risk-off market conditions.");
+      }
+
+      // Strong Market / Risk On (BTC Dominance < 40%)
+      // Good environment for secure DeFi
+      if (btcDominance < 40 && hasSecurityKeywords) {
+        newResult.overallScore += 3;
+        calibrationNotes.push("DeFi: plus points for launching during favorable risk-on market conditions.");
+      }
+    }
   }
 
   // Rule 2: Don't under-score strong infra ideas
@@ -344,6 +389,65 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     if (newResult.overallScore > 90) {
       newResult.overallScore = 90;
       calibrationNotes.push("AI: capped at 90 to maintain realism.");
+    }
+  }
+
+  // Rule 3: Execution & Team Risk Calibration
+  // Adjust executionRiskScore and overallScore based on team signals
+  const executionSignals = (newResult.execution.executionSignals || []).join(" ").toLowerCase();
+  const readinessFlags = (newResult.execution.founderReadinessFlags || []).join(" ").toLowerCase();
+  const combinedExecutionText = executionSignals + " " + readinessFlags;
+
+  // Memecoin Execution Rules
+  if (projectType === 'memecoin') {
+    const isAnon = combinedExecutionText.includes("anon") || combinedExecutionText.includes("anonymous");
+    const hasTrackRecord = combinedExecutionText.includes("shipped") || combinedExecutionText.includes("track record") || combinedExecutionText.includes("previous exit");
+
+    if (isAnon && !hasTrackRecord) {
+      newResult.execution.executionRiskScore = Math.max(0, newResult.execution.executionRiskScore - 10);
+      newResult.execution.executionRiskLabel = 'high';
+      calibrationNotes.push("Execution: minus points for anon team with no prior shipped products.");
+    }
+
+    if (hasTrackRecord) {
+      newResult.execution.executionRiskScore = Math.min(100, newResult.execution.executionRiskScore + 10);
+      calibrationNotes.push("Execution: plus points for proven domain experience and previous launches.");
+    }
+  }
+
+  // DeFi Execution Rules
+  if (projectType === 'defi') {
+    const isComplex = newResult.execution.complexityLevel === 'high';
+    const hasExperience = combinedExecutionText.includes("defi experience") || combinedExecutionText.includes("solidity") || combinedExecutionText.includes("rust");
+    const hasAudit = combinedExecutionText.includes("audit") || combinedExecutionText.includes("security partner");
+
+    if (isComplex && !hasExperience && !hasAudit) {
+      newResult.execution.executionRiskScore = Math.max(0, newResult.execution.executionRiskScore - 15);
+      newResult.execution.executionRiskLabel = 'high';
+      newResult.overallScore = Math.max(10, newResult.overallScore - 5); // Hard penalty on overall score too
+      calibrationNotes.push("Execution: minus points for complex DeFi protocol without specific experience or audits.");
+    }
+
+    if (hasExperience || hasAudit) {
+      newResult.execution.executionRiskScore = Math.min(100, newResult.execution.executionRiskScore + 10);
+      calibrationNotes.push("Execution: plus points for DeFi experience or security partners.");
+    }
+  }
+
+  // AI Execution Rules
+  if (projectType === 'ai') {
+    const isAmbitious = newResult.execution.complexityLevel === 'high';
+    const hasMLBackground = combinedExecutionText.includes("ml engineer") || combinedExecutionText.includes("phd") || combinedExecutionText.includes("faang") || combinedExecutionText.includes("research");
+
+    if (isAmbitious && !hasMLBackground) {
+      newResult.execution.executionRiskScore = Math.max(0, newResult.execution.executionRiskScore - 10);
+      newResult.execution.executionRiskLabel = 'high';
+      calibrationNotes.push("Execution: minus points for ambitious AI project without clear ML/engineering background.");
+    }
+
+    if (hasMLBackground) {
+      newResult.execution.executionRiskScore = Math.min(100, newResult.execution.executionRiskScore + 10);
+      calibrationNotes.push("Execution: plus points for strong technical/ML background.");
     }
   }
 
