@@ -200,11 +200,19 @@ export default function Aurora(props: AuroraProps) {
         });
       };
 
+      const RENDER_SCALE = 0.5; // Reduce internal resolution by 50% for performance
+
       const resize = () => {
         const width = ctn.offsetWidth;
         const height = ctn.offsetHeight;
-        renderer.setSize(width, height);
-        program.uniforms.uResolution.value = [width, height];
+        // Render at lower resolution and let CSS upscale it
+        renderer.setSize(width * RENDER_SCALE, height * RENDER_SCALE);
+        // Force style to stretch back to full size
+        if (renderer.gl.canvas instanceof HTMLCanvasElement) {
+          renderer.gl.canvas.style.width = '100%';
+          renderer.gl.canvas.style.height = '100%';
+        }
+        program.uniforms.uResolution.value = [width * RENDER_SCALE, height * RENDER_SCALE];
       };
 
       window.addEventListener('resize', resize);

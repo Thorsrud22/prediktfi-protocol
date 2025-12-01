@@ -20,6 +20,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         attachments: '',
         responseStyle: undefined,
         focusHints: [],
+        mvpScope: '',
+        goToMarketPlan: '',
+        launchLiquidityPlan: '',
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -163,7 +166,46 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                 />
                 {errors.successDefinition && <p className="text-red-400 text-sm mt-1">{errors.successDefinition}</p>}
+                {errors.successDefinition && <p className="text-red-400 text-sm mt-1">{errors.successDefinition}</p>}
             </div>
+
+            {/* MVP Scope */}
+            <div>
+                <label className="block text-blue-200 mb-2 font-medium">MVP Scope (6-12 months)</label>
+                <textarea
+                    value={formData.mvpScope}
+                    onChange={(e) => handleChange('mvpScope', e.target.value)}
+                    placeholder="What is the realistic MVP you can ship in 6–12 months?"
+                    className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+                    rows={3}
+                />
+            </div>
+
+            {/* Go-to-Market Plan */}
+            <div>
+                <label className="block text-blue-200 mb-2 font-medium">Go-to-Market / First Users</label>
+                <textarea
+                    value={formData.goToMarketPlan}
+                    onChange={(e) => handleChange('goToMarketPlan', e.target.value)}
+                    placeholder="Who are your first users and how will you reach them? (e.g., CT traders on Solana, Discord communities...)"
+                    className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+                    rows={3}
+                />
+            </div>
+
+            {/* Launch & Liquidity Plan (Conditional) */}
+            {(formData.projectType === 'memecoin' || formData.projectType === 'defi') && (
+                <div>
+                    <label className="block text-blue-200 mb-2 font-medium">Launch & Liquidity Plan</label>
+                    <textarea
+                        value={formData.launchLiquidityPlan}
+                        onChange={(e) => handleChange('launchLiquidityPlan', e.target.value)}
+                        placeholder="Liquidity, LP, and token safety plan (e.g., LP lock, treasury, anti-rug measures...)"
+                        className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+                        rows={3}
+                    />
+                </div>
+            )}
 
             {/* Attachments */}
             <div>

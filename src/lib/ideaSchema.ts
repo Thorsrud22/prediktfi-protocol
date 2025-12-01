@@ -15,6 +15,9 @@ export const ideaSubmissionSchema = z.object({
         errorMap: () => ({ message: 'Please select a response style' }),
     }),
     focusHints: z.array(z.string()).optional(),
+    mvpScope: z.string().optional(),
+    goToMarketPlan: z.string().optional(),
+    launchLiquidityPlan: z.string().optional(),
 });
 
 export type IdeaSubmission = z.infer<typeof ideaSubmissionSchema>;

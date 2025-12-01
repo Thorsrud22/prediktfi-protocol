@@ -650,6 +650,71 @@ describe('calibrateScore', () => {
         expect(calibrated.overallScore).toBe(65);
         expect(calibrated.calibrationNotes).toContain("Overall: plus points for exceptional launch readiness.");
     });
+
+
+    it('boosts memecoin score when launchLiquidityPlan is provided in submission', () => {
+        const weakMeme = {
+            ...baseResult,
+            overallScore: 60,
+            launchReadinessScore: 50,
+            launchReadinessSignals: [] // Empty signals
+        };
+
+        const submission = {
+            description: "Meme project",
+            projectType: "memecoin" as const,
+            teamSize: "solo" as const,
+            resources: ["time"],
+            successDefinition: "Moon",
+            responseStyle: "short" as const,
+            launchLiquidityPlan: "Locked LP for 100 years, anti-rug measures in place.",
+            goToMarketPlan: "Viral marketing campaign on Twitter and Telegram."
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: weakMeme,
+            projectType: 'memecoin',
+            ideaSubmission: submission
+        });
+
+        // Should get boost from submission field even if signals are empty
+        // 50 + 10 = 60
+        expect(calibrated.launchReadinessScore).toBe(60);
+        expect(calibrated.calibrationNotes).toContain("Launch: plus points for clear LP and community plan.");
+    });
+
+    it('boosts AI score when mvpScope is provided in submission', () => {
+        const weakAI = {
+            ...baseResult,
+            overallScore: 70,
+            launchReadinessScore: 50,
+            launchReadinessSignals: [] // Empty signals
+        };
+
+        const submission = {
+            description: "AI project",
+            projectType: "ai" as const,
+            teamSize: "team_2_5" as const,
+            resources: ["skills"],
+            successDefinition: "Users",
+            responseStyle: "full" as const,
+            mvpScope: "Working prototype with real data pipeline",
+            goToMarketPlan: "Launch on Product Hunt"
+        };
+
+        const calibrated = calibrateScore({
+            rawResult: weakAI,
+            projectType: 'ai',
+            ideaSubmission: submission
+        });
+
+        // Should get boost from submission field
+        // 50 + 10 = 60
+        expect(calibrated.launchReadinessScore).toBe(60);
+        expect(calibrated.calibrationNotes).toContain("Launch: plus points for realistic MVP scope and data plan.");
+    });
+
+
 });
 
 import { buildIdeaContextSummary } from '../../src/lib/ai/evaluator';
@@ -671,8 +736,11 @@ describe('buildIdeaContextSummary', () => {
         expect(summary).toContain("Project Type: defi");
         expect(summary).toContain("Team Size: team_2_5");
         expect(summary).toContain("Resources: developer, designer");
-        expect(summary).toContain("Success Goal (6-12m): Launch on mainnet.");
+        expect(summary).toContain("Success Definition: \"Launch on mainnet.\"");
         expect(summary).toContain("Response Style: full");
+        expect(summary).toContain("MVP Scope (6-12m): \"Not provided\"");
+        expect(summary).toContain("Go-to-Market Plan: \"Not provided\"");
+        expect(summary).toContain("Launch & Liquidity Plan: \"Not provided\"");
     });
 
     it('includes focus hints when present', () => {
@@ -681,9 +749,9 @@ describe('buildIdeaContextSummary', () => {
         expect(summary).toContain("Focus Hints: Scalability, Security");
     });
 
-    it('omits focus hints when empty', () => {
+    it('includes "None" for focus hints when empty', () => {
         const ideaNoHints = { ...baseIdea, focusHints: [] };
         const summary = buildIdeaContextSummary(ideaNoHints);
-        expect(summary).not.toContain("Focus Hints:");
+        expect(summary).toContain("Focus Hints: None");
     });
 });

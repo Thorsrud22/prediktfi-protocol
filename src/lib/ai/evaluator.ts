@@ -59,13 +59,13 @@ export function buildIdeaContextSummary(idea: IdeaSubmission): string {
     `Project Type: ${idea.projectType}`,
     `Team Size: ${idea.teamSize}`,
     `Resources: ${idea.resources.join(', ')}`,
-    `Success Goal (6-12m): ${idea.successDefinition}`,
-    `Response Style: ${idea.responseStyle}`
+    `Success Definition: "${idea.successDefinition}"`,
+    `MVP Scope (6-12m): "${idea.mvpScope || 'Not provided'}"`,
+    `Go-to-Market Plan: "${idea.goToMarketPlan || 'Not provided'}"`,
+    `Launch & Liquidity Plan: "${idea.launchLiquidityPlan || 'Not provided'}"`,
+    `Response Style: ${idea.responseStyle}`,
+    `Focus Hints: ${idea.focusHints?.join(', ') || 'None'}`
   ];
-
-  if (idea.focusHints && idea.focusHints.length > 0) {
-    parts.push(`Focus Hints: ${idea.focusHints.join(', ')}`);
-  }
 
   return parts.join('\n');
 }
@@ -230,9 +230,10 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
 }
 
 export interface ScoreCalibrationContext {
+  rawResult: IdeaEvaluationResult;
   projectType: string;
   market?: MarketSnapshot;
-  rawResult: IdeaEvaluationResult;
+  ideaSubmission?: IdeaSubmission;
 }
 
 /**
@@ -243,12 +244,9 @@ export interface ScoreCalibrationContext {
  * @returns The adjusted evaluation result
  */
 export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluationResult {
-  const { rawResult, projectType } = context;
-  const newResult = {
-    ...rawResult,
-    execution: { ...rawResult.execution } // Deep copy execution to avoid mutation
-  };
-  const calibrationNotes: string[] = [];
+  const { rawResult, projectType, ideaSubmission } = context;
+  const newResult = JSON.parse(JSON.stringify(rawResult)) as IdeaEvaluationResult;
+  const calibrationNotes: string[] = newResult.calibrationNotes || [];
 
   // Rule 1: Cap hype / meme ideas
   // If it looks like a meme coin or pure hype, cap the score at 40.
@@ -463,8 +461,8 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
 
     // Memecoin Launch Rules
     if (projectType === 'memecoin') {
-      const hasLiquidityPlan = launchSignals.includes("liquidity") || launchSignals.includes("lp") || launchSignals.includes("treasury");
-      const hasCommunityPlan = launchSignals.includes("community") || launchSignals.includes("content") || launchSignals.includes("viral");
+      const hasLiquidityPlan = launchSignals.includes("liquidity") || launchSignals.includes("lp") || launchSignals.includes("treasury") || (ideaSubmission?.launchLiquidityPlan && ideaSubmission.launchLiquidityPlan.length > 10);
+      const hasCommunityPlan = launchSignals.includes("community") || launchSignals.includes("content") || launchSignals.includes("viral") || (ideaSubmission?.goToMarketPlan && ideaSubmission.goToMarketPlan.length > 10);
 
       if (!hasLiquidityPlan) {
         newResult.launchReadinessScore = Math.max(0, newResult.launchReadinessScore! - 20);
@@ -497,8 +495,8 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
 
     // AI/Other Launch Rules
     if (projectType === 'ai' || projectType === 'other') {
-      const hasMVP = launchSignals.includes("mvp") || launchSignals.includes("prototype") || launchSignals.includes("demo");
-      const hasData = launchSignals.includes("data") || launchSignals.includes("dataset") || launchSignals.includes("infra");
+      const hasMVP = launchSignals.includes("mvp") || launchSignals.includes("prototype") || launchSignals.includes("demo") || (ideaSubmission?.mvpScope && ideaSubmission.mvpScope.length > 10);
+      const hasData = launchSignals.includes("data") || launchSignals.includes("dataset") || launchSignals.includes("infra") || (ideaSubmission?.mvpScope && ideaSubmission.mvpScope.toLowerCase().includes("data"));
       const isVague = launchSignals.includes("vague") || launchSignals.includes("unclear");
 
       if (isVague || (!hasMVP && !hasData)) {
