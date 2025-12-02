@@ -738,9 +738,9 @@ describe('buildIdeaContextSummary', () => {
         expect(summary).toContain("Resources: developer, designer");
         expect(summary).toContain("Success Definition: \"Launch on mainnet.\"");
         expect(summary).toContain("Response Style: full");
-        expect(summary).toContain("MVP Scope (6-12m): \"Not provided\"");
-        expect(summary).toContain("Go-to-Market Plan: \"Not provided\"");
-        expect(summary).toContain("Launch & Liquidity Plan: \"Not provided\"");
+        expect(summary).toContain("MVP Scope (6-12m): \"Not provided - assume vague/undefined\"");
+        expect(summary).toContain("Go-to-Market / First Users: \"Not provided - assume no distribution plan\"");
+        expect(summary).toContain("Launch & Liquidity Plan: \"Not provided - assume high rug risk / no liquidity plan\"");
     });
 
     it('includes focus hints when present', () => {
