@@ -1,7 +1,7 @@
 'use client';
 
 import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import './Aurora.css';
 
 const VERT = `#version 300 es

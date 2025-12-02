@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSimplifiedWallet } from '@/app/components/wallet/SimplifiedWalletProvider';
 import { usePerformanceTracking, trackPageLoad } from '@/app/utils/performance';
 import PerformanceMonitor from '../components/PerformanceMonitor';
+import Aurora from '../components/ui/Aurora';
 import IdeaSubmissionForm from './IdeaSubmissionForm';
 import IdeaEvaluationReport from './IdeaEvaluationReport';
 import { IdeaSubmission } from '@/lib/ideaSchema';
@@ -98,7 +99,19 @@ export default function StudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-white selection:bg-blue-500/30">
+    <div className="relative min-h-screen text-white selection:bg-blue-500/30">
+      {/* Aurora Background */}
+      <Aurora
+        colorStops={['#0ea5e9', '#3b82f6', '#8b5cf6']} // Blue to purple gradient
+        amplitude={1.2}
+        blend={0.6}
+        speed={0.8}
+        className="fixed inset-0 -z-10"
+      />
+
+      {/* Gradient overlay for better text readability */}
+      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-900 -z-[9]" />
+
       <PerformanceMonitor />
 
 
@@ -187,7 +200,7 @@ export default function StudioPage() {
                   (currentStep === 'commit');
 
                 return (
-                  <div key={step.id} className="flex flex-col items-center gap-3 bg-[#0B0F19] px-4">
+                  <div key={step.id} className="flex flex-col items-center gap-3 px-4">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${isActive ? 'bg-blue-500 text-white scale-110 shadow-lg shadow-blue-500/30' :
                       isCompleted ? 'bg-green-500 text-white' :
                         'bg-white/10 text-white/40 border border-white/10'

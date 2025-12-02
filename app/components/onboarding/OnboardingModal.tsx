@@ -34,7 +34,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
       content: (
         <div className="space-y-4">
           <p className="text-lg text-blue-100">
-            Input your project's core constraints—<strong className="text-white">team size, budget, target sector</strong> (DeFi, Infra, Gaming), and technical resources.
+            Input your project's core constraints—<strong className="text-white">team size, budget, target sector</strong> (AI, DeFi, Memecoin), and technical resources.
           </p>
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
             <p className="text-blue-200 text-sm">

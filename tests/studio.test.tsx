@@ -26,6 +26,13 @@ vi.mock('../app/components/PerformanceMonitor', () => ({
     },
 }));
 
+// Mock Aurora component
+vi.mock('../app/components/ui/Aurora', () => ({
+    default: function MockAurora() {
+        return <div data-testid="aurora-background" />;
+    },
+}));
+
 // Mock fetch for API calls
 global.fetch = vi.fn();
 
