@@ -161,6 +161,12 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
     "recommendedPivots": ["<pivot1>", "<pivot2>"],
     "niceToHaveLater": ["<item1>", "<item2>"]
   },
+  "cryptoNativeChecks": {
+    "rugPullRisk": "low" | "medium" | "high",
+    "auditStatus": "audited" | "planned" | "none" | "not_applicable",
+    "liquidityStatus": "locked" | "burned" | "unclear" | "not_applicable",
+    "isAnonTeam": <boolean>
+  },
   "launchReadinessScore": <number 0-100>,
   "launchReadinessLabel": "low" | "medium" | "high",
   "launchReadinessSignals": ["<signal1>", "<signal2>"]

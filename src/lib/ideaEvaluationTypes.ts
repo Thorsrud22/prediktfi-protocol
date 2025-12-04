@@ -43,6 +43,13 @@ export type IdeaEvaluationResult = {
     niceToHaveLater: string[];
   };
 
+  cryptoNativeChecks: {
+    rugPullRisk: 'low' | 'medium' | 'high';
+    auditStatus: 'audited' | 'planned' | 'none' | 'not_applicable';
+    liquidityStatus: 'locked' | 'burned' | 'unclear' | 'not_applicable';
+    isAnonTeam: boolean;
+  };
+
   calibrationNotes?: string[];
 
   launchReadinessScore?: number;

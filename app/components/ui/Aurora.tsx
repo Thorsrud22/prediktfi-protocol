@@ -12,7 +12,7 @@ void main() {
 `;
 
 const FRAG = `#version 300 es
-precision highp float;
+precision mediump float;
 
 uniform float uTime;
 uniform float uAmplitude;
@@ -122,7 +122,7 @@ interface AuroraProps {
   variant?: AuroraVariant;
 }
 
-export default function Aurora(props: AuroraProps) {
+export function Aurora(props: AuroraProps) {
   const {
     amplitude = 1.0,
     blend = 0.5,
@@ -154,13 +154,17 @@ export default function Aurora(props: AuroraProps) {
       const renderer = new Renderer({
         alpha: true,
         premultipliedAlpha: true,
-        antialias: true,
+        antialias: false, // Disable AA for performance
+        powerPreference: 'high-performance', // Hint to use discrete GPU
+        depth: false, // Explicitly disable depth buffer
         dpr: 1, // Force low resolution for performance
       });
       const gl = renderer.gl;
       gl.clearColor(0, 0, 0, 0);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.disable(gl.DEPTH_TEST); // Disable depth testing
+      gl.disable(gl.CULL_FACE);  // Disable face culling
       gl.canvas.style.backgroundColor = 'transparent';
 
       const geometry = new Triangle(gl);
@@ -200,7 +204,7 @@ export default function Aurora(props: AuroraProps) {
         });
       };
 
-      const RENDER_SCALE = 0.5; // Reduce internal resolution by 50% for performance
+      const RENDER_SCALE = 0.125; // Reduce internal resolution to 12.5% for extreme performance
 
       const resize = () => {
         const width = ctn.offsetWidth;
@@ -219,7 +223,7 @@ export default function Aurora(props: AuroraProps) {
       resize();
 
       // FPS Limiting Logic
-      const targetFPS = 30;
+      const targetFPS = 60;
       const frameInterval = 1000 / targetFPS;
       let lastFrameTime = 0;
       let isVisible = true;
@@ -288,3 +292,6 @@ export default function Aurora(props: AuroraProps) {
 
   return <div ref={ctnDom} className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''}`} />;
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export default React.memo(Aurora);

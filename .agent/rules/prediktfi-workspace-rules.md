@@ -2,6 +2,12 @@
 trigger: always_on
 ---
 
+## Language
+
+- Always respond in English, even if the user writes in Norwegian.
+- Use clear, direct, professional language.
+
+
 PrediktFi workspace rules (prediktfi-protocol-1)
 
 1. Main branch for work is ag-new-concept.

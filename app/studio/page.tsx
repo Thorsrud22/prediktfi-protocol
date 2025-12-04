@@ -173,7 +173,7 @@ export default function StudioPage() {
                   desc: 'Receive actionable suggestions to improve your product-market fit and tokenomics.'
                 }
               ].map((feature, i) => (
-                <div key={i} className="group p-8 rounded-3xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] hover:border-white/10 transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm">
+                <div key={i} className="group p-8 rounded-3xl bg-slate-900/80 border border-white/[0.05] hover:bg-slate-800 hover:border-white/10 transition-all duration-300 hover:-translate-y-1">
                   <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
                     {feature.icon}
                   </div>

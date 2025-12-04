@@ -25,7 +25,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Section */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-8 text-center relative overflow-hidden">
+            <div className="bg-slate-900/95 rounded-xl border border-white/20 p-8 text-center relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
 
                 <h2 className="text-3xl font-bold text-white mb-2">{result.summary.title}</h2>
@@ -96,7 +96,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-300">Risk Level:</span>
                         <span className={`text-sm font-bold uppercase ${result.execution.executionRiskLabel === 'high' ? 'text-red-400' :
-                                result.execution.executionRiskLabel === 'medium' ? 'text-yellow-400' : 'text-green-400'
+                            result.execution.executionRiskLabel === 'medium' ? 'text-yellow-400' : 'text-green-400'
                             }`}>
                             {result.execution.executionRiskLabel}
                         </span>
@@ -108,6 +108,50 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     </ul>
                 </div>
             </div>
+
+            {/* Crypto-Native Health Check */}
+            {result.cryptoNativeChecks && (
+                <div className="bg-slate-900/50 rounded-xl border border-blue-500/30 p-6">
+                    <h3 className="text-xl font-bold text-blue-300 mb-4 flex items-center uppercase tracking-wider">
+                        <span className="mr-2">🛡️</span> Crypto-Native Health Check
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Rug Risk */}
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 uppercase mb-1">Rug Risk</span>
+                            <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
+                                result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' :
+                                    'bg-red-500/10 border-red-500/30 text-red-400'
+                                }`}>
+                                <span className="font-bold uppercase">{result.cryptoNativeChecks.rugPullRisk}</span>
+                                {result.cryptoNativeChecks.rugPullRisk === 'high' && <span>⚠️</span>}
+                            </div>
+                        </div>
+
+                        {/* Audit Status */}
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 uppercase mb-1">Audit Status</span>
+                            <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
+                                result.cryptoNativeChecks.auditStatus === 'planned' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
+                                    'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                                }`}>
+                                <span className="font-bold uppercase">{result.cryptoNativeChecks.auditStatus.replace('_', ' ')}</span>
+                            </div>
+                        </div>
+
+                        {/* Liquidity Status */}
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 uppercase mb-1">Liquidity</span>
+                            <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
+                                result.cryptoNativeChecks.liquidityStatus === 'unclear' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                                    'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                                }`}>
+                                <span className="font-bold uppercase">{result.cryptoNativeChecks.liquidityStatus}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Detailed Analysis Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

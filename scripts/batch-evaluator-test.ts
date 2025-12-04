@@ -1,0 +1,149 @@
+
+import { evaluateIdea } from '../src/lib/ai/evaluator';
+import { IdeaSubmission } from '../src/lib/ideaSchema';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Define synthetic ideas
+const ideas: { name: string; submission: IdeaSubmission; expected: any }[] = [
+    {
+        name: "Bad Memecoin (Rug Risk)",
+        submission: {
+            projectType: 'memecoin',
+            description: 'A token for dog lovers with 1000x potential.',
+            teamSize: 'solo',
+            resources: ['time'],
+            successDefinition: '1M mcap',
+            responseStyle: 'short',
+            mvpScope: '',
+            goToMarketPlan: '',
+            launchLiquidityPlan: '', // Empty plan = High Risk
+            focusHints: []
+        },
+        expected: {
+            rugPullRisk: 'high',
+            launchReadinessLabel: 'low'
+        }
+    },
+    {
+        name: "Strong Memecoin",
+        submission: {
+            projectType: 'memecoin',
+            description: 'Community-first memecoin on Solana.',
+            teamSize: 'team_2_5',
+            resources: ['developer', 'marketer', 'budget_1k_5k'],
+            successDefinition: 'Sustainable community and 10k holders.',
+            responseStyle: 'short',
+            mvpScope: 'Token launch + Staking dApp',
+            goToMarketPlan: 'Partnerships with 3 alpha groups, viral Twitter campaign.',
+            launchLiquidityPlan: '100% LP burned, Mint Authority revoked, 5% marketing wallet (multisig).',
+            focusHints: []
+        },
+        expected: {
+            rugPullRisk: ['low', 'medium'], // Allow medium as LLM might be conservative
+            launchReadinessLabel: ['high', 'medium']
+        }
+    },
+    {
+        name: "Risky DeFi (No Audit)",
+        submission: {
+            projectType: 'defi',
+            description: 'High yield farming protocol with leverage.',
+            teamSize: 'team_2_5',
+            resources: ['developer'],
+            successDefinition: '100M TVL',
+            responseStyle: 'short',
+            mvpScope: 'Complex vault system',
+            goToMarketPlan: 'Twitter shill',
+            launchLiquidityPlan: 'User deposits',
+            focusHints: []
+        },
+        expected: {
+            auditStatus: 'none',
+            rugPullRisk: ['medium', 'high']
+        }
+    },
+    {
+        name: "Solid DeFi (Audited)",
+        submission: {
+            projectType: 'defi',
+            description: 'Lending protocol fork with safety modules.',
+            teamSize: 'team_6_plus',
+            resources: ['developer', 'audit_budget'],
+            successDefinition: 'Safe steady growth',
+            responseStyle: 'short',
+            mvpScope: 'Fork of Aave v3 with isolated pools',
+            goToMarketPlan: 'Incentivized testnet, partnership with major DEX.',
+            launchLiquidityPlan: 'Audit by Halborn scheduled. Multisig treasury.',
+            focusHints: []
+        },
+        expected: {
+            auditStatus: ['planned', 'audited'],
+            rugPullRisk: ['low', 'medium']
+        }
+    },
+    {
+        name: "AI Tool (Clear MVP)",
+        submission: {
+            projectType: 'ai',
+            description: 'AI agent for on-chain trading analysis.',
+            teamSize: 'team_2_5',
+            resources: ['developer', 'data_scientist'],
+            successDefinition: '1000 daily active users',
+            responseStyle: 'short',
+            mvpScope: 'MVP: Telegram bot that analyzes wallet PnL.',
+            goToMarketPlan: 'Launch on Product Hunt, Twitter threads.',
+            launchLiquidityPlan: 'Self-funded, no token initially.',
+            focusHints: []
+        },
+        expected: {
+            launchReadinessLabel: ['medium', 'high']
+        }
+    }
+];
+
+async function runBatchTest() {
+    console.log("🚀 Running Batch Evaluator Test...\n");
+
+    const results = [];
+
+    for (const idea of ideas) {
+        console.log(`Evaluating: ${idea.name}...`);
+        try {
+            const result = await evaluateIdea(idea.submission);
+
+            // Helper to check if value matches expectation (string or array of strings)
+            const check = (actual: any, expected: any) => {
+                if (!expected) return true;
+                if (Array.isArray(expected)) return expected.includes(actual);
+                return actual === expected;
+            };
+
+            const passRug = check(result.cryptoNativeChecks?.rugPullRisk, idea.expected.rugPullRisk);
+            const passAudit = check(result.cryptoNativeChecks?.auditStatus, idea.expected.auditStatus);
+            const passLaunch = check(result.launchReadinessLabel, idea.expected.launchReadinessLabel);
+
+            const passed = passRug && passAudit && passLaunch;
+
+            results.push({
+                name: idea.name,
+                score: result.overallScore,
+                rugRisk: result.cryptoNativeChecks?.rugPullRisk,
+                audit: result.cryptoNativeChecks?.auditStatus,
+                liquidity: result.cryptoNativeChecks?.liquidityStatus,
+                launchLabel: result.launchReadinessLabel,
+                passed: passed ? '✅ PASS' : '❌ FAIL',
+                details: passed ? '' : `Expected: ${JSON.stringify(idea.expected)}`
+            });
+
+        } catch (error) {
+            console.error(`Error evaluating ${idea.name}:`, error);
+            results.push({ name: idea.name, error: true, passed: '❌ ERROR' });
+        }
+    }
+
+    console.table(results);
+}
+
+runBatchTest();

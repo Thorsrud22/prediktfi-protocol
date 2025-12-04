@@ -45,6 +45,12 @@ vi.mock('../../src/lib/ai/evaluator', async (importOriginal) => {
                 mustFixBeforeBuild: ["Fix 1"],
                 recommendedPivots: ["Pivot 1"],
                 niceToHaveLater: ["Nice to have 1"]
+            },
+            cryptoNativeChecks: {
+                rugPullRisk: "low",
+                auditStatus: "planned",
+                liquidityStatus: "locked",
+                isAnonTeam: false
             }
         })
     };
@@ -141,6 +147,12 @@ describe('calibrateScore', () => {
             mustFixBeforeBuild: [],
             recommendedPivots: [],
             niceToHaveLater: []
+        },
+        cryptoNativeChecks: {
+            rugPullRisk: "low",
+            auditStatus: "none",
+            liquidityStatus: "unclear",
+            isAnonTeam: false
         },
         launchReadinessScore: 50,
         launchReadinessLabel: "medium",
