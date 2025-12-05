@@ -43,7 +43,7 @@ export type IdeaEvaluationResult = {
     niceToHaveLater: string[];
   };
 
-  cryptoNativeChecks: {
+  cryptoNativeChecks?: {
     rugPullRisk: 'low' | 'medium' | 'high';
     auditStatus: 'audited' | 'planned' | 'none' | 'not_applicable';
     liquidityStatus: 'locked' | 'burned' | 'unclear' | 'not_applicable';

@@ -56,7 +56,9 @@ CRITICAL:
 - Frame risks as "Investor Worries" (Deal Killers).
 - Frame market fit as "The Alpha" (Competitive Edge).
 
-You must explicitly assess "Crypto-Native Checks" in your output (keyRisks, launchReadinessSignals, executionSignals):
+You must explicitly assess "Crypto-Native Checks" in your output (keyRisks, launchReadinessSignals, executionSignals).
+Note: Only include the 'cryptoNativeChecks' JSON block if the project involves a token, DeFi, or explicitly mentions on-chain components.
+
 1. RUG RISK (Crucial for Memecoins/DeFi):
    - Look for LP lock plans, ownership renouncement, dev wallet transparency, and mint authority.
    - If NO LP/ownership plan is mentioned for a token project, flag this as "High Rug Risk" or "Unclear Ownership".
@@ -254,7 +256,8 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
     result = calibrateScore({
       projectType: input.projectType,
       market: options?.market,
-      rawResult: result
+      rawResult: result,
+      ideaSubmission: input
     });
 
     return result;
@@ -511,6 +514,35 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
         newResult.launchReadinessScore = Math.min(100, newResult.launchReadinessScore! + 10);
         calibrationNotes.push("Launch: plus points for clear LP and community plan.");
       }
+
+      // Mission 14A: Tune Memecoin Launch Risk
+      // Check for 'Standard Degen' setup (Self-buy + Lock) vs 'High Risk'
+      if (ideaSubmission?.launchLiquidityPlan) {
+        const plan = ideaSubmission.launchLiquidityPlan.toLowerCase();
+
+        // Anti-rug keywords
+        const hasLock = plan.includes("lock") || plan.includes("vesting");
+        const hasSelfBuy = plan.includes("self-buy") || plan.includes("my own money") || plan.includes("own capital") || plan.includes("self fund") || plan.includes("buy 500") || plan.includes("buy 1000") || plan.includes("buy $");
+        const hasAntiRug = plan.includes("renounce") || plan.includes("burn") || plan.includes("audit") || plan.includes("no stealth") || plan.includes("revoked");
+
+        // Logic 1: Standard Degen (Self-buy + Lock) -> Medium Risk
+        // If the LLM flagged it as High, but they have the standard degen setup, downgrade to Medium.
+        if (newResult.cryptoNativeChecks?.rugPullRisk === 'high' && hasSelfBuy && hasLock) {
+          newResult.cryptoNativeChecks.rugPullRisk = 'medium';
+          calibrationNotes.push("Rug Risk: downgraded to Medium due to standard degen setup (self-buy + lock). Fragile but not instant rug.");
+        }
+
+        // Logic 2: Strong Anti-Rug -> Low Risk
+        // If they have explicit anti-rug measures, push towards Low
+        if (hasAntiRug && hasLock) {
+          // Only upgrade if currently High or Medium
+          if (newResult.cryptoNativeChecks?.rugPullRisk && newResult.cryptoNativeChecks.rugPullRisk !== 'low') {
+            newResult.cryptoNativeChecks.rugPullRisk = 'low';
+            newResult.launchReadinessScore = Math.min(100, newResult.launchReadinessScore! + 5);
+            calibrationNotes.push("Rug Risk: upgraded to Low due to strong anti-rug measures (renounced/burned/locked).");
+          }
+        }
+      }
     }
 
     // DeFi Launch Rules
@@ -567,5 +599,23 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
   }
 
   newResult.calibrationNotes = calibrationNotes;
+
+  // Mission 14B: Show Crypto-Native Health only when it makes sense
+  const isCryptoProject = projectType === 'memecoin' || projectType === 'defi';
+  const hasToken = newResult.tokenomics.tokenNeeded;
+  // If user explicitly talks about LP or launch in the plan
+  // Refined: Ensure it's not a "no token" statement
+  const rawPlan = (ideaSubmission?.launchLiquidityPlan || "").toLowerCase();
+  const hasLiquidityPlan = rawPlan.length > 5 &&
+    !rawPlan.includes("no token") &&
+    !rawPlan.includes("self-funded") &&
+    !rawPlan.includes("none") &&
+    !rawPlan.includes("n/a");
+
+  // If none of these are true, remove the crypto block
+  if (!isCryptoProject && !hasToken && !hasLiquidityPlan) {
+    delete newResult.cryptoNativeChecks;
+  }
+
   return newResult;
 }

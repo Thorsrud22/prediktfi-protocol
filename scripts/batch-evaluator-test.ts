@@ -27,6 +27,25 @@ const ideas: { name: string; submission: IdeaSubmission; expected: any }[] = [
         }
     },
     {
+        name: "Degen Memecoin (Medium Risk)",
+        submission: {
+            projectType: 'memecoin',
+            description: 'Standard degen launch with self-buy.',
+            teamSize: 'solo',
+            resources: ['time', 'budget_500'],
+            successDefinition: 'Graduating via bonding curve',
+            responseStyle: 'short',
+            mvpScope: 'Meme art generated',
+            goToMarketPlan: 'Twitter spam',
+            launchLiquidityPlan: 'I will buy 500 usd of my own coin and lock slightly for 1 month.',
+            focusHints: []
+        },
+        expected: {
+            rugPullRisk: 'medium',
+            launchReadinessLabel: ['low', 'medium'] // Could be low if other signals are weak, but Rug Risk is key
+        }
+    },
+    {
         name: "Strong Memecoin",
         submission: {
             projectType: 'memecoin',
@@ -98,7 +117,8 @@ const ideas: { name: string; submission: IdeaSubmission; expected: any }[] = [
             focusHints: []
         },
         expected: {
-            launchReadinessLabel: ['medium', 'high']
+            launchReadinessLabel: ['medium', 'high'],
+            shouldHaveCryptoChecks: false
         }
     }
 ];
@@ -135,11 +155,20 @@ async function runBatchTest() {
             const passAudit = check(result.cryptoNativeChecks?.auditStatus, idea.expected.auditStatus);
             const passLaunch = check(result.launchReadinessLabel, idea.expected.launchReadinessLabel);
 
-            const passed = passRug && passAudit && passLaunch;
+            let passCryptoCheck = true;
+            if (idea.expected.shouldHaveCryptoChecks === false) {
+                if (result.cryptoNativeChecks) {
+                    passCryptoCheck = false;
+                    console.log("    FAILED: Expected NO crypto checks, but they were present.");
+                }
+            }
+
+            const passed = passRug && passAudit && passLaunch && passCryptoCheck;
 
             results.push({
                 name: idea.name,
                 score: result.overallScore,
+                crypto: result.cryptoNativeChecks ? '✅ YES' : '❌ NO',
                 rugRisk: result.cryptoNativeChecks?.rugPullRisk,
                 audit: result.cryptoNativeChecks?.auditStatus,
                 liquidity: result.cryptoNativeChecks?.liquidityStatus,
