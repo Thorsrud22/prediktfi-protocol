@@ -120,6 +120,17 @@ async function runBatchTest() {
                 return actual === expected;
             };
 
+            // Flexible assertion for crypto-native checks (Arrays allow for LLM variability)
+            // Also check for new Tone keywords in Verdict/Risks
+            const verdict = result.summary.mainVerdict.toLowerCase();
+            const risks = result.technical.keyRisks.join(" ").toLowerCase();
+
+            console.log(`\n    Tone Check (${idea.submission.projectType}):`);
+            if (idea.submission.projectType === 'ai' || idea.submission.projectType === 'defi') {
+                console.log(`    - Has VC Terms (moat/audit/proprietary): ${verdict.includes('moat') || verdict.includes('audit') || verdict.includes('proprietary') || risks.includes('audit') || risks.includes('moat')}`);
+            } else if (idea.submission.projectType === 'memecoin') {
+                console.log(`    - Has Crypto Terms (rug/liquidity/alpha): ${verdict.includes('rug') || verdict.includes('liquidity') || verdict.includes('alpha') || risks.includes('rug')}`);
+            }
             const passRug = check(result.cryptoNativeChecks?.rugPullRisk, idea.expected.rugPullRisk);
             const passAudit = check(result.cryptoNativeChecks?.auditStatus, idea.expected.auditStatus);
             const passLaunch = check(result.launchReadinessLabel, idea.expected.launchReadinessLabel);

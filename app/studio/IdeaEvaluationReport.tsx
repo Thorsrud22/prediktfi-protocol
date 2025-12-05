@@ -36,7 +36,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         <div className={`text-5xl font-bold mb-1 ${getScoreColor(result.overallScore)}`}>
                             {result.overallScore}
                         </div>
-                        <div className="text-sm text-blue-300 uppercase tracking-wider font-semibold">Overall Score</div>
+                        <div className="text-sm text-blue-300 uppercase tracking-wider font-semibold">Investment Verdict</div>
                     </div>
                 </div>
 
@@ -63,10 +63,12 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
             </div>
 
             {/* Dimension Scores */}
+
+            {/* Dimension Scores */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-xl border ${getScoreBg(result.technical.feasibilityScore)} bg-opacity-10`}>
                     <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-white">Technical Feasibility</span>
+                        <span className="font-semibold text-white">Tech & Moat</span>
                         <span className={`font-bold ${getScoreColor(result.technical.feasibilityScore)}`}>{result.technical.feasibilityScore}</span>
                     </div>
                     <p className="text-sm text-gray-300">{result.technical.comments}</p>
@@ -82,7 +84,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
                 <div className={`p-4 rounded-xl border ${getScoreBg(result.market.marketFitScore)} bg-opacity-10`}>
                     <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-white">Market Fit</span>
+                        <span className="font-semibold text-white">Market & Competitive Edge</span>
                         <span className={`font-bold ${getScoreColor(result.market.marketFitScore)}`}>{result.market.marketFitScore}</span>
                     </div>
                     <p className="text-sm text-gray-300">Complexity: {result.execution.complexityLevel}</p>
@@ -90,7 +92,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
                 <div className={`p-4 rounded-xl border ${getScoreBg(result.execution.executionRiskScore)} bg-opacity-10`}>
                     <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-white">Execution & Team</span>
+                        <span className="font-semibold text-white">Team & Delivery</span>
                         <span className={`font-bold ${getScoreColor(result.execution.executionRiskScore)}`}>{result.execution.executionRiskScore}</span>
                     </div>
                     <div className="flex items-center justify-between mb-2">
@@ -110,55 +112,57 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
             </div>
 
             {/* Crypto-Native Health Check */}
-            {result.cryptoNativeChecks && (
-                <div className="bg-slate-900/50 rounded-xl border border-blue-500/30 p-6">
-                    <h3 className="text-xl font-bold text-blue-300 mb-4 flex items-center uppercase tracking-wider">
-                        <span className="mr-2">🛡️</span> Crypto-Native Health Check
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Rug Risk */}
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 uppercase mb-1">Rug Risk</span>
-                            <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
-                                result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' :
-                                    'bg-red-500/10 border-red-500/30 text-red-400'
-                                }`}>
-                                <span className="font-bold uppercase">{result.cryptoNativeChecks.rugPullRisk}</span>
-                                {result.cryptoNativeChecks.rugPullRisk === 'high' && <span>⚠️</span>}
+            {
+                result.cryptoNativeChecks && (
+                    <div className="bg-slate-900/50 rounded-xl border border-blue-500/30 p-6">
+                        <h3 className="text-xl font-bold text-blue-300 mb-4 flex items-center uppercase tracking-wider">
+                            <span className="mr-2">🛡️</span> Crypto-Native Health Check
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Rug Risk */}
+                            <div className="flex flex-col">
+                                <span className="text-xs text-gray-400 uppercase mb-1">Rug Risk</span>
+                                <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
+                                    result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' :
+                                        'bg-red-500/10 border-red-500/30 text-red-400'
+                                    }`}>
+                                    <span className="font-bold uppercase">{result.cryptoNativeChecks.rugPullRisk}</span>
+                                    {result.cryptoNativeChecks.rugPullRisk === 'high' && <span>⚠️</span>}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Audit Status */}
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 uppercase mb-1">Audit Status</span>
-                            <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
-                                result.cryptoNativeChecks.auditStatus === 'planned' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
-                                    'bg-gray-500/10 border-gray-500/30 text-gray-400'
-                                }`}>
-                                <span className="font-bold uppercase">{result.cryptoNativeChecks.auditStatus.replace('_', ' ')}</span>
+                            {/* Audit Status */}
+                            <div className="flex flex-col">
+                                <span className="text-xs text-gray-400 uppercase mb-1">Audit Status</span>
+                                <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
+                                    result.cryptoNativeChecks.auditStatus === 'planned' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
+                                        'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                                    }`}>
+                                    <span className="font-bold uppercase">{result.cryptoNativeChecks.auditStatus.replace('_', ' ')}</span>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Liquidity Status */}
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 uppercase mb-1">Liquidity</span>
-                            <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
-                                result.cryptoNativeChecks.liquidityStatus === 'unclear' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
-                                    'bg-gray-500/10 border-gray-500/30 text-gray-400'
-                                }`}>
-                                <span className="font-bold uppercase">{result.cryptoNativeChecks.liquidityStatus}</span>
+                            {/* Liquidity Status */}
+                            <div className="flex flex-col">
+                                <span className="text-xs text-gray-400 uppercase mb-1">Liquidity</span>
+                                <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
+                                    result.cryptoNativeChecks.liquidityStatus === 'unclear' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                                        'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                                    }`}>
+                                    <span className="font-bold uppercase">{result.cryptoNativeChecks.liquidityStatus}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Detailed Analysis Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Key Risks */}
                 <div className="bg-white/5 rounded-xl border border-white/10 p-6">
                     <h3 className="text-xl font-semibold text-red-400 mb-4 flex items-center">
-                        <span className="mr-2">⚠️</span> Key Risks
+                        Investor Worries
                     </h3>
                     <ul className="space-y-3">
                         {result.technical.keyRisks.concat(result.market.goToMarketRisks).map((item, index) => (
@@ -173,7 +177,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 {/* Recommended Pivots */}
                 <div className="bg-white/5 rounded-xl border border-white/10 p-6">
                     <h3 className="text-xl font-semibold text-blue-400 mb-4 flex items-center">
-                        <span className="mr-2">💡</span> Recommended Pivots
+                        Strategic Pivots
                     </h3>
                     <ul className="space-y-3">
                         {result.recommendations.recommendedPivots.map((item, index) => (
@@ -188,7 +192,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 {/* Must Fix */}
                 <div className="bg-white/5 rounded-xl border border-white/10 p-6">
                     <h3 className="text-xl font-semibold text-orange-400 mb-4 flex items-center">
-                        <span className="mr-2">🛠️</span> Must Fix Before Build
+                        Critical Fixes
                     </h3>
                     <ul className="space-y-3">
                         {result.recommendations.mustFixBeforeBuild.map((item, index) => (
@@ -203,7 +207,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 {/* Tokenomics Issues */}
                 <div className="bg-white/5 rounded-xl border border-white/10 p-6">
                     <h3 className="text-xl font-semibold text-purple-400 mb-4 flex items-center">
-                        <span className="mr-2">🪙</span> Tokenomics Issues
+                        Tokenomics Flaws
                     </h3>
                     <ul className="space-y-3">
                         {result.tokenomics.mainIssues.map((item, index) => (
@@ -231,6 +235,6 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     Start New Evaluation
                 </button>
             </div>
-        </div>
+        </div >
     );
 }
