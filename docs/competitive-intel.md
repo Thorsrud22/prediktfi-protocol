@@ -19,42 +19,91 @@ To generate a high-quality memo, the agent would query a mix of structured and u
 | **Social / Sentiment** | Twitter/X (via API or specialized indexers) | Gauge "mindshare" and narrative heat. Is this category trending or dead? |
 
 ## 3. Output Shape (`CompetitiveMemo`)
-The helper will produce a structured memo, independent of the main evaluation, which can be fed into the main evaluator or displayed separately.
+The helper produces a structured memo, strictly typed as follows (v1 Implementation):
 
 ```typescript
 export interface CompetitiveMemo {
-  // High-level summary of the space
-  landscape: {
-    crowdedness: 'empty' | 'moderate' | 'saturated';
-    dominantNarrative: string; // e.g. "AI x Crypto is heating up, but mostly infra"
-    majors: string[]; // e.g. ["Bittensor", "Gensyn"]
-  };
-  
-  // Specific similar projects found
-  competitors: {
-    name: string;
-    url?: string;
-    status: 'live' | 'buidling' | 'abandoned' | 'unknown';
-    differentiationGap: 'high' | 'medium' | 'low'; // How different is our user's idea?
-    notes: string;
-  }[];
-
-  // Specific advice for differentiation
-  strategicAdvice: {
-    differentiationOpps: string[]; // "Focus on UX...", "Target non-crypto users..."
-    featuresToAvoid: string[]; // "Don't build another generic AMM unless..."
-  };
+    // Core Fields
+    categoryLabel: string; // e.g. "DeFi - Lending", "Memecoin - Animal"
+    crowdednessLevel: 'empty' | 'moderate' | 'high' | 'saturated';
+    shortLandscapeSummary: string; // 1-2 sentence high-level summary.
     
-  timestamp: string;
+    referenceProjects: {
+        name: string;
+        chainOrPlatform: string;
+        note: string;
+    }[];
+    
+    tractionDifficulty: {
+        label: 'low' | 'medium' | 'high' | 'extreme';
+        explanation: string;
+    };
+
+    differentiationWindow: {
+        label: 'wide_open' | 'narrow' | 'closed';
+        explanation: string;
+    };
+
+    noiseVsSignal: 'mostly_noise' | 'mixed' | 'high_signal';
+    evaluatorNotes: string;
+
+    // Category Specific Hints (Optional/Nullable)
+    memecoin?: {
+        narrativeLabel: string;
+        narrativeCrowdedness: 'low' | 'medium' | 'high';
+    };
+    defi?: {
+        defiBucket: string;
+        categoryKings: string[];
+    };
+    ai?: {
+        aiPattern: string;
+        moatType: string;
+    };
+    
+    timestamp: string;
 }
 ```
 
-## 4. Integration Points
+## 4. Evaluator Integration Spec
 
-### Phase 1: Context Injection (Backend)
-- Run the `CompetitiveHelper` **parallel** to the main `evaluateIdea` call (or strictly before).
-- Inject the `CompetitiveMemo` into the `evaluateIdea` prompt as "Market Context".
-- This allows the main evaluator to make specific comparisons: *"Unlike Competitor X, this idea focuses on..."*
+### Trigger Conditions
+The `evaluateIdea` function should ONLY call `fetchCompetitiveMemo` if the idea's normalized category is one of:
+- `memecoin`
+- `defi`
+- `ai`
+
+For all other categories, skip this step to save Token costs and latency.
+
+### Handling Status
+- **`status: "ok"`**: The resulting `CompetitiveMemo` object should be formatted into a string block (JSON or bullet points) and injected into the Main Evaluator Prompt.
+- **`status: "not_available"`**: The prompt section should be omitted entirely or replaced with a generic "No specific competitive data available. Rely on general knowledge." instruction. The Evaluator must NOT fail because this side-channel data is missing.
+
+### Conceptual Relationship
+The Evaluator uses three data pillars to form a verdict:
+1.  **Market Snapshot** (Macro): "Is the TIMING right?". Used for "Risk On/Off" calibration.
+2.  **Crypto Native Health** (Safety): "Is it SAFE?". Used for Rug Risk and Launch Readiness.
+3.  **Competitive Memo** (Micro): "Is it UNIQUE?". Used heavily for:
+    - **Moat / Feasibility Score**: If `differentiationWindow` is "closed", score must be capped.
+    - **Market Fit Score**: If `crowdednessLevel` is "saturated" but `tractionDifficulty` is "high", score should reflect reduced probability of success.
+
+### Prompt Injection Strategy
+When available, inject the following block into the System Prompt or User Context:
+
+```text
+COMPETITIVE_MEMO (Real-time Intel):
+- Category: [categoryLabel]
+- Crowdedness: [crowdednessLevel]
+- Landscape: [shortLandscapeSummary]
+- Known Competitors: [referenceProjects (Name + Note only)]
+- Evaluator Note: [evaluatorNotes]
+
+INSTRUCTION: Use this data to ground your 'Moat' and 'Market Fit' scores. 
+If the memo says the space is saturated, be very skeptical of "revolutionary" claims. 
+Do NOT invent new competitors not listed here or known to you.
+```
+
+## 5. Future Phases
 
 ### Phase 2: Report UI Section (Frontend)
 - Add a dedicated "Competitive Landscape" tab or card in the Report.
@@ -64,19 +113,33 @@ export interface CompetitiveMemo {
 ### Phase 3: "Deep Dive" Mode
 - Allow users to click "Analyze Competitors" to spawn a deeper, multi-step research agent that actively browses competitor docs and whitepapers.
 
-## 5. Cost and Complexity
+## 6. Memecoin Intelligence Helper Spec
 
-### Risks & Costs
-1.  **API Rate Limits & Cost**: High-quality search (like Tavily or Serper) and specific crypto APIs can be expensive at scale.
-    - *Mitigation*: Cache results by category (e.g. cache "DeFi Lending" landscape for 24h).
-2.  **Latency**: Real-time searching adds significant time (5-10s+).
-    - *Mitigation*: Run asynchronously. streaming the main evaluation first, then "unlocking" the competitor insights when ready.
-3.  **Noise**: Keyword search often returns SEO spam or irrelevant projects.
-    - *Mitigation*: Strict LLM filtering step to discard irrelevant results before final memo generation.
-4.  **Stale Data**: Crypto moves fast. "Live" projects might be rugged/dead.
-    - *Mitigation*: Check last tweet date or GitHub commit date if possible.
+### Objective
+For memecoin ideas, the Helper must answer three critical questions to prevent investors from buying into "dead" or "low-effort" coins:
+1.  **Trend Alignment**: Is this narrative (e.g. "Grimace Shake", "PolitiFi", "Cute Cat") currently trending or 3 weeks dead?
+2.  **Saturation Check**: Are there already 50+ tickers with this name or concept created in the last 24h?
+3.  **Differentiation**: Does the project have a unique angle (e.g. high-effort art, novel mechanism) or is it a low-effort fork?
 
-### Implementation Effort
-- **Low**: Defining types and basic prompts.
-- **Medium**: Integrating search tools (using Vercel SDK or LangChain).
-- **High**: robust filtering and multi-source aggregation (DeFiLlama + Twitter + GitHub).
+### Candidate Data Sources (Conceptual)
+We will eventually integrate specialized memecoin data providers:
+
+| Source | Priority | What to Extract | Purpose |
+|--------|----------|-----------------|---------|
+| **DexScreener API** | Must-Have | Top pairs by volume in last 24h matching keywords. | Identify if the specific ticker/name is already saturated. |
+| **Axiom.trade / GMGN** | Nice-to-Have | "Smart Money" flow into specific narratives. | Judge if the narrative is "early" or "dumping". |
+| **Twitter Search** | Must-Have | Cashtag () volume and sentiment. | Measure "Mindshare" vs "Market Cap". |
+
+### Bridge to CompetitiveMemo
+The raw signals from these sources map directly to `CompetitiveMemo` fields:
+
+- **`memecoin.narrativeLabel`**: Derived from the idea description (e.g. "Cat Coin"). Validated against DexScreener trending tags.
+- **`memecoin.narrativeCrowdedness`**: 
+    - *Low*: < 5 tokens with same name created in 24h.
+    - *High*: > 20 tokens with same name.
+    - *Saturated*: A dominant coin with >0M market cap already exists with this name.
+- **`referenceProjects`**: The top 1-3 existing coins with the same name/theme by Liquidity.
+- **`differentiationWindow`**: 
+    - *Closed*: If a "Category King" exists (e.g. DOGE for Dog coins).
+    - *Narrow*: If narrative is trending but no clear winner yet.
+    - *Wide Open*: If narrative is brand new (Blue Ocean).
