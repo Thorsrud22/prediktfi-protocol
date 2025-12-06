@@ -14,12 +14,12 @@ function getClientIdentifier(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
   const cfConnectingIp = request.headers.get('cf-connecting-ip');
-  
+
   const ip = forwarded?.split(',')[0] || realIp || cfConnectingIp || 'unknown';
-  
+
   // For authenticated requests, could use user ID instead
   const userId = request.headers.get('x-user-id');
-  
+
   return userId || ip;
 }
 
@@ -28,20 +28,20 @@ function getClientIdentifier(request: NextRequest): string {
  */
 function checkRateLimit(request: NextRequest, identifier: string): boolean {
   const pathname = request.nextUrl.pathname;
-  
+
   // Different rate limits for different endpoint types
   if (pathname.startsWith('/api/admin')) {
     return rateLimiters.admin.isRateLimited(identifier);
   }
-  
+
   if (pathname.includes('/auth') || pathname.includes('/login')) {
     return rateLimiters.auth.isRateLimited(identifier);
   }
-  
+
   if (pathname.startsWith('/api/')) {
     return rateLimiters.api.isRateLimited(identifier);
   }
-  
+
   return false;
 }
 
@@ -50,7 +50,7 @@ function checkRateLimit(request: NextRequest, identifier: string): boolean {
  */
 function recordRequest(request: NextRequest, identifier: string): void {
   const pathname = request.nextUrl.pathname;
-  
+
   if (pathname.startsWith('/api/admin')) {
     rateLimiters.admin.recordRequest(identifier);
   } else if (pathname.includes('/auth') || pathname.includes('/login')) {
@@ -65,7 +65,7 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const method = request.method;
   const identifier = getClientIdentifier(request);
-  
+
   // Skip middleware for static files, Next.js internals, and auth routes
   if (
     pathname.startsWith('/_next/') ||
@@ -77,13 +77,26 @@ export function middleware(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
-  
+
+  // FORCE REDIRECT FOR PRIVATE ALPHA
+  // Block access to Studio, Account, etc.
+  // Allow only: /, /api (for internal use if needed), /legal (optional)
+  const isAllowedPath =
+    pathname === '/' ||
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/legal') ||
+    pathname.startsWith('/og'); // Allow OpenGraph images
+
+  if (!isAllowedPath) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   // Skip rate limiting in development
   if (process.env.NODE_ENV !== 'development') {
     // Check rate limiting
     if (checkRateLimit(request, identifier)) {
       console.log(`🚨 Rate limit exceeded for ${identifier} on ${pathname}`);
-      
+
       // Log abuse event
       abuseDetector.logAbuseEvent({
         type: 'rate_limit',
@@ -94,14 +107,14 @@ export function middleware(request: NextRequest) {
           userAgent: request.headers.get('user-agent') || 'unknown'
         }
       });
-      
+
       return NextResponse.json(
-        { 
+        {
           error: 'Too Many Requests',
           message: 'Rate limit exceeded. Please try again later.',
           retryAfter: 900 // 15 minutes
         },
-        { 
+        {
           status: 429,
           headers: {
             'Retry-After': '900',
@@ -113,51 +126,51 @@ export function middleware(request: NextRequest) {
       );
     }
   }
-  
+
   // Record request for rate limiting (only in production)
   if (process.env.NODE_ENV !== 'development') {
     recordRequest(request, identifier);
   }
-  
+
   // Create response
   const response = NextResponse.next();
-  
+
   // Apply security headers
   applySecurityHeaders(response);
-  
+
   // Add observability headers
   const duration = Date.now() - startTime;
   response.headers.set('X-Response-Time', `${duration}ms`);
   response.headers.set('X-Request-ID', crypto.randomUUID());
-  
+
   // Add plan header for client-side detection
   const planCookie = request.cookies.get('predikt_plan')?.value;
   const plan = planCookie === 'pro' ? 'pro' : 'free';
   response.headers.set('x-plan', plan);
-  
+
   // Add wallet identification header
-  const walletId = request.headers.get('x-wallet-id') || 
-                   request.cookies.get('wallet_id')?.value ||
-                   request.nextUrl.searchParams.get('wallet');
+  const walletId = request.headers.get('x-wallet-id') ||
+    request.cookies.get('wallet_id')?.value ||
+    request.nextUrl.searchParams.get('wallet');
   if (walletId) {
     response.headers.set('x-wallet-id', walletId);
   }
-  
+
   // Add rate limit headers
   if (pathname.startsWith('/api/')) {
     const limiter = pathname.startsWith('/api/admin') ? rateLimiters.admin :
-                   pathname.includes('/auth') ? rateLimiters.auth :
-                   rateLimiters.api;
-    
+      pathname.includes('/auth') ? rateLimiters.auth :
+        rateLimiters.api;
+
     const remaining = limiter.getRemainingRequests(identifier);
     response.headers.set('X-RateLimit-Remaining', String(remaining));
   }
-  
+
   // Log request for monitoring
   if (process.env.NODE_ENV === 'development') {
     console.log(`${method} ${pathname} - ${identifier} - ${duration}ms`);
   }
-  
+
   return response;
 }
 

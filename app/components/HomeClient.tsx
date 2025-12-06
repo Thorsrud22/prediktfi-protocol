@@ -4,7 +4,7 @@ import React, { memo, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider';
 import { useOnboarding } from '@/app/hooks/useOnboarding';
-import OnboardingModal from './onboarding/OnboardingModal';
+// import OnboardingModal from './onboarding/OnboardingModal';
 import Hero from './Hero';
 import TrendingMarkets from './TrendingMarkets';
 import ActivityFeed from './ActivityFeed';
@@ -26,7 +26,7 @@ const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
   const router = useRouter();
   const { isConnected } = useSimplifiedWallet();
   const { showOnboarding, completeOnboarding } = useOnboarding();
-  
+
   // Disabled returning user logic - always show landing page
   const [isReturningUser] = useState(false);
 
@@ -35,11 +35,11 @@ const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
   return (
     <>
       {/* Onboarding Modal for first-time users */}
-      <OnboardingModal isOpen={showOnboarding} onClose={completeOnboarding} />
+      {/* <OnboardingModal isOpen={showOnboarding} onClose={completeOnboarding} /> */}
 
       {/* Old content hidden - new Aurora landing page is now in app/page.tsx */}
       {/* Uncomment below to show the old Hero + TrendingMarkets layout */}
-      
+
       {/*
       <Hero />
 

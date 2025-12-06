@@ -45,64 +45,33 @@ export default async function Home() {
         <div className="text-center max-w-5xl mx-auto space-y-8">
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
-            Institutional-Grade Validation for your{' '}
+            Turn your idea into an{' '}
             <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-              Web3 Protocol
+              investor-grade answer
             </span>
           </h1>
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
-            Don't build in the dark. Get rigorous AI stress-testing on your tokenomics, market fit, and technical feasibility before you write a single line of code.
+            PrediktFi is an AI-native evaluator built to stress-test AI, DeFi and memecoin ideas instead of giving you generic AI replies.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link
-              href="/studio"
-              className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold text-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105"
+            <button
+              disabled
+              className="px-8 py-4 rounded-full bg-slate-700/50 text-slate-300 font-semibold text-lg cursor-not-allowed border border-slate-600"
             >
-              Start Validation
-            </Link>
-            <Link
-              href="/feed"
-              className="px-8 py-4 rounded-full border-2 border-slate-600 bg-slate-900/50 backdrop-blur-sm text-slate-100 font-semibold text-lg hover:bg-slate-800/50 hover:border-slate-500 transition-all duration-300"
-            >
-              View Case Studies
-            </Link>
+              Coming soon
+            </button>
+            {/* Secondary CTA Removed for Landing Mode */}
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-16 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                {data.stats.activePredictions.toLocaleString()}
-              </div>
-              <div className="text-sm text-slate-400">Protocols Audited</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                {data.stats.totalVolume}M+
-              </div>
-              <div className="text-sm text-slate-400">Capital Saved</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                {data.stats.accuracyRate}%
-              </div>
-              <div className="text-sm text-slate-400">Risk Detection</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                {data.stats.activeCreators.toLocaleString()}
-              </div>
-              <div className="text-sm text-slate-400">Risk Factors Identified</div>
-            </div>
-          </div>
+          {/* Stats removed to keep it simple and static-looking */}
         </div>
       </div>
 
-      {/* Client-side logic for redirects */}
+      {/* Client-side logic for redirects (if any remaining) */}
       <HomeClient data={data} />
     </div>
   );

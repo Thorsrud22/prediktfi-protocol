@@ -7,60 +7,21 @@ export default function Footer() {
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="text-sm">© 2025 {SITE.name}</div>
           <div className="flex items-center gap-4 text-xs">
-            <a
-              className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
-              href="/studio"
-              aria-label="AI Studio"
-            >
-              AI Studio
-            </a>
-            <a
-              className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
-              href="/feed"
-              aria-label="Feed"
-            >
-              Feed
-            </a>
-            <a
-              className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
-              href="https://github.com/Thorsrud22/prediktfi-protocol"
-              target="_blank"
-              rel="noreferrer noopener"
-              aria-label="GitHub"
-            >
-              GitHub
-            </a>
+            {/* Links section disabled for Private Alpha Landing
+            <a ... >AI Studio</a>
+            <a ... >Feed</a>
+            <a ... >GitHub</a>
+            */}
           </div>
         </div>
+        {/* Secondary links disabled
         <div className="mt-4 flex items-center gap-3 text-xs opacity-70">
-          <a
-            className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
-            href="/legal/terms"
-            rel="nofollow"
-          >
-            Terms
-          </a>
-          <a
-            className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
-            href="/legal/privacy"
-            rel="nofollow"
-          >
-            Privacy
-          </a>
-          <a
-            className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
-            href="/legal/refund"
-            rel="nofollow"
-          >
-            Refund
-          </a>
-          <a
-            className="min-h-11 rounded px-1 py-0.5 hover:text-[color:var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
-            href="/about"
-          >
-            About
-          </a>
+          <a ... >Terms</a>
+          <a ... >Privacy</a>
+          <a ... >Refund</a>
+          <a ... >About</a>
         </div>
+        */}
       </div>
     </footer>
   );

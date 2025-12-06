@@ -208,12 +208,12 @@ export default function AppPillNav() {
 
   const navItems = useMemo(
     () => [
-      { href: '/studio', label: 'STUDIO' },
+      // { href: '/studio', label: 'STUDIO' }, // Disabled for Private Alpha
       // { href: '/feed', label: 'FEED' }, // Legacy
       // { href: '/leaderboard', label: 'LEADERBOARD' }, // Legacy
       // { href: '/my-predictions', label: 'MY PREDICTIONS' }, // Legacy
-      { href: '/account', label: 'ACCOUNT' },
-    ],
+      // { href: '/account', label: 'ACCOUNT' }, // Disabled for Private Alpha
+    ] as Array<{ href: string; label: string }>,
     []
   );
 
@@ -237,7 +237,7 @@ export default function AppPillNav() {
   const Logo = useMemo(
     () => (
       <InstantLink
-        href="/feed"
+        href="/"
         className="group flex items-center gap-2.5 rounded-full bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-slate-900/80 px-2.5 py-1.5 pr-4 backdrop-blur-xl ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] duration-300"
         aria-label="Predikt home"
       >
@@ -271,18 +271,16 @@ export default function AppPillNav() {
         {Logo}
       </div>
 
-      {/* Main Navigation */}
+      {/* Main Navigation - Hidden for Private Alpha
       <div
         className={`fixed top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'
           }`}
       >
-        {/* Pill Nav - Outer wrapper with ring */}
         <nav
           className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${isScrolled ? 'backdrop-blur-lg shadow-xl' : ''
             }`}
           aria-label="Main navigation"
         >
-          {/* Inner wrapper with overflow-hidden to clip animated pill */}
           <div className="rounded-full overflow-hidden">
             <ul
               ref={navListRef}
@@ -312,10 +310,11 @@ export default function AppPillNav() {
           </div>
         </nav>
       </div>
+      */}
 
       {/* Wallet & Upgrade Actions - Positioned absolutely on the right */}
       <div className="fixed top-4 right-4 z-[100] flex items-center gap-2">
-        {/* Wallet button */}
+        {/* Wallet button - Hidden for Private Alpha
         {publicKey && (
           <div className="relative">
             <button
@@ -342,8 +341,11 @@ export default function AppPillNav() {
             />
           </div>
         )}
+        */}
 
         {/* Upgrade button - only show if not pro */}
+        {/* Upgrade button - Disabled for Private Alpha */}
+        {/*
         {!isPro && (
           <button
             onClick={handleUpgradeClick}
@@ -359,6 +361,7 @@ export default function AppPillNav() {
             Upgrade
           </button>
         )}
+        */}
       </div>
     </>
   );
