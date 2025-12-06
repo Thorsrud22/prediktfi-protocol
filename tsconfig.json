@@ -40,9 +40,9 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
     "dist",
     "tests",
-    "prediktfi-protocol"
+    "prediktfi-protocol",
+    "unused_app"
   ]
 }

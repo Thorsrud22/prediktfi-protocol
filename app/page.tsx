@@ -1,10 +1,10 @@
 import React from 'react';
-import Hero from './components/Hero';
-import TrendingMarkets from './components/TrendingMarkets';
-import ActivityFeed from './components/ActivityFeed';
-import TopCreators from './components/TopCreators';
+// import Hero from './components/Hero';
+// import TrendingMarkets from './components/TrendingMarkets';
+// import ActivityFeed from './components/ActivityFeed';
+// import TopCreators from './components/TopCreators';
 import HomeClient from './components/HomeClient';
-import Link from 'next/link';
+// import Link from 'next/link';
 import Aurora from './components/ui/Aurora';
 
 // ISR: Revalidate every hour like PredictionSwap
@@ -38,7 +38,7 @@ export default async function Home() {
       />
 
       {/* Gradient overlay for better text readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-900 -z-[9]" />
+      {/* Gradient overlay removed for performance */}
 
       {/* Hero Section */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
