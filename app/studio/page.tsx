@@ -5,6 +5,7 @@ import { useSimplifiedWallet } from '@/app/components/wallet/SimplifiedWalletPro
 import { usePerformanceTracking, trackPageLoad } from '@/app/utils/performance';
 import PerformanceMonitor from '../components/PerformanceMonitor';
 import Aurora from '../components/ui/Aurora';
+import EvaluationLoadingOverlay from './EvaluationLoadingOverlay';
 import IdeaSubmissionForm from './IdeaSubmissionForm';
 import IdeaEvaluationReport from './IdeaEvaluationReport';
 import { IdeaSubmission } from '@/lib/ideaSchema';
@@ -19,6 +20,7 @@ export default function StudioPage() {
   const [submissionData, setSubmissionData] = useState<IdeaSubmission | null>(null);
   const [evaluationResult, setEvaluationResult] = useState<IdeaEvaluationResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [commitStatus, setCommitStatus] = useState<'idle' | 'committing' | 'success' | 'error'>('idle');
   const [insightId, setInsightId] = useState<string | null>(null);
 
@@ -39,6 +41,7 @@ export default function StudioPage() {
   const handleEvaluate = async (data: IdeaSubmission) => {
     setSubmissionData(data);
     setIsAnalyzing(true);
+    setError(null);
 
     try {
       const response = await fetch('/api/idea-evaluator/evaluate', {
@@ -58,7 +61,7 @@ export default function StudioPage() {
       setCurrentStep('analysis');
     } catch (error) {
       console.error('Error evaluating idea:', error);
-      // Ideally show error toast here
+      setError('Evaluation service is temporarily unavailable. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -67,12 +70,14 @@ export default function StudioPage() {
   const handleEdit = () => {
     setCurrentStep('question');
     setEvaluationResult(null);
+    setError(null);
   };
 
   const handleStartNew = () => {
     setSubmissionData(null);
     setEvaluationResult(null);
     setCurrentStep('question');
+    setError(null);
   };
 
   const handleCommit = async () => {
@@ -218,11 +223,25 @@ export default function StudioPage() {
             {/* Step Content */}
             <div className="min-h-[400px]">
               {currentStep === 'question' && (
-                <IdeaSubmissionForm
-                  onSubmit={handleEvaluate}
-                  isSubmitting={isAnalyzing}
-                  initialData={submissionData || undefined}
-                />
+                <>
+                  {isAnalyzing ? (
+                    <EvaluationLoadingOverlay />
+                  ) : (
+                    <>
+                      {error && (
+                        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-200 text-sm text-center animate-in fade-in slide-in-from-top-2">
+                          {error}
+                        </div>
+                      )}
+
+                      <IdeaSubmissionForm
+                        onSubmit={handleEvaluate}
+                        isSubmitting={isAnalyzing}
+                        initialData={submissionData || undefined}
+                      />
+                    </>
+                  )}
+                </>
               )}
 
               {currentStep === 'analysis' && evaluationResult && (

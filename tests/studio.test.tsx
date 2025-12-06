@@ -154,7 +154,7 @@ describe('AI Idea Evaluator Studio', () => {
         fireEvent.click(submitButton);
 
         // Expect loading state
-        expect(screen.getByText('Submitting...')).toBeInTheDocument();
+        expect(screen.getByText('Evaluating your idea')).toBeInTheDocument();
 
         // Verify fetch was called
         expect(global.fetch).toHaveBeenCalledTimes(1);
