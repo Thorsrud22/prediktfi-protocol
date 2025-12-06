@@ -11,7 +11,7 @@ vi.mock('@/lib/openaiClient', () => ({
     })
 }));
 
-import { openai } from '@/lib/openaiClient';
+import { openai } from '../../src/lib/openaiClient';
 
 describe('fetchCompetitiveMemo', () => {
     const mockIdea: IdeaSubmission = {
