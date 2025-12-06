@@ -107,6 +107,10 @@ import { MarketSnapshot } from "@/lib/market/types";
 
 // ... existing imports
 
+import { fetchCompetitiveMemo } from "@/lib/market/competitive";
+
+// ... existing imports
+
 /**
  * Evaluates an idea using OpenAI GPT-5.1.
  * 
@@ -120,6 +124,7 @@ export async function evaluateIdea(
 ): Promise<IdeaEvaluationResult> {
   const contextSummary = buildIdeaContextSummary(input);
 
+  // 1. Market Context (Macro)
   let marketContext = "";
   if (options?.market && options.market.source !== 'fallback') {
     marketContext = `
@@ -129,11 +134,43 @@ Use this context to judge timing and market fit.
 `;
   }
 
+  // 2. Competitive Memo (Micro / Landscape)
+  let competitiveContext = "";
+  const normalizedCategory = input.projectType.toLowerCase();
+
+  // Only fetch for supported categories to save tokens/time
+  if (['memecoin', 'defi', 'ai'].includes(normalizedCategory)) {
+    try {
+      const compResult = await fetchCompetitiveMemo(input, normalizedCategory);
+      if (compResult.status === 'ok') {
+        const memo = compResult.memo;
+        const competitorList = memo.referenceProjects
+          .map(p => `${p.name} (${p.note})`)
+          .join(', ');
+
+        competitiveContext = `
+COMPETITIVE_MEMO:
+- Category: ${memo.categoryLabel}
+- Crowdedness: ${memo.crowdednessLevel}
+- Landscape: ${memo.shortLandscapeSummary}
+- Known Competitors: ${competitorList || "None specific listed"}
+- Evaluator Note: ${memo.evaluatorNotes}
+
+INSTRUCTION: Use this data to ground your 'Moat' and 'Market Fit' scores.
+If the memo says the space is saturated, be very skeptical of "revolutionary" claims.
+Do NOT invent new competitors not listed here or known to you.
+`;
+      }
+    } catch (err) {
+      // Silently fail to avoid blocking the main evaluation
+      console.warn("Failed to fetch competitive memo (non-blocking):", err);
+    }
+  }
+
   const userContent = `Idea Context:
 ${contextSummary}
 ${marketContext}
-
-Idea Submission:
+${competitiveContext}
 
 Idea Submission:
 ${JSON.stringify(input, null, 2)}
