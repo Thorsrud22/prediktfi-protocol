@@ -1,53 +1,59 @@
 export interface CompetitiveMemo {
+    // Core Fields
     /**
-     * High-level summary of the space
+     * e.g. "DeFi - Lending", "Memecoin - Animal", "AI - Infra"
      */
-    landscape: LandscapeSummary;
+    categoryLabel: string;
+
+    crowdednessLevel: 'empty' | 'moderate' | 'high' | 'saturated';
 
     /**
-     * Specific similar projects found
+     * A 1-2 sentence summary of the current landscape for this specific idea.
      */
-    competitors: Competitor[];
+    shortLandscapeSummary: string;
+
+    referenceProjects: ReferenceProject[];
+
+    tractionDifficulty: {
+        label: 'low' | 'medium' | 'high' | 'extreme';
+        explanation: string;
+    };
+
+    differentiationWindow: {
+        label: 'wide_open' | 'narrow' | 'closed';
+        explanation: string;
+    };
+
+    noiseVsSignal: 'mostly_noise' | 'mixed' | 'high_signal';
 
     /**
-     * Specific advice for differentiation
+     * Additional notes from the evaluator about specific risks or opportunities.
      */
-    strategicAdvice: StrategicAdvice;
+    evaluatorNotes: string;
 
-    /**
-     * ISO timestamp of when this memo was generated
-     */
+    // Category Specific Hints (Optional/Nullable)
+    memecoin?: {
+        narrativeLabel: string;
+        narrativeCrowdedness: 'low' | 'medium' | 'high';
+    };
+    defi?: {
+        defiBucket: string;
+        categoryKings: string[];
+    };
+    ai?: {
+        aiPattern: string;
+        moatType: string;
+    };
+
     timestamp: string;
 }
 
-export interface LandscapeSummary {
-    crowdedness: 'empty' | 'moderate' | 'saturated';
-    /**
-     * Short description of the current narrative meta
-     * e.g. "AI x Crypto is heating up, but mostly infra"
-     */
-    dominantNarrative: string;
-    /**
-     * Names of the major players in this sector
-     */
-    majors: string[];
-}
-
-export interface Competitor {
+export interface ReferenceProject {
     name: string;
-    url?: string;
-    status: 'live' | 'buidling' | 'abandoned' | 'unknown';
-    /**
-     * How different is our user's idea from this competitor?
-     */
-    differentiationGap: 'high' | 'medium' | 'low';
-    /**
-     * Brief notes on what this competitor does and how it compares
-     */
-    notes: string;
+    chainOrPlatform: string;
+    note: string;
 }
 
-export interface StrategicAdvice {
-    differentiationOpps: string[]; // "Focus on UX...", "Target non-crypto users..."
-    featuresToAvoid: string[]; // "Don't build another generic AMM unless..."
-}
+export type CompetitiveMemoResult =
+    | { status: 'ok'; memo: CompetitiveMemo }
+    | { status: 'not_available'; reason: string };
