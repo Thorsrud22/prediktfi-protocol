@@ -27,10 +27,13 @@ const isProduction = process.env.NODE_ENV === 'production' && process.env.SOLANA
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "PrediktFi — AI prediction studio with freemium quotas",
-    template: "%s | PrediktFi",
+    default: "Predikt — AI prediction studio with freemium quotas",
+    template: "%s | Predikt",
   },
   description: "AI prediction studio with freemium quotas and shareable insights. Get probability analysis with confidence scores.",
+  icons: {
+    icon: '/icon.svg',
+  },
   alternates: {
     canonical: isProduction ? '/' : undefined,
   },
@@ -39,14 +42,14 @@ export const metadata: Metadata = {
     follow: false,
   },
   openGraph: {
-    title: "PrediktFi — AI prediction studio with freemium quotas",
+    title: "Predikt — AI prediction studio with freemium quotas",
     description: "AI prediction studio with freemium quotas and shareable insights. Get probability analysis with confidence scores.",
     type: "website",
     images: ["/og/opengraph-image.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PrediktFi — AI prediction studio with freemium quotas",
+    title: "Predikt — AI prediction studio with freemium quotas",
     description: "AI prediction studio with freemium quotas and shareable insights. Get probability analysis with confidence scores.",
     images: ["/og/opengraph-image.png"],
   },
