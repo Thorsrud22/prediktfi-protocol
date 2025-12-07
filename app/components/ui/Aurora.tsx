@@ -199,7 +199,7 @@ export function Aurora(props: AuroraProps) {
 
         // Wrap time to avoid float precision loss (lag) over time
         // 1000 is arbitrary large number, period of sine is 2PI
-        timeAccumulator += dt * (propsRef.current.speed ?? effectiveSpeed) * 0.1;
+        timeAccumulator += dt * (propsRef.current.speed ?? effectiveSpeed) * 0.15;
         if (timeAccumulator > 10000) timeAccumulator -= 10000;
 
         program.uniforms.uTime.value = timeAccumulator;

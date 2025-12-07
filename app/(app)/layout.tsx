@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
-import "./globals.css";
-import "../src/styles/design-tokens.css";
+import "@/app/globals.css";
+import "@/src/styles/design-tokens.css";
 import "@solana/wallet-adapter-react-ui/styles.css";
-import AppPillNav from "./components/AppPillNav";
-import Footer from "./components/Footer";
+import AppPillNav from "@/app/components/AppPillNav";
+import Footer from "@/app/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

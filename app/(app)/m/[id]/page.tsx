@@ -8,9 +8,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import MetricPills from '../../components/models/MetricPills';
-import { CalibrationResult } from '../../../src/server/models/calibration';
-import { ANALYTICS_EVENT_TYPES } from '../../../src/server/analytics/events';
+import MetricPills from '@/app/components/models/MetricPills';
+import { CalibrationResult } from '@/src/server/models/calibration';
+import { ANALYTICS_EVENT_TYPES } from '@/src/server/analytics/events';
 
 interface ModelMetrics {
   total_pnl_usd: number;
@@ -33,7 +33,7 @@ interface ModelMetrics {
 export default function ModelDetailPage() {
   const params = useParams();
   const modelId = params.id as string;
-  
+
   const [metrics, setMetrics] = useState<ModelMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,9 +41,9 @@ export default function ModelDetailPage() {
 
   useEffect(() => {
     if (!modelId) return;
-    
+
     fetchMetrics();
-    
+
     // Send view event (debounced on server)
     if (!viewEventSent) {
       sendAnalyticsEvent({
@@ -75,7 +75,7 @@ export default function ModelDetailPage() {
         type: ANALYTICS_EVENT_TYPES.MODEL_COPY_CLICKED,
         modelId
       });
-      
+
       // Redirect to advisor actions page with model template
       const advisorUrl = `/advisor/actions?template=model&sourceModelId=${encodeURIComponent(modelId)}`;
       window.location.href = advisorUrl;
@@ -86,11 +86,11 @@ export default function ModelDetailPage() {
     try {
       setLoading(true);
       const response = await fetch(`/api/public/models/${modelId}/metrics?window=30d`);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch metrics: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setMetrics(data);
       setError(null);
@@ -126,7 +126,7 @@ export default function ModelDetailPage() {
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6">
             <h2 className="text-xl font-bold text-red-300 mb-2">Error Loading Model</h2>
             <p className="text-red-200">{error}</p>
-            <button 
+            <button
               onClick={fetchMetrics}
               className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
             >
@@ -283,10 +283,9 @@ export default function ModelDetailPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Status:</span>
-                    <span className={`font-bold ${
-                      metrics.calibration.status === 'Good' ? 'text-green-400' :
-                      metrics.calibration.status === 'Fair' ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
+                    <span className={`font-bold ${metrics.calibration.status === 'Good' ? 'text-green-400' :
+                        metrics.calibration.status === 'Fair' ? 'text-yellow-400' : 'text-red-400'
+                      }`}>
                       {metrics.calibration.status}
                     </span>
                   </div>
@@ -300,7 +299,7 @@ export default function ModelDetailPage() {
                   )}
                 </div>
               </div>
-              
+
               <div>
                 <h4 className="font-medium mb-3">Calibration Bins</h4>
                 <div className="overflow-x-auto">
