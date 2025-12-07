@@ -155,13 +155,13 @@ registerChaosTest({
  */
 export function cleanupExpiredChaosTests(): void {
   const now = new Date();
-  
+
   for (const [testId, test] of chaosTests.entries()) {
     if (test.enabled && test.startTime && test.config?.duration) {
       const elapsed = now.getTime() - test.startTime.getTime();
       if (elapsed >= test.config.duration) {
         disableChaosTest(testId);
-        
+
         recordChaosTestResult({
           testId,
           success: true,

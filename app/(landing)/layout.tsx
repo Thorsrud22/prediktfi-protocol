@@ -1,5 +1,5 @@
 export const metadata = {
-    title: 'PrediktFi - Investor-Grade AI Analysis',
+    title: 'Predikt - Investor-Grade AI Analysis',
     description: 'AI-native evaluator for DeFi and memecoins.',
 };
 

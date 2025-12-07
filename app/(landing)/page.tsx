@@ -28,7 +28,7 @@ export default function Home() {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
-            PrediktFi is an AI-native evaluator built to stress-test AI, DeFi and memecoin ideas instead of giving you generic AI replies.
+            Predikt is an AI-native evaluator built to stress-test AI, DeFi and memecoin ideas instead of giving you generic AI replies.
           </p>
 
           {/* CTA Buttons */}
