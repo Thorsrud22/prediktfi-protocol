@@ -5,7 +5,15 @@ const nextConfig = {
   },
 
   // Performance: External packages that should not be bundled
-  serverExternalPackages: ['@solana/web3.js', '@coral-xyz/anchor'],
+  serverExternalPackages: [
+    '@solana/web3.js',
+    '@coral-xyz/anchor',
+    '@opentelemetry/api',
+    '@upstash/redis',
+    '@upstash/analytics',
+    '@upstash/ratelimit',
+    '@prisma/client',
+  ],
 
   // Reactivity optimizations (experimental)
   reactStrictMode: true,
@@ -88,7 +96,6 @@ const nextConfig = {
         },
       };
     }
-
     return config;
   },
 
