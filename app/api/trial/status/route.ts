@@ -1,33 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTrialStatus } from '@/lib/trial';
-import { getWalletIdentifier } from '@/lib/rate-limit-wallet';
 import { isFeatureEnabled } from '@/lib/flags';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
+/**
+ * Minimal Edge route - returns static response
+ * TODO: Implement proper proxy once build issue is resolved
+ */
 export async function GET(request: NextRequest) {
   try {
-    // Check if Pro trials are enabled
     if (!isFeatureEnabled('PRO_TRIALS')) {
-      return NextResponse.json({
-        isOnTrial: false
-      });
+      return NextResponse.json({ isOnTrial: false });
     }
 
-    const walletId = getWalletIdentifier(request);
-    if (!walletId) {
-      return NextResponse.json({
-        isOnTrial: false
-      });
-    }
-
-    const status = await getTrialStatus(walletId);
-
-    return NextResponse.json(status);
+    // For now, return static response until proxy architecture works
+    return NextResponse.json({
+      isOnTrial: false,
+      message: 'Pro trials temporarily disabled during deployment fix'
+    });
   } catch (error) {
     console.error('Trial status error:', error);
-    return NextResponse.json({
-      isOnTrial: false
-    });
+    return NextResponse.json({ isOnTrial: false });
   }
 }

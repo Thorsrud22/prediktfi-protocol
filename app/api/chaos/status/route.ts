@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getActiveChaosTests, cleanupExpiredChaosTests } from '../../../lib/chaos/chaos-testing';
 import { isFeatureEnabled } from '@/lib/flags';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
   try {
