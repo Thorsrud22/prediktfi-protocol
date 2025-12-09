@@ -3,26 +3,12 @@ import React from 'react'
 import Link from 'next/link'
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider'
 import { useRouter } from 'next/navigation'
-import Aurora from '../components/ui/Aurora'
 
 export default function PricingPage() {
   const { isConnected, publicKey } = useSimplifiedWallet()
   const router = useRouter()
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100">
-      {/* Aurora Background - Subtle Variant */}
-      <Aurora 
-        colorStops={['#6366f1', '#8b5cf6', '#d946ef']} // Indigo to purple gradient
-        amplitude={0.9}
-        blend={0.5}
-        speed={0.6}
-        variant="subtle"
-        className="fixed inset-0 -z-10"
-      />
-      
-      {/* Subtle gradient overlay */}
-      <div className="fixed inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/70 to-slate-950/90 -z-[9]" />
-      
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-16">
         <p className="text-center text-sm text-slate-400">
           No credit card required • Cancel anytime
@@ -48,8 +34,8 @@ export default function PricingPage() {
               id: 'pro',
               title: 'Pro',
               price: 9,
-              button: { 
-                label: isConnected ? 'Upgrade with Crypto' : 'Connect with Phantom to upgrade', 
+              button: {
+                label: isConnected ? 'Upgrade with Crypto' : 'Connect with Phantom to upgrade',
                 href: isConnected ? '/pay?plan=pro' : '#',
                 disabled: !isConnected
               },
@@ -77,11 +63,10 @@ export default function PricingPage() {
               </ul>
               <Link
                 href={tier.button.href}
-                className={`mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 font-semibold transition ${
-                  tier.button.disabled 
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                className={`mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 font-semibold transition ${tier.button.disabled
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                     : 'bg-indigo-600 text-white hover:bg-indigo-500'
-                }`}
+                  }`}
                 onClick={tier.button.disabled ? (e) => e.preventDefault() : undefined}
               >
                 {tier.button.label}
@@ -93,7 +78,7 @@ export default function PricingPage() {
         <p className="mt-8 text-center text-xs text-slate-500">
           You can also pay in SOL or USDC on devnet or mainnet. Funds settle directly to your wallet.
         </p>
-        
+
         {!isConnected && (
           <div className="mt-8 text-center">
             <div className="rounded-xl border border-slate-700 p-6 max-w-2xl mx-auto">

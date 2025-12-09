@@ -5,7 +5,6 @@ import ActivityFeed from './components/ActivityFeed';
 import TopCreators from './components/TopCreators';
 import HomeClient from './components/HomeClient';
 import Link from 'next/link';
-import Aurora from './components/ui/Aurora';
 
 // ISR: Revalidate every hour like PredictionSwap
 export const revalidate = 3600;
@@ -28,18 +27,6 @@ export default async function Home() {
 
   return (
     <div className="relative min-h-screen">
-      {/* Aurora Background */}
-      <Aurora
-        colorStops={['#0ea5e9', '#3b82f6', '#8b5cf6']} // Blue to purple gradient
-        amplitude={1.2}
-        blend={0.6}
-        speed={0.8}
-        className="fixed inset-0 -z-10"
-      />
-
-      {/* Gradient overlay for better text readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-900 -z-[9]" />
-
       {/* Hero Section */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
         <div className="text-center max-w-5xl mx-auto space-y-8">

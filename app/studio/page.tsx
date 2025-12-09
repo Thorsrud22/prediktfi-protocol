@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useSimplifiedWallet } from '@/app/components/wallet/SimplifiedWalletProvider';
 import { usePerformanceTracking, trackPageLoad } from '@/app/utils/performance';
 import PerformanceMonitor from '../components/PerformanceMonitor';
-import Aurora from '../components/ui/Aurora';
 import EvaluationLoadingOverlay from './EvaluationLoadingOverlay';
 import IdeaSubmissionForm from './IdeaSubmissionForm';
 import IdeaEvaluationReport from './IdeaEvaluationReport';
@@ -105,18 +104,6 @@ export default function StudioPage() {
 
   return (
     <div className="relative min-h-screen text-white selection:bg-blue-500/30">
-      {/* Aurora Background */}
-      <Aurora
-        colorStops={['#0ea5e9', '#3b82f6', '#8b5cf6']} // Blue to purple gradient
-        amplitude={1.2}
-        blend={0.6}
-        speed={0.8}
-        className="fixed inset-0 -z-10"
-      />
-
-      {/* Gradient overlay for better text readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-900 -z-[9]" />
-
       <PerformanceMonitor />
 
 
