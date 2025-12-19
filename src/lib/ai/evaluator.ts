@@ -661,33 +661,20 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
   // Constraint 1: Solo Founder Cap
   // "If Team Size = Solo -> cap 'Team & Execution' to <= 50"
   if (ideaSubmission?.teamSize === 'solo') {
-    // Cap execution risk score (higher is better/safer in this context? 
-    // Wait, let's check executionRiskScore definition. 
-    // Typically 100 = Low Risk, 0 = High Risk. 
-    // If 100 is "Good/Safe", then "Low Risk" means High Score?
-    // Let's assume standard 0-100 where 100 is Best (Lowest Risk).
-    // If unsure, we check prompt labels: "0-100".
-    // Let's assume we are capping the *quality* score of execution.
-    // If strict: newResult.execution.executionRiskScore = Math.min(newResult.execution.executionRiskScore, 50);
-
-    // BUT: "Risk Score". If 100 is High Risk, we should set it TO High (>50). 
-    // Usually "Score" in this app is "Goodness" (Feasibility, Design, Market Fit). 
-    // So 100 = Best Execution (Lowest Risk).
     if (newResult.execution.executionRiskScore > 50) {
       newResult.execution.executionRiskScore = 50;
-      newResult.execution.executionRiskLabel = 'medium'; // Forced downgrade from high/low? "medium" is safer.
+      newResult.execution.executionRiskLabel = 'medium';
       calibrationNotes.push("Constraint: Solo founder execution score capped at 50.");
     }
     // Also cap overall slightly if it was super high?
     if (newResult.overallScore > 85) {
       newResult.overallScore = 85;
-      calibrationNotes.push("Constraint: Overall score capped for solo founder (execution risk).");
+      calibrationNotes.push("Constraint: Overall score capped for solo founder.");
     }
   }
 
   // Constraint 2: Memecoin + Low Budget
   // "If Project Type = Memecoin AND Budget is low -> apply market/launch penalty"
-  // Def of Low Budget: resources does NOT include "budget"
   const hasBudget = ideaSubmission?.resources?.includes('budget');
   if (projectType === 'memecoin' && !hasBudget) {
     // Penalty on Launch Readiness
@@ -696,25 +683,30 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
       newResult.launchReadinessLabel = 'low';
       calibrationNotes.push("Constraint: Memecoin without budget capped at low launch readiness.");
     }
-    // Penalty on Overall
-    newResult.overallScore = Math.max(10, newResult.overallScore - 10);
-    calibrationNotes.push("Constraint: Overall score penalty for memecoin with no budget.");
+    // Only apply overall penalty if score is relatively high to avoid double-dipping low scores
+    if (newResult.overallScore > 20) {
+      newResult.overallScore -= 10;
+      calibrationNotes.push("Constraint: Overall score penalty for memecoin with no budget.");
+    }
   }
 
   // Constraint 3: Vague Description
   // "If Description < 100 chars AND Attachments empty"
   const descLen = ideaSubmission?.description?.length || 0;
   const hasAttachments = !!ideaSubmission?.attachments && ideaSubmission.attachments.length > 5;
+  const isVague = descLen < 100 && !hasAttachments;
 
-  if (descLen < 100 && !hasAttachments) {
-    newResult.overallScore = Math.max(0, newResult.overallScore - 15);
+  if (isVague) {
+    // Reduced from -15 to -5 (Mission 16)
+    // Primary effect is now on confidence/notes, not nuking the score.
+    newResult.overallScore -= 5;
+
     // Force a "Confidence" note in technical comments
     newResult.technical.comments += " [System: Confidence Low due to sparse input]";
-    calibrationNotes.push("Constraint: Heavy penalty for vague/short description.");
+    calibrationNotes.push("Constraint: Minor penalty for vague/short description.");
   }
 
   // Constraint 4: Admin Risk in DeFi (Deterministic Keyword Check)
-  // If DeFi AND "admin" mentioned in risks but "timelock"/"dao" NOT mentioned in plan
   if (projectType === 'defi') {
     const risks = (newResult.technical.keyRisks || []).join(" ").toLowerCase();
     const plan = (ideaSubmission?.mvpScope || "" + ideaSubmission?.description || "").toLowerCase();
@@ -729,12 +721,34 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     }
   }
 
-  newResult.calibrationNotes = calibrationNotes;
+  // === Mission 16: Hard Fail & Score Floor ===
+  // Purpose: Prevent 0 scores unless explicitly "Hard Fail".
 
-  // ... (existing crypto check removal logic) ...
-  const isCryptoProject2 = projectType === 'memecoin' || projectType === 'defi';
-  // ...
+  let isHardFail = false;
 
+  // Hard Fail Definition for Memecoins
+  if (projectType === 'memecoin') {
+    const launchSignals = (newResult.launchReadinessSignals || []).join(" ").toLowerCase();
+    // Condition: No Budget AND Vague AND No LP Plan
+    // Check if LP plan exists in signals or submission
+    const hasLP = launchSignals.includes("liquidity") || launchSignals.includes("lp") || (ideaSubmission?.launchLiquidityPlan && ideaSubmission.launchLiquidityPlan.length > 10);
+
+    if (!hasBudget && isVague && !hasLP) {
+      isHardFail = true;
+      calibrationNotes.push("CRITICAL: Hard Fail triggered (No Budget + Vague + No LP Plan). Score collapsed to 0.");
+    }
+  }
+
+  // Final Floor Clamp
+  if (isHardFail) {
+    newResult.overallScore = 0;
+  } else {
+    // Non-hardfail floor is 5
+    newResult.overallScore = Math.max(5, newResult.overallScore);
+  }
+
+  // Ensure we never exceed 100
+  newResult.overallScore = Math.min(100, newResult.overallScore);
 
   newResult.calibrationNotes = calibrationNotes;
 

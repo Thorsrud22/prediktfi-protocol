@@ -89,10 +89,11 @@ describe('Evaluator Constraints', () => {
 
         const result = calibrateScore(context);
 
-        // Overall score penalty (-15 from 90 -> 75)
-        expect(result.overallScore).toBeLessThanOrEqual(75);
+        // Overall score penalty Reduced (-15 -> -5)
+        // 90 -> 85
+        expect(result.overallScore).toBe(85);
         expect(result.technical.comments).toContain("Confidence Low");
-        expect(result.calibrationNotes).toContain("Constraint: Heavy penalty for vague/short description.");
+        expect(result.calibrationNotes).toContain("Constraint: Minor penalty for vague/short description.");
     });
 
     it('Constraint 4: DeFi Admin Risk', () => {
@@ -118,6 +119,71 @@ describe('Evaluator Constraints', () => {
         expect(result.execution.executionRiskScore).toBeLessThanOrEqual(40);
         expect(result.cryptoNativeChecks?.rugPullRisk).toBe('high');
         expect(result.calibrationNotes).toContain("Constraint: DeFi with centralization risks and no safeguards flagged as High Risk.");
+    });
+
+    it('prevents 0 score for weak but not hard-fail inputs (Floor Check)', () => {
+        const weakResult: IdeaEvaluationResult = {
+            ...mockBaseResult,
+            overallScore: 30, // Initially weak
+            launchReadinessScore: 30, // Initially weak
+            launchReadinessSignals: [],
+            execution: { ...mockBaseResult.execution, executionRiskScore: 30 },
+        };
+
+        // NOT a hard fail because we will preserve LP plan or something to avoid the trigger
+        const weakSubmission: IdeaSubmission = {
+            ...mockBaseSubmission,
+            projectType: 'memecoin',
+            teamSize: 'solo',
+            resources: ['time'], // No budget
+            description: "To the moon", // Vague
+            attachments: "",
+            launchLiquidityPlan: "Locked LP for 12 months" // Has LP plan -> Avoids Hard Fail
+        };
+
+        const result = calibrateScore({
+            rawResult: weakResult,
+            projectType: 'memecoin',
+            ideaSubmission: weakSubmission
+        });
+
+        // 30 - 5 (launch mismatch - wait, launch 30, overall 30. No mismatch penalty as overall < 70)
+        // - 10 (no budget) = 20
+        // - 5 (vague) = 15
+        // Result should be 15.
+        // It should AT LEAST be > 5 (Floor).
+        console.log("Weak Result Score:", result.overallScore);
+
+        expect(result.overallScore).toBeGreaterThanOrEqual(15);
+        expect(result.overallScore).not.toBe(0);
+    });
+
+    it('triggers 0 score for explicit Hard Fail', () => {
+        const failResult: IdeaEvaluationResult = {
+            ...mockBaseResult,
+            overallScore: 30,
+            launchReadinessScore: 30,
+            launchReadinessSignals: [],
+        };
+
+        const failSubmission: IdeaSubmission = {
+            ...mockBaseSubmission,
+            projectType: 'memecoin',
+            teamSize: 'solo',
+            resources: ['time'], // No budget
+            description: "Some vague scam", // Vague (isVague=true)
+            attachments: "",
+            launchLiquidityPlan: "" // No LP (hasLP=false) -> Hard Fail
+        };
+
+        const result = calibrateScore({
+            rawResult: failResult,
+            projectType: 'memecoin',
+            ideaSubmission: failSubmission
+        });
+
+        expect(result.overallScore).toBe(0);
+        expect(result.calibrationNotes).toContain("CRITICAL: Hard Fail triggered (No Budget + Vague + No LP Plan). Score collapsed to 0.");
     });
 
 });
