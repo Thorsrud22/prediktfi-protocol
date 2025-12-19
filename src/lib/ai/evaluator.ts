@@ -112,7 +112,7 @@ import { fetchCompetitiveMemo } from "@/lib/market/competitive";
 // ... existing imports
 
 /**
- * Evaluates an idea using OpenAI GPT-5.1.
+ * Evaluates an idea using OpenAI GPT-5.2.
  * 
  * @param input The idea submission data.
  * @param options Optional configuration including market context.
@@ -228,7 +228,7 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
   try {
     // @ts-ignore - responses API might not be in the types yet
     const response = await openai().responses.create({
-      model: "gpt-5.1",
+      model: "gpt-5.2",
       input: [
         { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
         { role: "user", content: userContent }
