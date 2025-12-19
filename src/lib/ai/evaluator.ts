@@ -752,6 +752,7 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
 
   newResult.calibrationNotes = calibrationNotes;
 
+
   // Mission 14B: Show Crypto-Native Health only when it makes sense
   const isCryptoProject = projectType === 'memecoin' || projectType === 'defi';
   const hasToken = newResult.tokenomics.tokenNeeded;
@@ -767,7 +768,49 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
   // If none of these are true, remove the crypto block
   if (!isCryptoProject && !hasToken && !hasLiquidityPlan) {
     delete newResult.cryptoNativeChecks;
+  } else if (newResult.cryptoNativeChecks) {
+    // Mission 15: Enhance Liquidity Grading
+    if (ideaSubmission?.launchLiquidityPlan) {
+      const lpPlan = ideaSubmission.launchLiquidityPlan.toLowerCase();
+
+      // Extract Duration
+      let durationDetail = "Unclear duration";
+      if (lpPlan.includes("1 year") || lpPlan.includes("12 months") || lpPlan.includes("365 days")) durationDetail = "Locked for 1 year";
+      else if (lpPlan.includes("6 months") || lpPlan.includes("180 days")) durationDetail = "Locked for 6 months";
+      else if (lpPlan.includes("3 months") || lpPlan.includes("90 days")) durationDetail = "Locked for 3 months";
+      else if (lpPlan.includes("1 month") || lpPlan.includes("30 days")) durationDetail = "Locked for 30 days";
+      else if (lpPlan.includes("burn") || lpPlan.includes("burnt")) durationDetail = "Liquidity Burned";
+      else if (lpPlan.includes("lock") || lpPlan.includes("vesting")) durationDetail = "Locked (Unknown duration)";
+
+      newResult.cryptoNativeChecks.liquidityDetail = durationDetail;
+
+      // Grade Liquidity
+      if (lpPlan.includes("burn") || lpPlan.includes("1 year") || lpPlan.includes("12 months")) {
+        newResult.cryptoNativeChecks.liquidityGrade = 'strong';
+      } else if (lpPlan.includes("6 months") || lpPlan.includes("180 days")) {
+        newResult.cryptoNativeChecks.liquidityGrade = 'medium';
+      } else if (lpPlan.includes("1 month") || lpPlan.includes("30 days") || lpPlan.includes("short")) {
+        newResult.cryptoNativeChecks.liquidityGrade = 'weak';
+        calibrationNotes.push("Liquidity: Short lock period (30d) is considered weak signal.");
+      } else {
+        // Default if locked but unknown
+        if (newResult.cryptoNativeChecks.liquidityStatus === 'locked') {
+          newResult.cryptoNativeChecks.liquidityGrade = 'medium';
+        } else {
+          newResult.cryptoNativeChecks.liquidityGrade = 'weak';
+        }
+      }
+    }
   }
+
+  // Populate new fields
+  newResult.projectType = projectType;
+
+  // Set Confidence Level based on Vague logic (re-evaluated or carried over)
+  // We can check if we added the "Confidence Low" note or the specific constraint note
+  const isConfidenceLow = newResult.technical.comments.includes("Confidence Low") ||
+    calibrationNotes.some(n => n.includes("vague/short description"));
+  newResult.confidenceLevel = isConfidenceLow ? 'low' : 'high';
 
   return newResult;
 }

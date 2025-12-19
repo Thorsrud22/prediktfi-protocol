@@ -186,4 +186,50 @@ describe('Evaluator Constraints', () => {
         expect(result.calibrationNotes).toContain("CRITICAL: Hard Fail triggered (No Budget + Vague + No LP Plan). Score collapsed to 0.");
     });
 
+
+    it('Mission 15: Correctly grades liquidity lock duration', () => {
+        // Case A: Weak/Short Lock
+        const weakResult = calibrateScore({
+            rawResult: { ...mockBaseResult },
+            projectType: 'memecoin',
+            ideaSubmission: {
+                ...mockBaseSubmission,
+                projectType: 'memecoin',
+                launchLiquidityPlan: "Locked for 30 days"
+            }
+        });
+        expect(weakResult.cryptoNativeChecks?.liquidityGrade).toBe('weak');
+        expect(weakResult.cryptoNativeChecks?.liquidityDetail).toContain("30 days");
+
+        // Case B: Strong/Long Lock
+        const strongResult = calibrateScore({
+            rawResult: { ...mockBaseResult },
+            projectType: 'memecoin',
+            ideaSubmission: {
+                ...mockBaseSubmission,
+                projectType: 'memecoin',
+                launchLiquidityPlan: "Locked for 1 year and some burnt"
+            }
+        });
+        expect(strongResult.cryptoNativeChecks?.liquidityGrade).toBe('strong');
+    });
+
+    it('Mission 16: Sets Confidence Level to Low on Vague Input', () => {
+        const context: ScoreCalibrationContext = {
+            rawResult: { ...mockBaseResult },
+            projectType: 'other',
+            ideaSubmission: {
+                ...mockBaseSubmission,
+                description: "Too short.",
+                attachments: ""
+            }
+        };
+
+        const result = calibrateScore(context);
+
+        // From previous test, we know this adds a "confidence low" note
+        // Now check the top-level flag
+        expect(result.confidenceLevel).toBe('low');
+    });
+
 });

@@ -47,6 +47,8 @@ export type IdeaEvaluationResult = {
     rugPullRisk: 'low' | 'medium' | 'high';
     auditStatus: 'audited' | 'planned' | 'none' | 'not_applicable';
     liquidityStatus: 'locked' | 'burned' | 'unclear' | 'not_applicable';
+    liquidityDetail?: string; // e.g. "Locked for 1 year"
+    liquidityGrade?: 'weak' | 'medium' | 'strong';
     isAnonTeam: boolean;
   };
 
@@ -55,4 +57,7 @@ export type IdeaEvaluationResult = {
   launchReadinessScore?: number;
   launchReadinessLabel?: 'low' | 'medium' | 'high';
   launchReadinessSignals?: string[];
+
+  projectType?: string;
+  confidenceLevel?: 'low' | 'medium' | 'high';
 };
