@@ -66,8 +66,72 @@ export default function Home() {
               Coming soon
             </div>
           </div>
+
+          {/* Scroll Indicator */}
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
+            <svg
+              className="w-6 h-6 text-slate-500/50"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </div>
         </div>
       </div>
+
+      {/* How it works Section */}
+      <section className="relative z-10 py-24 px-4 border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">How it works</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto">
+              From raw idea to investor-grade analysis in three simple steps.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+            {/* Step 1 */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6 ring-1 ring-blue-500/20 group-hover:ring-blue-500/40 transition-all duration-300 group-hover:bg-blue-500/20">
+                <span className="text-2xl">⚡️</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">1. Submit Idea</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Paste a tweet, a whitepaper link, or just type out your raw concept. We handle the context.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-6 ring-1 ring-cyan-500/20 group-hover:ring-cyan-500/40 transition-all duration-300 group-hover:bg-cyan-500/20">
+                <span className="text-2xl">🧠</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">2. AI Stress-Test</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Our agent swarm analyzes market data, tokenomics, and sentiment to find holes in the logic.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center mb-6 ring-1 ring-teal-500/20 group-hover:ring-teal-500/40 transition-all duration-300 group-hover:bg-teal-500/20">
+                <span className="text-2xl">💎</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">3. Get Rated</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Receive a clear score (0-100) and a detailed analysis of the project's viability and risks.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
