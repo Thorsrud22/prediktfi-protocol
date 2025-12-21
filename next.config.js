@@ -13,7 +13,10 @@ const nextConfig = {
 
 
   // Performance optimizations
-  webpack: (config, { dev, isServer }) => {
+  webpack: (config, { dev, isServer, webpack }) => {
+    // Universal alias to kill the build error (REMOVED - root cause was splitChunks)
+    // config.plugins.push(...)
+
     if (dev) {
       // Development optimizations for speed
       config.resolve.alias = {
@@ -61,32 +64,32 @@ const nextConfig = {
       });
     } else {
       // Production optimizations
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          maxSize: 244000,
-          cacheGroups: {
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-            },
-            solana: {
-              test: /[\\/]node_modules[\\/]@solana[\\/]/,
-              name: 'solana',
-              chunks: 'all',
-              priority: 20,
-            },
-            wallet: {
-              test: /[\\/]node_modules[\\/]@solana[\\/]wallet-adapter[\\/]/,
-              name: 'wallet-adapter',
-              chunks: 'all',
-              priority: 30,
-            },
-          },
-        },
-      };
+      // config.optimization = {
+      //   ...config.optimization,
+      //   splitChunks: {
+      //     chunks: 'all',
+      //     maxSize: 244000,
+      //     cacheGroups: {
+      //       vendor: {
+      //         test: /[\\/]node_modules[\\/]/,
+      //         name: 'vendors',
+      //         chunks: 'all',
+      //       },
+      //       solana: {
+      //         test: /[\\/]node_modules[\\/]@solana[\\/]/,
+      //         name: 'solana',
+      //         chunks: 'all',
+      //         priority: 20,
+      //       },
+      //       wallet: {
+      //         test: /[\\/]node_modules[\\/]@solana[\\/]wallet-adapter[\\/]/,
+      //         name: 'wallet-adapter',
+      //         chunks: 'all',
+      //         priority: 30,
+      //       },
+      //     },
+      //   },
+      // };
     }
 
     return config;

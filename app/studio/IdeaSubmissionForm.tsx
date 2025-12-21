@@ -74,7 +74,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 bg-slate-900/95 rounded-xl border border-white/10 p-8 shadow-xl">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-slate-900 rounded-xl border border-white/10 p-8 shadow-xl">
             <h2 className="text-2xl font-bold text-white mb-6">Submit Your Idea</h2>
 
             {/* Project Type */}

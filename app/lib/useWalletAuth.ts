@@ -219,14 +219,14 @@ export function useWalletAuth() {
       if (!verifyResponse.ok) {
         const error = await verifyResponse.json();
         console.error('Verification failed:', verifyResponse.status, error);
-        
+
         // If nonce expired or invalid, try to re-authenticate once
         if (verifyResponse.status === 401 && error.error?.includes('nonce')) {
           console.log('Nonce issue detected, clearing cache and will retry on next attempt...');
           localStorage.removeItem(cacheKey);
           throw new Error('Session expired. Please try connecting again.');
         }
-        
+
         throw new Error(error.error || 'Authentication failed');
       }
       console.log('Step 3 complete: Signature verified');
@@ -291,10 +291,10 @@ export function useWalletAuth() {
   const signOutAndDisconnect = async () => {
     try {
       await signOut?.();
-    } catch {}
+    } catch { }
     try {
       await wallet?.adapter?.disconnect?.();
-    } catch {}
+    } catch { }
   };
 
   const connectAndAuthenticate = async () => {

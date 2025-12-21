@@ -1,7 +1,7 @@
 'use client';
 
-import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import './Aurora.css';
 
 const VERT = `#version 300 es
@@ -128,10 +128,18 @@ export function Aurora(props: AuroraProps) {
     blend = 0.5,
     variant = 'default'
   } = props;
+
+  const pathname = usePathname();
+  // Only run WebGL on landing page
+  const isLandingPage = pathname === '/';
+
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
   const resolvedColorStops = useMemo(
     () => props.colorStops ?? ['#5227FF', '#7cff67', '#5227FF'],
     [props.colorStops?.join('|') ?? 'default']
   );
+
   const propsRef = useRef<AuroraProps>({ ...props, colorStops: resolvedColorStops });
   propsRef.current = { ...props, colorStops: props.colorStops ?? resolvedColorStops };
 
@@ -142,7 +150,23 @@ export function Aurora(props: AuroraProps) {
 
   const ctnDom = useRef<HTMLDivElement>(null);
 
+  // Check for reduced motion preference
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  // WebGL Render Loop
+  useEffect(() => {
+    // Skip WebGL initialization if:
+    // 1. Reduced motion is enabled
+    // 2. NOT on landing page (use static fallback)
+    if (prefersReducedMotion || !isLandingPage) return;
+
     const ctn = ctnDom.current;
     if (!ctn) return;
 
@@ -150,7 +174,16 @@ export function Aurora(props: AuroraProps) {
     let idleId: number | null = null;
     let animationFrameId: number | null = null;
 
-    const startAurora = () => {
+    const startAurora = async () => {
+      // Dynamic import of ogl to prevent server-side errors
+      // @ts-ignore
+      const { Renderer, Program, Mesh, Color, Triangle } = await import('ogl');
+
+      // Remove any existing canvas to be safe
+      while (ctn.firstChild) {
+        ctn.removeChild(ctn.firstChild);
+      }
+
       const renderer = new Renderer({
         alpha: true,
         premultipliedAlpha: true,
@@ -172,7 +205,7 @@ export function Aurora(props: AuroraProps) {
         delete geometry.attributes.uv;
       }
 
-      let program: Program;
+      let program: any;
       const baseColorStops = resolvedColorStops.map(hex => {
         const c = new Color(hex);
         return [c.r, c.g, c.b];
@@ -198,7 +231,7 @@ export function Aurora(props: AuroraProps) {
         const key = stops.join('|');
         if (key === lastStopsKey) return;
         lastStopsKey = key;
-        program.uniforms.uColorStops.value = stops.map(hex => {
+        program.uniforms.uColorStops.value = stops.map((hex: string) => {
           const c = new Color(hex);
           return [c.r, c.g, c.b];
         });
@@ -288,9 +321,27 @@ export function Aurora(props: AuroraProps) {
       }
       cleanup?.();
     };
-  }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed]);
+  }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed, isLandingPage, prefersReducedMotion]);
 
-  return <div ref={ctnDom} className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''}`} />;
+  // If not on landing page or reduced motion, render static background
+  const showStatic = !isLandingPage || prefersReducedMotion;
+
+  // Style for static fallback: A dark, subtle gradient based heavily on the first color stop (usually blue)
+  const staticStyle = showStatic ? {
+    background: `
+      radial-gradient(circle at 50% 10%, ${resolvedColorStops[0]}40 0%, transparent 60%),
+      radial-gradient(circle at 80% 40%, ${resolvedColorStops[2]}20 0%, transparent 50%),
+      linear-gradient(to bottom, #0F172A, #020617)
+    `
+  } : undefined;
+
+  return (
+    <div
+      ref={ctnDom}
+      className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''}`}
+      style={{ ...staticStyle, willChange: 'transform' }}
+    />
+  );
 }
 
 // Memoize the component to prevent unnecessary re-renders

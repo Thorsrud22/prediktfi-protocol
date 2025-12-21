@@ -92,13 +92,20 @@ ${JSON.stringify({
 
     try {
         // 3. Call LLM
+        const model = process.env.EVAL_MODEL || "gpt-5.2";
+        const reasoningEffort = process.env.EVAL_REASONING_SHORT || "medium";
+
         // @ts-ignore - openai client typing
         const response = await openai().responses.create({
-            model: "gpt-5.2",
+            model: model,
             input: [
                 { role: "system", content: COMPETITIVE_SYSTEM_PROMPT },
                 { role: "user", content: userContent }
             ],
+            // Activate "Thinking" logic via parameter
+            reasoning: {
+                effort: reasoningEffort
+            },
             text: {
                 format: { type: "json_object" }
             },

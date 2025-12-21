@@ -26,7 +26,7 @@ const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
   const router = useRouter();
   const { isConnected } = useSimplifiedWallet();
   const { showOnboarding, completeOnboarding } = useOnboarding();
-  
+
   // Disabled returning user logic - always show landing page
   const [isReturningUser] = useState(false);
 
@@ -39,7 +39,7 @@ const HomeClient = memo(function HomeClient({ data }: HomeClientProps) {
 
       {/* Old content hidden - new Aurora landing page is now in app/page.tsx */}
       {/* Uncomment below to show the old Hero + TrendingMarkets layout */}
-      
+
       {/*
       <Hero />
 

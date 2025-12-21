@@ -39,6 +39,7 @@ global.fetch = vi.fn();
 describe('AI Idea Evaluator Studio', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        window.scrollTo = vi.fn();
     });
 
     it('renders the landing view initially', () => {
@@ -56,11 +57,16 @@ describe('AI Idea Evaluator Studio', () => {
         expect(screen.getByRole('button', { name: /Start New Evaluation/i })).toBeInTheDocument();
     });
 
-    it('switches to evaluation flow when CTA is clicked', () => {
+    it('switches to evaluation flow when CTA is clicked', async () => {
         render(<StudioPage />);
 
         const ctaButton = screen.getByRole('button', { name: /Start new evaluation/i });
         fireEvent.click(ctaButton);
+
+        // Wait for skeleton to disappear and form to load
+        await waitFor(() => {
+            expect(screen.getByText('Project Type')).toBeInTheDocument();
+        }, { timeout: 3000 });
 
         expect(screen.getByText('Submit Your Idea')).toBeInTheDocument();
         expect(screen.getByText('Project Type')).toBeInTheDocument();
@@ -71,6 +77,11 @@ describe('AI Idea Evaluator Studio', () => {
 
         // Enter flow
         fireEvent.click(screen.getByRole('button', { name: /Start new evaluation/i }));
+
+        // Wait for skeleton to disappear and form to load
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: /Evaluate Idea/i })).toBeInTheDocument();
+        }, { timeout: 2000 });
 
         // Submit empty form
         const submitButton = screen.getByRole('button', { name: /Evaluate Idea/i });
@@ -132,6 +143,11 @@ describe('AI Idea Evaluator Studio', () => {
 
         // Enter flow
         fireEvent.click(screen.getByRole('button', { name: /Start new evaluation/i }));
+
+        // Wait for skeleton to disappear and form to load
+        await waitFor(() => {
+            expect(screen.getByText('DeFi')).toBeInTheDocument();
+        }, { timeout: 2000 });
 
         // Fill form
         fireEvent.click(screen.getByText('DeFi')); // Project Type

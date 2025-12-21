@@ -9,12 +9,14 @@ import IdeaSubmissionForm from './IdeaSubmissionForm';
 import IdeaEvaluationReport from './IdeaEvaluationReport';
 import { IdeaSubmission } from '@/lib/ideaSchema';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
+import StudioSkeleton from './StudioSkeleton';
 
 type Step = 'question' | 'analysis' | 'commit';
 
 export default function StudioPage() {
   const { isConnected, connect, publicKey } = useSimplifiedWallet();
   const [isStarted, setIsStarted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>('question');
   const [submissionData, setSubmissionData] = useState<IdeaSubmission | null>(null);
   const [evaluationResult, setEvaluationResult] = useState<IdeaEvaluationResult | null>(null);
@@ -34,7 +36,11 @@ export default function StudioPage() {
   }, []);
 
   const handleStart = () => {
+    setIsLoading(true);
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     setIsStarted(true);
+    // Short artificial delay to ensure Skeleton is seen and masks the paint cost of the heavy form
+    setTimeout(() => setIsLoading(false), 800);
   };
 
   const handleEvaluate = async (data: IdeaSubmission) => {
@@ -73,10 +79,14 @@ export default function StudioPage() {
   };
 
   const handleStartNew = () => {
+    setIsLoading(true);
+    // Scroll to top instantly to prevent layout jump when switching from long report -> short form
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     setSubmissionData(null);
     setEvaluationResult(null);
     setCurrentStep('question');
     setError(null);
+    setTimeout(() => setIsLoading(false), 800);
   };
 
   const handleCommit = async () => {
@@ -102,15 +112,13 @@ export default function StudioPage() {
     }
   };
 
+
   return (
     <div className="relative min-h-screen text-white selection:bg-blue-500/30">
       <PerformanceMonitor />
 
-
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!isStarted ? (
-          /* Landing View */
           /* Landing View */
           <div className="relative text-center py-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Background Glows */}
@@ -177,7 +185,9 @@ export default function StudioPage() {
           </div>
         ) : (
           /* Evaluation Flow */
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
+            {/* Persistent Glow behind Steps */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
             {/* Progress Steps */}
             <div className="flex justify-between mb-12 relative">
               <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/10 -z-10"></div>
@@ -211,7 +221,11 @@ export default function StudioPage() {
             <div className="min-h-[400px]">
               {currentStep === 'question' && (
                 <>
-                  {isAnalyzing ? (
+                  {isLoading ? (
+                    <div className="animate-in fade-in duration-300">
+                      <StudioSkeleton />
+                    </div>
+                  ) : isAnalyzing ? (
                     <EvaluationLoadingOverlay />
                   ) : (
                     <>
@@ -221,11 +235,13 @@ export default function StudioPage() {
                         </div>
                       )}
 
-                      <IdeaSubmissionForm
-                        onSubmit={handleEvaluate}
-                        isSubmitting={isAnalyzing}
-                        initialData={submissionData || undefined}
-                      />
+                      <div className="animate-in fade-in duration-300">
+                        <IdeaSubmissionForm
+                          onSubmit={handleEvaluate}
+                          isSubmitting={isAnalyzing}
+                          initialData={submissionData || undefined}
+                        />
+                      </div>
                     </>
                   )}
                 </>
