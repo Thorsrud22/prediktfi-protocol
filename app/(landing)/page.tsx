@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Aurora from '../components/ui/Aurora';
+import ProcessTimeline from '../components/ProcessTimeline';
 import { InstantLink } from '../components/InstantLink';
 
 export const dynamic = "force-static";
@@ -68,6 +69,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Process Timeline */}
+      <ProcessTimeline />
     </div>
   );
 }
