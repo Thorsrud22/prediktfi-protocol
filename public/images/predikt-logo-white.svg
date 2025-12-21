@@ -1,0 +1,38 @@
+<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Final White Version - Transparent Background -->
+  <g transform="translate(250, 250)">
+    <!-- Letters positioned in a circle, fading opacity, explicitly white -->
+    <!-- P -->
+    <text x="0" y="-150" font-family="Arial Black, sans-serif" font-weight="900" font-size="80" fill="white" text-anchor="middle" dominant-baseline="central" opacity="1.0">P</text>
+    
+    <!-- R -->
+    <g transform="translate(117.5, -93.5)">
+      <text x="0" y="0" font-family="Arial Black, sans-serif" font-weight="900" font-size="70" fill="white" text-anchor="middle" dominant-baseline="central" opacity="0.8">R</text>
+    </g>
+    
+    <!-- E -->
+    <g transform="translate(146, 34)">
+      <text x="0" y="0" font-family="Arial Black, sans-serif" font-weight="900" font-size="60" fill="white" text-anchor="middle" dominant-baseline="central" opacity="0.6">E</text>
+    </g>
+    
+    <!-- D -->
+    <g transform="translate(64, 135)">
+      <text x="0" y="0" font-family="Arial Black, sans-serif" font-weight="900" font-size="50" fill="white" text-anchor="middle" dominant-baseline="central" opacity="0.45">D</text>
+    </g>
+    
+    <!-- I -->
+    <g transform="translate(-64, 135)">
+      <text x="0" y="0" font-family="Arial Black, sans-serif" font-weight="900" font-size="40" fill="white" text-anchor="middle" dominant-baseline="central" opacity="0.3">I</text>
+    </g>
+    
+    <!-- K -->
+    <g transform="translate(-146, 34)">
+      <text x="0" y="0" font-family="Arial Black, sans-serif" font-weight="900" font-size="30" fill="white" text-anchor="middle" dominant-baseline="central" opacity="0.15">K</text>
+    </g>
+    
+    <!-- T -->
+    <g transform="translate(-117.5, -93.5)">
+      <text x="0" y="0" font-family="Arial Black, sans-serif" font-weight="900" font-size="20" fill="white" text-anchor="middle" dominant-baseline="central" opacity="0.08">T</text>
+    </g>
+  </g>
+</svg>
