@@ -11,7 +11,7 @@ void main() {
 }
 `;
 
-// Simple pseudo-noise using sine waves - drastically cheaper than Perlin/Simplex
+// Smoother, more liquid-like noise
 const FRAG = `#version 300 es
 precision mediump float;
 
@@ -24,7 +24,8 @@ uniform float uBlend;
 out vec4 fragColor;
 
 float snoise(vec2 v) {
-    return sin(v.x * 10.0 + uTime * 0.5) * 0.5 + sin(v.y * 8.0 - uTime * 0.3) * 0.5;
+    // Smoother wave function with 3 components
+    return (sin(v.x * 6.0 + uTime * 0.2) + sin(v.y * 4.0 + uTime * 0.35) + sin((v.x + v.y) * 2.0 - uTime * 0.1)) / 3.0;
 }
 
 struct ColorStop {
@@ -35,8 +36,8 @@ struct ColorStop {
 #define COLOR_RAMP(colors, factor, finalColor) { \
   int index = 0; \
   for (int i = 0; i < 2; i++) { \
-     ColorStop currentColor = colors[i]; \
-     bool isInBetween = currentColor.position <= factor; \
+    ColorStop currentColor = colors[i]; \
+    bool isInBetween = currentColor.position <= factor; \
     index = int(mix(float(index), float(i), float(isInBetween))); \
   } \
   ColorStop currentColor = colors[index]; \
@@ -57,7 +58,8 @@ void main() {
   vec3 rampColor;
   COLOR_RAMP(colors, uv.x, rampColor);
   
-  float height = snoise(vec2(uv.x * 2.0 + uTime * 0.1, uTime * 0.25)) * 0.5 * uAmplitude;
+  // Slower, more organic movement
+  float height = snoise(vec2(uv.x * 1.5, uTime)) * 0.5 * uAmplitude;
   height = exp(height);
   // Adjusted vertical position to prevent bottom cutoff
   height = (uv.y * 2.0 - height + 0.0); 
@@ -199,7 +201,7 @@ export function Aurora(props: AuroraProps) {
 
         // Wrap time to avoid float precision loss (lag) over time
         // 1000 is arbitrary large number, period of sine is 2PI
-        timeAccumulator += dt * (propsRef.current.speed ?? effectiveSpeed) * 0.15;
+        timeAccumulator += dt * (propsRef.current.speed ?? effectiveSpeed) * 0.1; // Reduced from 0.15 to 0.1 for smoother flow
         if (timeAccumulator > 10000) timeAccumulator -= 10000;
 
         program.uniforms.uTime.value = timeAccumulator;

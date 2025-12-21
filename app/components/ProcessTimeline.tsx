@@ -77,12 +77,12 @@ export default function ProcessTimeline() {
                     {
                         opacity: 0,
                         x: isLeft ? -50 : 50,
-                        filter: 'blur(10px)'
+                        // filter: 'blur(10px)' // Removed for performance
                     },
                     {
                         opacity: 1,
                         x: 0,
-                        filter: 'blur(0px)',
+                        // filter: 'blur(0px)', // Removed for performance
                         duration: 0.8,
                         ease: 'power3.out',
                         scrollTrigger: {
@@ -100,8 +100,13 @@ export default function ProcessTimeline() {
 
     return (
         <section ref={containerRef} className="relative py-24 px-4 overflow-hidden">
-            {/* Background Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+            {/* Background Glow - Optimized: Radial Gradient instead of Box Shadow Blur */}
+            <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none"
+                style={{
+                    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%)'
+                }}
+            />
 
             <div className="max-w-5xl mx-auto relative z-10">
                 {/* Section Header */}
