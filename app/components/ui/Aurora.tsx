@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
+import React, { useEffect, useMemo, useRef } from 'react';
 import './Aurora.css';
 
 const VERT = `#version 300 es
@@ -11,6 +11,7 @@ void main() {
 }
 `;
 
+// Smoother, more liquid-like noise
 const FRAG = `#version 300 es
 precision mediump float;
 
@@ -22,48 +23,9 @@ uniform float uBlend;
 
 out vec4 fragColor;
 
-vec3 permute(vec3 x) {
-  return mod(((x * 34.0) + 1.0) * x, 289.0);
-}
-
-float snoise(vec2 v){
-  const vec4 C = vec4(
-      0.211324865405187, 0.366025403784439,
-      -0.577350269189626, 0.024390243902439
-  );
-  vec2 i  = floor(v + dot(v, C.yy));
-  vec2 x0 = v - i + dot(i, C.xx);
-  vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-  vec4 x12 = x0.xyxy + C.xxzz;
-  x12.xy -= i1;
-  i = mod(i, 289.0);
-
-  vec3 p = permute(
-      permute(i.y + vec3(0.0, i1.y, 1.0))
-    + i.x + vec3(0.0, i1.x, 1.0)
-  );
-
-  vec3 m = max(
-      0.5 - vec3(
-          dot(x0, x0),
-          dot(x12.xy, x12.xy),
-          dot(x12.zw, x12.zw)
-      ), 
-      0.0
-  );
-  m = m * m;
-  m = m * m;
-
-  vec3 x = 2.0 * fract(p * C.www) - 1.0;
-  vec3 h = abs(x) - 0.5;
-  vec3 ox = floor(x + 0.5);
-  vec3 a0 = x - ox;
-  m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
-
-  vec3 g;
-  g.x  = a0.x  * x0.x  + h.x  * x0.y;
-  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-  return 130.0 * dot(m, g);
+float snoise(vec2 v) {
+    // Smoother wave function with 3 components
+    return (sin(v.x * 6.0 + uTime * 0.2) + sin(v.y * 4.0 + uTime * 0.35) + sin((v.x + v.y) * 2.0 - uTime * 0.1)) / 3.0;
 }
 
 struct ColorStop {
@@ -71,15 +33,15 @@ struct ColorStop {
   float position;
 };
 
-#define COLOR_RAMP(colors, factor, finalColor) {              \
-  int index = 0;                                            \
-  for (int i = 0; i < 2; i++) {                               \
-     ColorStop currentColor = colors[i];                    \
-     bool isInBetween = currentColor.position <= factor;    \
-     index = int(mix(float(index), float(i), float(isInBetween))); \
-  }                                                         \
-  ColorStop currentColor = colors[index];                   \
-  ColorStop nextColor = colors[index + 1];                  \
+#define COLOR_RAMP(colors, factor, finalColor) { \
+  int index = 0; \
+  for (int i = 0; i < 2; i++) { \
+    ColorStop currentColor = colors[i]; \
+    bool isInBetween = currentColor.position <= factor; \
+    index = int(mix(float(index), float(i), float(isInBetween))); \
+  } \
+  ColorStop currentColor = colors[index]; \
+  ColorStop nextColor = colors[index + 1]; \
   float range = nextColor.position - currentColor.position; \
   float lerpFactor = (factor - currentColor.position) / range; \
   finalColor = mix(currentColor.color, nextColor.color, lerpFactor); \
@@ -96,16 +58,18 @@ void main() {
   vec3 rampColor;
   COLOR_RAMP(colors, uv.x, rampColor);
   
-  float height = snoise(vec2(uv.x * 2.0 + uTime * 0.1, uTime * 0.25)) * 0.5 * uAmplitude;
+  // Slower, more organic movement
+  float height = snoise(vec2(uv.x * 1.5, uTime)) * 0.5 * uAmplitude;
   height = exp(height);
-  height = (uv.y * 2.0 - height + 0.2);
+  // Adjusted vertical position to prevent bottom cutoff
+  height = (uv.y * 2.0 - height + 0.0); 
   float intensity = 0.6 * height;
   
   float midPoint = 0.20;
   float auroraAlpha = smoothstep(midPoint - uBlend * 0.5, midPoint + uBlend * 0.5, intensity);
   
   vec3 auroraColor = intensity * rampColor;
-  
+
   fragColor = vec4(auroraColor * auroraAlpha, auroraAlpha);
 }
 `;
@@ -128,18 +92,10 @@ export function Aurora(props: AuroraProps) {
     blend = 0.5,
     variant = 'default'
   } = props;
-
-  const pathname = usePathname();
-  // Only run WebGL on landing page
-  const isLandingPage = pathname === '/';
-
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
   const resolvedColorStops = useMemo(
     () => props.colorStops ?? ['#5227FF', '#7cff67', '#5227FF'],
     [props.colorStops?.join('|') ?? 'default']
   );
-
   const propsRef = useRef<AuroraProps>({ ...props, colorStops: resolvedColorStops });
   propsRef.current = { ...props, colorStops: props.colorStops ?? resolvedColorStops };
 
@@ -150,23 +106,7 @@ export function Aurora(props: AuroraProps) {
 
   const ctnDom = useRef<HTMLDivElement>(null);
 
-  // Check for reduced motion preference
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  // WebGL Render Loop
-  useEffect(() => {
-    // Skip WebGL initialization if:
-    // 1. Reduced motion is enabled
-    // 2. NOT on landing page (use static fallback)
-    if (prefersReducedMotion || !isLandingPage) return;
-
     const ctn = ctnDom.current;
     if (!ctn) return;
 
@@ -174,30 +114,21 @@ export function Aurora(props: AuroraProps) {
     let idleId: number | null = null;
     let animationFrameId: number | null = null;
 
-    const startAurora = async () => {
-      // Dynamic import of ogl to prevent server-side errors
-      // @ts-ignore
-      const { Renderer, Program, Mesh, Color, Triangle } = await import('ogl');
-
-      // Remove any existing canvas to be safe
-      while (ctn.firstChild) {
-        ctn.removeChild(ctn.firstChild);
-      }
-
+    const startAurora = () => {
       const renderer = new Renderer({
         alpha: true,
         premultipliedAlpha: true,
-        antialias: false, // Disable AA for performance
-        powerPreference: 'high-performance', // Hint to use discrete GPU
-        depth: false, // Explicitly disable depth buffer
-        dpr: 1, // Force low resolution for performance
+        antialias: false,
+        powerPreference: 'default',
+        depth: false,
+        dpr: 1, // Standard resolution (1x) for best performance on all devices
       });
       const gl = renderer.gl;
       gl.clearColor(0, 0, 0, 0);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      gl.disable(gl.DEPTH_TEST); // Disable depth testing
-      gl.disable(gl.CULL_FACE);  // Disable face culling
+      gl.disable(gl.DEPTH_TEST);
+      gl.disable(gl.CULL_FACE);
       gl.canvas.style.backgroundColor = 'transparent';
 
       const geometry = new Triangle(gl);
@@ -205,7 +136,7 @@ export function Aurora(props: AuroraProps) {
         delete geometry.attributes.uv;
       }
 
-      let program: any;
+      let program: Program;
       const baseColorStops = resolvedColorStops.map(hex => {
         const c = new Color(hex);
         return [c.r, c.g, c.b];
@@ -226,53 +157,54 @@ export function Aurora(props: AuroraProps) {
       const mesh = new Mesh(gl, { geometry, program });
       ctn.appendChild(gl.canvas);
 
+      // Force canvas to fill container via CSS
+      gl.canvas.style.display = 'block';
+      gl.canvas.style.width = '100%';
+      gl.canvas.style.height = '100%';
+
       let lastStopsKey = '';
       const updateColorStops = (stops: string[]) => {
         const key = stops.join('|');
         if (key === lastStopsKey) return;
         lastStopsKey = key;
-        program.uniforms.uColorStops.value = stops.map((hex: string) => {
+        program.uniforms.uColorStops.value = stops.map(hex => {
           const c = new Color(hex);
           return [c.r, c.g, c.b];
         });
       };
 
-      const RENDER_SCALE = 0.125; // Reduce internal resolution to 12.5% for extreme performance
-
       const resize = () => {
+        if (!ctn) return;
         const width = ctn.offsetWidth;
         const height = ctn.offsetHeight;
-        // Render at lower resolution and let CSS upscale it
-        renderer.setSize(width * RENDER_SCALE, height * RENDER_SCALE);
-        // Force style to stretch back to full size
-        if (renderer.gl.canvas instanceof HTMLCanvasElement) {
-          renderer.gl.canvas.style.width = '100%';
-          renderer.gl.canvas.style.height = '100%';
-        }
-        program.uniforms.uResolution.value = [width * RENDER_SCALE, height * RENDER_SCALE];
+
+        renderer.setSize(width, height);
+        program.uniforms.uResolution.value = [width, height];
       };
 
       window.addEventListener('resize', resize);
       resize();
 
-      // FPS Limiting Logic
-      const targetFPS = 60;
-      const frameInterval = 1000 / targetFPS;
-      let lastFrameTime = 0;
       let isVisible = true;
+      let timeAccumulator = 0;
+      let lastTime = performance.now();
 
       const update = (t: number) => {
         animationFrameId = requestAnimationFrame(update);
 
         if (!isVisible) return;
 
-        const elapsed = t - lastFrameTime;
-        if (elapsed < frameInterval) return;
+        // Calculate delta time
+        const now = performance.now();
+        const dt = (now - lastTime) * 0.001; // seconds
+        lastTime = now;
 
-        lastFrameTime = t - (elapsed % frameInterval);
+        // Wrap time to avoid float precision loss (lag) over time
+        // 1000 is arbitrary large number, period of sine is 2PI
+        timeAccumulator += dt * (propsRef.current.speed ?? effectiveSpeed) * 0.1; // Reduced from 0.15 to 0.1 for smoother flow
+        if (timeAccumulator > 10000) timeAccumulator -= 10000;
 
-        const { time = t * 0.01, speed = effectiveSpeed } = propsRef.current;
-        program.uniforms.uTime.value = time * speed * 0.1;
+        program.uniforms.uTime.value = timeAccumulator;
         program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? effectiveAmplitude;
         program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
         const stops = propsRef.current.colorStops ?? resolvedColorStops;
@@ -321,27 +253,9 @@ export function Aurora(props: AuroraProps) {
       }
       cleanup?.();
     };
-  }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed, isLandingPage, prefersReducedMotion]);
+  }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed]);
 
-  // If not on landing page or reduced motion, render static background
-  const showStatic = !isLandingPage || prefersReducedMotion;
-
-  // Style for static fallback: A dark, subtle gradient based heavily on the first color stop (usually blue)
-  const staticStyle = showStatic ? {
-    background: `
-      radial-gradient(circle at 50% 10%, ${resolvedColorStops[0]}40 0%, transparent 60%),
-      radial-gradient(circle at 80% 40%, ${resolvedColorStops[2]}20 0%, transparent 50%),
-      linear-gradient(to bottom, #0F172A, #020617)
-    `
-  } : undefined;
-
-  return (
-    <div
-      ref={ctnDom}
-      className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''}`}
-      style={{ ...staticStyle, willChange: 'transform' }}
-    />
-  );
+  return <div ref={ctnDom} className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''} `} />;
 }
 
 // Memoize the component to prevent unnecessary re-renders
