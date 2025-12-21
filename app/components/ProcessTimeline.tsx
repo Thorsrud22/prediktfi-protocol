@@ -53,17 +53,16 @@ export default function ProcessTimeline() {
 
     useLayoutEffect(() => {
         const ctx = gsap.context(() => {
-            // Animate the central line
+            // Animate the central line (One-time animation, no scrubbing for performance)
             gsap.from('.timeline-line', {
                 scaleY: 0,
                 transformOrigin: 'top center',
-                duration: 1.5,
+                duration: 2,
                 ease: 'power3.out',
                 scrollTrigger: {
                     trigger: containerRef.current,
-                    start: 'top 60%',
-                    end: 'bottom 80%',
-                    scrub: 1
+                    start: 'top 70%',
+                    toggleActions: 'play none none none' // Play once
                 }
             });
 
@@ -76,15 +75,13 @@ export default function ProcessTimeline() {
                 gsap.fromTo(step,
                     {
                         opacity: 0,
-                        x: isLeft ? -50 : 50,
-                        // filter: 'blur(10px)' // Removed for performance
+                        x: isLeft ? -30 : 30, // Reduced travel distance
                     },
                     {
                         opacity: 1,
                         x: 0,
-                        // filter: 'blur(0px)', // Removed for performance
-                        duration: 0.8,
-                        ease: 'power3.out',
+                        duration: 0.6,
+                        ease: 'power2.out',
                         scrollTrigger: {
                             trigger: step,
                             start: 'top 85%',
@@ -99,18 +96,18 @@ export default function ProcessTimeline() {
     }, []);
 
     return (
-        <section ref={containerRef} className="relative py-24 px-4 overflow-hidden">
-            {/* Background Glow - Optimized: Radial Gradient instead of Box Shadow Blur */}
+        <section ref={containerRef} className="relative py-32 px-4 overflow-hidden">
+            {/* Background Glow - Optimized */}
             <div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none"
                 style={{
-                    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%)'
+                    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 60%)'
                 }}
             />
 
-            <div className="max-w-5xl mx-auto relative z-10">
+            <div className="max-w-6xl mx-auto relative z-10">
                 {/* Section Header */}
-                <div className="text-center mb-20 space-y-4">
+                <div className="text-center mb-32 space-y-4">
                     <h2 className="text-sm font-bold tracking-[0.2em] text-cyan-400 uppercase">
                         The Process
                     </h2>
@@ -124,27 +121,29 @@ export default function ProcessTimeline() {
                     {/* Central Line */}
                     <div className="timeline-line absolute left-4 md:left-1/2 top-0 bottom-0 w-1 md:-ml-0.5 bg-gradient-to-b from-blue-500/20 via-cyan-500/50 to-emerald-500/20 rounded-full" />
 
-                    <div className="space-y-12 md:space-y-24">
+                    <div className="space-y-24">
                         {STEPS.map((step, index) => {
                             const isEven = index % 2 === 0;
                             return (
                                 <div
                                     key={step.id}
                                     ref={el => { stepsRef.current[index] = el }}
-                                    className={`relative flex flex-col md:flex-row gap-8 items-center ${isEven ? 'md:flex-row-reverse' : ''
+                                    className={`relative flex flex-col md:flex-row gap-12 md:gap-24 items-center ${isEven ? 'md:flex-row-reverse' : ''
                                         }`}
                                 >
                                     {/* Content Side */}
-                                    <div className="flex-1 w-full md:w-1/2 p-6 rounded-2xl bg-slate-900/40 border border-slate-800/50 backdrop-blur-sm hover:bg-slate-800/40 hover:border-cyan-500/30 transition-all duration-300 group">
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <div className={`p-3 rounded-xl bg-gradient-to-br ${step.color} bg-opacity-10 opacity-90 group-hover:scale-110 transition-transform duration-300`}>
-                                                <step.icon className="w-6 h-6 text-white" />
+                                    <div className="flex-1 w-full md:w-1/2 pl-12 md:pl-0">
+                                        <div className="p-8 rounded-2xl bg-slate-900/80 border border-slate-800/50 hover:bg-slate-800/80 hover:border-cyan-500/30 transition-all duration-300 group shadow-2xl">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className={`p-3 rounded-xl bg-gradient-to-br ${step.color} bg-opacity-10 opacity-90 group-hover:scale-110 transition-transform duration-300`}>
+                                                    <step.icon className="w-6 h-6 text-white" />
+                                                </div>
+                                                <h4 className="text-xl font-bold text-white">{step.title}</h4>
                                             </div>
-                                            <h4 className="text-xl font-bold text-white">{step.title}</h4>
+                                            <p className="text-slate-400 leading-relaxed">
+                                                {step.description}
+                                            </p>
                                         </div>
-                                        <p className="text-slate-400 leading-relaxed">
-                                            {step.description}
-                                        </p>
                                     </div>
 
                                     {/* Center Dot */}
