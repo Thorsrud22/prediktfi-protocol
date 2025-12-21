@@ -1,5 +1,6 @@
 import React from 'react';
 import Hero from './components/Hero';
+import ProcessTimeline from './components/ProcessTimeline';
 import TrendingMarkets from './components/TrendingMarkets';
 import ActivityFeed from './components/ActivityFeed';
 import TopCreators from './components/TopCreators';
@@ -88,6 +89,9 @@ export default async function Home() {
           </div>
         </div>
       </div>
+
+      {/* Process Timeline */}
+      <ProcessTimeline />
 
       {/* Client-side logic for redirects */}
       <HomeClient data={data} />
