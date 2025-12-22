@@ -1,6 +1,7 @@
 import { IdeaSubmission } from "@/lib/ideaSchema";
 import { IdeaEvaluationResult } from "@/lib/ideaEvaluationTypes";
 import { openai } from "@/lib/openaiClient";
+import { Langfuse } from "langfuse";
 
 const WEB3_EVALUATION_GUIDE = `
 When evaluating Web3, crypto and AI projects, you MUST always think about:
@@ -111,6 +112,10 @@ import { fetchCompetitiveMemo } from "@/lib/market/competitive";
 
 // ... existing imports
 
+import { verifyTokenSecurity } from "@/lib/solana/token-check";
+
+// ... existing imports
+
 /**
  * Evaluates an idea using OpenAI (Model configurable via env).
  * 
@@ -149,6 +154,32 @@ Use this context to judge timing and market fit.
 `;
   }
 
+  // 1.5 On-Chain Verification (Anti-Rug)
+  let verificationContext = "";
+  if (input.tokenAddress) {
+    try {
+      const check = await verifyTokenSecurity(input.tokenAddress);
+      verificationContext = `
+ON-CHAIN VERIFICATION (Real-Time Data):
+- Token Address: ${input.tokenAddress}
+- Supply: ${check.supply}
+- Mint Authority: ${check.mintAuthority ? "ACTIVE (High Risk - Dev can print tokens)" : "REVOKED (Safe)"}
+- Freeze Authority: ${check.freezeAuthority ? "ACTIVE (High Risk - Dev can freeze wallets)" : "REVOKED (Safe)"}
+- Is Pump.fun: ${check.isPumpFun}
+
+INSTRUCTION: 
+If Mint Authority is ACTIVE, you MUST flag this as "High Rug Risk" in 'cryptoNativeChecks'.
+If Mint Authority is REVOKED, reward this in the 'Rug Risk' score.
+`;
+    } catch (e) {
+      verificationContext = `
+ON-CHAIN VERIFICATION FAILED:
+Could not verify token address: ${input.tokenAddress}. 
+Assume "Unverified" status.
+`;
+    }
+  }
+
   // 2. Competitive Memo (Micro / Landscape)
   let competitiveContext = "";
   const normalizedCategory = input.projectType.toLowerCase();
@@ -185,6 +216,7 @@ Do NOT invent new competitors not listed here or known to you.
   const userContent = `Idea Context:
 ${contextSummary}
 ${marketContext}
+${verificationContext}
 ${competitiveContext}
 
 Idea Submission:
@@ -243,6 +275,33 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
   try {
     const { model, reasoningEffort } = getEnvModelConfig();
 
+    // Langfuse Integration
+    const langfuse = new Langfuse({
+      publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+      secretKey: process.env.LANGFUSE_SECRET_KEY,
+      baseUrl: process.env.LANGFUSE_HOST
+    });
+
+    const trace = langfuse.trace({
+      name: "idea-evaluation",
+      sessionId: "session-" + Math.random().toString(36).substring(7), // Simple session ID for now
+      metadata: {
+        projectType: input.projectType,
+        teamSize: input.teamSize,
+        tokenAddress: input.tokenAddress
+      },
+      input: {
+        system: VALIDATOR_SYSTEM_PROMPT,
+        user: userContent
+      }
+    });
+
+    const generation = trace.generation({
+      name: "evaluator-gpt",
+      model: model,
+      input: userContent
+    });
+
     // @ts-ignore - responses API might not be in the types yet
     const response = await openai().responses.create({
       model: model,
@@ -281,9 +340,6 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
       responseContent = JSON.stringify(response);
     }
 
-    // If the API returns an object directly (as some "Responses" APIs do), we might not need parsing
-    // But the user said "Parse the JSON", implying it returns a string.
-
     // Let's try to handle both string and object
     let result: IdeaEvaluationResult;
 
@@ -317,6 +373,19 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
       rawResult: result,
       ideaSubmission: input
     });
+
+    // Log the final result to Langfuse
+    generation.end({
+      output: result
+    });
+
+    // ALSO update the parent trace so it shows up in the main list
+    trace.update({
+      output: result
+    });
+
+    // Important: Flush async in serverless
+    await langfuse.flushAsync();
 
     return result;
   } catch (error) {
@@ -395,22 +464,17 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     newResult.overallScore = Math.max(10, Math.min(90, score));
 
     // Market-Aware Calibration (Memecoin)
-    // Use btcDominance as a proxy for market cycle if available
+    // Mission 17: "A good meme is a good meme."
+    // - Removed BTC Dominance penalties (irrelevant).
+    // - Added SOL Price Bonus (Mania Mode).
     if (context.market && context.market.source !== 'fallback') {
-      const { btcDominance } = context.market;
+      const { solPriceUsd } = context.market;
 
-      // Crowded / Alt Season (BTC Dominance < 40%)
-      // High competition, harder to stand out
-      if (btcDominance < 40) {
-        newResult.overallScore -= 3;
-        calibrationNotes.push("Memecoin: minus points for launching into an extremely crowded memecoin cycle.");
-      }
-
-      // Quiet / Risk Off (BTC Dominance > 60%)
-      // Contrarian play, less noise
-      if (btcDominance > 60) {
-        newResult.overallScore += 3;
-        calibrationNotes.push("Memecoin: plus points for launching during a quieter cycle (contrarian).");
+      // Solana Mania Bonus (> $150 matches "Vibes are good")
+      // Only a bonus, never a penalty.
+      if (solPriceUsd > 150) {
+        newResult.overallScore += 2;
+        calibrationNotes.push("Market: + points for launching during strong Solana price action (> $150).");
       }
     }
   }
@@ -459,7 +523,7 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
       // Weak Market / Risk Off (BTC Dominance > 60%)
       // Harder for complex DeFi to get traction/liquidity
       if (btcDominance > 60 && isComplex) {
-        newResult.overallScore -= 3;
+        newResult.overallScore -= 2;
         calibrationNotes.push("DeFi: minus points for high complexity during risk-off market conditions.");
       }
 

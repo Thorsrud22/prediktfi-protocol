@@ -18,6 +18,7 @@ export const ideaSubmissionSchema = z.object({
     mvpScope: z.string().optional(),
     goToMarketPlan: z.string().optional(),
     launchLiquidityPlan: z.string().optional(),
+    tokenAddress: z.string().optional(),
 });
 
 export type IdeaSubmission = z.infer<typeof ideaSubmissionSchema>;

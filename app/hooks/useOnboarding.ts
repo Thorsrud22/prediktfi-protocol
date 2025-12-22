@@ -13,12 +13,13 @@ export function useOnboarding() {
     // Check if user has completed onboarding
     try {
       const completed = localStorage.getItem(ONBOARDING_KEY);
-      const shouldShow = completed !== ONBOARDING_VERSION;
-      
-      setShowOnboarding(shouldShow);
+      // const shouldShow = completed !== ONBOARDING_VERSION;
+
+      // Disabled for now per user request
+      setShowOnboarding(false);
     } catch (error) {
       console.warn('Failed to check onboarding status:', error);
-      setShowOnboarding(true); // Show by default if we can't check
+      setShowOnboarding(false); // Default to hidden
     } finally {
       setIsLoading(false);
     }

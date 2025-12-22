@@ -23,6 +23,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         mvpScope: '',
         goToMarketPlan: '',
         launchLiquidityPlan: '',
+        tokenAddress: '',
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -195,16 +196,30 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
             {/* Launch & Liquidity Plan (Conditional) */}
             {(formData.projectType === 'memecoin' || formData.projectType === 'defi') && (
-                <div>
-                    <label className="block text-blue-200 mb-2 font-medium">Launch & Liquidity Plan</label>
-                    <textarea
-                        value={formData.launchLiquidityPlan}
-                        onChange={(e) => handleChange('launchLiquidityPlan', e.target.value)}
-                        placeholder="Liquidity, LP, and token safety plan (e.g., LP lock, treasury, anti-rug measures...)"
-                        className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
-                        rows={3}
-                    />
-                </div>
+                <>
+                    <div>
+                        <label className="block text-blue-200 mb-2 font-medium">Launch & Liquidity Plan</label>
+                        <textarea
+                            value={formData.launchLiquidityPlan}
+                            onChange={(e) => handleChange('launchLiquidityPlan', e.target.value)}
+                            placeholder="Liquidity, LP, and token safety plan (e.g., LP lock, treasury, anti-rug measures...)"
+                            className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+                            rows={3}
+                        />
+                    </div>
+                    {/* Token Address for Verification */}
+                    <div>
+                        <label className="block text-blue-200 mb-2 font-medium">Token Address (Optional)</label>
+                        <input
+                            type="text"
+                            value={formData.tokenAddress || ''}
+                            onChange={(e) => handleChange('tokenAddress', e.target.value)}
+                            placeholder="Solana Token Address (e.g., 7xW...)"
+                            className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent font-mono text-sm"
+                        />
+                        <p className="text-xs text-blue-300/60 mt-1">If provided, we will verify Mint Authority and LP status on-chain.</p>
+                    </div>
+                </>
             )}
 
             {/* Attachments */}

@@ -17,6 +17,8 @@ import IntentStorageGuard from "./components/IntentStorageGuard";
 import AuthGuard from "./components/AuthGuard";
 import RoutePreloader from "./components/RoutePreloader";
 import Aurora from "./components/ui/Aurora";
+import SmoothScrolling from "./components/SmoothScrolling";
+import ProgressBarProvider from "./components/ProgressBarProvider";
 import { SITE } from "./config/site";
 import { getPlanFromRequest } from "./lib/plan";
 import { headers } from "next/headers";
@@ -215,38 +217,42 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased min-h-screen bg-[#0F172A] text-slate-100`}>
-        {/* Persistent Aurora background - stays across route changes */}
-        <Aurora
-          colorStops={['#0ea5e9', '#3b82f6', '#8b5cf6']}
-          amplitude={1.2}
-          blend={0.6}
-          speed={0.8}
-          className="fixed inset-0 -z-10"
-        />
-        {/* Gradient overlay for text readability */}
-        <div className="fixed inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-900 -z-[9]" />
+        <SmoothScrolling>
+          <ProgressBarProvider>
+            {/* Persistent Aurora background - stays across route changes */}
+            <Aurora
+              colorStops={['#0ea5e9', '#3b82f6', '#8b5cf6']}
+              amplitude={1.2}
+              blend={0.6}
+              speed={0.8}
+              className="fixed inset-0 -z-10"
+            />
+            {/* Gradient overlay for text readability */}
+            <div className="fixed inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-900 -z-[9]" />
 
-        <IntentStorageGuard />
-        <AuthGuard>
-          <SimplifiedWalletProvider>
-            <ClientErrorBoundary>
-              <ToastProvider>
-                <ConsentGate />
-                <RoutePreloader />
-                <AppPillNav />
-                <main className="flex min-h-screen flex-col pt-24">
-                  {children}
-                </main>
-                <Footer />
-                {process.env.NODE_ENV === "development" && (
-                  <DebugProvider>
-                    <DebugOverlay />
-                  </DebugProvider>
-                )}
-              </ToastProvider>
-            </ClientErrorBoundary>
-          </SimplifiedWalletProvider>
-        </AuthGuard>
+            <IntentStorageGuard />
+            <AuthGuard>
+              <SimplifiedWalletProvider>
+                <ClientErrorBoundary>
+                  <ToastProvider>
+                    <ConsentGate />
+                    <RoutePreloader />
+                    <AppPillNav />
+                    <main className="flex min-h-screen flex-col pt-24">
+                      {children}
+                    </main>
+                    <Footer />
+                    {process.env.NODE_ENV === "development" && (
+                      <DebugProvider>
+                        <DebugOverlay />
+                      </DebugProvider>
+                    )}
+                  </ToastProvider>
+                </ClientErrorBoundary>
+              </SimplifiedWalletProvider>
+            </AuthGuard>
+          </ProgressBarProvider>
+        </SmoothScrolling>
       </body>
     </html>
   );

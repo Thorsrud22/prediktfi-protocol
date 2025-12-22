@@ -194,7 +194,7 @@ describe('calibrateScore', () => {
         expect(calibrated.calibrationNotes).toContain("Memecoin: minus points for heavy dependence on one celebrity/brand without a twist.");
     });
 
-    it('applies market-aware penalty for memecoins in crowded market', () => {
+    it('does not apply market-aware penalty for memecoins based on BTC dominance', () => {
         const crowdedMarket = {
             timestamp: new Date().toISOString(),
             btcDominance: 35, // < 40
@@ -217,23 +217,23 @@ describe('calibrateScore', () => {
             }
         });
 
-        // 60 - 3 = 57
-        expect(calibrated.overallScore).toBe(57);
-        expect(calibrated.calibrationNotes).toContain("Memecoin: minus points for launching into an extremely crowded memecoin cycle.");
+        // 60 - 0 (no penalty) = 60
+        expect(calibrated.overallScore).toBe(60);
+        expect(calibrated.calibrationNotes).not.toContain("Memecoin: minus points for launching into an extremely crowded memecoin cycle.");
     });
 
-    it('applies market-aware boost for memecoins in quiet market', () => {
-        const quietMarket = {
+    it('applies market-aware boost for memecoins during Solana mania', () => {
+        const maniaMarket = {
             timestamp: new Date().toISOString(),
-            btcDominance: 65, // > 60
-            solPriceUsd: 100,
+            btcDominance: 50,
+            solPriceUsd: 160, // > 150 (Mania)
             source: 'coingecko' as const
         };
 
         const calibrated = calibrateScore({
             rawResult: { ...baseResult, overallScore: 60 },
             projectType: 'memecoin',
-            market: quietMarket,
+            market: maniaMarket,
             // Fix: provide safe submission
             ideaSubmission: {
                 description: "Valid description.................................................................................................",
@@ -245,9 +245,9 @@ describe('calibrateScore', () => {
             }
         });
 
-        // 60 + 3 = 63
-        expect(calibrated.overallScore).toBe(63);
-        expect(calibrated.calibrationNotes).toContain("Memecoin: plus points for launching during a quieter cycle (contrarian).");
+        // 60 + 2 = 62
+        expect(calibrated.overallScore).toBe(62);
+        expect(calibrated.calibrationNotes).toContain("Market: + points for launching during strong Solana price action (> $150).");
     });
 
     it('preserves score for high quality memecoins', () => {
@@ -478,8 +478,8 @@ describe('calibrateScore', () => {
             }
         });
 
-        // 70 - 5 (base logic) - 3 (market logic) - 5 (execution penalty) = 57
-        expect(calibrated.overallScore).toBe(57);
+        // 70 - 5 (base logic) - 2 (market logic) - 5 (execution penalty) = 58
+        expect(calibrated.overallScore).toBe(58);
         expect(calibrated.calibrationNotes).toContain("DeFi: minus points for high complexity during risk-off market conditions.");
     });
 

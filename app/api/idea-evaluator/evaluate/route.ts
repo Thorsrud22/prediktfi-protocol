@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
 import { evaluateIdea } from "@/lib/ai/evaluator";
+import { getMarketSnapshot } from "@/lib/market/snapshot";
 
 export async function POST(request: NextRequest) {
     try {
@@ -14,7 +15,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const result = await evaluateIdea(parsed.data);
+        // Fetch market context (latencies handled by internal cache/timeout)
+        const marketSnapshot = await getMarketSnapshot();
+
+        const result = await evaluateIdea(parsed.data, { market: marketSnapshot });
         return NextResponse.json({ result });
     } catch (error) {
         console.error("Error evaluating idea:", error);
