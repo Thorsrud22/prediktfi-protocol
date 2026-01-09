@@ -59,13 +59,13 @@ export const metadata: Metadata = {
     title: "PrediktFi — AI prediction studio with freemium quotas",
     description: "AI prediction studio with freemium quotas and shareable insights. Get probability analysis with confidence scores.",
     type: "website",
-    images: ["/og/opengraph-image.png"],
+    images: ["/og"],
   },
   twitter: {
     card: "summary_large_image",
     title: "PrediktFi — AI prediction studio with freemium quotas",
     description: "AI prediction studio with freemium quotas and shareable insights. Get probability analysis with confidence scores.",
-    images: ["/og/opengraph-image.png"],
+    images: ["/og"],
   },
 };
 

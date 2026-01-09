@@ -40,19 +40,30 @@ const mockBaseSubmission: IdeaSubmission = {
 
 describe('Evaluator Constraints', () => {
 
-    it('Constraint 1: Solo Founder Cap', () => {
-        const context: ScoreCalibrationContext = {
-            rawResult: { ...mockBaseResult },
+    it('Constraint 1: Solo Founder Cap (Refined)', () => {
+        // Case A: Solo + Low Complexity (Should NOT be capped)
+        const lowContext: ScoreCalibrationContext = {
+            rawResult: { ...mockBaseResult, execution: { ...mockBaseResult.execution, complexityLevel: 'low' } },
             projectType: 'defi',
             ideaSubmission: { ...mockBaseSubmission, teamSize: 'solo' }
         };
 
-        const result = calibrateScore(context);
+        const lowResult = calibrateScore(lowContext);
+        // Should retain high score (mock is 90)
+        expect(lowResult.execution.executionRiskScore).toBe(90);
+        expect(lowResult.calibrationNotes).not.toContain("Constraint: Solo founder execution score capped at 50.");
 
-        // Should cap execution risk score at 50 (downgrade from 90)
-        expect(result.execution.executionRiskScore).toBeLessThanOrEqual(50);
-        // Should append note
-        expect(result.calibrationNotes).toContain("Constraint: Solo founder execution score capped at 50.");
+        // Case B: Solo + High Complexity (Should be capped)
+        const highContext: ScoreCalibrationContext = {
+            rawResult: { ...mockBaseResult, execution: { ...mockBaseResult.execution, complexityLevel: 'high' } },
+            projectType: 'defi',
+            ideaSubmission: { ...mockBaseSubmission, teamSize: 'solo' }
+        };
+
+        const highResult = calibrateScore(highContext);
+        // Should cap execution risk score at 60
+        expect(highResult.execution.executionRiskScore).toBeLessThanOrEqual(60);
+        expect(highResult.calibrationNotes).toContain("Constraint: Solo founder execution score capped due to high complexity.");
     });
 
     it('Constraint 2: Memecoin + Low Budget', () => {

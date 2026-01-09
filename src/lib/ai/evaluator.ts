@@ -722,18 +722,13 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
 
   // === NEW: Deterministic Investor Constraints (Mission 15) ===
 
-  // Constraint 1: Solo Founder Cap
-  // "If Team Size = Solo -> cap 'Team & Execution' to <= 50"
-  if (ideaSubmission?.teamSize === 'solo') {
-    if (newResult.execution.executionRiskScore > 50) {
-      newResult.execution.executionRiskScore = 50;
-      newResult.execution.executionRiskLabel = 'medium';
-      calibrationNotes.push("Constraint: Solo founder execution score capped at 50.");
-    }
-    // Also cap overall slightly if it was super high?
-    if (newResult.overallScore > 85) {
-      newResult.overallScore = 85;
-      calibrationNotes.push("Constraint: Overall score capped for solo founder.");
+  // Constraint 1: Solo Founder Cap (Refined for Mission 18)
+  // Only cap score if it's a Solo founder attempting a HIGH complexity project.
+  if (ideaSubmission?.teamSize === 'solo' && newResult.execution.complexityLevel === 'high') {
+    if (newResult.execution.executionRiskScore > 60) {
+      newResult.execution.executionRiskScore = 60;
+      newResult.execution.executionRiskLabel = 'high'; // High complexity solo is high risk
+      calibrationNotes.push("Constraint: Solo founder execution score capped due to high complexity.");
     }
   }
 
