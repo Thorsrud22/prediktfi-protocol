@@ -33,7 +33,8 @@ export default async function Home() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
         <div className="text-center max-w-5xl mx-auto space-y-8">
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
+          {/* Main Heading */}
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white leading-tight">
             Investor-Grade Validation for your{' '}
             <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
               Web3 Protocol
@@ -41,7 +42,7 @@ export default async function Home() {
           </h1>
 
           {/* Subheading */}
-          <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto px-2">
             Don't build in the dark. Get rigorous AI stress-testing on your tokenomics, market fit, and technical feasibility before you write a single line of code.
           </p>
 
@@ -49,7 +50,7 @@ export default async function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link
               href="/studio"
-              className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold text-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105"
+              className="px-6 py-3 md:px-8 md:py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold text-base md:text-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105"
             >
               Start Validation
             </Link>

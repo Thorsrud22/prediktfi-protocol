@@ -255,7 +255,7 @@ export function Aurora(props: AuroraProps) {
     };
   }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed]);
 
-  return <div ref={ctnDom} className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''} `} />;
+  return <div ref={ctnDom} className={`aurora-container pointer-events-none ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''} `} />;
 }
 
 // Memoize the component to prevent unnecessary re-renders
