@@ -84,6 +84,8 @@
     "next-nprogress-bar": "^2.4.7",
     "ogl": "^1.0.11",
     "openai": "^5.20.2",
+    "posthog-js": "^1.316.0",
+    "posthog-node": "^5.20.0",
     "qrcode": "^1.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
