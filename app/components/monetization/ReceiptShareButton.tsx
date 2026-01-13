@@ -15,12 +15,12 @@ interface ReceiptShareButtonProps {
   children?: React.ReactNode;
 }
 
-export function ReceiptShareButton({ 
-  intentId, 
-  receiptId, 
-  platform, 
-  className, 
-  children 
+export function ReceiptShareButton({
+  intentId,
+  receiptId,
+  platform,
+  className,
+  children
 }: ReceiptShareButtonProps) {
   const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
@@ -40,10 +40,10 @@ export function ReceiptShareButton({
         // Track the share for trial eligibility
         await trackReceiptShare(walletId, intentId, platform);
       }
-      
+
       // Perform the actual share
       shareToPlatform();
-      
+
       addToast({
         title: 'Shared!',
         description: 'Receipt shared successfully',
@@ -62,7 +62,7 @@ export function ReceiptShareButton({
   const shareToPlatform = () => {
     const shareUrl = getShareUrl();
     const shareText = getShareText();
-    
+
     switch (platform) {
       case 'twitter':
         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
@@ -89,7 +89,7 @@ export function ReceiptShareButton({
 
   const getShareText = () => {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    return `Check out my trading result on Predikt! ${baseUrl}/receipts/${receiptId}`;
+    return `Just validated my project idea on @PrediktFi. Check the result here: ${baseUrl}/receipts/${receiptId} #BuildPublic`;
   };
 
   const getPlatformIcon = () => {
