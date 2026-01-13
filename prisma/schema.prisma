@@ -188,6 +188,7 @@ model Wallet {
   events        UserEvent[]
   retention     UserRetention?
   subscription  UserSubscription?
+  ideas         IdeaEvaluation[]
 
   @@index([address])
   @@index([chain])
@@ -635,4 +636,26 @@ enum InvoiceStatus {
   PENDING
   PAID
   EXPIRED
+}
+
+model IdeaEvaluation {
+  id             String   @id @default(cuid())
+  walletId       String?
+  
+  submissionJson String   // Stores the full user input
+  resultJson     String   // Stores the full AI output
+
+  // Metadata for easy querying/listing
+  score          Float
+  title          String
+  projectType    String
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  wallet         Wallet?  @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([score])
+  @@map("idea_evaluations")
 }

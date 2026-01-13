@@ -90,20 +90,26 @@ export default function StudioPage() {
   };
 
   const handleCommit = async () => {
-    if (!isConnected) {
-      connect();
-      return;
-    }
+    // We allow saving without wallet for now, or we can enforce it.
+    // Ideally we want to link it to a user.
+    // For now, let's just save it.
 
     setCommitStatus('committing');
     try {
-      // Simulate commit delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await fetch('/api/idea/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submission: submissionData,
+          result: evaluationResult,
+          walletAddress: publicKey || undefined
+        }),
+      });
 
-      // In a real app, we would save the evaluation result to the chain/db here
-      // const response = await fetch('/api/insight/commit', { ... });
+      if (!response.ok) throw new Error('Failed to save');
 
-      setInsightId(`insight_${Date.now()}`);
+      const data = await response.json();
+      setInsightId(data.id);
       setCommitStatus('success');
       setCurrentStep('commit');
     } catch (error) {
@@ -290,15 +296,31 @@ export default function StudioPage() {
                   <p className="text-blue-200/60 mb-8">
                     Your idea evaluation has been recorded on-chain. ID: <span className="font-mono text-white bg-white/10 px-2 py-1 rounded">{insightId}</span>
                   </p>
-                  <div className="flex justify-center gap-4">
+                  <div className="flex flex-col gap-4 max-w-md mx-auto">
+                    <div className="flex gap-4">
+                      <a
+                        href={`/idea/${insightId}`}
+                        target="_blank"
+                        className="flex-1 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 text-white rounded-lg transition-all text-center flex items-center justify-center"
+                      >
+                        View Public Page
+                      </a>
+                      <button
+                        onClick={() => {
+                          const text = `Just validated my project idea on @PrediktFi. AI Confidence: ${evaluationResult?.overallScore}% 🔮 #BuildPublic`;
+                          const url = `${window.location.origin}/idea/${insightId}`;
+                          window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+                        }}
+                        className="flex-1 px-6 py-3 bg-black hover:bg-gray-900 text-white rounded-lg transition-all shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <span>Share on X</span>
+                      </button>
+                    </div>
                     <button
                       onClick={handleStartNew}
-                      className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 text-white rounded-lg transition-all"
+                      className="px-6 py-3 text-blue-300 hover:text-white transition-colors text-sm"
                     >
                       Start New Evaluation
-                    </button>
-                    <button className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all shadow-lg shadow-blue-500/20">
-                      View on Explorer
                     </button>
                   </div>
                 </div>

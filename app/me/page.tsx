@@ -9,6 +9,7 @@ import { CopyButton } from "../components/CopyButton";
 import { useToast } from "../components/ToastProvider";
 import Receipt from "../components/Receipt";
 import { pushInsightLocal } from "../lib/local";
+import IdeaHistory from "../components/IdeaHistory";
 
 const ERROR_MESSAGES: Record<InsightErrorCode, string> = {
   "INVALID_SIGNATURE": "The transaction signature format is invalid",
@@ -31,7 +32,7 @@ function InsightVerificationContent() {
   const searchParams = useSearchParams();
   const { connection } = useConnection();
   const { addToast } = useToast();
-  
+
   const [verification, setVerification] = useState<VerificationState>({
     status: "idle"
   });
@@ -40,47 +41,47 @@ function InsightVerificationContent() {
 
   const verifyInsight = useCallback(async (sig: string) => {
     setVerification({ status: "verifying" });
-    
+
     try {
       const rpcUrl = connection.rpcEndpoint;
       const cluster = rpcUrl.includes("devnet") ? "devnet" : "mainnet-beta";
-      
+
       const response = await fetch(`/api/insights?sig=${encodeURIComponent(sig)}&cluster=${cluster}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         const errorCode = errorData.error || "NETWORK_ERROR";
-        setVerification({ 
-          status: "failed", 
-          error: errorCode as InsightErrorCode 
+        setVerification({
+          status: "failed",
+          error: errorCode as InsightErrorCode
         });
         return;
       }
-      
+
       const data = await response.json();
-      setVerification({ 
-        status: "verified", 
+      setVerification({
+        status: "verified",
         insight: data.insight,
         slot: data.slot
       });
-      
+
       // Save to local storage
       if (data.insight) {
         pushInsightLocal({ ...data.insight, signature: sig });
       }
-      
+
       addToast({
         title: "Insight verified!",
         description: "Your on-chain insight was successfully verified",
         variant: "success",
         duration: 5000,
       });
-      
+
     } catch (error) {
       console.error("Verification error:", error);
-      setVerification({ 
-        status: "failed", 
-        error: "NETWORK_ERROR" 
+      setVerification({
+        status: "failed",
+        error: "NETWORK_ERROR"
       });
     }
   }, [connection.rpcEndpoint, addToast]);
@@ -95,7 +96,7 @@ function InsightVerificationContent() {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Insight Verification & Receipt</h1>
-        
+
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <div className="text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -134,7 +135,7 @@ function InsightVerificationContent() {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Insight Verification & Receipt</h1>
-        
+
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <div className="text-center">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -158,11 +159,11 @@ function InsightVerificationContent() {
 
   if (verification.status === "failed") {
     const errorMessage = verification.error ? ERROR_MESSAGES[verification.error] : "Unknown error occurred";
-    
+
     return (
       <div className="max-w-4xl mx-auto p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Insight Verification & Receipt</h1>
-        
+
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <div className="text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -170,7 +171,7 @@ function InsightVerificationContent() {
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Verification failed</h2>
             <p className="text-red-600 mb-6">{errorMessage}</p>
-            
+
             <div className="bg-gray-50 rounded-md p-4 mb-6">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Signature:</span>
@@ -191,7 +192,7 @@ function InsightVerificationContent() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-3 justify-center">
               <button
                 onClick={() => verifyInsight(signature)}
@@ -222,12 +223,12 @@ function InsightVerificationContent() {
     const insight = verification.insight;
     const rpcUrl = connection.rpcEndpoint;
     const cluster = rpcUrl.includes("devnet") ? "devnet" : "mainnet-beta";
-    
+
     return (
       <div className="max-w-4xl mx-auto p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Insight Verification & Receipt</h1>
-        
-        <Receipt 
+
+        <Receipt
           insight={insight}
           signature={signature}
           slot={verification.slot}
@@ -237,7 +238,14 @@ function InsightVerificationContent() {
     );
   }
 
-  return null;
+  // Return default view with history if no signature
+  return (
+    <div className="max-w-6xl mx-auto p-6">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Profile & History</h1>
+
+      <IdeaHistory />
+    </div>
+  );
 }
 
 export default function InsightVerificationPage() {
