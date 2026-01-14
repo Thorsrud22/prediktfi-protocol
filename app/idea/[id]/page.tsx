@@ -3,10 +3,61 @@ import { prisma } from '@/lib/prisma';
 import IdeaEvaluationReport from '@/app/studio/IdeaEvaluationReport';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { Metadata } from 'next';
 
-export default async function IdeaPage({ params }: { params: { id: string } }) {
+type Props = {
+    params: Promise<{ id: string }>
+}
+
+export async function generateMetadata(
+    { params }: Props
+): Promise<Metadata> {
+    const { id } = await params;
     const idea = await prisma.ideaEvaluation.findUnique({
-        where: { id: params.id },
+        where: { id },
+    });
+
+    if (!idea) {
+        return {
+            title: 'Idea Not Found • Predikt',
+        }
+    }
+
+    const title = idea.title || 'Crypto Idea Evaluation';
+    const score = idea.score;
+
+    const ogUrl = new URL('https://predikt.fi/og');
+    ogUrl.searchParams.set('title', title);
+    if (score) ogUrl.searchParams.set('score', score.toString());
+
+    return {
+        title: `${title} - Score: ${score}/100 • Predikt`,
+        description: `Check out the AI evaluation for ${title}. Feasibility, Market Fit, and Execution Risk analyzed by Predikt.`,
+        openGraph: {
+            title: `${title} - Score: ${score}/100`,
+            description: `AI-verified crypto project evaluation.`,
+            images: [
+                {
+                    url: ogUrl.toString(),
+                    width: 1200,
+                    height: 630,
+                    alt: `${title} Evaluation Score`,
+                },
+            ],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${title} - Score: ${score}/100`,
+            description: `AI-verified crypto project evaluation.`,
+            images: [ogUrl.toString()],
+        },
+    }
+}
+
+export default async function IdeaPage({ params }: Props) {
+    const { id } = await params;
+    const idea = await prisma.ideaEvaluation.findUnique({
+        where: { id },
     });
 
     if (!idea) {
@@ -30,8 +81,6 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
 
                 <IdeaEvaluationReport
                     result={result}
-                    onEdit={() => { }} // Read-only view
-                    onStartNew={() => { }} // Hidden in read-only props or handled by wrapper
                 />
 
                 <div className="mt-12 text-center border-t border-white/10 pt-8">

@@ -93,7 +93,7 @@ export function Aurora(props: AuroraProps) {
     variant = 'default'
   } = props;
   const resolvedColorStops = useMemo(
-    () => props.colorStops ?? ['#5227FF', '#7cff67', '#5227FF'],
+    () => props.colorStops ?? ['#3b82f6', '#06b6d4', '#3b82f6'],
     [props.colorStops?.join('|') ?? 'default']
   );
   const propsRef = useRef<AuroraProps>({ ...props, colorStops: resolvedColorStops });

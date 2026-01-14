@@ -225,7 +225,7 @@ export default async function RootLayout({
             <ProgressBarProvider>
               {/* Persistent Aurora background - stays across route changes */}
               <Aurora
-                colorStops={['#0ea5e9', '#3b82f6', '#8b5cf6']}
+                colorStops={['#0ea5e9', '#3b82f6', '#0ea5e9']}
                 amplitude={1.2}
                 blend={0.6}
                 speed={0.8}

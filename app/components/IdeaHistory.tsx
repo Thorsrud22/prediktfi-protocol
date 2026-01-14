@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
@@ -14,7 +14,7 @@ interface Idea {
 }
 
 export default function IdeaHistory() {
-    const { publicKey } = useWallet();
+    const { publicKey } = useSimplifiedWallet();
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -24,7 +24,7 @@ export default function IdeaHistory() {
         const fetchIdeas = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`/api/idea/list?address=${publicKey.toBase58()}`);
+                const res = await fetch(`/api/idea/list?address=${publicKey}`);
                 if (res.ok) {
                     const data = await res.json();
                     setIdeas(data.ideas);
@@ -74,8 +74,8 @@ export default function IdeaHistory() {
                             <div className="p-6">
                                 <div className="flex justify-between items-start mb-4">
                                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${idea.score >= 75 ? 'bg-green-100 text-green-700' :
-                                            idea.score >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                                                'bg-red-100 text-red-700'
+                                        idea.score >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                                            'bg-red-100 text-red-700'
                                         }`}>
                                         Score: {idea.score}
                                     </span>

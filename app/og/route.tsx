@@ -2,7 +2,11 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export async function GET() {
+export async function GET(request: Request) {
+	const { searchParams } = new URL(request.url);
+	const title = searchParams.get('title') || 'Predikt';
+	const score = searchParams.get('score');
+
 	return new ImageResponse(
 		(
 			<div
@@ -13,12 +17,12 @@ export async function GET() {
 					flexDirection: 'column',
 					alignItems: 'center',
 					justifyContent: 'center',
-					background: 'linear-gradient(135deg, #0B1426 0%, #1E3A8A 50%, #5B21B6 100%)',
+					background: 'linear-gradient(135deg, #0B1426 0%, #172554 100%)',
 					color: 'white',
 					fontFamily: 'sans-serif',
 				}}
 			>
-				{/* Background Noise/Grid Pattern */}
+				{/* Background Pattern */}
 				<div
 					style={{
 						position: 'absolute',
@@ -26,72 +30,88 @@ export async function GET() {
 						left: 0,
 						right: 0,
 						bottom: 0,
-						backgroundImage: 'radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.1) 2%, transparent 0%), radial-gradient(circle at 75px 75px, rgba(255, 255, 255, 0.1) 2%, transparent 0%)',
-						backgroundSize: '100px 100px',
-						opacity: 0.2,
+						backgroundImage: 'radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.05) 2%, transparent 0%)',
+						backgroundSize: '80px 80px',
 					}}
 				/>
 
-				<div style={{ display: 'flex', alignItems: 'center', gap: '24px', zIndex: 10 }}>
-					{/* Logo Placeholder (Orb) */}
+				<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', zIndex: 10, padding: '40px', textAlign: 'center' }}>
+					{/* Badge */}
 					<div
 						style={{
-							width: '80px',
-							height: '80px',
-							borderRadius: '50%',
-							background: 'linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%)',
-							boxShadow: '0 0 40px rgba(96, 165, 250, 0.5)',
 							display: 'flex',
 							alignItems: 'center',
-							justifyContent: 'center',
-							fontSize: '40px',
+							gap: '12px',
+							background: 'rgba(59, 130, 246, 0.15)',
+							border: '1px solid rgba(147, 197, 253, 0.3)',
+							borderRadius: 'full',
+							padding: '10px 24px',
 						}}
 					>
-						🔮
+						<div style={{ fontSize: '24px' }}>🔮</div>
+						<div style={{ fontSize: '20px', color: '#93C5FD', fontWeight: 600, letterSpacing: '1px' }}>PREDIKT VERIFIED</div>
 					</div>
 
-					<div style={{ display: 'flex', flexDirection: 'column' }}>
-						<div
-							style={{
-								fontSize: '80px',
-								fontWeight: 900,
-								lineHeight: '1',
-								background: 'linear-gradient(to right, #DBEAFE, #93C5FD)',
-								backgroundClip: 'text',
-								color: 'transparent',
-							}}
-						>
-							Predikt
-						</div>
-						<div
-							style={{
-								fontSize: '28px',
-								fontWeight: 500,
-								marginTop: '8px',
-								color: '#BFDBFE',
-								letterSpacing: '2px',
-								textTransform: 'uppercase',
-							}}
-						>
-							AI Prediction Studio
-						</div>
+					{/* Title */}
+					<div
+						style={{
+							fontSize: '70px',
+							fontWeight: 900,
+							lineHeight: '1.1',
+							backgroundImage: 'linear-gradient(to bottom right, #FFFFFF, #93C5FD)',
+							backgroundClip: 'text',
+							color: 'transparent',
+							maxWidth: '900px',
+							marginTop: '20px',
+							marginBottom: '20px',
+						}}
+					>
+						{title}
 					</div>
+
+					{/* Score Card */}
+					{score ? (
+						<div
+							style={{
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								background: 'rgba(15, 23, 42, 0.6)',
+								border: '2px solid rgba(59, 130, 246, 0.4)',
+								borderRadius: '24px',
+								padding: '20px 60px',
+								boxShadow: '0 0 60px rgba(59, 130, 246, 0.2)',
+							}}
+						>
+							<div style={{ fontSize: '24px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '5px' }}>Overall Score</div>
+							<div
+								style={{
+									fontSize: '90px',
+									fontWeight: 900,
+									color: parseInt(score) >= 75 ? '#4ADE80' : parseInt(score) >= 50 ? '#FACC15' : '#F87171',
+									textShadow: '0 0 30px rgba(255,255,255,0.2)',
+								}}
+							>
+								{score}
+							</div>
+						</div>
+					) : (
+						<div style={{ fontSize: '32px', color: '#64748B' }}>AI Prediction Studio</div>
+					)}
 				</div>
 
 				<div
 					style={{
 						position: 'absolute',
-						bottom: '60px',
+						bottom: '50px',
+						fontSize: '24px',
+						color: '#475569',
 						display: 'flex',
 						alignItems: 'center',
-						gap: '12px',
-						padding: '12px 24px',
-						background: 'rgba(15, 23, 42, 0.6)',
-						borderRadius: 'full',
-						border: '1px solid rgba(148, 163, 184, 0.2)',
+						gap: '10px',
 					}}
 				>
-					<div style={{ fontSize: '20px', color: '#93C5FD' }}>predikt.fi</div>
+					predikt.fi
 				</div>
 			</div>
 		),

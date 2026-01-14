@@ -5,8 +5,8 @@ import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
 
 interface IdeaEvaluationReportProps {
     result: IdeaEvaluationResult;
-    onEdit: () => void;
-    onStartNew: () => void;
+    onEdit?: () => void;
+    onStartNew?: () => void;
 }
 
 export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: IdeaEvaluationReportProps) {
@@ -221,20 +221,26 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
             </div>
 
             {/* Actions */}
-            <div className="flex justify-center gap-4 pt-4">
-                <button
-                    onClick={onEdit}
-                    className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 text-white rounded-lg transition-all font-medium"
-                >
-                    ← Edit Idea
-                </button>
-                <button
-                    onClick={onStartNew}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20"
-                >
-                    Start New Evaluation
-                </button>
-            </div>
+            {(onEdit || onStartNew) && (
+                <div className="flex justify-center gap-4 pt-4">
+                    {onEdit && (
+                        <button
+                            onClick={onEdit}
+                            className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 text-white rounded-lg transition-all font-medium"
+                        >
+                            ← Edit Idea
+                        </button>
+                    )}
+                    {onStartNew && (
+                        <button
+                            onClick={onStartNew}
+                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20"
+                        >
+                            Start New Evaluation
+                        </button>
+                    )}
+                </div>
+            )}
         </div >
     );
 }

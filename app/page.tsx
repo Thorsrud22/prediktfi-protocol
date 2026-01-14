@@ -50,7 +50,7 @@ export default async function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link
               href="/studio"
-              className="px-6 py-3 md:px-8 md:py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold text-base md:text-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105"
+              className="px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 border border-blue-400/30 text-white font-semibold text-lg hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:-translate-y-1 transition-all duration-300"
             >
               Start Validation
             </Link>

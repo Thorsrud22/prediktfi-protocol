@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 import { useWalletAuth } from '../lib/useWalletAuth';
+import IdeaHistory from '../components/IdeaHistory';
 
 function shortAddress(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
@@ -108,17 +109,17 @@ const AuthenticationPrompt = React.memo(
 );
 
 // Extracted account details component
-const AccountDetails = React.memo(({ 
-  publicKey, 
-  creator, 
-  loadingCreator 
-}: { 
+const AccountDetails = React.memo(({
+  publicKey,
+  creator,
+  loadingCreator
+}: {
   publicKey: string | null;
   creator: Creator | null;
   loadingCreator: boolean;
 }) => {
-  const accuracyPercentage = creator?.accuracyScore 
-    ? Math.round(creator.accuracyScore * 100) 
+  const accuracyPercentage = creator?.accuracyScore
+    ? Math.round(creator.accuracyScore * 100)
     : 0;
 
   return (
@@ -287,7 +288,7 @@ export default function AccountClient() {
   // Auto-authenticate when wallet is connected but not authenticated
   // But only do this once per mount to avoid loops
   const hasTriedAuthRef = useRef(false);
-  
+
   useEffect(() => {
     if (
       mounted &&
@@ -328,9 +329,9 @@ export default function AccountClient() {
       try {
         setLoadingCreator(true);
         setCreatorError(null);
-        
+
         const response = await fetch(`/api/creator/${publicKey}`);
-        
+
         if (!response.ok) {
           if (response.status === 404) {
             // No profile yet - this is fine for new users
@@ -340,7 +341,7 @@ export default function AccountClient() {
           }
           throw new Error(`Failed to fetch profile: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         setCreator(data);
       } catch (err) {
@@ -373,11 +374,16 @@ export default function AccountClient() {
           onVerify={handleVerify}
         />
       ) : (
-        <AccountDetails 
-          publicKey={publicKey} 
-          creator={creator}
-          loadingCreator={loadingCreator}
-        />
+        <>
+          <AccountDetails
+            publicKey={publicKey}
+            creator={creator}
+            loadingCreator={loadingCreator}
+          />
+          <div className="mt-12 border-t border-slate-700 pt-12">
+            <IdeaHistory />
+          </div>
+        </>
       )}
     </main>
   );

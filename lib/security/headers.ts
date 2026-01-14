@@ -220,6 +220,11 @@ export const rateLimiters = {
   auth: new RateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 5
+  }),
+
+  ideaGeneration: new RateLimiter({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: 5 // Strict limit for expensive AI calls
   })
 };
 
