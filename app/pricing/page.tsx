@@ -32,15 +32,15 @@ export default function PricingPage() {
             },
             {
               id: 'pro',
-              title: 'Pro',
-              price: 9,
+              title: 'Alpha Access',
+              price: 49,
               button: {
-                label: isConnected ? 'Upgrade with Crypto' : 'Connect with Phantom to upgrade',
-                href: isConnected ? '/pay?plan=pro' : '#',
-                disabled: !isConnected
+                label: 'Join Waitlist',
+                href: 'https://x.com/PrediktFi',
+                disabled: false
               },
-              features: ['30 intents per week', 'Advanced analytics', 'Priority support'],
-              accent: 'border-indigo-500/60',
+              features: ['Stealth Mode (Private Validation)', 'Real-time Alpha Feed (85+ Scores)', 'Snipe New Launches', 'Priority GPU Access'],
+              accent: 'border-indigo-500/60 shadow-[0_0_30px_rgba(99,102,241,0.15)]',
             },
           ].map((tier) => (
             <div
@@ -64,8 +64,8 @@ export default function PricingPage() {
               <Link
                 href={tier.button.href}
                 className={`mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 font-semibold transition ${tier.button.disabled
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-500'
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-500'
                   }`}
                 onClick={tier.button.disabled ? (e) => e.preventDefault() : undefined}
               >

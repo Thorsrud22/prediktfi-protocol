@@ -237,7 +237,7 @@ export default function AppPillNav() {
   const Logo = useMemo(
     () => (
       <InstantLink
-        href="/feed"
+        href="/"
         className="group flex items-center gap-2.5 rounded-full bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-slate-900/80 px-2.5 py-1.5 pr-4 backdrop-blur-xl ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] duration-300"
         aria-label="Predikt home"
       >

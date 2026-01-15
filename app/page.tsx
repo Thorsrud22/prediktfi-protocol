@@ -42,7 +42,7 @@ export default async function Home() {
           </h1>
 
           {/* Subheading */}
-          <p className="text-lg sm:text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto px-2">
+          <p className="text-xl md:text-2xl text-slate-400 leading-relaxed max-w-3xl mx-auto px-4 w-full text-balance font-light">
             Don't build in the dark. Get rigorous AI stress-testing on your tokenomics, market fit, and technical feasibility before you write a single line of code.
           </p>
 
