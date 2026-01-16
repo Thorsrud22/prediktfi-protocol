@@ -282,7 +282,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
             <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-5 bg-gradient-to-r from-indigo-600 to-blue-600 border border-blue-400/30 text-white rounded-xl hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:-translate-y-1 transition-all duration-300 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+                className="w-full py-5 bg-gradient-to-r from-indigo-600 to-blue-600 border border-blue-400/30 text-white rounded-full hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:-translate-y-1 transition-all duration-300 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
             >
                 {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">

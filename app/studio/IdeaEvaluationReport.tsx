@@ -234,9 +234,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     {onStartNew && (
                         <button
                             onClick={onStartNew}
-                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20"
+                            className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 border border-blue-400/30 text-white rounded-full hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:-translate-y-1 transition-all duration-300 font-semibold text-lg shadow-lg"
                         >
-                            Start New Evaluation
+                            Start New Evaluation →
                         </button>
                     )}
                 </div>
