@@ -67,6 +67,22 @@ export default function Home() {
               Coming soon
             </div>
           </div>
+
+          <div className="pt-8">
+            <div className="inline-flex flex-col items-center gap-2">
+              <span className="text-sm font-medium text-slate-400 uppercase tracking-widest">
+                Official Contract Address
+              </span>
+              <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm">
+                <code className="font-mono text-slate-300">
+                  Pending Launch...
+                </code>
+              </div>
+              <p className="text-xs text-slate-500 max-w-md mx-auto mt-2">
+                CA will be updated here immediately after launch to prevent scams. Verify the address before buying.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
