@@ -74,8 +74,8 @@ export default function Home() {
                 Official Contract Address
               </span>
               <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm">
-                <code className="font-mono text-slate-300">
-                  Pending Launch...
+                <code className="font-mono text-slate-300 select-all">
+                  EpovRy1g8w9rfLWnL91swESJoH1k2Tp1TNU6R6brpump
                 </code>
               </div>
               <p className="text-xs text-slate-500 max-w-md mx-auto mt-2">
