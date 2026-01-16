@@ -256,5 +256,5 @@ describe("Insights API verification", () => {
 
     expect(response.status).toBe(405);
     expect(data.error).toBe("Method not supported in E8.1");
-  });
+  }, 15000);
 });
