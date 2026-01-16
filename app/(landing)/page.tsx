@@ -85,9 +85,9 @@ export default function Home() {
           </div>
 
           <div className="pt-12 w-full max-w-4xl mx-auto">
-            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-blue-500/10 bg-black/50">
+            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-blue-500/10 bg-black/50 aspect-video">
               <video
-                className="w-full h-auto object-contain rounded-xl"
+                className="w-full h-full object-contain rounded-xl bg-black"
                 controls
                 playsInline
                 src="/demo-video.mov"
@@ -97,7 +97,6 @@ export default function Home() {
                 <source src="/demo-video.mov" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
-              <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/10 rounded-xl"></div>
             </div>
             <p className="text-sm text-slate-400 mt-4 font-medium">
               Watch the AI Evaluator in action (Pre-alpha footage)
