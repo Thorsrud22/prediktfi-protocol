@@ -90,6 +90,9 @@ export default function Home() {
                 className="w-full h-full object-contain rounded-xl bg-black"
                 controls
                 playsInline
+                autoPlay
+                muted
+                loop
                 src="/demo-video.mov"
                 poster="/images/video-poster.png"
               >
