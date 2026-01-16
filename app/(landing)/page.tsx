@@ -44,7 +44,7 @@ export default function Home() {
       />
 
       {/* Hero Section */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
+      <div className="relative z-10 flex flex-col items-center pt-32 pb-20 px-4">
         <div className="text-center max-w-5xl mx-auto space-y-4 md:space-y-8">
           {/* Main Heading */}
           <h1 className="text-3xl sm:text-4xl md:text-7xl font-bold text-white leading-tight">
