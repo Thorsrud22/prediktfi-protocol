@@ -85,9 +85,9 @@ export default function Home() {
           </div>
 
           <div className="pt-12 w-full max-w-4xl mx-auto">
-            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-blue-500/10 aspect-[16/8.8]">
+            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-blue-500/10 aspect-video">
               <video
-                className="w-full h-full object-cover rounded-xl"
+                className="w-full h-full object-cover rounded-xl scale-[1.035]"
                 controls
                 playsInline
                 autoPlay
