@@ -2,8 +2,21 @@
 
 import React from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, FileText, Twitter, Gift, Loader2 } from 'lucide-react';
+import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, FileText, Gift, Loader2 } from 'lucide-react';
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
+
+// Custom X (formerly Twitter) logo component
+const XLogo = ({ size = 16, className = "" }: { size?: number, className?: string }) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className={className}
+    >
+        <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+    </svg>
+);
 
 interface IdeaEvaluationReportProps {
     result: IdeaEvaluationResult;
@@ -34,8 +47,12 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
     const handleShareOnX = async () => {
         setIsSharing(true);
 
-        // Generate Twitter Intent
-        const text = `I just evaluated my Web3 idea "${result.summary.title}" on @PrediktFi Protocol.\n\nScore: ${result.overallScore}/100 - ${getScoreLabel(result.overallScore)}\n\nInstitutional-grade AI evaluation for Solana degens. Check it out at predikt.fi\n\n#Solana #AI #Web3`;
+        // Generate X Intent - Less "AI-ish" and more punchy
+        const statusText = result.overallScore >= 75
+            ? `Just cooked up a ${result.overallScore}/100 idea on @PrediktFi. Institutional-grade alpha for Solana. 🥂`
+            : `Stress-tested my latest build on @PrediktFi. Score: ${result.overallScore}/100. Back to the lab. 🧪`;
+
+        const text = `${statusText}\n\nCheck it out: prediktfi.xyz\n\n#Solana #AI #Web3`;
         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
 
         window.open(url, '_blank');
@@ -253,8 +270,8 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
                 {/* VIRAL QUOTA INCENTIVE */}
                 <div className="mb-6 p-6 rounded-xl border border-blue-500/30 bg-blue-500/[0.03] backdrop-blur-sm overflow-hidden relative group">
-                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Twitter size={100} />
+                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity text-white">
+                        <XLogo size={100} />
                     </div>
 
                     <div className="relative z-10">
@@ -263,15 +280,15 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                             <h3 className="text-lg font-bold text-white">Unlock Bonus Evaluation</h3>
                         </div>
                         <p className="text-blue-100/70 text-sm mb-4 max-w-xl">
-                            Share your evaluation results on X to support the protocol and get <span className="text-blue-400 font-bold">+1 extra credit</span> for your daily quota.
+                            Share your results on X to support the protocol and get <span className="text-blue-400 font-bold">+1 extra credit</span> instantly.
                         </p>
 
                         {bonusStatus === 'idle' ? (
                             <button
                                 onClick={handleShareOnX}
-                                className="inline-flex items-center gap-2 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all hover:scale-105 shadow-lg shadow-blue-500/20"
+                                className="inline-flex items-center gap-2 bg-white text-black hover:bg-slate-200 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all hover:scale-105 shadow-lg shadow-white/10"
                             >
-                                <Twitter size={16} /> Share on X to Unlock
+                                <XLogo size={16} /> Share on X to Unlock
                             </button>
                         ) : bonusStatus === 'claiming' ? (
                             <button className="inline-flex items-center gap-2 bg-slate-800 text-slate-400 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider cursor-wait border border-slate-700">
