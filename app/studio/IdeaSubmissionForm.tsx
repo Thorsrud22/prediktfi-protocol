@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ideaSubmissionSchema, IdeaSubmission } from '@/lib/ideaSchema';
 import { z } from 'zod';
-import { ArrowLeft, ArrowRight, CheckCircle2, Rocket, Target, Users, Settings2, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Rocket, Target, Users, Settings2, Sparkles, Lightbulb, X } from 'lucide-react';
 
 interface IdeaSubmissionFormProps {
     onSubmit: (data: IdeaSubmission) => void;
@@ -160,7 +160,44 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     const [animating, setAnimating] = useState(false);
 
     // Stable session ID that doesn't change on re-renders
+    const [coachTip, setCoachTip] = useState<string | null>(null);
+    const [isCoaching, setIsCoaching] = useState(false);
 
+    // Live Coach Logic
+    useEffect(() => {
+        // Only run on step 0 (Vision) and if description is long enough
+        if (currentStep !== 0 || !formData.description || formData.description.length < 20) {
+            setCoachTip(null);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setIsCoaching(true);
+            try {
+                const res = await fetch('/api/idea-evaluator/copilot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: formData.description,
+                        field: 'description'
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.suggestion) {
+                        setCoachTip(data.suggestion);
+                    }
+                }
+            } catch (e) {
+                console.error("Coach error", e);
+            } finally {
+                setIsCoaching(false);
+            }
+        }, 3000); // 3s debounce
+
+        return () => clearTimeout(timer);
+    }, [formData.description, currentStep]);
 
     // ----------------------------------------------------------------
     // HANDLERS
@@ -360,6 +397,45 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                     placeholder="Describe your project..."
                                     className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-none min-h-[150px] font-mono text-sm leading-relaxed rounded-xl"
                                 />
+
+                                {/* LIVE COACH TIP UI */}
+                                {(coachTip || isCoaching) && (
+                                    <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                                        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 flex gap-3 relative overflow-hidden">
+                                            {/* Shimmer effect */}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -skew-x-12 animate-shimmer" />
+
+                                            <div className="flex-shrink-0 mt-0.5">
+                                                {isCoaching ? (
+                                                    <div className="w-5 h-5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                                                ) : (
+                                                    <div className="bg-blue-500/20 p-1.5 rounded-full text-blue-400">
+                                                        <Lightbulb size={16} />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex-1 relative z-10">
+                                                <div className="flex justify-between items-start">
+                                                    <h4 className="text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">
+                                                        {isCoaching ? 'AI Advisor analyzing...' : 'Co-Founder Tip'}
+                                                    </h4>
+                                                    {!isCoaching && (
+                                                        <button
+                                                            onClick={() => setCoachTip(null)}
+                                                            className="text-white/20 hover:text-white transition-colors"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-blue-100/90 leading-relaxed font-medium">
+                                                    {isCoaching ? "Scanning your pitch for optimization opportunities..." : coachTip}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 {errors.description && <p className="text-red-500 text-xs mt-2 font-mono">:: ERROR :: {errors.description}</p>}
                             </div>
 
