@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openaiClient";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "edge";
 
+// ... (PROMPTS remain here) 
 
 const BASE_PROMPT = `
 You are an elite expert in Web3. Your goal is to help a founder refine their pitch AS THEY WRITE IT.
@@ -30,6 +32,10 @@ const PERSONAS: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
     try {
+        // Rate Limit Check
+        const rateLimitRes = await checkRateLimit(request, { plan: 'copilot' });
+        if (rateLimitRes) return rateLimitRes;
+
         const { text, field, projectType } = await request.json();
 
         if (!text || text.length < 15) {

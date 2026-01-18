@@ -68,11 +68,17 @@ const rateLimiters = redis ? {
     limiter: Ratelimit.slidingWindow(2, '24 h'),
     analytics: true,
   }),
+  // Live Coach / Copilot limit (per hour)
+  copilot: new Ratelimit({
+    redis: redis,
+    limiter: Ratelimit.slidingWindow(40, '1 h'), // 40 tips per hour
+    analytics: true,
+  }),
 } : null;
 
 export interface RateLimitOptions {
   identifier?: string; // Custom identifier (defaults to IP)
-  plan?: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim'; // User plan or specific limiter
+  plan?: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim' | 'copilot'; // User plan or specific limiter
   skipForDevelopment?: boolean; // Skip rate limiting in development
 }
 
@@ -180,7 +186,7 @@ export async function getBonusQuota(identifier: string): Promise<number> {
 
 export async function getRateLimitInfo(
   identifier: string,
-  plan: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim' = 'free'
+  plan: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim' | 'copilot' = 'free'
 ): Promise<{
   limit: number;
   remaining: number;
@@ -195,7 +201,8 @@ export async function getRateLimitInfo(
       free: 20,
       idea_eval_ip: 3,
       idea_eval_wallet: 5,
-      bonus_claim: 2
+      bonus_claim: 2,
+      copilot: 40
     };
     const limit = defaultLimits[plan] || 20;
     return {
@@ -243,7 +250,8 @@ export async function getRateLimitInfo(
     free: 20,
     idea_eval_ip: 3,
     idea_eval_wallet: 5,
-    bonus_claim: 2
+    bonus_claim: 2,
+    copilot: 40
   };
 
   return {
