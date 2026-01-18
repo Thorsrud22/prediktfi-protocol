@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 import { useWalletAuth } from '../lib/useWalletAuth';
 import IdeaHistory from '../components/IdeaHistory';
+import SimplifiedConnectButton from '../components/wallet/SimplifiedConnectButton';
 import Link from 'next/link';
 
 function shortAddress(address: string) {
@@ -76,6 +77,7 @@ const AuthenticationPrompt = React.memo(
               Connect your wallet and sign a message to view your account details, subscription
               status, and transaction history.
             </p>
+            <SimplifiedConnectButton />
           </>
         ) : verifying ? (
           <>

@@ -51,10 +51,14 @@ export default function StudioPage() {
     fetchQuota();
   }, [publicKey, evaluationResult]);
 
+  // Stream reasoning steps for the UI
+  const [streamingSteps, setStreamingSteps] = useState<string[]>([]);
+
   const handleEvaluate = async (data: IdeaSubmission) => {
     setSubmissionData(data);
     setIsAnalyzing(true);
     setError(null);
+    setStreamingSteps([]);
 
     try {
       const payload = {
@@ -62,7 +66,8 @@ export default function StudioPage() {
         walletAddress: publicKey || undefined
       };
 
-      const response = await fetch('/api/idea-evaluator/evaluate', {
+      // Use the streaming endpoint
+      const response = await fetch('/api/idea-evaluator/evaluate-stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,22 +75,63 @@ export default function StudioPage() {
         body: JSON.stringify(payload),
       });
 
-      if (response.status === 429) {
-        throw new Error('Daily quota exceeded. Please come back tomorrow or upgrade.');
-      }
-
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Daily quota exceeded. Please come back tomorrow or upgrade.');
+        }
         throw new Error('Evaluation failed');
       }
 
-      const responseData = await response.json();
-      setEvaluationResult(responseData.result);
-      setCurrentStep('analysis');
-    } catch (error: any) {
+      // Read the SSE stream
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response stream');
+      }
+
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Parse SSE events from buffer
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            // Next line will be data
+          } else if (line.startsWith('data: ')) {
+            const jsonStr = line.slice(6);
+            try {
+              const event = JSON.parse(jsonStr);
+
+              if (event.step) {
+                setStreamingSteps(prev => [...prev, event.step]);
+              } else if (event.result) {
+                setEvaluationResult(event.result);
+                setCurrentStep('analysis');
+              } else if (event.error) {
+                throw new Error(event.error);
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+
+    } catch (error: unknown) {
       console.error('Error evaluating idea:', error);
-      setError(error.message || 'Evaluation service is temporarily unavailable. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Evaluation service is temporarily unavailable. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsAnalyzing(false);
+      setStreamingSteps([]);
     }
   };
 
@@ -171,12 +217,13 @@ export default function StudioPage() {
                 onSubmit={handleEvaluate}
                 isSubmitting={isAnalyzing}
                 quota={quota}
+                streamingSteps={streamingSteps}
               />
             </>
           )}
 
           {currentStep === 'analysis' && evaluationResult && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-8">
               <IdeaEvaluationReport
                 result={evaluationResult}
                 onEdit={handleEdit}

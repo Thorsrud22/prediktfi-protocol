@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ideaSubmissionSchema, IdeaSubmission } from '@/lib/ideaSchema';
 import { z } from 'zod';
 import { ArrowLeft, ArrowRight, CheckCircle2, Rocket, Target, Users, Settings2, Sparkles } from 'lucide-react';
@@ -10,43 +10,128 @@ interface IdeaSubmissionFormProps {
     isSubmitting: boolean;
     initialData?: Partial<IdeaSubmission>;
     quota?: { limit: number; remaining: number } | null;
+    streamingSteps?: string[];
 }
 
-// ------------------------------------------------------------------
-// STEP DEFINITIONS
-// ------------------------------------------------------------------
-const STEPS = [
-    {
-        id: 'vision',
-        title: 'The Vision',
-        subtitle: 'What are you building?',
-        icon: Rocket,
-        fields: ['projectType', 'description']
-    },
-    {
-        id: 'execution',
-        title: 'Execution',
-        subtitle: 'Can you build it?',
-        icon: Users,
-        fields: ['teamSize', 'resources', 'tokenAddress']
-    },
-    {
-        id: 'strategy',
-        title: 'Strategy',
-        subtitle: 'How will you grow?',
-        icon: Target,
-        fields: ['mvpScope', 'goToMarketPlan', 'launchLiquidityPlan']
-    },
-    {
-        id: 'goals',
-        title: 'Goals',
-        subtitle: 'Define success',
-        icon: Settings2,
-        fields: ['successDefinition', 'responseStyle', 'attachments', 'focusHints']
-    }
-];
+// ... imports
 
-export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota }: IdeaSubmissionFormProps) {
+// ------------------------------------------------------------------
+// REASONING TERMINAL COMPONENT - Now with real streaming support
+// ------------------------------------------------------------------
+function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: string; streamingSteps?: string[] }) {
+    const [logs, setLogs] = useState<string[]>([]);
+    const [startTime] = useState(() => Date.now());
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+    // Update elapsed time
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [startTime]);
+
+    // Use streaming steps if provided, otherwise fall back to animation
+    useEffect(() => {
+        if (streamingSteps && streamingSteps.length > 0) {
+            // Real streaming mode - use actual steps from API
+            setLogs(streamingSteps);
+        } else {
+            // Fallback animation mode (for backwards compatibility)
+            const baseSteps = [
+                "Initializing PrediktFi Evaluator v2.1...",
+                "Secure handshake with evaluation node...",
+                "Parsing submission metadata...",
+            ];
+
+            const specificSteps = projectType === 'memecoin' ? [
+                "Scanning Solana chain for similar tickers...",
+                "Analyzing viral coefficients...",
+                "Checking liquidity lock patterns...",
+                "Simulating community raid potential...",
+            ] : projectType === 'defi' ? [
+                "Verifying yield sustainability...",
+                "Checking contract audit registries...",
+                "Analyzing impermanent loss risks...",
+                "Stress-testing economic model...",
+            ] : [
+                "Analyzing technical architecture...",
+                "Evaluating moat sustainability...",
+                "Cross-referencing GitHub activity...",
+                "Projecting training compute costs...",
+            ];
+
+            const finalSteps = [
+                "Synthesizing market signals...",
+                "Generating risk matrix...",
+                "Finalizing institutional report...",
+            ];
+
+            const allSteps = [...baseSteps, ...specificSteps, ...finalSteps];
+            let stepIndex = 0;
+
+            const interval = setInterval(() => {
+                if (stepIndex < allSteps.length) {
+                    setLogs(prev => [...prev, allSteps[stepIndex]]);
+                    stepIndex++;
+                }
+            }, 800);
+
+            return () => clearInterval(interval);
+        }
+    }, [projectType, streamingSteps]);
+
+    // Auto-scroll to bottom
+    const bottomRef = React.useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (bottomRef.current?.scrollIntoView) {
+            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [logs]);
+
+    return (
+        <div className="w-full h-[500px] flex flex-col p-8 font-mono text-xs md:text-sm bg-black/50">
+            <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-green-500 font-bold tracking-widest uppercase">LIVE ANALYSIS RUNNING</span>
+                </div>
+                <div className="text-white/40 font-mono text-xs">
+                    {elapsedSeconds}s elapsed
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-white/20">
+                {logs.map((log, i) => (
+                    <div key={i} className="flex gap-3 text-white/70 animate-in fade-in slide-in-from-left-2 duration-300">
+                        <span className="text-white/20 select-none">
+                            {new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </span>
+                        <span className="text-white">
+                            {'>'} {log}
+                        </span>
+                    </div>
+                ))}
+
+                <div className="flex gap-3 text-blue-400 animate-pulse">
+                    <span className="text-white/20 select-none">
+                        {new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                    <span>_</span>
+                </div>
+                <div ref={bottomRef} />
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center text-white/30 text-[10px] uppercase tracking-widest">
+                <span>STEPS: {logs.length}</span>
+                <span>STATUS: {streamingSteps && streamingSteps.length > 0 ? 'STREAMING' : 'SIMULATED'}</span>
+                <span>NET: ENCRYPTED</span>
+            </div>
+        </div>
+    );
+}
+
+export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps }: IdeaSubmissionFormProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
@@ -73,6 +158,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [animating, setAnimating] = useState(false);
+
+    // Stable session ID that doesn't change on re-renders
+    const sessionId = useMemo(() => Math.random().toString(36).substring(7).toUpperCase(), []);
 
     // ----------------------------------------------------------------
     // HANDLERS
@@ -168,6 +256,16 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     // ----------------------------------------------------------------
     // RENDER (TERMINAL UI)
     // ----------------------------------------------------------------
+
+    // INTERCEPT: If submitting, show Reasoning Terminal
+    if (isSubmitting) {
+        return (
+            <div className="w-full max-w-4xl mx-auto bg-slate-900/95 border border-white/10 shadow-xl rounded-xl relative overflow-hidden font-sans animate-in fade-in duration-500">
+                <ReasoningTerminal projectType={formData.projectType} streamingSteps={streamingSteps} />
+            </div>
+        );
+    }
+
     const progress = ((currentStep + 1) / STEPS.length) * 100;
     const currentStepConfig = STEPS[currentStep];
 
@@ -177,10 +275,10 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
                 <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-blue-400 font-mono">
                     <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                    SYSTEM_READY
+                    SYSTEM READY
                 </div>
                 <div className="text-xs text-white/40 font-mono">
-                    SESSION_ID: {Math.random().toString(36).substring(7).toUpperCase()}
+                    SESSION_ID: {sessionId}
                 </div>
             </div>
 
@@ -211,10 +309,10 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     ))}
                 </div>
                 <div className="flex justify-between mt-2 text-[10px] uppercase text-white/30 tracking-widest font-mono">
-                    <span>INIT</span>
-                    <span>EXEC</span>
-                    <span>STRAT</span>
-                    <span>GOAL</span>
+                    <span>Vision</span>
+                    <span>Execution</span>
+                    <span>Strategy</span>
+                    <span>Goals</span>
                 </div>
             </div>
 
@@ -231,9 +329,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {[
-                                        { id: 'memecoin', label: 'MEMECOIN', desc: 'VIRAL / HYPE' },
-                                        { id: 'defi', label: 'DEFI', desc: 'YIELD / PROTOCOL' },
-                                        { id: 'ai', label: 'AI AGENT', desc: 'LLM / INFRA' }
+                                        { id: 'memecoin', label: 'Memecoin', desc: 'Viral / Hype' },
+                                        { id: 'defi', label: 'DeFi', desc: 'Yield / Protocol' },
+                                        { id: 'ai', label: 'AI Agent', desc: 'LLM / Infra' }
                                     ].map((type) => (
                                         <button
                                             key={type.id}
@@ -268,7 +366,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => handleChange('description', e.target.value)}
-                                    placeholder="> INPUT PROJECT DESCRIPTION..."
+                                    placeholder="Describe your project..."
                                     className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-none min-h-[150px] font-mono text-sm leading-relaxed rounded-xl"
                                 />
                                 {errors.description && <p className="text-red-500 text-xs mt-2 font-mono">:: ERROR :: {errors.description}</p>}
@@ -278,31 +376,31 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             {formData.projectType === 'memecoin' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
                                     <div>
-                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-pink-500 pl-2">
+                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
                                             Community Vibe
                                         </label>
                                         <select
                                             value={formData.memecoinVibe || ''}
                                             onChange={(e) => handleChange('memecoinVibe', e.target.value)}
-                                            className="w-full p-3 bg-black/40 border border-white/10 text-white focus:outline-none focus:border-pink-500 text-sm font-mono appearance-none rounded-lg"
+                                            className="w-full p-3 bg-black/40 border border-white/10 text-white focus:outline-none focus:border-blue-500 text-sm font-mono appearance-none rounded-lg"
                                         >
-                                            <option value="" disabled> SELECT_VIBE</option>
-                                            <option value="cult">CULT_CONVICTION</option>
-                                            <option value="chill">CHILL_LOW_STRESS</option>
-                                            <option value="raiding">AGGRESSIVE_RAIDING</option>
-                                            <option value="utility">UTILITY_HIDDEN</option>
+                                            <option value="" disabled> SELECT VIBE</option>
+                                            <option value="cult">Cult / Conviction</option>
+                                            <option value="chill">Chill / Low Stress</option>
+                                            <option value="raiding">Aggressive / Raiding</option>
+                                            <option value="utility">Utility (Hidden)</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-pink-500 pl-2">
+                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
                                             Narrative Vector
                                         </label>
                                         <input
                                             type="text"
                                             value={formData.memecoinNarrative || ''}
                                             onChange={(e) => handleChange('memecoinNarrative', e.target.value)}
-                                            placeholder="> e.g. POLITIFI, CATS..."
-                                            className="w-full p-3 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-pink-500 text-sm font-mono rounded-lg"
+                                            placeholder="e.g. PolitiFi, Cats..."
+                                            className="w-full p-3 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 text-sm font-mono rounded-lg"
                                         />
                                     </div>
                                 </div>
@@ -312,7 +410,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             {formData.projectType === 'defi' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
                                     <div>
-                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-blue-500 pl-2">
+                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
                                             Mechanism Design
                                         </label>
                                         <select
@@ -320,23 +418,23 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                             onChange={(e) => handleChange('defiMechanism', e.target.value)}
                                             className="w-full p-3 bg-black/40 border border-white/10 text-white focus:outline-none focus:border-blue-500 text-sm font-mono appearance-none rounded-lg"
                                         >
-                                            <option value="" disabled> SELECT_MECHANISM</option>
-                                            <option value="staking">STAKING_YIELD</option>
-                                            <option value="lending">LENDING_BORROWING</option>
-                                            <option value="amm">DEX_AMM</option>
-                                            <option value="derivatives">PERPS_OPTIONS</option>
-                                            <option value="aggregator">AGGREGATOR</option>
+                                            <option value="" disabled> Select Mechanism</option>
+                                            <option value="staking">Staking / Yield</option>
+                                            <option value="lending">Lending / Borrowing</option>
+                                            <option value="amm">DEX / AMM</option>
+                                            <option value="derivatives">Perps / Options</option>
+                                            <option value="aggregator">Aggregator</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-blue-500 pl-2">
+                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
                                             Revenue Model
                                         </label>
                                         <input
                                             type="text"
                                             value={formData.defiRevenue || ''}
                                             onChange={(e) => handleChange('defiRevenue', e.target.value)}
-                                            placeholder="> e.g. 0.3% SWAP FEES..."
+                                            placeholder="e.g. 0.3% Swap Fees..."
                                             className="w-full p-3 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 text-sm font-mono rounded-lg"
                                         />
                                     </div>
@@ -347,31 +445,31 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             {formData.projectType === 'ai' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
                                     <div>
-                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-cyan-500 pl-2">
+                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
                                             Model Strategy
                                         </label>
                                         <select
                                             value={formData.aiModelType || ''}
                                             onChange={(e) => handleChange('aiModelType', e.target.value)}
-                                            className="w-full p-3 bg-black/40 border border-white/10 text-white focus:outline-none focus:border-cyan-500 text-sm font-mono appearance-none rounded-lg"
+                                            className="w-full p-3 bg-black/40 border border-white/10 text-white focus:outline-none focus:border-blue-500 text-sm font-mono appearance-none rounded-lg"
                                         >
-                                            <option value="" disabled> SELECT_STRATEGY</option>
-                                            <option value="wrapper">WRAPPER_API</option>
-                                            <option value="finetuned">FINE_TUNED_MODEL</option>
-                                            <option value="agents">AUTONOMOUS_AGENTS</option>
-                                            <option value="training">TRAINING_INFRA</option>
+                                            <option value="" disabled> Select Strategy</option>
+                                            <option value="wrapper">Wrapper API</option>
+                                            <option value="finetuned">Fine-tuned Model</option>
+                                            <option value="agents">Autonomous Agents</option>
+                                            <option value="training">Training Infra</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-cyan-500 pl-2">
+                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
                                             Data Moat
                                         </label>
                                         <input
                                             type="text"
                                             value={formData.aiDataMoat || ''}
                                             onChange={(e) => handleChange('aiDataMoat', e.target.value)}
-                                            placeholder="> e.g. PROPRIETARY DATASET..."
-                                            className="w-full p-3 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-cyan-500 text-sm font-mono rounded-lg"
+                                            placeholder="e.g. Proprietary Dataset..."
+                                            className="w-full p-3 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 text-sm font-mono rounded-lg"
                                         />
                                     </div>
                                 </div>
@@ -414,7 +512,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                             <div>
                                 <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
-                                    Resource Verification
+                                    Project Assets & Readiness
                                 </label>
 
                                 {/* GENERAL RESOURCES */}
@@ -426,12 +524,12 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                                 type="button"
                                                 onClick={() => toggleArrayItem('resources', resource)}
                                                 className={`px-4 py-3 border transition-all flex items-center justify-between group rounded-lg ${formData.resources?.includes(resource)
-                                                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.1)]'
+                                                    ? 'bg-blue-500/10 text-blue-200 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.1)]'
                                                     : 'bg-white/5 text-white/40 border-white/10 hover:border-white/20 hover:bg-white/10'
                                                     }`}
                                             >
-                                                <span className="uppercase text-xs font-bold tracking-wider">[ {resource} ]</span>
-                                                {formData.resources?.includes(resource) && <span className="text-[10px]">VERIFIED</span>}
+                                                <span className="uppercase text-xs font-bold tracking-wider">{resource}</span>
+                                                {formData.resources?.includes(resource) && <span className="text-[10px]">Verified</span>}
                                             </button>
                                         ))}
                                     </div>
@@ -441,24 +539,24 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 {formData.projectType === 'memecoin' && (
                                     <div className="grid grid-cols-1 gap-2">
                                         {[
-                                            { id: 'art_ready', label: 'ART_METADATA_READY' },
-                                            { id: 'kols_lined_up', label: 'KOLS_WARBAND_READY' },
-                                            { id: 'community_manager', label: 'COMMUNITY_MOD' },
-                                            { id: 'marketing_budget', label: 'BUDGET_GT_5K' }
+                                            { id: 'art_ready', label: 'Art & Metadata Ready' },
+                                            { id: 'kols_lined_up', label: 'KOLs & Warband Ready' },
+                                            { id: 'community_manager', label: 'Community Mod' },
+                                            { id: 'marketing_budget', label: 'Budget > $5k' }
                                         ].map((item) => (
                                             <button
                                                 key={item.id}
                                                 type="button"
                                                 onClick={() => toggleArrayItem('memecoinLaunchPreparation', item.id)}
                                                 className={`px-4 py-3 border transition-all flex items-center justify-between text-left rounded-none ${formData.memecoinLaunchPreparation?.includes(item.id)
-                                                    ? 'bg-pink-500/10 text-pink-500 border-pink-500'
+                                                    ? 'bg-blue-500/10 text-blue-200 border-blue-500/50'
                                                     : 'bg-black text-white/40 border-white/20 hover:border-white/40'
                                                     }`}
                                             >
                                                 <span className="text-xs font-bold tracking-wider">{item.label}</span>
                                                 {formData.memecoinLaunchPreparation?.includes(item.id) ? (
-                                                    <span className="text-[10px] bg-pink-500/20 px-1">CONFIRMED</span>
-                                                ) : <span className="text-[10px] opacity-20">UNVERIFIED</span>}
+                                                    <span className="text-[10px] bg-blue-500/20 px-1">Confirmed</span>
+                                                ) : <span className="text-[10px] opacity-20">Unverified</span>}
                                             </button>
                                         ))}
                                     </div>
@@ -468,24 +566,24 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 {formData.projectType === 'defi' && (
                                     <div className="grid grid-cols-1 gap-2">
                                         {[
-                                            { id: 'audit_planned', label: 'SECURITY_AUDIT' },
-                                            { id: 'multisig_setup', label: 'MULTISIG_DAO_OP' },
-                                            { id: 'timelock', label: 'TIMELOCK_CONTRACTS' },
-                                            { id: 'testnet_live', label: 'TESTNET_DEPLOYED' }
+                                            { id: 'audit_planned', label: 'Security Audit' },
+                                            { id: 'multisig_setup', label: 'Multisig / DAO' },
+                                            { id: 'timelock', label: 'Timelock Contracts' },
+                                            { id: 'testnet_live', label: 'Testnet Deployed' }
                                         ].map((item) => (
                                             <button
                                                 key={item.id}
                                                 type="button"
                                                 onClick={() => toggleArrayItem('defiSecurityMarks', item.id)}
                                                 className={`px-4 py-3 border transition-all flex items-center justify-between text-left rounded-none ${formData.defiSecurityMarks?.includes(item.id)
-                                                    ? 'bg-blue-500/10 text-blue-500 border-blue-500'
+                                                    ? 'bg-blue-500/10 text-blue-200 border-blue-500/50'
                                                     : 'bg-black text-white/40 border-white/20 hover:border-white/40'
                                                     }`}
                                             >
                                                 <span className="text-xs font-bold tracking-wider">{item.label}</span>
                                                 {formData.defiSecurityMarks?.includes(item.id) ? (
-                                                    <span className="text-[10px] bg-blue-500/20 px-1">SECURED</span>
-                                                ) : <span className="text-[10px] opacity-20">MISSING</span>}
+                                                    <span className="text-[10px] bg-blue-500/20 px-1">Secured</span>
+                                                ) : <span className="text-[10px] opacity-20">Missing</span>}
                                             </button>
                                         ))}
                                     </div>
@@ -495,24 +593,24 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 {formData.projectType === 'ai' && (
                                     <div className="grid grid-cols-1 gap-2">
                                         {[
-                                            { id: 'gpu_access', label: 'GPU_COMPUTE_ACCESS' },
-                                            { id: 'proprietary_data', label: 'CLEAN_DATASET' },
-                                            { id: 'ml_engineer', label: 'ML_ENGINEER_LEAD' },
-                                            { id: 'prototype_working', label: 'PROTOTYPE_ONLINE' }
+                                            { id: 'gpu_access', label: 'GPU Compute' },
+                                            { id: 'proprietary_data', label: 'Clean Dataset' },
+                                            { id: 'ml_engineer', label: 'ML Engineer Lead' },
+                                            { id: 'prototype_working', label: 'Prototype Online' }
                                         ].map((item) => (
                                             <button
                                                 key={item.id}
                                                 type="button"
                                                 onClick={() => toggleArrayItem('aiInfraReadiness', item.id)}
                                                 className={`px-4 py-3 border transition-all flex items-center justify-between text-left rounded-none ${formData.aiInfraReadiness?.includes(item.id)
-                                                    ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500'
+                                                    ? 'bg-blue-500/10 text-blue-200 border-blue-500/50'
                                                     : 'bg-black text-white/40 border-white/20 hover:border-white/40'
                                                     }`}
                                             >
                                                 <span className="text-xs font-bold tracking-wider">{item.label}</span>
                                                 {formData.aiInfraReadiness?.includes(item.id) ? (
-                                                    <span className="text-[10px] bg-cyan-500/20 px-1">READY</span>
-                                                ) : <span className="text-[10px] opacity-20">NOT_READY</span>}
+                                                    <span className="text-[10px] bg-blue-500/20 px-1">Ready</span>
+                                                ) : <span className="text-[10px] opacity-20">Not Ready</span>}
                                             </button>
                                         ))}
                                     </div>
@@ -522,17 +620,17 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             {(formData.projectType === 'memecoin' || formData.projectType === 'defi') && (
                                 <div>
                                     <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
-                                        Chain Analytics (Optional)
+                                        Existing Token Contract
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.tokenAddress || ''}
                                         onChange={(e) => handleChange('tokenAddress', e.target.value)}
-                                        placeholder="> SOLANA CA (7xW...)"
+                                        placeholder="Solana CA (7xW...)"
                                         className="w-full p-4 bg-black border border-white/20 text-white placeholder-white/20 focus:outline-none focus:border-green-500 text-sm font-mono"
                                     />
                                     <p className="text-[10px] text-green-500/60 mt-2 font-mono">
-                                        // DETECTS_RUG_RISK()
+                                        For live tokens only. We'll scan for rug pull risks and liquidity locks.
                                     </p>
                                 </div>
                             )}
@@ -550,7 +648,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 <textarea
                                     value={formData.mvpScope}
                                     onChange={(e) => handleChange('mvpScope', e.target.value)}
-                                    placeholder="> DEFINE_DELIVERABLES"
+                                    placeholder="Define deliverables..."
                                     className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-green-500 resize-none min-h-[120px] font-mono text-sm rounded-xl"
                                 />
                             </div>
@@ -562,7 +660,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 <textarea
                                     value={formData.goToMarketPlan}
                                     onChange={(e) => handleChange('goToMarketPlan', e.target.value)}
-                                    placeholder="> DEFINE_TARGET_USERS"
+                                    placeholder="Define target users..."
                                     className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-green-500 resize-none min-h-[120px] font-mono text-sm rounded-xl"
                                 />
                             </div>
@@ -575,7 +673,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                     <textarea
                                         value={formData.launchLiquidityPlan}
                                         onChange={(e) => handleChange('launchLiquidityPlan', e.target.value)}
-                                        placeholder="> DEFINE_LP_SETUP"
+                                        placeholder="Define liquidity setup..."
                                         className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-green-500 resize-none min-h-[120px] font-mono text-sm rounded-xl"
                                     />
                                 </div>
@@ -602,8 +700,8 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                                     handleChange('targetMarketCap', e.target.value);
                                                     handleChange('successDefinition', `Target MC: ${e.target.value}`);
                                                 }}
-                                                placeholder="> TARGET_MCAP (e.g. $10M)"
-                                                className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-pink-500 text-sm font-mono rounded-lg"
+                                                placeholder="Target Market Cap (e.g. $10M)"
+                                                className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 text-sm font-mono rounded-lg"
                                             />
                                         </div>
                                     </div>
@@ -617,7 +715,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                                     handleChange('targetTVL', e.target.value);
                                                     handleChange('successDefinition', `Target TVL: ${e.target.value}`);
                                                 }}
-                                                placeholder="> TARGET_TVL (e.g. $1M)"
+                                                placeholder="Target TVL (e.g. $1M)"
                                                 className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 text-sm font-mono rounded-lg"
                                             />
                                         </div>
@@ -627,7 +725,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                         type="text"
                                         value={formData.successDefinition}
                                         onChange={(e) => handleChange('successDefinition', e.target.value)}
-                                        placeholder="> DEFINE_SUCCESS"
+                                        placeholder="Define success..."
                                         className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-green-500 text-sm font-mono rounded-lg"
                                     />
                                 )}
@@ -640,9 +738,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {[
-                                        { id: 'short', label: 'SHORT_VERDICT', desc: 'DIRECT_BRUTAL' },
-                                        { id: 'full', label: 'FULL_REPORT', desc: 'DEEP_ANALYSIS' },
-                                        { id: 'next_steps', label: 'ACTION_PLAN', desc: 'TASK_LIST' },
+                                        { id: 'short', label: 'Short Verdict', desc: 'Direct & Brutal' },
+                                        { id: 'full', label: 'Full Report', desc: 'Deep Analysis' },
+                                        { id: 'next_steps', label: 'Action Plan', desc: 'Task List' },
                                     ].map((style) => (
                                         <button
                                             key={style.id}
@@ -653,7 +751,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                                 : 'bg-white/5 border-white/10 text-white/40 hover:text-white/80 hover:border-white/20'
                                                 }`}
                                         >
-                                            {formData.responseStyle === style.id && <span className="absolute top-3 right-3 text-blue-500 text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full">[ACTIVE]</span>}
+                                            {formData.responseStyle === style.id && <span className="absolute top-3 right-3 text-blue-500 text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full">Active</span>}
                                             <div className="font-bold mb-1 text-sm tracking-wide">{style.label}</div>
                                             <div className="text-[10px] opacity-60 font-mono uppercase">{style.desc}</div>
                                         </button>
@@ -696,7 +794,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                     ? 'border-red-500 text-red-500 bg-red-500/10'
                                     : 'border-green-500 text-green-500 bg-green-500/10'
                                     }`}>
-                                    QUOTA: {quota.remaining}/{quota.limit}
+                                    Quota: {quota.remaining}/{quota.limit}
                                 </div>
                             )}
                             <button
@@ -705,7 +803,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 disabled={isSubmitting || (quota?.remaining === 0)}
                                 className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-3 font-bold uppercase tracking-wider transition-all shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:grayscale rounded-full"
                             >
-                                {isSubmitting ? 'PROCESSING...' : 'RUN_EVALUATION'} <Sparkles size={14} />
+                                {isSubmitting ? 'Processing...' : 'Analyze Idea'} <Sparkles size={14} />
                             </button>
                         </div>
                     )}
@@ -714,3 +812,35 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         </div>
     );
 }
+const STEPS = [
+    {
+        id: 'vision',
+        title: 'The Vision',
+        subtitle: 'What are you building?',
+        icon: Rocket,
+        fields: ['projectType', 'description']
+    },
+    {
+        id: 'execution',
+        title: 'Execution',
+        subtitle: 'Can you build it?',
+        icon: Users,
+        fields: ['teamSize', 'resources', 'tokenAddress']
+    },
+    {
+        id: 'strategy',
+        title: 'Strategy',
+        subtitle: 'How will you grow?',
+        icon: Target,
+        fields: ['mvpScope', 'goToMarketPlan', 'launchLiquidityPlan']
+    },
+    {
+        id: 'goals',
+        title: 'Goals',
+        subtitle: 'Define success',
+        icon: Settings2,
+        fields: ['successDefinition', 'responseStyle', 'attachments', 'focusHints']
+    }
+];
+
+
