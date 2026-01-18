@@ -51,6 +51,19 @@ TONE INSTRUCTIONS (Context-Aware):
   - Use Crypto-native, narrative-driven terminology.
   - Focus on: Liquidity, Distribution, Rug Risk, Narrative Stickiness, Community Hype.
   - "Is the distribution fair?" "Will the team rug?" "Is the meme alpha?"
+  - IF 'Memecoin Vibe' IS PROVIDED: Judge if the description matches the vibe (e.g. "Cult" needs strong conviction language).
+  - IF 'Memecoin Narrative' IS PROVIDED: Critique its timeliness (e.g. "PolitiFi is dead" or "Cats are trending").
+
+- IF PROJECT TYPE IS 'DEFI':
+  - Use professional, Venture Capital terminology.
+  - Focus on: Moat, Defensibility, Unit Economics, Technical Debt, Security, Audit.
+  - IF 'Revenue Model' IS PROVIDED: Critique sustainability (Ponzi vs Real Yield).
+  - IF 'Mechanism' IS PROVIDED: Check for known risks (e.g. "Staking" -> Inflation risk).
+
+- IF PROJECT TYPE IS 'AI' OR 'INFRA':
+  - Focus on: Moat, Defensibility, Technical Debt.
+  - IF 'AI Model Strategy' IS 'Wrapper': Be highly skepticism of "Moat".
+  - IF 'AI Data Moat' IS 'Public Scraping': Penalize defensibility scrore.
 
 CRITICAL:
 - Your "mainVerdict" MUST be a direct thesis statement (e.g., "Pass - Liquidity risk too high" or "Watchlist - Strong tech but early").
@@ -92,7 +105,22 @@ export function buildIdeaContextSummary(idea: IdeaSubmission): string {
   const parts = [
     `Project Type: ${idea.projectType}`,
     `Team Size: ${idea.teamSize}`,
-    `Resources: ${idea.resources.join(', ')}`,
+    `Resources: ${idea.resources?.join(', ') || 'None specified'}`,
+
+    // --- Smart Fields Injection ---
+    idea.memecoinNarrative ? `Memecoin Narrative: "${idea.memecoinNarrative}"` : '',
+    idea.memecoinVibe ? `Memecoin Vibe: "${idea.memecoinVibe}"` : '',
+    idea.defiRevenue ? `DeFi Revenue Model: "${idea.defiRevenue}"` : '',
+    idea.defiMechanism ? `DeFi Mechanism: "${idea.defiMechanism}"` : '',
+    idea.aiModelType ? `AI Model Strategy: "${idea.aiModelType}"` : '',
+    idea.aiDataMoat ? `AI Data Moat: "${idea.aiDataMoat}"` : '',
+
+    // Checklists
+    idea.memecoinLaunchPreparation?.length ? `Memecoin Prep: ${idea.memecoinLaunchPreparation.join(', ')}` : '',
+    idea.defiSecurityMarks?.length ? `DeFi Security Marks: ${idea.defiSecurityMarks.join(', ')}` : '',
+    idea.aiInfraReadiness?.length ? `AI Infra: ${idea.aiInfraReadiness.join(', ')}` : '',
+    // ------------------------------
+
     `Success Definition: "${idea.successDefinition}"`,
     `MVP Scope (6-12m): "${idea.mvpScope || 'Not provided - assume vague/undefined'}"`,
     `Go-to-Market / First Users: "${idea.goToMarketPlan || 'Not provided - assume no distribution plan'}"`,

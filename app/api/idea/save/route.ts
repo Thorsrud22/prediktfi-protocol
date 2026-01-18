@@ -12,21 +12,38 @@ const saveSchema = z.object({
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { submission, result, walletAddress } = saveSchema.parse(body);
+        console.log("Saving Idea - Body:", JSON.stringify(body, null, 2));
+
+        const parsed = saveSchema.safeParse(body);
+        if (!parsed.success) {
+            console.error("Validation failed:", parsed.error);
+            return NextResponse.json(
+                { error: 'Invalid payload', issues: parsed.error },
+                { status: 400 }
+            );
+        }
+
+        const { submission, result, walletAddress } = parsed.data;
 
         let dbWalletId: string | undefined;
 
         // If walletAddress is provided, find or create the wallet in DB
         if (walletAddress) {
-            const wallet = await prisma.wallet.upsert({
-                where: { address: walletAddress },
-                update: {},
-                create: {
-                    address: walletAddress,
-                    // Only required fields based on schema, assuming defaults handle the rest
-                },
-            });
-            dbWalletId = wallet.id;
+            try {
+                const wallet = await prisma.wallet.upsert({
+                    where: { address: walletAddress },
+                    update: {},
+                    create: {
+                        address: walletAddress,
+                    },
+                });
+                dbWalletId = wallet.id;
+            } catch (err) {
+                console.error("Error upserting wallet:", err);
+                // Continue without wallet link if this fails? Or fail?
+                // Let's fail for now to be safe
+                throw err;
+            }
         }
 
         const savedIdea = await prisma.ideaEvaluation.create({
@@ -40,6 +57,7 @@ export async function POST(req: NextRequest) {
             },
         });
 
+        console.log("Idea saved successfully:", savedIdea.id);
         return NextResponse.json({ success: true, id: savedIdea.id });
     } catch (error) {
         console.error('Error saving idea:', error);

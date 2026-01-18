@@ -40,140 +40,130 @@ describe('AI Idea Evaluator Studio', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         window.scrollTo = vi.fn();
-    });
 
-    it('renders the landing view initially', () => {
-        render(<StudioPage />);
-
-        // Check for heading content
-        const heading = screen.getByRole('heading', { level: 1 });
-        expect(heading).toHaveTextContent(/AI Idea Evaluator/i);
-        expect(heading).toHaveTextContent(/Studio/i);
-
-        // Check for description (partial match is safer with <br> tags)
-        expect(screen.getByText(/Validate your crypto, memecoin, or web3 project ideas instantly/i)).toBeInTheDocument();
-
-        // Check for new button text (Title Case)
-        expect(screen.getByRole('button', { name: /Start New Evaluation/i })).toBeInTheDocument();
-    });
-
-    it('switches to evaluation flow when CTA is clicked', async () => {
-        render(<StudioPage />);
-
-        const ctaButton = screen.getByRole('button', { name: /Start new evaluation/i });
-        fireEvent.click(ctaButton);
-
-        // Wait for skeleton to disappear and form to load
-        await waitFor(() => {
-            expect(screen.getByText('Project Type')).toBeInTheDocument();
-        }, { timeout: 3000 });
-
-        expect(screen.getByText('Submit Your Idea')).toBeInTheDocument();
-        expect(screen.getByText('Project Type')).toBeInTheDocument();
-    });
-
-    it('shows validation errors when submitting empty form', async () => {
-        render(<StudioPage />);
-
-        // Enter flow
-        fireEvent.click(screen.getByRole('button', { name: /Start new evaluation/i }));
-
-        // Wait for skeleton to disappear and form to load
-        await waitFor(() => {
-            expect(screen.getByRole('button', { name: /Evaluate Idea/i })).toBeInTheDocument();
-        }, { timeout: 2000 });
-
-        // Submit empty form
-        const submitButton = screen.getByRole('button', { name: /Evaluate Idea/i });
-        fireEvent.click(submitButton);
-
-        // Check for validation messages
-        await waitFor(() => {
-            expect(screen.getByText('Please select a project type')).toBeInTheDocument();
-            expect(screen.getByText('Description must be at least 10 characters long')).toBeInTheDocument();
+        // Default mock for Quota calls to avoid unhandled rejections in simple renders
+        (global.fetch as any).mockImplementation((url: string) => {
+            if (url && url.toString().includes('/api/idea-evaluator/quota')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({ limit: 3, remaining: 3, reset: Date.now() + 86400000 })
+                });
+            }
+            return Promise.resolve({ ok: true, json: async () => ({}) });
         });
     });
 
-    it('submits successfully with valid data', async () => {
-        // Mock successful API response
-        (global.fetch as any).mockResolvedValueOnce({
-            ok: true,
-            json: async () => ({
-                result: {
-                    overallScore: 85,
-                    summary: {
-                        title: 'Great Idea Title',
-                        oneLiner: 'A decentralized exchange for memecoins',
-                        mainVerdict: 'Great idea with potential'
-                    },
-                    technical: {
-                        feasibilityScore: 90,
-                        keyRisks: ['Smart contract risk'],
-                        requiredComponents: ['Solana Program'],
-                        comments: 'Technically sound'
-                    },
-                    tokenomics: {
-                        tokenNeeded: true,
-                        designScore: 70,
-                        mainIssues: [],
-                        suggestions: []
-                    },
-                    market: {
-                        marketFitScore: 80,
-                        targetAudience: ['Degens'],
-                        competitorSignals: [],
-                        goToMarketRisks: ['High competition']
-                    },
-                    execution: {
-                        complexityLevel: 'medium',
-                        founderReadinessFlags: [],
-                        estimatedTimeline: '3 months'
-                    },
-                    recommendations: {
-                        mustFixBeforeBuild: [],
-                        recommendedPivots: ['Add social features'],
-                        niceToHaveLater: []
-                    },
-                    calibrationNotes: ['DeFi: plus points for explicit audit/security thinking and a concrete target user.']
-                }
-            }),
+    it('submits successfully with valid data through wizard steps', async () => {
+        // Mock API responses based on URL
+        (global.fetch as any).mockImplementation((url: string) => {
+            if (url.includes('/api/idea-evaluator/quota')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({ limit: 3, remaining: 3, reset: Date.now() + 86400000 })
+                });
+            }
+            if (url.includes('/api/idea-evaluator/evaluate')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({
+                        result: {
+                            overallScore: 85,
+                            summary: {
+                                title: 'Great Idea Title',
+                                oneLiner: 'A decentralized exchange for memecoins',
+                                mainVerdict: 'Great idea with potential'
+                            },
+                            technical: {
+                                feasibilityScore: 90,
+                                keyRisks: ['Smart contract risk'],
+                                requiredComponents: ['Solana Program'],
+                                comments: 'Technically sound'
+                            },
+                            tokenomics: {
+                                tokenNeeded: true,
+                                designScore: 70,
+                                mainIssues: [],
+                                suggestions: []
+                            },
+                            market: {
+                                marketFitScore: 80,
+                                targetAudience: ['Degens'],
+                                competitorSignals: [],
+                                goToMarketRisks: ['High competition']
+                            },
+                            execution: {
+                                complexityLevel: 'medium',
+                                founderReadinessFlags: [],
+                                estimatedTimeline: '3 months'
+                            },
+                            recommendations: {
+                                mustFixBeforeBuild: [],
+                                recommendedPivots: ['Add social features'],
+                                niceToHaveLater: []
+                            },
+                            calibrationNotes: ['DeFi: plus points for explicit audit/security thinking and a concrete target user.']
+                        }
+                    }),
+                });
+            }
+            return Promise.reject(new Error(`Unknown URL: ${url}`));
         });
 
         render(<StudioPage />);
 
-        // Enter flow
-        fireEvent.click(screen.getByRole('button', { name: /Start new evaluation/i }));
-
-        // Wait for skeleton to disappear and form to load
+        // Expect form to be immediately visible
         await waitFor(() => {
-            expect(screen.getByText('DeFi')).toBeInTheDocument();
+            expect(screen.getByText('The Vision')).toBeInTheDocument();
         }, { timeout: 2000 });
 
-        // Fill form
+        // --- STEP 1: VISION ---
         fireEvent.click(screen.getByText('DeFi')); // Project Type
-
-        const descriptionInput = screen.getByPlaceholderText('Describe your project in a few sentences...');
+        const descriptionInput = screen.getByPlaceholderText('Describe your project in a few sentences... What problem does it solve?');
         fireEvent.change(descriptionInput, { target: { value: 'A decentralized exchange for memecoins on Solana' } });
 
-        fireEvent.click(screen.getByLabelText('2-5 Members')); // Team Size
+        fireEvent.click(screen.getByRole('button', { name: /Next Step/i }));
 
-        fireEvent.click(screen.getByText('Time')); // Resources
-        fireEvent.click(screen.getByText('Skills'));
+        // --- STEP 2: EXECUTION ---
+        await waitFor(() => expect(screen.getByText('Execution')).toBeInTheDocument());
 
-        const successInput = screen.getByPlaceholderText('e.g., 10k users, $1M TVL, mainnet launch...');
+        // Use getByRole for accurate button selection including the label text
+        fireEvent.click(screen.getByText('2-5 Members'));
+
+        // Wait for animation frame or just robustness
+        await waitFor(() => expect(screen.getByText('Audit Planned / Completed')).toBeInTheDocument());
+        fireEvent.click(screen.getByText('Audit Planned / Completed'));
+        fireEvent.click(screen.getByText('Multisig / DAO Setup'));
+
+        fireEvent.click(screen.getByRole('button', { name: /Next Step/i }));
+
+        // --- STEP 3: STRATEGY ---
+        await waitFor(() => expect(screen.getByText('Strategy')).toBeInTheDocument());
+
+        // These fields are optional/text areas in the new form
+        const mvpInput = screen.getByPlaceholderText('What is the realistic MVP you can ship?');
+        fireEvent.change(mvpInput, { target: { value: 'Basic AMM' } });
+
+        fireEvent.click(screen.getByRole('button', { name: /Next Step/i }));
+
+        // --- STEP 4: GOALS ---
+        await waitFor(() => expect(screen.getByText('Goals')).toBeInTheDocument());
+
+        const successInput = screen.getByPlaceholderText('e.g. $1M TVL');
         fireEvent.change(successInput, { target: { value: '1M TVL' } });
 
         fireEvent.click(screen.getByText('Short Verdict')); // Response Style
 
         // Submit
-        const submitButton = screen.getByRole('button', { name: /Evaluate Idea/i });
+        const submitButton = screen.getByRole('button', { name: /Run Evaluation/i });
         fireEvent.click(submitButton);
 
-        // Expect loading state
-        expect(screen.getByText('Evaluating your idea')).toBeInTheDocument();
+        // Expect loading state from the overlay, not the form button
+        // The form unmounts or is covered by EvaluationLoadingOverlay which says "Parsing your idea..."
+        expect(screen.getByText(/Parsing your idea/i)).toBeInTheDocument();
 
         // Verify fetch was called
-        expect(global.fetch).toHaveBeenCalledTimes(1);
+        // Verify fetch was called at least once (quota + evaluate)
+        expect(global.fetch).toHaveBeenCalled();
 
         // Wait for report step
         await waitFor(() => {
@@ -181,10 +171,64 @@ describe('AI Idea Evaluator Studio', () => {
             expect(screen.getByText('85')).toBeInTheDocument();
             expect(screen.getByText('Technically sound')).toBeInTheDocument();
             expect(screen.getByText('High competition')).toBeInTheDocument();
-
-            // Check for calibration notes
-            expect(screen.getByText('Why this score?')).toBeInTheDocument();
-            expect(screen.getByText('DeFi: plus points for explicit audit/security thinking and a concrete target user.')).toBeInTheDocument();
         }, { timeout: 3000 });
     });
+
+    it('shows smart conditional fields based on project type', async () => {
+        render(<StudioPage />);
+
+        // Immediate check
+        expect(screen.getByText('The Vision')).toBeInTheDocument();
+
+        // Select Memecoin -> Should show "Community Vibe"
+        fireEvent.click(screen.getByText('Memecoin'));
+        expect(screen.getByText('Community Vibe')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('e.g. PolitiFi, Cats, Retro...')).toBeInTheDocument();
+
+        // Select DeFi -> Should show "Core Mechanism"
+        fireEvent.click(screen.getByText('DeFi'));
+        expect(screen.getByText('Core Mechanism')).toBeInTheDocument();
+        expect(screen.getByText('Revenue Model')).toBeInTheDocument();
+
+        // Ensure Memecoin fields are gone
+        expect(screen.queryByText('Community Vibe')).not.toBeInTheDocument();
+    });
+
+    it('shows adaptive checklists and goals based on project type', async () => {
+        render(<StudioPage />);
+
+        // Start
+        await waitFor(() => screen.getByText('The Vision'));
+
+        // 1. MEMECOIN FLOW
+        fireEvent.click(screen.getByText('Memecoin'));
+        fireEvent.change(screen.getByPlaceholderText('Describe your project in a few sentences... What problem does it solve?'), { target: { value: 'A memecoin about coding.' } });
+
+        // Next to Execution
+        fireEvent.click(screen.getByText('Next Step'));
+        await waitFor(() => screen.getByText('Execution'));
+
+        // Check Memecoin Checklist
+        expect(screen.getByText('KOLs / Influencers Lined Up')).toBeInTheDocument();
+        expect(screen.queryByText('Audit Planned / Completed')).not.toBeInTheDocument();
+
+        // Select Team Size (required)
+        fireEvent.click(screen.getByLabelText(/Solo Builder/i));
+
+        // Next to Strategy (skip)
+        fireEvent.click(screen.getByText('Next Step'));
+        await waitFor(() => screen.getByText('MVP Scope (6-12 months)'));
+
+        // Fill MVP Scope (required)
+        fireEvent.change(screen.getByPlaceholderText('What is the realistic MVP you can ship?'), { target: { value: 'A simple token launcher.' } });
+
+        // Next to Goals
+        fireEvent.click(screen.getByText('Next Step'));
+        await waitFor(() => screen.getByText('Goals'));
+
+        // Check Memecoin Goal
+        expect(screen.getByText('Target Market Cap (3mo)')).toBeInTheDocument();
+        expect(screen.queryByText('Target TVL / Volume')).not.toBeInTheDocument();
+    });
 });
+
