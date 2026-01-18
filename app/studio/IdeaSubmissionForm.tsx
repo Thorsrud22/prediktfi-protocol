@@ -12,6 +12,7 @@ interface IdeaSubmissionFormProps {
     quota?: { limit: number; remaining: number } | null;
     streamingSteps?: string[];
     isConnected?: boolean;
+    onConnect?: () => void;
 }
 
 const STEPS = [
@@ -163,7 +164,7 @@ function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: stri
     );
 }
 
-export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, isConnected }: IdeaSubmissionFormProps) {
+export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, isConnected, onConnect }: IdeaSubmissionFormProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
@@ -474,9 +475,13 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                                             Considering the competitive landscape of your memecoin, have you thought about how to differentiate the narrative?
                                                         </p>
                                                         <div className="absolute inset-0 flex items-center justify-center">
-                                                            <div className="bg-blue-600/90 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg transform transition-transform group-hover:scale-105 flex items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => onConnect?.()}
+                                                                className="bg-blue-600/90 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg transform transition-transform group-hover:scale-105 flex items-center gap-2 cursor-pointer"
+                                                            >
                                                                 <Rocket size={12} /> Connect Wallet to Unlock
-                                                            </div>
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 ) : (

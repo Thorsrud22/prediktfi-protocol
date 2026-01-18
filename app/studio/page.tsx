@@ -227,6 +227,7 @@ export default function StudioPage() {
                 quota={quota}
                 streamingSteps={streamingSteps}
                 isConnected={isConnected}
+                onConnect={connect}
               />
             </>
           )}
