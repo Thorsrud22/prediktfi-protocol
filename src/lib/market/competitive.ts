@@ -2,6 +2,7 @@ import { IdeaSubmission } from "@/lib/ideaSchema";
 import { openai } from "@/lib/openaiClient";
 import { CompetitiveMemo, CompetitiveMemoResult } from "./competitiveTypes";
 import { searchCompetitors } from "@/lib/tavilyClient";
+import { generateDeFiCompetitiveSummary, getDeFiCompetitors, formatTVL } from "@/lib/defiLlamaClient";
 
 const COMPETITIVE_SYSTEM_PROMPT = `You are a Competitive Intelligence Scout for specialized crypto/tech sectors.
 Your goal is to produce a "Competitive Memo" that provides a reality check on an idea's landscape.
@@ -50,14 +51,48 @@ JSON Structure Requirements:
 
 Category Specific Instructions:
 - **Memecoin**: Focus on narrative exhaustion. If it's another dog coin, crowdedness is "saturated". Reference Top 3 similar coins.
-- **DeFi**: Focus on distinct mechanism or liquidity moat. If it's a generic fork, crowdedness is "high".
+- **DeFi**: Focus on distinct mechanism or liquidity moat. If it's a generic fork, crowdedness is "high". USE THE DEFILLAMA TVL DATA PROVIDED.
 - **AI**: Focus on "Wrapper vs Proprietary". If it's just a GPT wrapper, moat is "None".
 
 Constraint:
 - Do not fabricate URLs. 
 - Keep notes concise (under 20 words).
 - If the idea is nonsense, be honest in "evaluatorNotes".
+- For DeFi: Reference ACTUAL TVL numbers from DeFiLlama when comparing to competitors.
 `;
+
+/**
+ * Detect DeFi mechanism type from idea data
+ */
+function detectDeFiMechanism(idea: IdeaSubmission): string {
+    const text = `${idea.description} ${idea.defiMechanism || ''} ${idea.mvpScope || ''}`.toLowerCase();
+
+    if (text.includes('lend') || text.includes('borrow') || text.includes('collateral')) {
+        return 'lending';
+    }
+    if (text.includes('stake') || text.includes('staking') || text.includes('validator')) {
+        return 'staking';
+    }
+    if (text.includes('swap') || text.includes('dex') || text.includes('amm') || text.includes('liquidity pool')) {
+        return 'amm';
+    }
+    if (text.includes('perp') || text.includes('derivative') || text.includes('futures') || text.includes('options')) {
+        return 'derivatives';
+    }
+    if (text.includes('yield') || text.includes('farm') || text.includes('vault')) {
+        return 'yield';
+    }
+    if (text.includes('aggregat')) {
+        return 'aggregator';
+    }
+
+    // Fall back to defiMechanism field if set
+    if (idea.defiMechanism) {
+        return idea.defiMechanism;
+    }
+
+    return 'lending'; // Default fallback
+}
 
 /**
  * Fetches a competitive memo using the LLM.
@@ -97,7 +132,39 @@ ${formattedResults}
         console.warn("[Competitive] Tavily search failed (non-blocking):", err);
     }
 
-    // 3. Prepare Prompt
+    // 3. Fetch DeFiLlama data for DeFi projects
+    let defiLlamaContext = "";
+    if (normalizedCategory === 'defi') {
+        try {
+            // Detect mechanism type from idea
+            const mechanism = detectDeFiMechanism(idea);
+            const competitors = await getDeFiCompetitors(mechanism, "Solana");
+
+            if (competitors.length > 0) {
+                const totalTVL = competitors.reduce((sum, p) => sum + p.tvl, 0);
+                const top5 = competitors.slice(0, 5);
+
+                defiLlamaContext = `
+REAL-TIME DEFILLAMA TVL DATA (Live Solana ${mechanism.toUpperCase()} Market):
+Total category TVL: ${formatTVL(totalTVL)}
+
+Top Competitors by TVL:
+${top5.map((p, i) => {
+                    const change = p.change_7d !== null ? ` (${p.change_7d > 0 ? '+' : ''}${p.change_7d.toFixed(1)}% 7d)` : '';
+                    return `${i + 1}. ${p.name}: ${formatTVL(p.tvl)}${change}`;
+                }).join('\n')}
+
+Use these REAL numbers when analyzing competitive landscape.
+If user's target TVL is provided, compare it to these actual figures.
+`;
+                console.log(`[Competitive] Found ${competitors.length} DeFi competitors via DeFiLlama (${mechanism})`);
+            }
+        } catch (err) {
+            console.warn("[Competitive] DeFiLlama fetch failed (non-blocking):", err);
+        }
+    }
+
+    // 4. Prepare Prompt
     const userContent = `
 Analyze this idea for Competitive Intelligence.
 Category: ${normalizedCategory}
@@ -108,9 +175,11 @@ ${JSON.stringify({
         description: idea.description,
         projectType: idea.projectType, // using original type as hint
         mvpScope: idea.mvpScope,
-        successDefinition: idea.successDefinition
+        successDefinition: idea.successDefinition,
+        targetTVL: idea.targetTVL, // Include target TVL for comparison
     }, null, 2)}
 ${webSearchContext}
+${defiLlamaContext}
 `;
 
     try {
