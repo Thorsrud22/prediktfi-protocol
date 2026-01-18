@@ -194,7 +194,8 @@ export async function getRateLimitInfo(
       alerts: 5,
       free: 20,
       idea_eval_ip: 3,
-      idea_eval_wallet: 10
+      idea_eval_wallet: 5,
+      bonus_claim: 2
     };
     const limit = defaultLimits[plan] || 20;
     return {
