@@ -21,9 +21,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
     };
 
     const getScoreLabel = (score: number) => {
-        if (score >= 75) return 'BUY / LONG';
-        if (score >= 50) return 'HOLD / WATCH';
-        return 'SELL / PASS';
+        if (score >= 75) return 'Strong Potential';
+        if (score >= 50) return 'Watchlist';
+        return 'High Risk / Pass';
     };
 
     if (!result) return null;
@@ -40,7 +40,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     <div>
                         <div className="text-[10px] text-blue-400 font-mono uppercase tracking-wider mb-2 flex items-center gap-2">
                             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                            EVALUATION_COMPLETE
+                            Analysis Complete
                         </div>
                         <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{result.summary.title}</h1>
                         <p className="text-white/60 text-sm mt-1 max-w-lg leading-relaxed">
@@ -57,163 +57,181 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 <div className="flex flex-col md:flex-row gap-8 items-center md:items-start relative z-10">
                     {/* TOTAL SCORE BLOCK */}
                     <div className="flex-1 w-full">
-                        <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-2">
-                            AGGREGATE_SCORE
-                        </div>
-                        <div className="flex items-end gap-6 border border-white/10 p-6 bg-white/[0.02] rounded-xl">
-                            <div className={`text-7xl font-black tracking-tighter ${getScoreColor(result.overallScore)}`}>
-                                {result.overallScore}
-                            </div>
-                            <div className="mb-2">
-                                <div className={`text-xl font-bold ${getScoreColor(result.overallScore)}`}>
-                                    {getScoreLabel(result.overallScore)}
+                        <div className="text-right hidden md:block">
+                            <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-1">Date</div>
+                            <div className="flex items-end gap-6 border border-white/10 p-6 bg-white/[0.02] rounded-xl">
+                                <div className={`text-7xl font-black tracking-tighter ${getScoreColor(result.overallScore)}`}>
+                                    {result.overallScore}
                                 </div>
-                                <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest">
-                                    CONFIDENCE: HIGH
+                                <div className="mb-2">
+                                    <div className={`text-xl font-bold ${getScoreColor(result.overallScore)}`}>
+                                        {getScoreLabel(result.overallScore)}
+                                    </div>
+                                    <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest">
+                                        Confidence: High
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* VERDICT SUMMARY */}
-            <div className="border border-white/10 bg-slate-900/95 p-8 mb-6 rounded-xl shadow-lg">
-                <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
-                    <FileText size={18} className="text-blue-400" />
-                    <h3 className="font-bold uppercase tracking-widest text-xs font-mono text-blue-100">EXECUTIVE_SUMMARY</h3>
-                </div>
-                <p className="text-white/90 text-base leading-relaxed border-l-4 border-blue-500/50 pl-6 py-1 italic">
-                    "{result.summary.mainVerdict}"
-                </p>
-            </div>
-
-            {/* ANALYSIS BLOCKS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* MARKET & COMPETITION (Used as Signals) */}
-                <div className="border border-green-500/20 bg-green-500/[0.02] p-6 rounded-xl">
-                    <div className="flex items-center gap-2 mb-4 text-green-400 border-b border-green-500/20 pb-2">
-                        <Terminal size={18} />
-                        <h3 className="font-bold uppercase tracking-widest text-xs font-mono">MARKET_SIGNALS</h3>
-                    </div>
-                    <ul className="space-y-3">
-                        {result.market.competitorSignals.slice(0, 5).map((signal, i) => (
-                            <li key={i} className="flex gap-3 text-green-200/90 text-sm leading-relaxed">
-                                <span className="text-green-500 font-mono">[+]</span>
-                                <span>{signal}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                {/* RISK FACTORS */}
-                <div className="border border-red-500/20 bg-red-500/[0.02] p-6 rounded-xl">
-                    <div className="flex items-center gap-2 mb-4 text-red-400 border-b border-red-500/20 pb-2">
-                        <AlertTriangle size={18} />
-                        <h3 className="font-bold uppercase tracking-widest text-xs font-mono">CRITICAL_RISKS</h3>
-                    </div>
-                    <ul className="space-y-3">
-                        {[...result.technical.keyRisks, ...result.market.goToMarketRisks].slice(0, 5).map((con, i) => (
-                            <li key={i} className="flex gap-3 text-red-200/90 text-sm leading-relaxed">
-                                <span className="text-red-500 font-mono">[!]</span>
-                                <span>{con}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-
-            {/* SECURITY & HEALTH CHECK */}
-            {result.cryptoNativeChecks && (
-                <div className="border border-white/10 bg-slate-900/95 p-6 mb-6 rounded-xl">
-                    <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
-                        <div className="flex items-center gap-2 text-blue-400">
-                            <Shield size={18} />
-                            <h3 className="font-bold uppercase tracking-widest text-xs font-mono">SECURITY_AUDIT_LOG</h3>
-                        </div>
-                        <div className="text-[10px] text-white/40 font-mono">v1.0.4</div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                        <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
-                            <span className="text-white/60 text-xs font-mono">RUG_PULL_RISK</span>
-                            <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-green-400' :
-                                result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-yellow-400' : 'text-red-400'
-                                }`}>
-                                {result.cryptoNativeChecks.rugPullRisk}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
-                            <span className="text-white/60 text-xs font-mono">AUDIT_STATUS</span>
-                            <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-green-400' : 'text-yellow-400'
-                                }`}>
-                                {result.cryptoNativeChecks.auditStatus}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
-                            <span className="text-white/60 text-xs font-mono">LIQUIDITY_STATUS</span>
-                            <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'text-green-400' : 'text-red-400'
-                                }`}>
-                                {result.cryptoNativeChecks.liquidityStatus}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* EXECUTION SIGNALS */}
-            {result.execution && (
-                <div className="border border-white/10 bg-slate-900/90 p-6 mb-8 rounded-xl">
+                {/* VERDICT SUMMARY */}
+                <div className="border border-white/10 bg-slate-900/95 p-8 mb-6 rounded-xl shadow-lg">
                     <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
-                        <CheckCircle2 size={18} />
-                        <h3 className="font-bold uppercase tracking-widest text-xs font-mono">EXECUTION_SIGNALS & FIXES</h3>
+                        <FileText size={18} className="text-blue-400" />
+                        <h3 className="font-bold uppercase tracking-widest text-xs font-mono text-blue-100">Executive Summary</h3>
                     </div>
-                    <div className="space-y-4">
-                        {/* EXECUTION SIGNALS */}
-                        <div className="space-y-1">
-                            <div className="text-[10px] text-white/40 font-mono uppercase mb-2">SIGNALS</div>
-                            {result.execution.executionSignals.slice(0, 3).map((signal, i) => (
-                                <div key={i} className="flex gap-4 items-start opacity-70">
-                                    <span className="text-blue-400 font-mono text-xs">{(i + 1).toString().padStart(2, '0')}</span>
-                                    <p className="text-white/80 text-sm">{signal}</p>
-                                </div>
+                    <p className="text-white/90 text-base leading-relaxed border-l-4 border-blue-500/50 pl-6 py-1 italic">
+                        "{result.summary.mainVerdict}"
+                    </p>
+                </div>
+
+                {/* REASONING CHAIN */}
+                {result.reasoningSteps && result.reasoningSteps.length > 0 && (
+                    <div className="border border-white/10 bg-black/40 p-6 mb-6 rounded-xl font-mono text-xs">
+                        <div className="flex items-center gap-2 mb-4 text-white/60 border-b border-white/5 pb-2">
+                            <Terminal size={14} />
+                            <h3 className="font-bold uppercase tracking-widest">AI Reasoning Chain</h3>
+                        </div>
+                        <ul className="space-y-2 text-white/70">
+                            {result.reasoningSteps.map((step, i) => (
+                                <li key={i} className="flex gap-3">
+                                    <span className="text-blue-500/50">{(i + 1).toString().padStart(2, '0')}.</span>
+                                    <span>{step}</span>
+                                </li>
                             ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* ANALYSIS BLOCKS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* MARKET & COMPETITION (Used as Signals) */}
+                    <div className="border border-green-500/20 bg-green-500/[0.02] p-6 rounded-xl">
+                        <div className="flex items-center gap-2 mb-4 text-green-400 border-b border-green-500/20 pb-2">
+                            <Terminal size={18} />
+                            <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Market Signals</h3>
+                        </div>
+                        <ul className="space-y-3">
+                            {result.market.competitorSignals.slice(0, 5).map((signal, i) => (
+                                <li key={i} className="flex gap-3 text-green-200/90 text-sm leading-relaxed">
+                                    <span className="text-green-500 font-mono">[+]</span>
+                                    <span>{signal}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* RISK FACTORS */}
+                    <div className="border border-red-500/20 bg-red-500/[0.02] p-6 rounded-xl">
+                        <div className="flex items-center gap-2 mb-4 text-red-400 border-b border-red-500/20 pb-2">
+                            <AlertTriangle size={18} />
+                            <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Critical Risks</h3>
+                        </div>
+                        <ul className="space-y-3">
+                            {[...result.technical.keyRisks, ...result.market.goToMarketRisks].slice(0, 5).map((con, i) => (
+                                <li key={i} className="flex gap-3 text-red-200/90 text-sm leading-relaxed">
+                                    <span className="text-red-500 font-mono">[!]</span>
+                                    <span>{con}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
+                {/* SECURITY & HEALTH CHECK */}
+                {result.cryptoNativeChecks && (
+                    <div className="border border-white/10 bg-slate-900/95 p-6 mb-6 rounded-xl">
+                        <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                            <div className="flex items-center gap-2 text-blue-400">
+                                <Shield size={18} />
+                                <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Security Check</h3>
+                            </div>
+                            <div className="text-[10px] text-white/40 font-mono">v1.0.4</div>
                         </div>
 
-                        {/* MUST FIX */}
-                        {result.recommendations.mustFixBeforeBuild.length > 0 && (
-                            <div className="space-y-1 mt-4">
-                                <div className="text-[10px] text-red-400/60 font-mono uppercase mb-2 pt-2 border-t border-white/5">MUST_FIX_IMMEDIATELY</div>
-                                {result.recommendations.mustFixBeforeBuild.map((fix, i) => (
-                                    <div key={i} className="flex gap-4 items-start">
-                                        <span className="text-red-500 font-mono text-xs">!!</span>
-                                        <p className="text-red-300 text-sm">{fix}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
+                                <span className="text-white/60 text-xs font-mono">Rug Pull Risk</span>
+                                <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-green-400' :
+                                    result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-yellow-400' : 'text-red-400'
+                                    }`}>
+                                    {result.cryptoNativeChecks.rugPullRisk}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
+                                <span className="text-white/60 text-xs font-mono">Audit Status</span>
+                                <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-green-400' : 'text-yellow-400'
+                                    }`}>
+                                    {result.cryptoNativeChecks.auditStatus}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
+                                <span className="text-white/60 text-xs font-mono">Liquidity</span>
+                                <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'text-green-400' : 'text-red-400'
+                                    }`}>
+                                    {result.cryptoNativeChecks.liquidityStatus}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* EXECUTION SIGNALS */}
+                {result.execution && (
+                    <div className="border border-white/10 bg-slate-900/90 p-6 mb-8 rounded-xl">
+                        <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
+                            <CheckCircle2 size={18} />
+                            <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Execution Analysis</h3>
+                        </div>
+                        <div className="space-y-4">
+                            {/* EXECUTION SIGNALS */}
+                            <div className="space-y-1">
+                                <div className="text-[10px] text-white/40 font-mono uppercase mb-2">Signals</div>
+                                {result.execution?.executionSignals?.slice(0, 3)?.map((signal, i) => (
+                                    <div key={i} className="flex gap-4 items-start opacity-70">
+                                        <span className="text-blue-400 font-mono text-xs">{(i + 1).toString().padStart(2, '0')}</span>
+                                        <p className="text-white/80 text-sm">{signal}</p>
                                     </div>
                                 ))}
                             </div>
-                        )}
-                    </div>
-                </div>
-            )}
 
-            {/* ACTION BUTTONS */}
-            <div className="flex flex-col md:flex-row gap-4 border-t border-white/10 pt-6">
-                {onEdit && (
-                    <button
-                        onClick={onEdit}
-                        className="flex-1 bg-transparent border border-white/20 text-white p-4 hover:bg-white/5 text-xs font-bold uppercase tracking-widest transition-all rounded-xl hover:border-white/40 flex items-center justify-center gap-2"
-                    >
-                        <ArrowLeft size={16} /> Refine_Input
-                    </button>
+                            {/* MUST FIX */}
+                            {result.recommendations.mustFixBeforeBuild.length > 0 && (
+                                <div className="space-y-1 mt-4">
+                                    <div className="text-[10px] text-red-400/60 font-mono uppercase mb-2 pt-2 border-t border-white/5">Critical Improvements</div>
+                                    {result.recommendations.mustFixBeforeBuild.map((fix, i) => (
+                                        <div key={i} className="flex gap-4 items-start">
+                                            <span className="text-red-500 font-mono text-xs">!!</span>
+                                            <p className="text-red-300 text-sm">{fix}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 )}
-                {onStartNew && (
-                    <button
-                        onClick={onStartNew}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-transparent p-4 hover:from-blue-500 hover:to-indigo-500 text-xs font-bold uppercase tracking-widest transition-all rounded-xl shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-2"
-                    >
-                        New_Evaluation <Sparkles size={16} />
-                    </button>
-                )}
+
+                {/* ACTION BUTTONS */}
+                <div className="flex flex-col md:flex-row gap-4 border-t border-white/10 pt-6">
+                    {onEdit && (
+                        <button
+                            onClick={onEdit}
+                            className="flex-1 bg-transparent border border-white/20 text-white p-4 hover:bg-white/5 text-xs font-bold uppercase tracking-widest transition-all rounded-xl hover:border-white/40 flex items-center justify-center gap-2"
+                        >
+                            <ArrowLeft size={16} /> Refine Input
+                        </button>
+                    )}
+                    {onStartNew && (
+                        <button
+                            onClick={onStartNew}
+                            className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-transparent p-4 hover:from-blue-500 hover:to-indigo-500 text-xs font-bold uppercase tracking-widest transition-all rounded-xl shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-2"
+                        >
+                            New Evaluation <Sparkles size={16} />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

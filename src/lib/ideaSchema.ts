@@ -48,37 +48,6 @@ export const ideaSubmissionSchema = z.object({
     targetTVL: z.string().optional(),
     targetMarketCap: z.string().optional(),
     targetDAU: z.string().optional(),
-}).superRefine((data, ctx) => {
-    // Validation Rule: Must have at least one "Resource" execution signal
-
-    const hasGenericResources = data.resources && data.resources.length > 0;
-    const hasMemecoinResources = data.projectType === 'memecoin' && data.memecoinLaunchPreparation && data.memecoinLaunchPreparation.length > 0;
-    const hasDeFiResources = data.projectType === 'defi' && data.defiSecurityMarks && data.defiSecurityMarks.length > 0;
-    const hasAIResources = data.projectType === 'ai' && data.aiInfraReadiness && data.aiInfraReadiness.length > 0;
-
-    // Determine if any resource list is populated based on project type
-    let isValid = false;
-
-    if (!data.projectType) {
-        // No project type selected yet (should be caught by projectType check), but strict resources generic check
-        isValid = !!hasGenericResources;
-    } else if (data.projectType === 'memecoin') {
-        isValid = !!hasMemecoinResources;
-    } else if (data.projectType === 'defi') {
-        isValid = !!hasDeFiResources;
-    } else if (data.projectType === 'ai') {
-        isValid = !!hasAIResources;
-    } else {
-        isValid = !!hasGenericResources;
-    }
-
-    if (!isValid) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Please select at least one readiness/resource item.",
-            path: ["resources"] // Point error to resources field for UI to catch it
-        });
-    }
 });
 
 export type IdeaSubmission = z.infer<typeof ideaSubmissionSchema>;

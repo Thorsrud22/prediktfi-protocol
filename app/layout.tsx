@@ -46,10 +46,10 @@ const isProduction = process.env.NODE_ENV === 'production' && process.env.SOLANA
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "PrediktFi — AI prediction studio with freemium quotas",
+    default: "PrediktFi — AI Evaluation Protocol for Web3",
     template: "%s | PrediktFi",
   },
-  description: "AI prediction studio with freemium quotas and shareable insights. Get probability analysis with confidence scores.",
+  description: "Institutional-grade AI evaluation for Web3, DeFi, and Memecoins. Real-time market signals and on-chain security verification.",
   alternates: {
     canonical: isProduction ? '/' : undefined,
   },
@@ -58,15 +58,15 @@ export const metadata: Metadata = {
     follow: false,
   },
   openGraph: {
-    title: "PrediktFi — AI prediction studio with freemium quotas",
-    description: "AI prediction studio with freemium quotas and shareable insights. Get probability analysis with confidence scores.",
+    title: "PrediktFi — AI Evaluation Protocol for Web3",
+    description: "Institutional-grade AI evaluation for Web3, DeFi, and Memecoins. Real-time market signals and on-chain security verification.",
     type: "website",
     images: ["/og"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PrediktFi — AI prediction studio with freemium quotas",
-    description: "AI prediction studio with freemium quotas and shareable insights. Get probability analysis with confidence scores.",
+    title: "PrediktFi — AI Evaluation Protocol for Web3",
+    description: "Institutional-grade AI evaluation for Web3, DeFi, and Memecoins. Real-time market signals and on-chain security verification.",
     images: ["/og"],
   },
 };

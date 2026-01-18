@@ -160,7 +160,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     const [animating, setAnimating] = useState(false);
 
     // Stable session ID that doesn't change on re-renders
-    const sessionId = useMemo(() => Math.random().toString(36).substring(7).toUpperCase(), []);
+
 
     // ----------------------------------------------------------------
     // HANDLERS
@@ -271,16 +271,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
     return (
         <div className="w-full max-w-4xl mx-auto bg-slate-900/95 border border-white/10 shadow-xl rounded-xl relative overflow-hidden font-sans">
-            {/* Top Bar / Status Line */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
-                <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-blue-400 font-mono">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                    SYSTEM READY
-                </div>
-                <div className="text-xs text-white/40 font-mono">
-                    SESSION_ID: {sessionId}
-                </div>
-            </div>
+
 
             {/* Terminal Header */}
             <div className="px-8 pt-8 pb-6 border-b border-white/10">
@@ -329,9 +320,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {[
-                                        { id: 'memecoin', label: 'Memecoin', desc: 'Viral / Hype' },
-                                        { id: 'defi', label: 'DeFi', desc: 'Yield / Protocol' },
-                                        { id: 'ai', label: 'AI Agent', desc: 'LLM / Infra' }
+                                        { id: 'memecoin', label: 'Memecoin', desc: 'VIRAL / HYPE' },
+                                        { id: 'ai', label: 'AI', desc: 'LLM / INFRA' },
+                                        { id: 'defi', label: 'DeFi', desc: 'YIELD / PROTOCOL' }
                                     ].map((type) => (
                                         <button
                                             key={type.id}

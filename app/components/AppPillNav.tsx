@@ -241,13 +241,13 @@ export default function AppPillNav() {
         className="group flex items-center gap-2.5 rounded-full bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-slate-900/80 px-2.5 py-1.5 pr-4 backdrop-blur-xl ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] duration-300"
         aria-label="Predikt home"
       >
-        <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/10 to-cyan-500/10 ring-1 ring-white/20 shadow-[0_8px_32px_rgba(59,130,246,0.4)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_12px_40px_rgba(59,130,246,0.6)] group-hover:ring-white/30">
+        <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/20 shadow-[0_8px_32px_rgba(59,130,246,0.4)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_12px_40px_rgba(59,130,246,0.6)] group-hover:ring-white/30 overflow-hidden">
           <Image
-            src="/images/predikt-orb.svg"
+            src="/images/logo.png"
             alt="Predikt logo"
-            width={36}
-            height={36}
-            className="h-full w-full object-contain p-0.5 drop-shadow-[0_2px_8px_rgba(59,130,246,0.5)]"
+            width={40}
+            height={40}
+            className="absolute inset-0 h-full w-full object-cover scale-[1.3]"
             priority
           />
           {/* Subtle rotating glow effect */}

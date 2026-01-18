@@ -1,6 +1,9 @@
 export type IdeaEvaluationResult = {
   overallScore: number;
 
+  // Phase 2: Proof of Reasoning
+  reasoningSteps?: string[];
+
   summary: {
     title: string;
     oneLiner: string;

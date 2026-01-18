@@ -17,13 +17,13 @@ export default function Home() {
           className="group flex items-center gap-2.5 rounded-full bg-slate-900/90 px-2.5 py-1.5 pr-4 ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 duration-300"
           aria-label="Predikt home"
         >
-          <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/10 ring-1 ring-white/20 transition-all duration-300 group-hover:scale-110 group-hover:ring-white/30">
+          <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/20 transition-all duration-300 group-hover:scale-110 group-hover:ring-white/30 overflow-hidden">
             <Image
-              src="/images/predikt-orb.svg"
+              src="/images/logo.png"
               alt="Predikt logo"
-              width={36}
-              height={36}
-              className="h-full w-full object-contain p-0.5 drop-shadow-[0_2px_8px_rgba(59,130,246,0.5)]"
+              width={40}
+              height={40}
+              className="absolute inset-0 h-full w-full object-cover scale-[1.3]"
               priority
             />
             {/* Subtle rotating glow effect */}
