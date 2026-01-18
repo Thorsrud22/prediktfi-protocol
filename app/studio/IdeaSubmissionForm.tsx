@@ -11,7 +11,39 @@ interface IdeaSubmissionFormProps {
     initialData?: Partial<IdeaSubmission>;
     quota?: { limit: number; remaining: number } | null;
     streamingSteps?: string[];
+    isConnected?: boolean;
 }
+
+const STEPS = [
+    {
+        id: 'vision',
+        title: 'The Vision',
+        subtitle: 'What are you building?',
+        icon: Rocket,
+        fields: ['projectType', 'description']
+    },
+    {
+        id: 'execution',
+        title: 'Execution',
+        subtitle: 'Can you build it?',
+        icon: Users,
+        fields: ['teamSize', 'resources', 'tokenAddress']
+    },
+    {
+        id: 'strategy',
+        title: 'Strategy',
+        subtitle: 'How will you grow?',
+        icon: Target,
+        fields: ['mvpScope', 'goToMarketPlan', 'launchLiquidityPlan']
+    },
+    {
+        id: 'goals',
+        title: 'Goals',
+        subtitle: 'Define success',
+        icon: Settings2,
+        fields: ['successDefinition', 'responseStyle', 'attachments', 'focusHints']
+    }
+];
 
 // ... imports
 
@@ -131,7 +163,7 @@ function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: stri
     );
 }
 
-export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps }: IdeaSubmissionFormProps) {
+export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, isConnected }: IdeaSubmissionFormProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
@@ -172,6 +204,12 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         }
 
         const timer = setTimeout(async () => {
+            // If not connected, we still show the "UI" but blurred/locked
+            if (!isConnected) {
+                setCoachTip("LOCKED"); // Special flag
+                return;
+            }
+
             setIsCoaching(true);
             try {
                 const res = await fetch('/api/idea-evaluator/copilot', {
@@ -197,7 +235,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         }, 3000); // 3s debounce
 
         return () => clearTimeout(timer);
-    }, [formData.description, currentStep]);
+    }, [formData.description, currentStep, isConnected]);
 
     // ----------------------------------------------------------------
     // HANDLERS
@@ -401,7 +439,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 {/* LIVE COACH TIP UI */}
                                 {(coachTip || isCoaching) && (
                                     <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-500">
-                                        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 flex gap-3 relative overflow-hidden">
+                                        <div className={`bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 flex gap-3 relative overflow-hidden ${!isConnected ? 'cursor-pointer group' : ''}`}>
                                             {/* Shimmer effect */}
                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -skew-x-12 animate-shimmer" />
 
@@ -420,7 +458,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                                     <h4 className="text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">
                                                         {isCoaching ? 'AI Advisor analyzing...' : 'Co-Founder Tip'}
                                                     </h4>
-                                                    {!isCoaching && (
+                                                    {!isCoaching && coachTip !== 'LOCKED' && (
                                                         <button
                                                             onClick={() => setCoachTip(null)}
                                                             className="text-white/20 hover:text-white transition-colors"
@@ -429,9 +467,23 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                                         </button>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-blue-100/90 leading-relaxed font-medium">
-                                                    {isCoaching ? "Scanning your pitch for optimization opportunities..." : coachTip}
-                                                </p>
+
+                                                {coachTip === 'LOCKED' && !isConnected ? (
+                                                    <div className="relative">
+                                                        <p className="text-sm text-blue-100/40 leading-relaxed font-medium blur-sm select-none">
+                                                            Considering the competitive landscape of your memecoin, have you thought about how to differentiate the narrative?
+                                                        </p>
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <div className="bg-blue-600/90 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg transform transition-transform group-hover:scale-105 flex items-center gap-2">
+                                                                <Rocket size={12} /> Connect Wallet to Unlock
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm text-blue-100/90 leading-relaxed font-medium">
+                                                        {isCoaching ? "Scanning your pitch for optimization opportunities..." : coachTip}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -879,35 +931,6 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         </div>
     );
 }
-const STEPS = [
-    {
-        id: 'vision',
-        title: 'The Vision',
-        subtitle: 'What are you building?',
-        icon: Rocket,
-        fields: ['projectType', 'description']
-    },
-    {
-        id: 'execution',
-        title: 'Execution',
-        subtitle: 'Can you build it?',
-        icon: Users,
-        fields: ['teamSize', 'resources', 'tokenAddress']
-    },
-    {
-        id: 'strategy',
-        title: 'Strategy',
-        subtitle: 'How will you grow?',
-        icon: Target,
-        fields: ['mvpScope', 'goToMarketPlan', 'launchLiquidityPlan']
-    },
-    {
-        id: 'goals',
-        title: 'Goals',
-        subtitle: 'Define success',
-        icon: Settings2,
-        fields: ['successDefinition', 'responseStyle', 'attachments', 'focusHints']
-    }
-];
+
 
 

@@ -226,6 +226,7 @@ export default function StudioPage() {
                 isSubmitting={isAnalyzing}
                 quota={quota}
                 streamingSteps={streamingSteps}
+                isConnected={isConnected}
               />
             </>
           )}
