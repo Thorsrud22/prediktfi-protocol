@@ -172,7 +172,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     const currentStepConfig = STEPS[currentStep];
 
     return (
-        <div className="w-full max-w-4xl mx-auto bg-slate-900/50 backdrop-blur-md border border-white/10 shadow-xl rounded-xl relative overflow-hidden font-sans">
+        <div className="w-full max-w-4xl mx-auto bg-slate-900/95 border border-white/10 shadow-xl rounded-xl relative overflow-hidden font-sans">
             {/* Top Bar / Status Line */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
                 <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-blue-400 font-mono">

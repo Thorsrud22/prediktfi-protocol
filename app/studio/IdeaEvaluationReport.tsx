@@ -31,7 +31,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
     return (
         <div className="w-full max-w-4xl mx-auto font-sans text-sm leading-relaxed">
             {/* AUDIT LOG HEADER */}
-            <div className="bg-slate-900/50 backdrop-blur-md border border-white/10 p-8 mb-6 relative overflow-hidden group rounded-xl shadow-2xl">
+            <div className="bg-slate-900/95 border border-white/10 p-8 mb-6 relative overflow-hidden group rounded-xl shadow-2xl">
                 <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity">
                     <Activity size={120} />
                 </div>
@@ -60,7 +60,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-2">
                             AGGREGATE_SCORE
                         </div>
-                        <div className="flex items-end gap-6 border border-white/10 p-6 bg-white/[0.02] rounded-xl backdrop-blur-sm">
+                        <div className="flex items-end gap-6 border border-white/10 p-6 bg-white/[0.02] rounded-xl">
                             <div className={`text-7xl font-black tracking-tighter ${getScoreColor(result.overallScore)}`}>
                                 {result.overallScore}
                             </div>
@@ -78,7 +78,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
             </div>
 
             {/* VERDICT SUMMARY */}
-            <div className="border border-white/10 bg-slate-900/50 backdrop-blur-md p-8 mb-6 rounded-xl shadow-lg">
+            <div className="border border-white/10 bg-slate-900/95 p-8 mb-6 rounded-xl shadow-lg">
                 <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
                     <FileText size={18} className="text-blue-400" />
                     <h3 className="font-bold uppercase tracking-widest text-xs font-mono text-blue-100">EXECUTIVE_SUMMARY</h3>
@@ -125,7 +125,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
             {/* SECURITY & HEALTH CHECK */}
             {result.cryptoNativeChecks && (
-                <div className="border border-white/10 bg-slate-900/80 backdrop-blur-xl p-6 mb-6 rounded-xl">
+                <div className="border border-white/10 bg-slate-900/95 p-6 mb-6 rounded-xl">
                     <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
                         <div className="flex items-center gap-2 text-blue-400">
                             <Shield size={18} />
@@ -163,7 +163,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
             {/* EXECUTION SIGNALS */}
             {result.execution && (
-                <div className="border border-white/10 bg-slate-900/30 backdrop-blur-md p-6 mb-8 rounded-xl">
+                <div className="border border-white/10 bg-slate-900/90 p-6 mb-8 rounded-xl">
                     <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
                         <CheckCircle2 size={18} />
                         <h3 className="font-bold uppercase tracking-widest text-xs font-mono">EXECUTION_SIGNALS & FIXES</h3>

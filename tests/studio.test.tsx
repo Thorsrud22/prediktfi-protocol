@@ -183,7 +183,7 @@ describe('AI Idea Evaluator Studio', () => {
         // Select Memecoin -> Should show "Community Vibe"
         fireEvent.click(screen.getByText('MEMECOIN'));
         expect(screen.getByText('Community Vibe')).toBeInTheDocument();
-        expect(screen.getByPlaceholderText('e.g. PolitiFi, Cats, Retro...')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('> e.g. POLITIFI, CATS...')).toBeInTheDocument();
 
         // Select DeFi -> Should show "Core Mechanism"
         fireEvent.click(screen.getByText('DEFI'));

@@ -206,7 +206,7 @@ export default function StudioPage() {
           )}
 
           {currentStep === 'commit' && commitStatus === 'success' && (
-            <div className="text-center py-20 animate-in fade-in zoom-in duration-500 border border-white/10 bg-slate-900/50 backdrop-blur-md p-12 max-w-2xl mx-auto rounded-2xl shadow-2xl">
+            <div className="text-center py-20 animate-in fade-in zoom-in duration-500 border border-white/10 bg-slate-900/95 p-12 max-w-2xl mx-auto rounded-2xl shadow-2xl">
               <div className="inline-flex items-center justify-center p-6 border-2 border-green-500 text-green-500 mb-6 rounded-full bg-green-500/10">
                 <CheckCircle size={48} />
               </div>
