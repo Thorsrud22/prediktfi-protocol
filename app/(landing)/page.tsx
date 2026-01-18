@@ -40,7 +40,7 @@ export default function Home() {
         colorStops={['#0F172A', '#38bdf8', '#6366f1']}
         speed={0.5}
         amplitude={1.2}
-        className="fixed inset-0 -z-10 scale-[2.0] blur-2xl md:scale-100 md:blur-none"
+        className="fixed inset-0 -z-10 scale-[2.0] md:scale-100"
       />
 
       {/* Hero Section */}
@@ -68,21 +68,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="pt-8">
-            <div className="inline-flex flex-col items-center gap-2">
-              <span className="text-sm font-medium text-slate-400 uppercase tracking-widest">
-                Official Contract Address
-              </span>
-              <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm">
-                <code className="font-mono text-slate-300 select-all">
-                  EpovRy1g8w9rfLWnL91swESJoH1k2Tp1TNU6R6brpump
-                </code>
-              </div>
-              <p className="text-xs text-slate-500 max-w-md mx-auto mt-2">
-                CA will be updated here immediately after launch to prevent scams. Verify the address before buying.
-              </p>
-            </div>
-          </div>
+
 
           <div className="pt-12 w-full max-w-4xl mx-auto">
             <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-blue-500/10 aspect-video bg-transparent">
