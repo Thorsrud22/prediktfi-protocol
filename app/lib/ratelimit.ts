@@ -59,14 +59,20 @@ const rateLimiters = redis ? {
   }),
   idea_eval_wallet: new Ratelimit({
     redis: redis,
-    limiter: Ratelimit.slidingWindow(10, '24 h'), // 10 per day for connected wallets
+    limiter: Ratelimit.slidingWindow(5, '24 h'), // Reduced to 5 per day for connected wallets
+    analytics: true,
+  }),
+  // Limit bonus claims (sharing on X) to 2 per day
+  bonus_claim: new Ratelimit({
+    redis: redis,
+    limiter: Ratelimit.slidingWindow(2, '24 h'),
     analytics: true,
   }),
 } : null;
 
 export interface RateLimitOptions {
   identifier?: string; // Custom identifier (defaults to IP)
-  plan?: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet'; // User plan or specific limiter
+  plan?: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim'; // User plan or specific limiter
   skipForDevelopment?: boolean; // Skip rate limiting in development
 }
 
@@ -174,7 +180,7 @@ export async function getBonusQuota(identifier: string): Promise<number> {
 
 export async function getRateLimitInfo(
   identifier: string,
-  plan: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' = 'free'
+  plan: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim' = 'free'
 ): Promise<{
   limit: number;
   remaining: number;
@@ -235,7 +241,8 @@ export async function getRateLimitInfo(
     pro: 100,
     free: 20,
     idea_eval_ip: 3,
-    idea_eval_wallet: 10
+    idea_eval_wallet: 5,
+    bonus_claim: 2
   };
 
   return {

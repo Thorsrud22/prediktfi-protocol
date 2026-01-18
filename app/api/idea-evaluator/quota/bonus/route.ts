@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { grantBonusQuota } from "@/app/lib/ratelimit";
+import { grantBonusQuota, checkRateLimit } from "@/app/lib/ratelimit";
 
 /**
  * API to grant bonus quota for sharing on X
@@ -17,6 +17,19 @@ export async function POST(request: NextRequest) {
 
         if (identifier === "unknown") {
             return NextResponse.json({ error: "Could not identify user" }, { status: 400 });
+        }
+
+        // --- Rate Limiting for Bonus Claims ---
+        const rateLimitResponse = await checkRateLimit(request, {
+            identifier,
+            plan: 'bonus_claim'
+        });
+
+        if (rateLimitResponse) {
+            return NextResponse.json({
+                error: "Bonus limit reached",
+                message: "You can only unlock 2 bonus evaluations per day."
+            }, { status: 429 });
         }
 
         // Grant +1 bonus evaluation
