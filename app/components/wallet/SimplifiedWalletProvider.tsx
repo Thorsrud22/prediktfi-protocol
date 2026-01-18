@@ -33,21 +33,36 @@ function WalletManager({ children }: { children: React.ReactNode }) {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Initialize from localStorage on mount
+  // Initialize from localStorage on mount with retry for extension injection
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    try {
-      const savedWallet = localStorage.getItem('predikt:wallet:name');
-      const savedPubkey = localStorage.getItem('predikt:wallet:pubkey');
+    let attempts = 0;
+    const checkWallet = () => {
+      try {
+        const savedWallet = localStorage.getItem('predikt:wallet:name');
+        const savedPubkey = localStorage.getItem('predikt:wallet:pubkey');
 
-      if (savedWallet === 'Phantom' && savedPubkey && window.phantom?.solana?.isPhantom) {
-        setPublicKey(savedPubkey);
-        setIsConnected(true);
+        if (savedWallet === 'Phantom' && savedPubkey) {
+          // If we have saved data, we can set it immediately for UI optimistically
+          // BUT stricter check: verify provider exists
+          if (window.phantom?.solana?.isPhantom) {
+            setPublicKey(savedPubkey);
+            setIsConnected(true);
+            return; // Found it, done.
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to restore wallet state:', error);
       }
-    } catch (error) {
-      console.warn('Failed to restore wallet state:', error);
-    }
+
+      attempts++;
+      if (attempts < 10) {
+        setTimeout(checkWallet, 100); // Retry every 100ms for 1s
+      }
+    };
+
+    checkWallet();
   }, []);
 
   const connect = async () => {

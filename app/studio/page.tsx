@@ -38,10 +38,12 @@ export default function StudioPage() {
   useEffect(() => {
     async function fetchQuota() {
       try {
+        console.log('[Studio] Fetching quota. PublicKey:', publicKey);
         const addressParam = publicKey ? `?walletAddress=${publicKey}` : '';
         const res = await fetch(`/api/idea-evaluator/quota${addressParam}`);
         if (res.ok) {
           const data = await res.json();
+          console.log('[Studio] Quota received:', data);
           setQuota(data);
         }
       } catch (e) {

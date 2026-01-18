@@ -12,7 +12,11 @@ export async function GET(request: NextRequest) {
         const identifier = isWallet ? walletAddress : (request.headers.get('x-forwarded-for') || 'unknown');
         const plan = isWallet ? 'idea_eval_wallet' : 'idea_eval_ip';
 
+        console.log(`[QuotaAPI] Request from: ${identifier} (isWallet=${isWallet}) -> Plan: ${plan}`);
+
         const info = await getRateLimitInfo(identifier, plan);
+
+        console.log(`[QuotaAPI] Returning info for ${identifier}:`, info);
 
         return NextResponse.json({
             ...info,
