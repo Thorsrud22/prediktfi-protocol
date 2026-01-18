@@ -133,7 +133,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                             <h3 className="font-bold uppercase tracking-widest">AI Reasoning Chain</h3>
                         </div>
                         <ul className="space-y-2 text-white/70">
-                            {result.reasoningSteps.map((step, i) => (
+                            {(result.reasoningSteps ?? []).map((step, i) => (
                                 <li key={i} className="flex gap-3">
                                     <span className="text-blue-500/50">{(i + 1).toString().padStart(2, '0')}.</span>
                                     <span>{step}</span>
@@ -152,7 +152,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                             <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Market Signals</h3>
                         </div>
                         <ul className="space-y-3">
-                            {result.market.competitorSignals.slice(0, 5).map((signal, i) => (
+                            {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
                                 <li key={i} className="flex gap-3 text-green-200/90 text-sm leading-relaxed">
                                     <span className="text-green-500 font-mono">[+]</span>
                                     <span>{signal}</span>
@@ -168,7 +168,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                             <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Critical Risks</h3>
                         </div>
                         <ul className="space-y-3">
-                            {[...result.technical.keyRisks, ...result.market.goToMarketRisks].slice(0, 5).map((con, i) => (
+                            {[...(result.technical?.keyRisks ?? []), ...(result.market?.goToMarketRisks ?? [])].slice(0, 5).map((con, i) => (
                                 <li key={i} className="flex gap-3 text-red-200/90 text-sm leading-relaxed">
                                     <span className="text-red-500 font-mono">[!]</span>
                                     <span>{con}</span>
@@ -236,10 +236,10 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                             </div>
 
                             {/* MUST FIX */}
-                            {result.recommendations.mustFixBeforeBuild.length > 0 && (
+                            {(result.recommendations?.mustFixBeforeBuild ?? []).length > 0 && (
                                 <div className="space-y-1 mt-4">
                                     <div className="text-[10px] text-red-400/60 font-mono uppercase mb-2 pt-2 border-t border-white/5">Critical Improvements</div>
-                                    {result.recommendations.mustFixBeforeBuild.map((fix, i) => (
+                                    {(result.recommendations?.mustFixBeforeBuild ?? []).map((fix, i) => (
                                         <div key={i} className="flex gap-4 items-start">
                                             <span className="text-red-500 font-mono text-xs">!!</span>
                                             <p className="text-red-300 text-sm">{fix}</p>
