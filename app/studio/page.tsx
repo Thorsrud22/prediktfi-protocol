@@ -40,10 +40,16 @@ export default function StudioPage() {
       try {
         console.log('[Studio] Fetching quota. PublicKey:', publicKey);
         const addressParam = publicKey ? `?walletAddress=${publicKey}` : '';
-        const res = await fetch(`/api/idea-evaluator/quota${addressParam}`);
+        const res = await fetch(`/api/idea-evaluator/quota${addressParam}`, {
+          cache: 'no-store',
+          headers: {
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache'
+          }
+        });
         if (res.ok) {
           const data = await res.json();
-          console.log('[Studio] Quota received:', data);
+          console.log('[Studio] Quota received:', data, 'for key:', publicKey);
           setQuota(data);
         }
       } catch (e) {
