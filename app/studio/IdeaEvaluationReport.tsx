@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, FileText } from 'lucide-react';
+import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, FileText, Twitter, Gift, Loader2 } from 'lucide-react';
+import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 
 interface IdeaEvaluationReportProps {
     result: IdeaEvaluationResult;
@@ -11,6 +12,10 @@ interface IdeaEvaluationReportProps {
 }
 
 export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: IdeaEvaluationReportProps) {
+    const { publicKey } = useSimplifiedWallet();
+    const [isSharing, setIsSharing] = React.useState(false);
+    const [bonusStatus, setBonusStatus] = React.useState<'idle' | 'claiming' | 'claimed' | 'error'>('idle');
+
     // ----------------------------------------------------------------
     // TERMINAL STYLE HELPERS
     // ----------------------------------------------------------------
@@ -24,6 +29,39 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
         if (score >= 75) return 'Strong Potential';
         if (score >= 50) return 'Watchlist';
         return 'High Risk / Pass';
+    };
+
+    const handleShareOnX = async () => {
+        setIsSharing(true);
+
+        // Generate Twitter Intent
+        const text = `I just evaluated my Web3 idea "${result.summary.title}" on @PrediktFi Protocol.\n\nScore: ${result.overallScore}/100 - ${getScoreLabel(result.overallScore)}\n\nInstitutional-grade AI evaluation for Solana degens. Check it out at predikt.fi\n\n#Solana #AI #Web3`;
+        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+
+        window.open(url, '_blank');
+
+        // Wait a bit then show the "Claim Bonus" button logic if needed
+        // For simplicity, we just move to the claiming phase
+        setBonusStatus('claiming');
+
+        try {
+            const response = await fetch('/api/idea-evaluator/quota/bonus', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress: publicKey })
+            });
+
+            if (response.ok) {
+                setBonusStatus('claimed');
+            } else {
+                setBonusStatus('error');
+            }
+        } catch (err) {
+            console.error('Failed to claim bonus:', err);
+            setBonusStatus('error');
+        } finally {
+            setIsSharing(false);
+        }
     };
 
     if (!result) return null;
@@ -212,6 +250,47 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         </div>
                     </div>
                 )}
+
+                {/* VIRAL QUOTA INCENTIVE */}
+                <div className="mb-6 p-6 rounded-xl border border-blue-500/30 bg-blue-500/[0.03] backdrop-blur-sm overflow-hidden relative group">
+                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Twitter size={100} />
+                    </div>
+
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Gift className="text-yellow-400" size={20} />
+                            <h3 className="text-lg font-bold text-white">Unlock Bonus Evaluation</h3>
+                        </div>
+                        <p className="text-blue-100/70 text-sm mb-4 max-w-xl">
+                            Share your evaluation results on X to support the protocol and get <span className="text-blue-400 font-bold">+1 extra credit</span> for your daily quota.
+                        </p>
+
+                        {bonusStatus === 'idle' ? (
+                            <button
+                                onClick={handleShareOnX}
+                                className="inline-flex items-center gap-2 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all hover:scale-105 shadow-lg shadow-blue-500/20"
+                            >
+                                <Twitter size={16} /> Share on X to Unlock
+                            </button>
+                        ) : bonusStatus === 'claiming' ? (
+                            <button className="inline-flex items-center gap-2 bg-slate-800 text-slate-400 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider cursor-wait border border-slate-700">
+                                <Loader2 className="animate-spin" size={16} /> Verifying Share...
+                            </button>
+                        ) : bonusStatus === 'claimed' ? (
+                            <div className="inline-flex items-center gap-2 bg-green-500/20 text-green-400 border border-green-500/30 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                                <CheckCircle2 size={16} /> +1 Evaluation Credit Added
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleShareOnX}
+                                className="inline-flex items-center gap-2 bg-red-500/20 text-red-400 border border-red-500/30 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider"
+                            >
+                                <AlertTriangle size={16} /> Claiming Failed - Try Again
+                            </button>
+                        )}
+                    </div>
+                </div>
 
                 {/* ACTION BUTTONS */}
                 <div className="flex flex-col md:flex-row gap-4 border-t border-white/10 pt-6">

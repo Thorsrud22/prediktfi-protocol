@@ -102,6 +102,23 @@ export async function checkRateLimit(
     // Check rate limit
     const { success, limit, remaining, reset } = await ratelimiter.limit(identifier);
 
+    // --- BONUS QUOTA LOGIC ---
+    // If the standard limiter failed, check for a bonus credit in Redis
+    if (!success && redis) {
+      const bonusKey = `bonus_quota:${identifier}`;
+      const bonusCount = (await redis.get<number>(bonusKey)) || 0;
+
+      if (bonusCount > 0) {
+        // Consume one bonus credit
+        await redis.decr(bonusKey);
+
+        console.log(`[RateLimit] Allowing request via BONUS quota for ${identifier}. Remaining bonus: ${bonusCount - 1}`);
+
+        // Return null to ALLOW the request
+        return null;
+      }
+    }
+
     // Add rate limit headers to response
     const headers = {
       'X-RateLimit-Limit': limit.toString(),
@@ -113,7 +130,7 @@ export async function checkRateLimit(
       return NextResponse.json(
         {
           error: 'Rate limit exceeded',
-          message: `Too many requests. Limit: ${limit} requests per minute.`,
+          message: `Too many requests. Daily limit: ${limit}. Share on X to get +1 extra evaluation!`,
           retryAfter: Math.round((reset - Date.now()) / 1000)
         },
         {
@@ -123,14 +140,36 @@ export async function checkRateLimit(
       );
     }
 
-    // Request allowed, but we can't easily add headers here
-    // Headers will need to be added by the calling API route
+    // Request allowed
     return null;
   } catch (error) {
     console.error('Rate limiting check failed:', error);
-    // Don't fail the request if rate limiting fails
     return null;
   }
+}
+
+/**
+ * Grant a bonus evaluation credit to an identifier (wallet or IP)
+ * Used as a reward for viral sharing on X
+ */
+export async function grantBonusQuota(identifier: string): Promise<number> {
+  if (!redis) return 0;
+
+  const bonusKey = `bonus_quota:${identifier}`;
+  const newTotal = await redis.incr(bonusKey);
+
+  // Set expiration to 24 hours (matching daily reset window roughly)
+  await redis.expire(bonusKey, 86400);
+
+  return newTotal;
+}
+
+/**
+ * Get current bonus quota count
+ */
+export async function getBonusQuota(identifier: string): Promise<number> {
+  if (!redis) return 0;
+  return (await redis.get<number>(`bonus_quota:${identifier}`)) || 0;
 }
 
 export async function getRateLimitInfo(

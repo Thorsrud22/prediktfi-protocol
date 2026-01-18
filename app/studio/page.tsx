@@ -77,7 +77,7 @@ export default function StudioPage() {
 
       if (!response.ok) {
         if (response.status === 429) {
-          throw new Error('Daily quota exceeded. Please come back tomorrow or upgrade.');
+          throw new Error('Daily quota exceeded. Share your last report on X to get +1 extra credit instantly!');
         }
         throw new Error('Evaluation failed');
       }
