@@ -1,6 +1,7 @@
 import { IdeaSubmission } from "@/lib/ideaSchema";
 import { openai } from "@/lib/openaiClient";
 import { CompetitiveMemo, CompetitiveMemoResult } from "./competitiveTypes";
+import { searchCompetitors } from "@/lib/tavilyClient";
 
 const COMPETITIVE_SYSTEM_PROMPT = `You are a Competitive Intelligence Scout for specialized crypto/tech sectors.
 Your goal is to produce a "Competitive Memo" that provides a reality check on an idea's landscape.
@@ -75,7 +76,28 @@ export async function fetchCompetitiveMemo(
         };
     }
 
-    // 2. Prepare Prompt
+    // 2. Fetch real competitor data via Tavily (if API key is configured)
+    let webSearchContext = "";
+    try {
+        const searchResults = await searchCompetitors(idea.description, normalizedCategory);
+        if (searchResults.length > 0) {
+            const formattedResults = searchResults
+                .map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   Snippet: ${r.content}`)
+                .join("\n\n");
+            webSearchContext = `
+REAL-TIME WEB SEARCH RESULTS (from Tavily):
+Use these actual competitor references to ground your analysis.
+Do NOT make up competitors - prioritize what's listed here.
+
+${formattedResults}
+`;
+            console.log(`[Competitive] Found ${searchResults.length} real competitors via Tavily`);
+        }
+    } catch (err) {
+        console.warn("[Competitive] Tavily search failed (non-blocking):", err);
+    }
+
+    // 3. Prepare Prompt
     const userContent = `
 Analyze this idea for Competitive Intelligence.
 Category: ${normalizedCategory}
@@ -88,6 +110,7 @@ ${JSON.stringify({
         mvpScope: idea.mvpScope,
         successDefinition: idea.successDefinition
     }, null, 2)}
+${webSearchContext}
 `;
 
     try {
