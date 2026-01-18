@@ -218,7 +218,8 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         text: formData.description,
-                        field: 'description'
+                        field: 'description',
+                        projectType: formData.projectType
                     })
                 });
 
