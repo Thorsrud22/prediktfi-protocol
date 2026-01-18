@@ -18,7 +18,16 @@ interface EvaluationStats {
 // Extracted loading skeleton component for better reusability
 const LoadingSkeleton = React.memo(() => (
   <main className="max-w-4xl mx-auto px-4 py-10">
-    <h1 className="text-3xl font-semibold text-slate-100 mb-6">Your Account</h1>
+    <div className="flex justify-between items-end mb-12 border-b border-white/10 pb-6">
+      <div>
+        <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">
+          Account <span className="text-blue-500">.</span>
+        </h1>
+        <p className="text-white/60 text-base md:text-lg max-w-xl font-light">
+          Manage your wallet, evaluations, and subscription
+        </p>
+      </div>
+    </div>
     <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
       <div className="animate-pulse">
         <div className="h-4 bg-slate-700 rounded w-1/4 mb-4"></div>
@@ -331,7 +340,16 @@ export default function AccountClient() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-semibold text-slate-100 mb-6">Your Account</h1>
+      <div className="flex justify-between items-end mb-12 border-b border-white/10 pb-6">
+        <div>
+          <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">
+            Account <span className="text-blue-500">.</span>
+          </h1>
+          <p className="text-white/60 text-base md:text-lg max-w-xl font-light">
+            Manage your wallet, evaluations, and subscription
+          </p>
+        </div>
+      </div>
 
       {!canShowAccount ? (
         <AuthenticationPrompt

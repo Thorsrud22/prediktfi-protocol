@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
+import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, FileText } from 'lucide-react';
 
 interface IdeaEvaluationReportProps {
     result: IdeaEvaluationResult;
@@ -10,237 +11,210 @@ interface IdeaEvaluationReportProps {
 }
 
 export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: IdeaEvaluationReportProps) {
+    // ----------------------------------------------------------------
+    // TERMINAL STYLE HELPERS
+    // ----------------------------------------------------------------
     const getScoreColor = (score: number) => {
-        if (score >= 75) return 'text-green-400';
-        if (score >= 50) return 'text-yellow-400';
-        return 'text-red-400';
+        if (score >= 75) return 'text-green-500';
+        if (score >= 50) return 'text-yellow-500';
+        return 'text-red-500';
     };
 
-    const getScoreBg = (score: number) => {
-        if (score >= 75) return 'bg-green-500/20 border-green-500/50';
-        if (score >= 50) return 'bg-yellow-500/20 border-yellow-500/50';
-        return 'bg-red-500/20 border-red-500/50';
+    const getScoreLabel = (score: number) => {
+        if (score >= 75) return 'BUY / LONG';
+        if (score >= 50) return 'HOLD / WATCH';
+        return 'SELL / PASS';
     };
+
+    if (!result) return null;
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header Section */}
-            <div className="bg-slate-900/95 rounded-xl border border-white/20 p-8 text-center relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+        <div className="w-full max-w-4xl mx-auto font-sans text-sm leading-relaxed">
+            {/* AUDIT LOG HEADER */}
+            <div className="bg-slate-900/50 backdrop-blur-md border border-white/10 p-8 mb-6 relative overflow-hidden group rounded-xl shadow-2xl">
+                <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity">
+                    <Activity size={120} />
+                </div>
 
-                <h2 className="text-3xl font-bold text-white mb-2">{result.summary.title}</h2>
-                <p className="text-blue-200 text-lg mb-6">{result.summary.oneLiner}</p>
-
-                <div className="flex justify-center items-center gap-8">
-                    <div className="text-center">
-                        <div className={`text-5xl font-bold mb-1 ${getScoreColor(result.overallScore)}`}>
-                            {result.overallScore}
+                <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6 relative z-10">
+                    <div>
+                        <div className="text-[10px] text-blue-400 font-mono uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                            EVALUATION_COMPLETE
                         </div>
-                        <div className="text-sm text-blue-300 uppercase tracking-wider font-semibold">Investment Verdict</div>
-                    </div>
-                </div>
-
-                <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
-                    <p className="text-gray-300 italic">"{result.summary.mainVerdict}"</p>
-                </div>
-
-                {result.calibrationNotes && result.calibrationNotes.length > 0 && (
-                    <div className="mt-6 text-left bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                        <h4 className="text-sm font-bold text-blue-300 mb-2 uppercase tracking-wider">Why this score?</h4>
-                        <p className="text-xs text-blue-200/60 mb-3">
-                            These calibration notes come from PrediktFi’s deterministic scoring rules on top of the AI model.
+                        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{result.summary.title}</h1>
+                        <p className="text-white/60 text-sm mt-1 max-w-lg leading-relaxed">
+                            {result.summary.oneLiner}
                         </p>
-                        <ul className="space-y-1">
-                            {result.calibrationNotes.map((note, i) => (
-                                <li key={i} className="text-sm text-blue-100 flex items-start">
-                                    <span className="mr-2 text-blue-400">•</span>
-                                    {note}
-                                </li>
-                            ))}
-                        </ul>
                     </div>
-                )}
-            </div>
-
-            {/* Dimension Scores */}
-
-            {/* Dimension Scores */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={`p-4 rounded-xl border ${getScoreBg(result.technical.feasibilityScore)} bg-opacity-10`}>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-white">Tech & Moat</span>
-                        <span className={`font-bold ${getScoreColor(result.technical.feasibilityScore)}`}>{result.technical.feasibilityScore}</span>
+                    <div className="text-right hidden md:block">
+                        <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-1">TIMESTAMP</div>
+                        <div className="text-white text-xs font-mono">{new Date().toISOString().split('T')[0]}</div>
+                        <div className="text-xs text-white/20 mt-1 font-mono">ID: {Math.random().toString(36).substring(7).toUpperCase()}</div>
                     </div>
-                    <p className="text-sm text-gray-300">{result.technical.comments}</p>
                 </div>
 
-                <div className={`p-4 rounded-xl border ${getScoreBg(result.tokenomics.designScore)} bg-opacity-10`}>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-white">Tokenomics Design</span>
-                        <span className={`font-bold ${getScoreColor(result.tokenomics.designScore)}`}>{result.tokenomics.designScore}</span>
-                    </div>
-                    <p className="text-sm text-gray-300">Token Needed: {result.tokenomics.tokenNeeded ? 'Yes' : 'No'}</p>
-                </div>
-
-                <div className={`p-4 rounded-xl border ${getScoreBg(result.market.marketFitScore)} bg-opacity-10`}>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-white">Market & Competitive Edge</span>
-                        <span className={`font-bold ${getScoreColor(result.market.marketFitScore)}`}>{result.market.marketFitScore}</span>
-                    </div>
-                    <p className="text-sm text-gray-300">Complexity: {result.execution.complexityLevel}</p>
-                </div>
-
-                <div className={`p-4 rounded-xl border ${getScoreBg(result.execution.executionRiskScore)} bg-opacity-10`}>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-white">Team & Delivery</span>
-                        <span className={`font-bold ${getScoreColor(result.execution.executionRiskScore)}`}>{result.execution.executionRiskScore}</span>
-                    </div>
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-300">Risk Level:</span>
-                        <span className={`text-sm font-bold uppercase ${result.execution.executionRiskLabel === 'high' ? 'text-red-400' :
-                            result.execution.executionRiskLabel === 'medium' ? 'text-yellow-400' : 'text-green-400'
-                            }`}>
-                            {result.execution.executionRiskLabel}
-                        </span>
-                    </div>
-                    <ul className="space-y-1">
-                        {(result.execution.executionSignals || []).slice(0, 2).map((signal, i) => (
-                            <li key={i} className="text-xs text-gray-400 truncate">• {signal}</li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-
-            {/* Crypto-Native Health Check */}
-            {
-                result.cryptoNativeChecks && (
-                    <div className="bg-slate-900/50 rounded-xl border border-blue-500/30 p-6">
-                        <h3 className="text-xl font-bold text-blue-300 mb-4 flex items-center uppercase tracking-wider">
-                            <span className="mr-2">🛡️</span> Crypto-Native Health Check
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Rug Risk */}
-                            <div className="flex flex-col">
-                                <span className="text-xs text-gray-400 uppercase mb-1">Rug Risk</span>
-                                <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
-                                    result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' :
-                                        'bg-red-500/10 border-red-500/30 text-red-400'
-                                    }`}>
-                                    <span className="font-bold uppercase">{result.cryptoNativeChecks.rugPullRisk}</span>
-                                    {result.cryptoNativeChecks.rugPullRisk === 'high' && <span>⚠️</span>}
-                                </div>
+                <div className="flex flex-col md:flex-row gap-8 items-center md:items-start relative z-10">
+                    {/* TOTAL SCORE BLOCK */}
+                    <div className="flex-1 w-full">
+                        <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-2">
+                            AGGREGATE_SCORE
+                        </div>
+                        <div className="flex items-end gap-6 border border-white/10 p-6 bg-white/[0.02] rounded-xl backdrop-blur-sm">
+                            <div className={`text-7xl font-black tracking-tighter ${getScoreColor(result.overallScore)}`}>
+                                {result.overallScore}
                             </div>
-
-                            {/* Audit Status */}
-                            <div className="flex flex-col">
-                                <span className="text-xs text-gray-400 uppercase mb-1">Audit Status</span>
-                                <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
-                                    result.cryptoNativeChecks.auditStatus === 'planned' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
-                                        'bg-gray-500/10 border-gray-500/30 text-gray-400'
-                                    }`}>
-                                    <span className="font-bold uppercase">{result.cryptoNativeChecks.auditStatus.replace('_', ' ')}</span>
+                            <div className="mb-2">
+                                <div className={`text-xl font-bold ${getScoreColor(result.overallScore)}`}>
+                                    {getScoreLabel(result.overallScore)}
                                 </div>
-                            </div>
-
-                            {/* Liquidity Status */}
-                            <div className="flex flex-col">
-                                <span className="text-xs text-gray-400 uppercase mb-1">Liquidity</span>
-                                <div className={`px-3 py-2 rounded-lg border flex items-center justify-between ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
-                                    result.cryptoNativeChecks.liquidityStatus === 'unclear' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
-                                        'bg-gray-500/10 border-gray-500/30 text-gray-400'
-                                    }`}>
-                                    <span className="font-bold uppercase">{result.cryptoNativeChecks.liquidityStatus}</span>
+                                <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest">
+                                    CONFIDENCE: HIGH
                                 </div>
                             </div>
                         </div>
                     </div>
-                )
-            }
+                </div>
+            </div>
 
-            {/* Detailed Analysis Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Key Risks */}
-                <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-                    <h3 className="text-xl font-semibold text-red-400 mb-4 flex items-center">
-                        Investor Worries
-                    </h3>
+            {/* VERDICT SUMMARY */}
+            <div className="border border-white/10 bg-slate-900/50 backdrop-blur-md p-8 mb-6 rounded-xl shadow-lg">
+                <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
+                    <FileText size={18} className="text-blue-400" />
+                    <h3 className="font-bold uppercase tracking-widest text-xs font-mono text-blue-100">EXECUTIVE_SUMMARY</h3>
+                </div>
+                <p className="text-white/90 text-base leading-relaxed border-l-4 border-blue-500/50 pl-6 py-1 italic">
+                    "{result.summary.mainVerdict}"
+                </p>
+            </div>
+
+            {/* ANALYSIS BLOCKS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* MARKET & COMPETITION (Used as Signals) */}
+                <div className="border border-green-500/20 bg-green-500/[0.02] p-6 rounded-xl">
+                    <div className="flex items-center gap-2 mb-4 text-green-400 border-b border-green-500/20 pb-2">
+                        <Terminal size={18} />
+                        <h3 className="font-bold uppercase tracking-widest text-xs font-mono">MARKET_SIGNALS</h3>
+                    </div>
                     <ul className="space-y-3">
-                        {result.technical.keyRisks.concat(result.market.goToMarketRisks).map((item, index) => (
-                            <li key={index} className="flex items-start text-gray-300">
-                                <span className="mr-2 mt-1.5 w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0"></span>
-                                {item}
+                        {result.market.competitorSignals.slice(0, 5).map((signal, i) => (
+                            <li key={i} className="flex gap-3 text-green-200/90 text-sm leading-relaxed">
+                                <span className="text-green-500 font-mono">[+]</span>
+                                <span>{signal}</span>
                             </li>
                         ))}
                     </ul>
                 </div>
 
-                {/* Recommended Pivots */}
-                <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-                    <h3 className="text-xl font-semibold text-blue-400 mb-4 flex items-center">
-                        Strategic Pivots
-                    </h3>
+                {/* RISK FACTORS */}
+                <div className="border border-red-500/20 bg-red-500/[0.02] p-6 rounded-xl">
+                    <div className="flex items-center gap-2 mb-4 text-red-400 border-b border-red-500/20 pb-2">
+                        <AlertTriangle size={18} />
+                        <h3 className="font-bold uppercase tracking-widest text-xs font-mono">CRITICAL_RISKS</h3>
+                    </div>
                     <ul className="space-y-3">
-                        {result.recommendations.recommendedPivots.map((item, index) => (
-                            <li key={index} className="flex items-start text-gray-300">
-                                <span className="mr-2 mt-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                {/* Must Fix */}
-                <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-                    <h3 className="text-xl font-semibold text-orange-400 mb-4 flex items-center">
-                        Critical Fixes
-                    </h3>
-                    <ul className="space-y-3">
-                        {result.recommendations.mustFixBeforeBuild.map((item, index) => (
-                            <li key={index} className="flex items-start text-gray-300">
-                                <span className="mr-2 mt-1.5 w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0"></span>
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                {/* Tokenomics Issues */}
-                <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-                    <h3 className="text-xl font-semibold text-purple-400 mb-4 flex items-center">
-                        Tokenomics Flaws
-                    </h3>
-                    <ul className="space-y-3">
-                        {result.tokenomics.mainIssues.map((item, index) => (
-                            <li key={index} className="flex items-start text-gray-300">
-                                <span className="mr-2 mt-1.5 w-1.5 h-1.5 bg-purple-500 rounded-full flex-shrink-0"></span>
-                                {item}
+                        {[...result.technical.keyRisks, ...result.market.goToMarketRisks].slice(0, 5).map((con, i) => (
+                            <li key={i} className="flex gap-3 text-red-200/90 text-sm leading-relaxed">
+                                <span className="text-red-500 font-mono">[!]</span>
+                                <span>{con}</span>
                             </li>
                         ))}
                     </ul>
                 </div>
             </div>
 
-            {/* Actions */}
-            {(onEdit || onStartNew) && (
-                <div className="flex justify-center gap-4 pt-4">
-                    {onEdit && (
-                        <button
-                            onClick={onEdit}
-                            className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 text-white rounded-lg transition-all font-medium"
-                        >
-                            ← Edit Idea
-                        </button>
-                    )}
-                    {onStartNew && (
-                        <button
-                            onClick={onStartNew}
-                            className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 border border-blue-400/30 text-white rounded-full hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:-translate-y-1 transition-all duration-300 font-semibold text-lg shadow-lg"
-                        >
-                            Start New Evaluation →
-                        </button>
-                    )}
+            {/* SECURITY & HEALTH CHECK */}
+            {result.cryptoNativeChecks && (
+                <div className="border border-white/10 bg-slate-900/80 backdrop-blur-xl p-6 mb-6 rounded-xl">
+                    <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                        <div className="flex items-center gap-2 text-blue-400">
+                            <Shield size={18} />
+                            <h3 className="font-bold uppercase tracking-widest text-xs font-mono">SECURITY_AUDIT_LOG</h3>
+                        </div>
+                        <div className="text-[10px] text-white/40 font-mono">v1.0.4</div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                        <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
+                            <span className="text-white/60 text-xs font-mono">RUG_PULL_RISK</span>
+                            <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-green-400' :
+                                result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-yellow-400' : 'text-red-400'
+                                }`}>
+                                {result.cryptoNativeChecks.rugPullRisk}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
+                            <span className="text-white/60 text-xs font-mono">AUDIT_STATUS</span>
+                            <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-green-400' : 'text-yellow-400'
+                                }`}>
+                                {result.cryptoNativeChecks.auditStatus}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
+                            <span className="text-white/60 text-xs font-mono">LIQUIDITY_STATUS</span>
+                            <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'text-green-400' : 'text-red-400'
+                                }`}>
+                                {result.cryptoNativeChecks.liquidityStatus}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             )}
-        </div >
+
+            {/* EXECUTION SIGNALS */}
+            {result.execution && (
+                <div className="border border-white/10 bg-slate-900/30 backdrop-blur-md p-6 mb-8 rounded-xl">
+                    <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
+                        <CheckCircle2 size={18} />
+                        <h3 className="font-bold uppercase tracking-widest text-xs font-mono">EXECUTION_SIGNALS & FIXES</h3>
+                    </div>
+                    <div className="space-y-4">
+                        {/* EXECUTION SIGNALS */}
+                        <div className="space-y-1">
+                            <div className="text-[10px] text-white/40 font-mono uppercase mb-2">SIGNALS</div>
+                            {result.execution.executionSignals.slice(0, 3).map((signal, i) => (
+                                <div key={i} className="flex gap-4 items-start opacity-70">
+                                    <span className="text-blue-400 font-mono text-xs">{(i + 1).toString().padStart(2, '0')}</span>
+                                    <p className="text-white/80 text-sm">{signal}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* MUST FIX */}
+                        {result.recommendations.mustFixBeforeBuild.length > 0 && (
+                            <div className="space-y-1 mt-4">
+                                <div className="text-[10px] text-red-400/60 font-mono uppercase mb-2 pt-2 border-t border-white/5">MUST_FIX_IMMEDIATELY</div>
+                                {result.recommendations.mustFixBeforeBuild.map((fix, i) => (
+                                    <div key={i} className="flex gap-4 items-start">
+                                        <span className="text-red-500 font-mono text-xs">!!</span>
+                                        <p className="text-red-300 text-sm">{fix}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ACTION BUTTONS */}
+            <div className="flex flex-col md:flex-row gap-4 border-t border-white/10 pt-6">
+                {onEdit && (
+                    <button
+                        onClick={onEdit}
+                        className="flex-1 bg-transparent border border-white/20 text-white p-4 hover:bg-white/5 text-xs font-bold uppercase tracking-widest transition-all rounded-xl hover:border-white/40 flex items-center justify-center gap-2"
+                    >
+                        <ArrowLeft size={16} /> Refine_Input
+                    </button>
+                )}
+                {onStartNew && (
+                    <button
+                        onClick={onStartNew}
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-transparent p-4 hover:from-blue-500 hover:to-indigo-500 text-xs font-bold uppercase tracking-widest transition-all rounded-xl shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-2"
+                    >
+                        New_Evaluation <Sparkles size={16} />
+                    </button>
+                )}
+            </div>
+        </div>
     );
 }

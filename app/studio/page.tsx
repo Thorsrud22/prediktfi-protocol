@@ -4,12 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useSimplifiedWallet } from '@/app/components/wallet/SimplifiedWalletProvider';
 import { usePerformanceTracking, trackPageLoad } from '@/app/utils/performance';
 import PerformanceMonitor from '../components/PerformanceMonitor';
-import EvaluationLoadingOverlay from './EvaluationLoadingOverlay';
 import IdeaSubmissionForm from './IdeaSubmissionForm';
 import IdeaEvaluationReport from './IdeaEvaluationReport';
 import { IdeaSubmission } from '@/lib/ideaSchema';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import StudioSkeleton from './StudioSkeleton';
+import { CheckCircle } from 'lucide-react';
 
 type Step = 'question' | 'analysis' | 'commit';
 
@@ -50,7 +49,7 @@ export default function StudioPage() {
       }
     }
     fetchQuota();
-  }, [publicKey, evaluationResult]); // Refresh on wallet change or after evaluation
+  }, [publicKey, evaluationResult]);
 
   const handleEvaluate = async (data: IdeaSubmission) => {
     setSubmissionData(data);
@@ -97,19 +96,16 @@ export default function StudioPage() {
   };
 
   const handleStartNew = () => {
-    // Scroll to top instantly to prevent layout jump when switching from long report -> short form
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     setSubmissionData(null);
     setEvaluationResult(null);
     setCurrentStep('question');
     setError(null);
+    setCommitStatus('idle');
+    setInsightId(null);
   };
 
   const handleCommit = async () => {
-    // We allow saving without wallet for now, or we can enforce it.
-    // Ideally we want to link it to a user.
-    // For now, let's just save it.
-
     setCommitStatus('committing');
     try {
       const response = await fetch('/api/idea/save', {
@@ -136,147 +132,109 @@ export default function StudioPage() {
 
 
   return (
-    <div className="relative min-h-screen text-white selection:bg-blue-500/30">
+    <div className="relative min-h-screen text-white font-sans selection:bg-blue-500/30 selection:text-blue-200">
       <PerformanceMonitor />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Evaluation Flow */}
-        <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
-          {/* Persistent Glow behind Steps */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
-          {/* Progress Steps */}
-          <div className="flex justify-between mb-12 relative">
-            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/10 -z-10"></div>
-            {[
-              { id: 'question', label: 'Idea Submission' },
-              { id: 'analysis', label: 'AI Evaluation' },
-              { id: 'commit', label: 'Commit Insight' }
-            ].map((step, index) => {
-              const isActive = currentStep === step.id;
-              const isCompleted =
-                (currentStep === 'analysis' && index === 0) ||
-                (currentStep === 'commit');
+      {/* Aurora Background is handled by layout, we just need to be transparent */}
 
-              return (
-                <div key={step.id} className="flex flex-col items-center gap-3 px-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${isActive ? 'bg-blue-500 text-white scale-110 shadow-lg shadow-blue-500/30' :
-                    isCompleted ? 'bg-green-500 text-white' :
-                      'bg-white/10 text-white/40 border border-white/10'
-                    }`}>
-                    {isCompleted ? '✓' : index + 1}
-                  </div>
-                  <span className={`text-sm font-medium ${isActive ? 'text-blue-400' : 'text-white/40'}`}>
-                    {step.label}
-                  </span>
-                </div>
-              );
-            })}
+      <main className="relative pt-32 pb-20 px-4 md:px-8 max-w-7xl mx-auto">
+        <div className="flex justify-between items-end mb-12 border-b border-white/10 pb-6">
+          <div>
+            <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">
+              Studio <span className="text-blue-500">.</span>
+            </h1>
+            <p className="text-white/60 text-base md:text-lg max-w-xl font-light">
+              Advanced AI Evaluation Protocol for Web3 Assets
+            </p>
           </div>
 
-          {/* Step Content */}
-          <div className="min-h-[400px]">
-            {currentStep === 'question' && (
-              <>
-                {isLoading ? (
-                  <div className="animate-in fade-in duration-300">
-                    <StudioSkeleton />
+          {/* QUOTA DISPLAY - TERMINAL STYLE */}
+          {quota && (
+            <div className="text-right hidden md:block">
+              <div className="text-[10px] uppercase text-blue-300/60 mb-1 tracking-widest font-mono">DAILY QUOTA</div>
+              <div className={`font-bold text-2xl font-mono ${quota.remaining === 0 ? 'text-red-400' : 'text-blue-400'}`}>
+                {quota.remaining === -1 ? 'UNLIMITED' : `${quota.remaining}/${quota.limit}`}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="min-h-[400px]">
+          {currentStep === 'question' && (
+            <>
+              {error && (
+                <div className="mb-6 border border-red-500 text-red-500 p-4 font-mono text-xs uppercase tracking-wider flex items-center gap-2">
+                  <span className="text-lg">!</span> ERROR: {error}
+                </div>
+              )}
+              <IdeaSubmissionForm
+                onSubmit={handleEvaluate}
+                isSubmitting={isAnalyzing}
+                quota={quota}
+              />
+            </>
+          )}
+
+          {currentStep === 'analysis' && evaluationResult && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <IdeaEvaluationReport
+                result={evaluationResult}
+                onEdit={handleEdit}
+                onStartNew={handleStartNew}
+              />
+
+              <div className="flex justify-end pt-8 border-t border-white/10">
+                {commitStatus === 'success' ? (
+                  <div className="flex items-center gap-2 text-green-400 font-bold uppercase tracking-widest text-sm">
+                    <CheckCircle size={20} /> Insight Committed
                   </div>
-                ) : isAnalyzing ? (
-                  <EvaluationLoadingOverlay />
                 ) : (
-                  <>
-                    {error && (
-                      <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-200 text-sm text-center animate-in fade-in slide-in-from-top-2">
-                        {error}
-                      </div>
-                    )}
-
-                    <div className="animate-in fade-in duration-300">
-                      <IdeaSubmissionForm
-                        onSubmit={handleEvaluate}
-                        isSubmitting={isAnalyzing}
-                        initialData={submissionData || undefined}
-                        quota={quota}
-                      />
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-
-            {currentStep === 'analysis' && evaluationResult && (
-              <div className="space-y-8">
-                <IdeaEvaluationReport
-                  result={evaluationResult}
-                  onEdit={handleEdit}
-                  onStartNew={handleStartNew}
-                />
-
-                <div className="flex justify-end pt-8 border-t border-white/10">
                   <button
                     onClick={handleCommit}
                     disabled={commitStatus === 'committing'}
-                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white uppercase tracking-widest font-bold text-sm hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 rounded-full shadow-lg hover:shadow-blue-500/25 transition-all"
                   >
                     {commitStatus === 'committing' ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Committing to Chain...
-                      </>
+                      <>Processing...</>
                     ) : (
-                      <>
-                        Commit Insight to Chain →
-                      </>
+                      <>Commit Insight to Chain →</>
                     )}
                   </button>
-                </div>
+                )}
               </div>
-            )}
+            </div>
+          )}
 
-            {currentStep === 'commit' && (
-              <div className="text-center py-12 animate-in fade-in zoom-in duration-500">
-                <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8 text-green-400 border border-green-500/50">
-                  <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h2 className="text-3xl font-bold text-white mb-4">Insight Committed Successfully!</h2>
-                <p className="text-blue-200/60 mb-8">
-                  Your idea evaluation has been recorded on-chain. ID: <span className="font-mono text-white bg-white/10 px-2 py-1 rounded">{insightId}</span>
-                </p>
-                <div className="flex flex-col gap-4 max-w-md mx-auto">
-                  <div className="flex gap-4">
-                    <a
-                      href={`/idea/${insightId}`}
-                      target="_blank"
-                      className="flex-1 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 text-white rounded-lg transition-all text-center flex items-center justify-center"
-                    >
-                      View Public Page
-                    </a>
-                    <button
-                      onClick={() => {
-                        const text = `Just validated my project idea on @PrediktFi. AI Confidence: ${evaluationResult?.overallScore}% 🔮 #BuildPublic`;
-                        const url = `${window.location.origin}/idea/${insightId}`;
-                        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
-                      }}
-                      className="flex-1 px-6 py-3 bg-black hover:bg-gray-900 text-white rounded-lg transition-all shadow-lg flex items-center justify-center gap-2"
-                    >
-                      <span>Share on X</span>
-                    </button>
-                  </div>
-                  <button
-                    onClick={handleStartNew}
-                    className="px-6 py-3 text-blue-300 hover:text-white transition-colors text-sm"
-                  >
-                    Start New Evaluation
-                  </button>
-                </div>
+          {currentStep === 'commit' && commitStatus === 'success' && (
+            <div className="text-center py-20 animate-in fade-in zoom-in duration-500 border border-white/10 bg-slate-900/50 backdrop-blur-md p-12 max-w-2xl mx-auto rounded-2xl shadow-2xl">
+              <div className="inline-flex items-center justify-center p-6 border-2 border-green-500 text-green-500 mb-6 rounded-full bg-green-500/10">
+                <CheckCircle size={48} />
               </div>
-            )}
-          </div>
+              <h2 className="text-3xl font-bold tracking-tight mb-4 text-white">Insight Committed</h2>
+              <p className="text-white/60 mb-8 max-w-md mx-auto text-base">
+                Your evaluation has been immutably recorded on-chain.
+                <br />
+                <span className="font-mono text-sm mt-2 block text-white/40">ID: <span className="text-green-400">{insightId}</span></span>
+              </p>
+
+              <div className="flex flex-col gap-4 max-w-xs mx-auto">
+                <a
+                  href={`/idea/${insightId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 border border-white/20 hover:bg-white/10 text-white font-bold uppercase tracking-widest text-xs transition-colors rounded-full"
+                >
+                  View Public Record
+                </a>
+                <button
+                  onClick={handleStartNew}
+                  className="px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-gray-200 transition-colors rounded-full shadow-lg"
+                >
+                  Start New Session
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

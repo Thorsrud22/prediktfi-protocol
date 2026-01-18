@@ -56,6 +56,16 @@ vi.mock('../../src/lib/ai/evaluator', async (importOriginal) => {
     };
 });
 
+// Mock market snapshot
+vi.mock('../../src/lib/market/snapshot', () => ({
+    getMarketSnapshot: vi.fn().mockResolvedValue({
+        timestamp: new Date().toISOString(),
+        solPriceUsd: 150,
+        btcDominance: 50,
+        source: 'mock'
+    })
+}));
+
 // Helper to create a NextRequest with JSON body
 function createJsonRequest(body: any): NextRequest {
     return new NextRequest('http://localhost:3000/api/idea-evaluator/evaluate', {
@@ -68,12 +78,13 @@ function createJsonRequest(body: any): NextRequest {
 }
 
 describe('/api/idea-evaluator/evaluate', () => {
-    it('returns 200 and evaluation result for valid payload', async () => {
+    it('RETURNS 200 and evaluation result for valid payload', async () => {
         const validPayload = {
             description: "A decentralized prediction market for meme coins.",
             projectType: "memecoin",
             teamSize: "team_2_5",
             resources: ["developer", "marketer"],
+            memecoinLaunchPreparation: ["art_ready"],
             successDefinition: "Reach 10k users in 3 months.",
             responseStyle: "full"
         };

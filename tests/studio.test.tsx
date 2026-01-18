@@ -117,8 +117,8 @@ describe('AI Idea Evaluator Studio', () => {
         }, { timeout: 2000 });
 
         // --- STEP 1: VISION ---
-        fireEvent.click(screen.getByText('DeFi')); // Project Type
-        const descriptionInput = screen.getByPlaceholderText('Describe your project in a few sentences... What problem does it solve?');
+        fireEvent.click(screen.getByText(/DEFI/i)); // Project Type
+        const descriptionInput = screen.getByPlaceholderText(/> INPUT PROJECT DESCRIPTION.../i);
         fireEvent.change(descriptionInput, { target: { value: 'A decentralized exchange for memecoins on Solana' } });
 
         fireEvent.click(screen.getByRole('button', { name: /Next Step/i }));
@@ -127,12 +127,12 @@ describe('AI Idea Evaluator Studio', () => {
         await waitFor(() => expect(screen.getByText('Execution')).toBeInTheDocument());
 
         // Use getByRole for accurate button selection including the label text
-        fireEvent.click(screen.getByText('2-5 Members'));
+        fireEvent.click(screen.getByText(/2-5 Devs/i));
 
         // Wait for animation frame or just robustness
-        await waitFor(() => expect(screen.getByText('Audit Planned / Completed')).toBeInTheDocument());
-        fireEvent.click(screen.getByText('Audit Planned / Completed'));
-        fireEvent.click(screen.getByText('Multisig / DAO Setup'));
+        await waitFor(() => expect(screen.getByText('SECURITY_AUDIT')).toBeInTheDocument());
+        fireEvent.click(screen.getByText('SECURITY_AUDIT'));
+        fireEvent.click(screen.getByText('MULTISIG_DAO_OP'));
 
         fireEvent.click(screen.getByRole('button', { name: /Next Step/i }));
 
@@ -140,7 +140,7 @@ describe('AI Idea Evaluator Studio', () => {
         await waitFor(() => expect(screen.getByText('Strategy')).toBeInTheDocument());
 
         // These fields are optional/text areas in the new form
-        const mvpInput = screen.getByPlaceholderText('What is the realistic MVP you can ship?');
+        const mvpInput = screen.getByPlaceholderText(/> DEFINE_DELIVERABLES/i);
         fireEvent.change(mvpInput, { target: { value: 'Basic AMM' } });
 
         fireEvent.click(screen.getByRole('button', { name: /Next Step/i }));
@@ -148,13 +148,13 @@ describe('AI Idea Evaluator Studio', () => {
         // --- STEP 4: GOALS ---
         await waitFor(() => expect(screen.getByText('Goals')).toBeInTheDocument());
 
-        const successInput = screen.getByPlaceholderText('e.g. $1M TVL');
+        const successInput = screen.getByPlaceholderText(/> TARGET_TVL \(e.g. \$1M\)/i);
         fireEvent.change(successInput, { target: { value: '1M TVL' } });
 
-        fireEvent.click(screen.getByText('Short Verdict')); // Response Style
+        fireEvent.click(screen.getByText('SHORT_VERDICT')); // Response Style
 
         // Submit
-        const submitButton = screen.getByRole('button', { name: /Run Evaluation/i });
+        const submitButton = screen.getByRole('button', { name: /RUN_EVALUATION/i });
         fireEvent.click(submitButton);
 
         // Expect loading state from the overlay, not the form button
@@ -181,13 +181,13 @@ describe('AI Idea Evaluator Studio', () => {
         expect(screen.getByText('The Vision')).toBeInTheDocument();
 
         // Select Memecoin -> Should show "Community Vibe"
-        fireEvent.click(screen.getByText('Memecoin'));
+        fireEvent.click(screen.getByText('MEMECOIN'));
         expect(screen.getByText('Community Vibe')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('e.g. PolitiFi, Cats, Retro...')).toBeInTheDocument();
 
         // Select DeFi -> Should show "Core Mechanism"
-        fireEvent.click(screen.getByText('DeFi'));
-        expect(screen.getByText('Core Mechanism')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('DEFI'));
+        expect(screen.getByText('Mechanism Design')).toBeInTheDocument();
         expect(screen.getByText('Revenue Model')).toBeInTheDocument();
 
         // Ensure Memecoin fields are gone
@@ -201,34 +201,34 @@ describe('AI Idea Evaluator Studio', () => {
         await waitFor(() => screen.getByText('The Vision'));
 
         // 1. MEMECOIN FLOW
-        fireEvent.click(screen.getByText('Memecoin'));
-        fireEvent.change(screen.getByPlaceholderText('Describe your project in a few sentences... What problem does it solve?'), { target: { value: 'A memecoin about coding.' } });
+        fireEvent.click(screen.getByText('MEMECOIN'));
+        fireEvent.change(screen.getByPlaceholderText(/> INPUT PROJECT DESCRIPTION.../i), { target: { value: 'A memecoin about coding.' } });
 
         // Next to Execution
         fireEvent.click(screen.getByText('Next Step'));
         await waitFor(() => screen.getByText('Execution'));
 
         // Check Memecoin Checklist
-        expect(screen.getByText('KOLs / Influencers Lined Up')).toBeInTheDocument();
-        expect(screen.queryByText('Audit Planned / Completed')).not.toBeInTheDocument();
+        expect(screen.getByText('KOLS_WARBAND_READY')).toBeInTheDocument();
+        expect(screen.queryByText('SECURITY_AUDIT')).not.toBeInTheDocument();
 
         // Select Team Size (required)
-        fireEvent.click(screen.getByLabelText(/Solo Builder/i));
+        fireEvent.click(screen.getByLabelText(/Solo/i));
 
         // Next to Strategy (skip)
         fireEvent.click(screen.getByText('Next Step'));
-        await waitFor(() => screen.getByText('MVP Scope (6-12 months)'));
+        await waitFor(() => screen.getByText('MVP Scope (6-12m)'));
 
         // Fill MVP Scope (required)
-        fireEvent.change(screen.getByPlaceholderText('What is the realistic MVP you can ship?'), { target: { value: 'A simple token launcher.' } });
+        fireEvent.change(screen.getByPlaceholderText(/> DEFINE_DELIVERABLES/i), { target: { value: 'A simple token launcher.' } });
 
         // Next to Goals
         fireEvent.click(screen.getByText('Next Step'));
         await waitFor(() => screen.getByText('Goals'));
 
         // Check Memecoin Goal
-        expect(screen.getByText('Target Market Cap (3mo)')).toBeInTheDocument();
-        expect(screen.queryByText('Target TVL / Volume')).not.toBeInTheDocument();
+        expect(screen.getByPlaceholderText(/> TARGET_MCAP/i)).toBeInTheDocument();
+        expect(screen.queryByPlaceholderText(/> TARGET_TVL/i)).not.toBeInTheDocument();
     });
 });
 
