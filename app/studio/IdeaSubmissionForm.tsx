@@ -287,7 +287,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         }
 
         if (step.id === 'goals') {
-            if (!formData.successDefinition) newErrors.successDefinition = "Please define success.";
+            if (!formData.successDefinition || formData.successDefinition.length < 5) {
+                newErrors.successDefinition = "Success definition must be at least 5 chars.";
+            }
             if (!formData.responseStyle) newErrors.responseStyle = "Choose a response style.";
         }
 

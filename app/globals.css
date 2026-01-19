@@ -19,11 +19,14 @@ body {
   /* Performance optimizations */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeSpeed; /* Changed from optimizeLegibility for performance */
-  scroll-behavior: auto; /* Remove smooth scrolling for better performance */
+  text-rendering: optimizeSpeed;
+  /* Changed from optimizeLegibility for performance */
+  scroll-behavior: auto;
+  /* Remove smooth scrolling for better performance */
   /* Critical scroll performance optimizations */
   contain: layout style paint;
-  transform: translateZ(0); /* Force hardware acceleration */
+  transform: translateZ(0);
+  /* Force hardware acceleration */
   backface-visibility: hidden;
 }
 
@@ -49,31 +52,48 @@ body {
 }
 
 /* Wallet modal stacking fixes */
-.wallet-adapter-modal { z-index: 9999 !important; }
-.wallet-adapter-modal-container { z-index: 9999 !important; }
-.wallet-adapter-modal-overlay { z-index: 9998 !important; }
-html.wallet-modal-open, body.wallet-modal-open { overflow: hidden; }
+.wallet-adapter-modal {
+  z-index: 9999 !important;
+}
+
+.wallet-adapter-modal-container {
+  z-index: 9999 !important;
+}
+
+.wallet-adapter-modal-overlay {
+  z-index: 9998 !important;
+}
+
+html.wallet-modal-open,
+body.wallet-modal-open {
+  overflow: hidden;
+}
 
 /* Mobile-first responsive improvements */
 @media (max-width: 640px) {
+
   /* Ensure minimum touch target size */
-  button, a, input, select, textarea {
+  button,
+  a,
+  input,
+  select,
+  textarea {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   /* Improve text readability on mobile */
   body {
     font-size: 16px;
     line-height: 1.6;
   }
-  
+
   /* Better spacing for mobile */
   .container {
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  
+
   /* Prevent horizontal scroll */
   * {
     max-width: 100%;
@@ -82,16 +102,54 @@ html.wallet-modal-open, body.wallet-modal-open { overflow: hidden; }
 }
 
 /* Container system for consistent widths */
-.container-sm { max-width: var(--container-sm); margin: 0 auto; padding: 0 var(--space-md); }
-.container-md { max-width: var(--container-md); margin: 0 auto; padding: 0 var(--space-md); }
-.container-lg { max-width: var(--container-lg); margin: 0 auto; padding: 0 var(--space-md); }
-.container-xl { max-width: var(--container-xl); margin: 0 auto; padding: 0 var(--space-md); }
+.container-sm {
+  max-width: var(--container-sm);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.container-md {
+  max-width: var(--container-md);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.container-lg {
+  max-width: var(--container-lg);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.container-xl {
+  max-width: var(--container-xl);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
 
 /* Typography system */
-.text-heading-1 { font-size: var(--text-4xl); font-weight: 700; line-height: 1.2; }
-.text-heading-2 { font-size: var(--text-3xl); font-weight: 600; line-height: 1.3; }
-.text-heading-3 { font-size: var(--text-2xl); font-weight: 600; line-height: 1.4; }
-.text-heading-4 { font-size: var(--text-xl); font-weight: 500; line-height: 1.4; }
+.text-heading-1 {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.text-heading-2 {
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.text-heading-3 {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.text-heading-4 {
+  font-size: var(--text-xl);
+  font-weight: 500;
+  line-height: 1.4;
+}
 
 /* Button system */
 .btn-primary {
@@ -201,7 +259,8 @@ body {
   z-index: 0;
   background: linear-gradient(180deg, #0F172A 0%, #1E293B 25%, #334155 50%, #475569 75%, #1E293B 100%);
   will-change: transform;
-  transform: translateZ(0); /* Force GPU acceleration */
+  transform: translateZ(0);
+  /* Force GPU acceleration */
 }
 
 .vignette {
@@ -209,11 +268,9 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    transparent 55%,
-    rgba(0, 0, 0, 0.35) 100%
-  );
+  background: radial-gradient(ellipse at 50% 50%,
+      transparent 55%,
+      rgba(0, 0, 0, 0.35) 100%);
 }
 
 /* Clickable card link focus styles */
@@ -222,11 +279,13 @@ body {
   text-decoration: none;
   color: inherit;
   background: var(--color-surface);
-  padding: var(--space-6); /* ensures height well above 44px */
+  padding: var(--space-6);
+  /* ensures height well above 44px */
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
-  min-height: 44px; /* touch target min size */
+  min-height: 44px;
+  /* touch target min size */
 }
 
 .market-card:hover {
@@ -249,6 +308,7 @@ body {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -287,19 +347,19 @@ body {
   overflow: hidden;
   background: var(--surface-2);
 }
+
 .skeleton::after {
   content: "";
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.06),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.06),
+      transparent);
   animation: shimmer 1.4s infinite;
 }
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
@@ -313,25 +373,27 @@ body {
 
 /* Only enable animations on powerful devices */
 @media (prefers-reduced-motion: no-preference) and (min-width: 768px) {
+
   .btn-primary:hover,
   .btn-outline:hover {
     transform: translateY(-1px);
   }
-  
+
   .market-card:hover {
     transform: translateY(-1px);
   }
 }
 
 /* Completely disable animations on mobile and reduced motion */
-@media (prefers-reduced-motion: reduce), (max-width: 767px) {
+@media (prefers-reduced-motion: reduce),
+(max-width: 767px) {
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     transform: none !important;
   }
-  
+
   .skeleton::after {
     animation: none !important;
   }
@@ -339,7 +401,8 @@ body {
 
 /* A11y baseline: comfortable touch targets and clear focus rings */
 :where(a, button, input, select, textarea, [role="button"]) {
-  min-height: 44px; /* WCAG target size */
+  min-height: 44px;
+  /* WCAG target size */
 }
 
 :where(a, button, input, select, textarea, [role="button"]):focus-visible {
@@ -357,13 +420,26 @@ body {
   background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
   color: #FFFFFF;
   font-weight: 600;
-  padding: 0.625rem 1.25rem; /* 10px 20px */
-  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  padding: 0.625rem 1.25rem;
+  /* 10px 20px */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
   transition: filter .15s ease, transform .15s ease, background .2s ease;
 }
-.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-.btn-primary:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 60%, transparent); outline-offset: 3px; }
-.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-primary:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--accent) 60%, transparent);
+  outline-offset: 3px;
+}
+
+.btn-primary:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
 
 .btn-outline {
   display: inline-flex;
@@ -379,31 +455,58 @@ body {
   transition: all .15s ease;
   opacity: 0.8;
 }
-.btn-outline:hover { 
-  background: var(--surface); 
-  border-color: var(--text-muted); 
-  transform: translateY(-1px); 
+
+.btn-outline:hover {
+  background: var(--surface);
+  border-color: var(--text-muted);
+  transform: translateY(-1px);
   opacity: 1;
 }
-.btn-outline:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 3px; }
+
+.btn-outline:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent);
+  outline-offset: 3px;
+}
 
 .chip-yes {
   border: 1px solid var(--border);
   background: color-mix(in oklab, var(--surface) 70%, transparent);
   color: color-mix(in oklab, var(--text) 85%, transparent);
 }
-.chip-yes[aria-selected="true"] { background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%); color: #FFFFFF; }
-.chip-yes:hover { background: var(--surface); }
-.chip-yes:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 60%, transparent); outline-offset: 3px; }
+
+.chip-yes[aria-selected="true"] {
+  background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+  color: #FFFFFF;
+}
+
+.chip-yes:hover {
+  background: var(--surface);
+}
+
+.chip-yes:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--accent) 60%, transparent);
+  outline-offset: 3px;
+}
 
 .chip-no {
   border: 1px solid var(--border);
   background: color-mix(in oklab, var(--surface) 70%, transparent);
   color: color-mix(in oklab, var(--text) 85%, transparent);
 }
-.chip-no[aria-selected="true"] { background: var(--danger); color: #fff; }
-.chip-no:hover { background: var(--surface); }
-.chip-no:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 3px; }
+
+.chip-no[aria-selected="true"] {
+  background: var(--danger);
+  color: #fff;
+}
+
+.chip-no:hover {
+  background: var(--surface);
+}
+
+.chip-no:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--accent) 50%, transparent);
+  outline-offset: 3px;
+}
 
 /* Hide non-Phantom wallets in wallet modal */
 .wallet-adapter-modal-list .wallet-adapter-button:not([data-testid="phantom"]):not([aria-label*="Phantom"]) {
@@ -622,12 +725,22 @@ div[style*="position: fixed"]:not([class]):not([id]) {
 }
 
 /* Wallet adapter modal hardlift - ensure modal is always on top */
-.wallet-adapter-modal          { z-index: 9999 !important; }
-.wallet-adapter-modal-container{ z-index: 9999 !important; }
-.wallet-adapter-modal-overlay  { z-index: 9998 !important; }
+.wallet-adapter-modal {
+  z-index: 9999 !important;
+}
+
+.wallet-adapter-modal-container {
+  z-index: 9999 !important;
+}
+
+.wallet-adapter-modal-overlay {
+  z-index: 9998 !important;
+}
 
 /* Site overlay cap to prevent conflicts */
-.site-overlay{ z-index: 5000; }
+.site-overlay {
+  z-index: 5000;
+}
 
 /* Modal UX enhancements */
 .wallet-adapter-modal-wrapper {
@@ -680,9 +793,165 @@ body.modal-open {
   .wallet-adapter-modal-wrapper {
     padding: 0.5rem !important;
   }
-  
+
   .wallet-adapter-modal {
     max-height: 95vh !important;
     border-radius: 8px !important;
+  }
+}
+
+/* PRINT STYLES FOR PDF EXPERT */
+@media print {
+
+  /* Hide decorative backgrounds and noise */
+  .noise,
+  .noise::before,
+  .app-bg,
+  .bg-hero,
+  .aurora-bg,
+  .vignette {
+    display: none !important;
+    background: none !important;
+    opacity: 0 !important;
+  }
+
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Unhide the report container and its children */
+  .w-full.max-w-4xl.mx-auto,
+  .w-full.max-w-4xl.mx-auto * {
+    visibility: visible;
+  }
+
+  /* Position the report at the top */
+  .w-full.max-w-4xl.mx-auto {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100% !important;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Start Clean */
+  html,
+  body {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reset dark mode hacks for print */
+  .bg-slate-900\/95,
+  .bg-slate-900\/90,
+  .bg-black\/40,
+  .border-white\/10,
+  .border-white\/5,
+  div {
+    background-color: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Professional borders for print */
+  .border-white\/10,
+  .border-white\/5 {
+    border-color: #e5e7eb !important;
+    /* gray-200 */
+  }
+
+  /* Specific fixes for report cards */
+  .rounded-xl {
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    background-color: white !important;
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+
+  /* Fix text colors */
+  .text-white,
+  .text-white\/90,
+  .text-white\/80,
+  .text-white\/70,
+  .text-white\/60,
+  .text-slate-200,
+  .text-blue-100 {
+    color: #000000 !important;
+  }
+
+  .text-white\/40 {
+    color: #666666 !important;
+  }
+
+  .text-blue-400,
+  .text-blue-500 {
+    color: #2563eb !important;
+    /* Blue-600 for print contrast */
+  }
+
+  /* Keep score colors but ensure they print */
+  .text-green-500 {
+    color: #16a34a !important;
+    font-weight: bold;
+  }
+
+  .text-yellow-500 {
+    color: #ca8a04 !important;
+    font-weight: bold;
+  }
+
+  .text-red-500 {
+    color: #dc2626 !important;
+    font-weight: bold;
+  }
+
+  /* Ensure charts print clearly */
+  svg {
+    break-inside: avoid;
+  }
+
+  /* Hide the footer that might be causing the block */
+  .min-h-screen {
+    min-height: 0 !important;
+  }
+
+  /* Enhance typography for print */
+  h1 {
+    font-size: 24pt !important;
+    color: black !important;
+  }
+
+  h2 {
+    font-size: 18pt !important;
+    color: black !important;
+    margin-top: 20px !important;
+  }
+
+  h3 {
+    font-size: 14pt !important;
+    color: #333 !important;
+  }
+
+  p,
+  li {
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Page Setup */
+  @page {
+    size: A4;
+    margin: 1.5cm;
   }
 }

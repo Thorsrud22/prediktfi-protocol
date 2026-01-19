@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, FileText, Gift, Loader2 } from 'lucide-react';
+import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, FileText, Gift, Loader2, Download } from 'lucide-react';
+import RadarChart from '../components/charts/RadarChart';
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 
 // Custom X (formerly Twitter) logo component
@@ -29,9 +30,15 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
     const [isSharing, setIsSharing] = React.useState(false);
     const [bonusStatus, setBonusStatus] = React.useState<'idle' | 'claiming' | 'claimed' | 'error'>('idle');
 
-    // ----------------------------------------------------------------
-    // TERMINAL STYLE HELPERS
-    // ----------------------------------------------------------------
+    // Prepare Chart Data
+    const chartData = [
+        { label: 'Technical', value: result.technical.feasibilityScore, fullMark: 100 },
+        { label: 'Market', value: result.market.marketFitScore, fullMark: 100 },
+        { label: 'Execution', value: 100 - (result.execution?.executionRiskScore || 50), fullMark: 100 }, // Invert risk for "Goodness" score
+        { label: 'Tokenomics', value: result.tokenomics.designScore, fullMark: 100 },
+        { label: 'Overall', value: result.overallScore, fullMark: 100 },
+    ];
+
     const getScoreColor = (score: number) => {
         if (score >= 75) return 'text-green-500';
         if (score >= 50) return 'text-yellow-500';
@@ -44,13 +51,17 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
         return 'High Risk / Pass';
     };
 
+    const handleDownloadPDF = () => {
+        window.print();
+    };
+
     const handleShareOnX = async () => {
         setIsSharing(true);
 
         // Generate X Intent - Less "AI-ish" and more punchy
         const statusText = result.overallScore >= 75
-            ? `Just cooked up a ${result.overallScore}/100 idea on @PrediktFi. Institutional-grade alpha for Solana. 🥂`
-            : `Stress-tested my latest build on @PrediktFi. Score: ${result.overallScore}/100. Back to the lab. 🧪`;
+            ? `Just cooked up a ${result.overallScore} / 100 idea on @PrediktFi. Institutional - grade alpha for Solana. 🥂`
+            : `Stress - tested my latest build on @PrediktFi. Score: ${result.overallScore} / 100. Back to the lab. 🧪`;
 
         const text = `${statusText}\n\nCheck it out: prediktfi.xyz\n\n#Solana #AI #Web3`;
         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
@@ -84,45 +95,63 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
     if (!result) return null;
 
     return (
-        <div className="w-full max-w-4xl mx-auto font-sans text-sm leading-relaxed">
+        <div className="w-full max-w-4xl mx-auto font-sans text-sm leading-relaxed print:text-black print:bg-white">
             {/* AUDIT LOG HEADER */}
-            <div className="bg-slate-900/95 border border-white/10 p-8 mb-6 relative overflow-hidden group rounded-xl shadow-2xl">
-                <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity">
+            <div className="bg-slate-900/95 border border-white/10 p-8 mb-6 relative overflow-hidden group rounded-xl shadow-2xl print:border-black print:bg-white print:shadow-none print:text-black">
+                <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity print:hidden">
                     <Activity size={120} />
                 </div>
 
-                <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6 relative z-10">
+                <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6 relative z-10 print:border-black/20">
                     <div>
-                        <div className="text-[10px] text-blue-400 font-mono uppercase tracking-wider mb-2 flex items-center gap-2">
-                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                        <div className="text-[10px] text-blue-400 font-mono uppercase tracking-wider mb-2 flex items-center gap-2 print:text-blue-700">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse print:hidden"></span>
                             Analysis Complete
                         </div>
-                        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{result.summary.title}</h1>
-                        <p className="text-white/60 text-sm mt-1 max-w-lg leading-relaxed">
+                        <h1 className="text-3xl font-bold text-white tracking-tight mb-2 print:text-black">{result.summary.title}</h1>
+                        <p className="text-white/60 text-sm mt-1 max-w-lg leading-relaxed print:text-gray-600">
                             {result.summary.oneLiner}
                         </p>
                     </div>
-                    <div className="text-right hidden md:block">
-                        <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-1">TIMESTAMP</div>
-                        <div className="text-white text-xs font-mono">{new Date().toISOString().split('T')[0]}</div>
-                        <div className="text-xs text-white/20 mt-1 font-mono">ID: {Math.random().toString(36).substring(7).toUpperCase()}</div>
+                    <div className="flex flex-col items-end gap-2">
+                        <div className="text-right hidden md:block print:block">
+                            <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-1 print:text-gray-500">TIMESTAMP</div>
+                            <div className="text-white text-xs font-mono print:text-black">{new Date().toISOString().split('T')[0]}</div>
+                            <div className="text-xs text-white/20 mt-1 font-mono print:text-gray-400">ID: {Math.random().toString(36).substring(7).toUpperCase()}</div>
+                        </div>
+
+                        {/* Download Button (Hidden in Print) */}
+                        <button
+                            onClick={handleDownloadPDF}
+                            className="print:hidden flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-white/5"
+                            title="Download PDF Report"
+                        >
+                            <Download size={14} /> PDF Report
+                        </button>
                     </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-8 items-center md:items-start relative z-10">
+                    {/* RADAR CHART BLOCK */}
+                    <div className="w-full md:w-1/2 flex justify-center">
+                        <div className="relative w-[280px] h-[280px] md:w-[320px] md:h-[320px]">
+                            <RadarChart data={chartData} width={320} height={320} className="w-full h-full" />
+                        </div>
+                    </div>
+
                     {/* TOTAL SCORE BLOCK */}
-                    <div className="flex-1 w-full">
-                        <div className="text-right hidden md:block">
-                            <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-1">Date</div>
-                            <div className="flex items-end gap-6 border border-white/10 p-6 bg-white/[0.02] rounded-xl">
-                                <div className={`text-7xl font-black tracking-tighter ${getScoreColor(result.overallScore)}`}>
+                    <div className="flex-1 w-full md:w-1/2 flex flex-col justify-center h-full pt-8">
+                        <div className="text-center md:text-right">
+                            <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-2 print:text-gray-500">Overall Rating</div>
+                            <div className="flex flex-col items-center md:items-end gap-2 border border-white/10 p-8 bg-white/[0.02] rounded-xl print:border-black/20 print:bg-gray-50">
+                                <div className={`text-7xl font-black tracking-tighter ${getScoreColor(result.overallScore)} print:text-black`}>
                                     {result.overallScore}
                                 </div>
-                                <div className="mb-2">
-                                    <div className={`text-xl font-bold ${getScoreColor(result.overallScore)}`}>
+                                <div className="text-center md:text-right">
+                                    <div className={`text-xl font-bold ${getScoreColor(result.overallScore)} print:text-black`}>
                                         {getScoreLabel(result.overallScore)}
                                     </div>
-                                    <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest">
+                                    <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mt-1 print:text-gray-500">
                                         Confidence: High
                                     </div>
                                 </div>

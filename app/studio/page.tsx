@@ -123,6 +123,40 @@ export default function StudioPage() {
               } else if (event.result) {
                 setEvaluationResult(event.result);
                 setCurrentStep('analysis');
+
+                // AUTO-SAVE if connected
+                // We use the local 'data' (submission) and 'event.result' variables because state updates are async
+                if (publicKey) {
+                  // We define a fire-and-forget save function or just call fetch here
+                  // Using an IIFE to handle the async save without blocking the loop cleanly
+                  (async () => {
+                    try {
+                      setCommitStatus('committing'); // Show loading state on the button immediately
+                      const saveRes = await fetch('/api/idea/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          submission: data,
+                          result: event.result,
+                          walletAddress: publicKey
+                        }),
+                      });
+                      if (saveRes.ok) {
+                        const saveData = await saveRes.json();
+                        setInsightId(saveData.id);
+                        setCommitStatus('success');
+                      } else {
+                        // If auto-save fails, we just revert to idle so they can try manual commit
+                        console.error("Auto-save failed");
+                        setCommitStatus('idle');
+                      }
+                    } catch (err) {
+                      console.error("Auto-save error", err);
+                      setCommitStatus('idle');
+                    }
+                  })();
+                }
+
               } else if (event.error) {
                 throw new Error(event.error);
               }
