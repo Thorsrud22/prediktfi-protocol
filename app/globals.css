@@ -24,9 +24,6 @@ body {
   /* Remove smooth scrolling for better performance */
   /* Critical scroll performance optimizations */
   contain: layout style paint;
-  transform: translateZ(0);
-  /* Force hardware acceleration */
-  backface-visibility: hidden;
 }
 
 /* Performance optimizations for scrolling */

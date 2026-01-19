@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Aurora from '../components/ui/Aurora';
 import ProcessTimeline from '../components/ProcessTimeline';
 import { InstantLink } from '../components/InstantLink';
+import HeroActions from '../components/landing/HeroActions';
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -56,46 +57,35 @@ export default function Home() {
 
           {/* Subheading */}
           <p className="text-base md:text-2xl text-slate-300 max-w-3xl mx-auto">
-            Predikt is an AI-native evaluator built to stress-test AI, DeFi and memecoin ideas instead of giving you generic AI replies.
+            Predikt is an AI-native evaluator built to stress-test AI, DeFi and emerging digital assets instead of giving you generic AI replies.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <div
-              className="px-6 py-3 md:px-8 md:py-4 rounded-full bg-slate-700/50 text-slate-300 font-semibold text-lg cursor-default border border-slate-600 inline-flex items-center justify-center select-none"
-            >
-              Coming soon
+          <HeroActions />
+
+          <div className="pt-12 flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium text-slate-400">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+              Live Market Data
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]" />
+              Deep Semantic Analysis
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.5)]" />
+              Risk Modeling
             </div>
           </div>
 
 
 
-          <div className="pt-12 w-full max-w-4xl mx-auto">
-            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-blue-500/10 aspect-video bg-transparent">
-              <video
-                className="w-full h-full object-contain rounded-xl bg-transparent"
-                controls
-                playsInline
-                autoPlay
-                muted
-                loop
-                src="/demo-video.mov"
-                poster="/images/video-poster.png"
-              >
-                <source src="/demo-video.mov" type="video/quicktime" />
-                <source src="/demo-video.mov" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-            <p className="text-sm text-slate-400 mt-4 font-medium">
-              Watch the AI Evaluator in action (Pre-alpha footage)
-            </p>
-          </div>
+
         </div>
       </div>
 
       {/* Process Timeline */}
       <ProcessTimeline />
-    </div>
+    </div >
   );
 }
