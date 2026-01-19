@@ -72,6 +72,7 @@
     "@types/uuid": "^10.0.0",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
+    "@vercel/analytics": "^1.6.1",
     "@vercel/og": "^0.6.8",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

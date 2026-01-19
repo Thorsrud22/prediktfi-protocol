@@ -118,7 +118,7 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="space-y-2">
                                 <h3 className="text-xl font-bold text-white">Request Early Access</h3>
-                                <p className="text-slate-400 text-sm">Help us tailor your alpha experience.</p>
+                                <p className="text-slate-400 text-sm">Help us tailor your experience.</p>
                             </div>
 
                             {/* Focus Areas */}

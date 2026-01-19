@@ -8,6 +8,7 @@ export const metadata = {
 
 import '../globals.css';
 import { Inter } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 
 // Optimize font loading
 const inter = Inter({
@@ -25,6 +26,7 @@ export default function LandingLayout({
         <html lang="en" className={inter.variable}>
             <body className="bg-slate-900 text-white antialiased">
                 {children}
+                <Analytics />
             </body>
         </html>
     );

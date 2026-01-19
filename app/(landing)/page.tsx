@@ -45,7 +45,7 @@ export default function Home() {
       />
 
       {/* Hero Section */}
-      <div className="relative z-10 flex flex-col items-center pt-32 pb-20 px-4">
+      <div className="relative z-10 flex flex-col items-center pt-24 sm:pt-32 pb-16 sm:pb-20 px-5 sm:px-6">
         <div className="text-center max-w-5xl mx-auto space-y-4 md:space-y-8">
           {/* Main Heading */}
           <h1 className="text-3xl sm:text-4xl md:text-7xl font-bold text-white leading-tight">
@@ -63,7 +63,7 @@ export default function Home() {
           {/* CTA Buttons */}
           <HeroActions />
 
-          <div className="pt-12 flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium text-slate-400">
+          <div className="pt-8 sm:pt-12 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-x-8 sm:gap-y-4 text-sm font-medium text-slate-400">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
               Live Market Data
