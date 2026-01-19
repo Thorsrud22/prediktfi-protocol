@@ -4,6 +4,8 @@
   contain: strict;
   isolation: isolate;
   pointer-events: none;
+  /* Fallback background to prevent flicker during page transitions */
+  background: linear-gradient(135deg, #0F172A 0%, #1e293b 50%, #0F172A 100%);
 }
 
 .aurora-container canvas {

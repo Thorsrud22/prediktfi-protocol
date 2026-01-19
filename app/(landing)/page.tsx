@@ -1,6 +1,5 @@
 import React from 'react';
 import Image from 'next/image';
-import Aurora from '../components/ui/Aurora';
 import ProcessTimeline from '../components/ProcessTimeline';
 import { InstantLink } from '../components/InstantLink';
 import HeroActions from '../components/landing/HeroActions';
@@ -36,13 +35,7 @@ export default function Home() {
         </InstantLink>
       </div>
 
-      {/* Aurora Background (WebGL Shader Version) */}
-      <Aurora
-        colorStops={['#0F172A', '#38bdf8', '#2563EB']}
-        speed={0.5}
-        amplitude={1.2}
-        className="fixed inset-0 -z-10 scale-[2.0] md:scale-100"
-      />
+
 
       {/* Hero Section */}
       <div className="relative z-10 flex flex-col items-center pt-24 sm:pt-32 pb-16 sm:pb-20 px-5 sm:px-6">
@@ -86,6 +79,7 @@ export default function Home() {
 
       {/* Process Timeline */}
       <ProcessTimeline />
+
     </div >
   );
 }

@@ -1,34 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 type Step = 'questions' | 'loading' | 'success';
 
-interface AccessRequestModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-export default function AccessRequestModal({ isOpen, onClose }: AccessRequestModalProps) {
+export default function RequestAccessPage() {
     const [step, setStep] = useState<Step>('questions');
     const [formData, setFormData] = useState({
         focus: [] as string[],
-        role: '', // Keeping for back-compat if needed, or remove. Let's remove it from UI but maybe keep in state or replace?
-        // Replacing role with:
         twitterHandle: '',
         walletAddress: '',
         communities: '',
         email: '',
     });
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
-
-    if (!isOpen || !mounted) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,14 +26,10 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             });
-            // Min wait time for UX
             await new Promise(resolve => setTimeout(resolve, 800));
             setStep('success');
         } catch (error) {
             console.error('Application failed', error);
-            // Fallback to success even on error for frontend demo purposes, 
-            // or handle error state if preferred. 
-            // For now, assuming success to keep the flow smooth for the user.
             setStep('success');
         }
     };
@@ -61,37 +43,47 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
         }));
     };
 
-    // Use Portal to escape parent stacking contexts
-    // Added explicit w-screen and h-screen to force viewport coverage
-    const modalContent = (
-        <div
-            className="fixed inset-0 z-[9999] overflow-y-auto"
-            onClick={onClose}
-        >
-            {/* Backdrop - Cozy dark slate overlay */}
-            <div
-                className="fixed inset-0 bg-slate-950 transition-opacity"
-            />
+    return (
+        <div className="relative min-h-screen">
 
-            {/* Modal Content Wrapper - Positioned at top */}
-            <div className="flex justify-center p-4 pt-16 sm:pt-24 pb-8">
-                {/* Modal Content - Ensure opaque background */}
-                <div
-                    className="relative w-full max-w-lg bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200"
-                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            {/* Brand Pill - Fixed Top Left */}
+            <div className="fixed top-3 left-4 sm:left-6 z-50">
+                <Link
+                    href="/"
+                    className="group flex items-center gap-2.5 rounded-full bg-slate-900/90 px-2.5 py-1.5 pr-4 ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 duration-300"
+                    aria-label="Predikt home"
                 >
+                    <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/10 ring-1 ring-white/20 transition-all duration-300 group-hover:scale-110 group-hover:ring-white/30">
+                        <Image
+                            src="/images/predikt-orb.svg"
+                            alt="Predikt logo"
+                            width={36}
+                            height={36}
+                            className="h-full w-full object-contain p-0.5 drop-shadow-[0_2px_8px_rgba(59,130,246,0.5)]"
+                            priority
+                        />
+                    </span>
+                    <span className="font-inter text-base font-bold tracking-tight bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]">
+                        Predikt
+                    </span>
+                </Link>
+            </div>
 
+            {/* Form Content */}
+            <div className="relative z-10 flex justify-center px-4 pt-20 pb-12">
+                <div className="w-full max-w-lg bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl relative">
                     {/* Close Button */}
-                    <button
-                        onClick={onClose}
+                    <Link
+                        href="/"
                         className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white transition-colors z-50"
+                        aria-label="Close"
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                    </button>
+                    </Link>
 
-                    <div className="p-8 relative z-20">
+                    <div className="p-8">
                         {step === 'success' ? (
                             <div className="text-center py-8">
                                 <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -101,15 +93,15 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
                                 </div>
                                 <h3 className="text-2xl font-bold text-white mb-2">Application Received</h3>
                                 <p className="text-slate-400">
-                                    You've been added to our priority queue. <br />
-                                    We'll email you at <span className="text-white font-medium">{formData.email}</span> if you're selected for the alpha.
+                                    You&apos;ve been added to our priority queue. <br />
+                                    We&apos;ll email you at <span className="text-white font-medium">{formData.email}</span> if you&apos;re selected for the alpha.
                                 </p>
-                                <button
-                                    onClick={onClose}
-                                    className="mt-8 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-full font-medium transition-colors"
+                                <Link
+                                    href="/"
+                                    className="mt-8 inline-block px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-full font-medium transition-colors"
                                 >
-                                    Close
-                                </button>
+                                    Back to Home
+                                </Link>
                             </div>
                         ) : step === 'loading' ? (
                             <div className="text-center py-16">
@@ -130,7 +122,7 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
                                         {['DeFi Protocols', 'AI Agents', 'Emerging Assets', 'Yield Strategies'].map((f) => (
                                             <button
                                                 key={f}
-                                                type={"button" as const}
+                                                type="button"
                                                 onClick={() => toggleFocus(f)}
                                                 className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${formData.focus.includes(f)
                                                     ? 'bg-blue-500/20 border-blue-500 text-blue-400'
@@ -153,7 +145,7 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
                                             required
                                             placeholder="crypto_wizard"
                                             value={formData.twitterHandle}
-                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, twitterHandle: e.target.value })}
+                                            onChange={(e) => setFormData({ ...formData, twitterHandle: e.target.value })}
                                             className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-8 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                         />
                                     </div>
@@ -168,7 +160,7 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
                                         type="text"
                                         placeholder="Enter your public key..."
                                         value={formData.walletAddress}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, walletAddress: e.target.value })}
+                                        onChange={(e) => setFormData({ ...formData, walletAddress: e.target.value })}
                                         className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono text-sm"
                                     />
                                 </div>
@@ -180,7 +172,7 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
                                         rows={2}
                                         placeholder="e.g. Superteam, Mad Lads, MonkeDAO..."
                                         value={formData.communities}
-                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, communities: e.target.value })}
+                                        onChange={(e) => setFormData({ ...formData, communities: e.target.value })}
                                         className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
                                     />
                                 </div>
@@ -193,13 +185,13 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
                                         required
                                         placeholder="name@example.com"
                                         value={formData.email}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, email: e.target.value })}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                     />
                                 </div>
 
                                 <button
-                                    type={"submit" as const}
+                                    type="submit"
                                     className="w-full bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform hover:-translate-y-0.5"
                                 >
                                     Submit Application
@@ -211,6 +203,4 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
             </div>
         </div>
     );
-
-    return createPortal(modalContent, document.body);
 }

@@ -80,9 +80,10 @@ export function middleware(request: NextRequest) {
 
   // FORCE REDIRECT FOR PRIVATE ALPHA
   // Block access to Studio, Account, etc.
-  // Allow only: /, /api (for internal use if needed), /legal (optional)
+  // Allow only: /, /request-access, /api (for internal use if needed), /legal (optional)
   const isAllowedPath =
     pathname === '/' ||
+    pathname === '/request-access' ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/legal') ||
     pathname.startsWith('/og'); // Allow OpenGraph images
