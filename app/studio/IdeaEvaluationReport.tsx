@@ -5,6 +5,7 @@ import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
 import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, FileText, Gift, Loader2, Download } from 'lucide-react';
 import RadarChart from '../components/charts/RadarChart';
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
+import { printElement } from '../utils/print';
 
 // Custom X (formerly Twitter) logo component
 const XLogo = ({ size = 16, className = "" }: { size?: number, className?: string }) => (
@@ -23,9 +24,10 @@ interface IdeaEvaluationReportProps {
     result: IdeaEvaluationResult;
     onEdit?: () => void;
     onStartNew?: () => void;
+    hideBonus?: boolean;
 }
 
-export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: IdeaEvaluationReportProps) {
+export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideBonus }: IdeaEvaluationReportProps) {
     const { publicKey } = useSimplifiedWallet();
     const [isSharing, setIsSharing] = React.useState(false);
     const [bonusStatus, setBonusStatus] = React.useState<'idle' | 'claiming' | 'claimed' | 'error'>('idle');
@@ -52,60 +54,32 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
     };
 
     const handleDownloadPDF = () => {
-        window.print();
+        // Use the robust iframe print utility
+        printElement('printable-report', `PrediktFi Evaluation - ${result.summary.title}`);
     };
-
-    const handleShareOnX = async () => {
-        setIsSharing(true);
-
-        // Generate X Intent - Less "AI-ish" and more punchy
-        const statusText = result.overallScore >= 75
-            ? `Just cooked up a ${result.overallScore} / 100 idea on @PrediktFi. Institutional - grade alpha for Solana. 🥂`
-            : `Stress - tested my latest build on @PrediktFi. Score: ${result.overallScore} / 100. Back to the lab. 🧪`;
-
-        const text = `${statusText}\n\nCheck it out: prediktfi.xyz\n\n#Solana #AI #Web3`;
-        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-
-        window.open(url, '_blank');
-
-        // Wait a bit then show the "Claim Bonus" button logic if needed
-        // For simplicity, we just move to the claiming phase
-        setBonusStatus('claiming');
-
-        try {
-            const response = await fetch('/api/idea-evaluator/quota/bonus', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ walletAddress: publicKey })
-            });
-
-            if (response.ok) {
-                setBonusStatus('claimed');
-            } else {
-                setBonusStatus('error');
-            }
-        } catch (err) {
-            console.error('Failed to claim bonus:', err);
-            setBonusStatus('error');
-        } finally {
-            setIsSharing(false);
-        }
-    };
-
-    if (!result) return null;
 
     return (
-        <div className="w-full max-w-4xl mx-auto font-sans text-sm leading-relaxed print:text-black print:bg-white">
+        <div className="w-full max-w-4xl mx-auto font-sans text-sm leading-relaxed">
+            {/* 
+                We no longer need the aggressive @media print hacks because we print via an isolated iframe.
+                However, we keep some basic utility classes in the markup (like noprint) which the iframe utility respects.
+            */}
+            <style jsx global>{`
+                /* Simple utility to hide elements in the print view (iframe) */
+                @media print {
+                    .noprint {
+                        display: none !important;
+                    }
+                }
+            `}</style>
             {/* AUDIT LOG HEADER */}
-            <div className="bg-slate-900/95 border border-white/10 p-8 mb-6 relative overflow-hidden group rounded-xl shadow-2xl print:border-black print:bg-white print:shadow-none print:text-black">
-                <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity print:hidden">
-                    <Activity size={120} />
-                </div>
+            <div id="printable-report" className="bg-slate-900/95 border border-white/10 p-8 mb-6 relative overflow-visible group rounded-xl shadow-2xl text-white">
+                {/* Removed decorative Activity icon - was distracting on hover */}
 
                 <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6 relative z-10 print:border-black/20">
                     <div>
                         <div className="text-[10px] text-blue-400 font-mono uppercase tracking-wider mb-2 flex items-center gap-2 print:text-blue-700">
-                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse print:hidden"></span>
+                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse noprint"></span>
                             Analysis Complete
                         </div>
                         <h1 className="text-3xl font-bold text-white tracking-tight mb-2 print:text-black">{result.summary.title}</h1>
@@ -123,7 +97,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         {/* Download Button (Hidden in Print) */}
                         <button
                             onClick={handleDownloadPDF}
-                            className="print:hidden flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-white/5"
+                            className="noprint flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-white/5"
                             title="Download PDF Report"
                         >
                             <Download size={14} /> PDF Report
@@ -173,7 +147,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
                 {/* REASONING CHAIN */}
                 {result.reasoningSteps && result.reasoningSteps.length > 0 && (
-                    <div className="border border-white/10 bg-black/40 p-6 mb-6 rounded-xl font-mono text-xs">
+                    <div className="border border-white/10 bg-black/40 p-6 mb-6 rounded-xl font-mono text-xs break-inside-avoid">
                         <div className="flex items-center gap-2 mb-4 text-white/60 border-b border-white/5 pb-2">
                             <Terminal size={14} />
                             <h3 className="font-bold uppercase tracking-widest">AI Reasoning Chain</h3>
@@ -190,9 +164,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 )}
 
                 {/* ANALYSIS BLOCKS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 print:grid-cols-1">
                     {/* MARKET & COMPETITION (Used as Signals) */}
-                    <div className="border border-green-500/20 bg-green-500/[0.02] p-6 rounded-xl">
+                    <div className="border border-green-500/20 bg-green-500/[0.02] p-6 rounded-xl break-inside-avoid">
                         <div className="flex items-center gap-2 mb-4 text-green-400 border-b border-green-500/20 pb-2">
                             <Terminal size={18} />
                             <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Market Signals</h3>
@@ -208,7 +182,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     </div>
 
                     {/* RISK FACTORS */}
-                    <div className="border border-red-500/20 bg-red-500/[0.02] p-6 rounded-xl">
+                    <div className="border border-red-500/20 bg-red-500/[0.02] p-6 rounded-xl break-inside-avoid">
                         <div className="flex items-center gap-2 mb-4 text-red-400 border-b border-red-500/20 pb-2">
                             <AlertTriangle size={18} />
                             <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Critical Risks</h3>
@@ -225,8 +199,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 </div>
 
                 {/* SECURITY & HEALTH CHECK */}
+                {/* SECURITY & HEALTH CHECK */}
                 {result.cryptoNativeChecks && (
-                    <div className="border border-white/10 bg-slate-900/95 p-6 mb-6 rounded-xl">
+                    <div className="border border-white/10 bg-slate-900/95 p-6 mb-6 rounded-xl break-inside-avoid">
                         <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
                             <div className="flex items-center gap-2 text-blue-400">
                                 <Shield size={18} />
@@ -264,7 +239,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
                 {/* EXECUTION SIGNALS */}
                 {result.execution && (
-                    <div className="border border-white/10 bg-slate-900/90 p-6 mb-8 rounded-xl">
+                    <div className="border border-white/10 bg-slate-900/90 p-6 mb-8 rounded-xl break-inside-avoid">
                         <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
                             <CheckCircle2 size={18} />
                             <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Execution Analysis</h3>
@@ -298,48 +273,50 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 )}
 
                 {/* VIRAL QUOTA INCENTIVE */}
-                <div className="mb-6 p-6 rounded-xl border border-blue-500/30 bg-blue-500/[0.03] backdrop-blur-sm overflow-hidden relative group">
-                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity text-white">
-                        <XLogo size={100} />
-                    </div>
-
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-2">
-                            <Gift className="text-yellow-400" size={20} />
-                            <h3 className="text-lg font-bold text-white">Unlock Bonus Evaluation</h3>
+                {!hideBonus && (
+                    <div className="mb-6 p-6 rounded-xl border border-blue-500/30 bg-blue-500/[0.03] backdrop-blur-sm overflow-hidden relative group">
+                        <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity text-white">
+                            <XLogo size={100} />
                         </div>
-                        <p className="text-blue-100/70 text-sm mb-4 max-w-xl">
-                            Share your results on X to support the protocol and get <span className="text-blue-400 font-bold">+1 extra credit</span> instantly.
-                        </p>
 
-                        {bonusStatus === 'idle' ? (
-                            <button
-                                onClick={handleShareOnX}
-                                className="inline-flex items-center gap-2 bg-white text-black hover:bg-slate-200 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all hover:scale-105 shadow-lg shadow-white/10"
-                            >
-                                <XLogo size={16} /> Share on X to Unlock
-                            </button>
-                        ) : bonusStatus === 'claiming' ? (
-                            <button className="inline-flex items-center gap-2 bg-slate-800 text-slate-400 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider cursor-wait border border-slate-700">
-                                <Loader2 className="animate-spin" size={16} /> Verifying Share...
-                            </button>
-                        ) : bonusStatus === 'claimed' ? (
-                            <div className="inline-flex items-center gap-2 bg-green-500/20 text-green-400 border border-green-500/30 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider">
-                                <CheckCircle2 size={16} /> +1 Evaluation Credit Added
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Gift className="text-yellow-400" size={20} />
+                                <h3 className="text-lg font-bold text-white">Unlock Bonus Evaluation</h3>
                             </div>
-                        ) : (
-                            <button
-                                onClick={handleShareOnX}
-                                className="inline-flex items-center gap-2 bg-red-500/20 text-red-400 border border-red-500/30 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider"
-                            >
-                                <AlertTriangle size={16} /> Claiming Failed - Try Again
-                            </button>
-                        )}
+                            <p className="text-blue-100/70 text-sm mb-4 max-w-xl">
+                                Share your results on X to support the protocol and get <span className="text-blue-400 font-bold">+1 extra credit</span> instantly.
+                            </p>
+
+                            {bonusStatus === 'idle' ? (
+                                <button
+                                    onClick={handleShareOnX}
+                                    className="inline-flex items-center gap-2 bg-white text-black hover:bg-slate-200 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all hover:scale-105 shadow-lg shadow-white/10"
+                                >
+                                    <XLogo size={16} /> Share on X to Unlock
+                                </button>
+                            ) : bonusStatus === 'claiming' ? (
+                                <button className="inline-flex items-center gap-2 bg-slate-800 text-slate-400 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider cursor-wait border border-slate-700">
+                                    <Loader2 className="animate-spin" size={16} /> Verifying Share...
+                                </button>
+                            ) : bonusStatus === 'claimed' ? (
+                                <div className="inline-flex items-center gap-2 bg-green-500/20 text-green-400 border border-green-500/30 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                                    <CheckCircle2 size={16} /> +1 Evaluation Credit Added
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleShareOnX}
+                                    className="inline-flex items-center gap-2 bg-red-500/20 text-red-400 border border-red-500/30 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider"
+                                >
+                                    <AlertTriangle size={16} /> Claiming Failed - Try Again
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* ACTION BUTTONS */}
-                <div className="flex flex-col md:flex-row gap-4 border-t border-white/10 pt-6">
+                <div className="flex flex-col md:flex-row gap-4 border-t border-white/10 pt-6 noprint">
                     {onEdit && (
                         <button
                             onClick={onEdit}

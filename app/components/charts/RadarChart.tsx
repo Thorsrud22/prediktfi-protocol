@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 
 interface RadarChartProps {
     data: {
@@ -21,19 +21,17 @@ export default function RadarChart({ data, width = 300, height = 300, className 
     const sides = data.length;
     const angleStep = (Math.PI * 2) / sides;
 
-    // Calculate points for the polygon
-    const points = useMemo(() => {
-        return data.map((item, i) => {
-            const angle = i * angleStep - Math.PI / 2; // Start from top (-90 deg)
-            // Clamp value to min 5% to prevent chart from collapsing into a line "glitch" look
-            const safeValue = Math.max(item.value, 5);
-            const normalizedValue = safeValue / item.fullMark;
+    // Calculate points for the polygon - direct calculation (no memoization for stability)
+    const points = data.map((item, i) => {
+        const angle = i * angleStep - Math.PI / 2; // Start from top (-90 deg)
+        // Clamp value to min 5% to prevent chart from collapsing, max 100% to keep in bounds
+        const safeValue = Math.max(Math.min(item.value, item.fullMark), 5);
+        const normalizedValue = safeValue / item.fullMark;
 
-            const x = centerX + radius * normalizedValue * Math.cos(angle);
-            const y = centerY + radius * normalizedValue * Math.sin(angle);
-            return { x, y, angle, value: item.value, label: item.label };
-        });
-    }, [data, radius, centerX, centerY, angleStep]);
+        const x = centerX + radius * normalizedValue * Math.cos(angle);
+        const y = centerY + radius * normalizedValue * Math.sin(angle);
+        return { x, y, angle, value: item.value, label: item.label };
+    });
 
     // Calculate grid polygons (concentric webs)
     const gridLevels = [0.2, 0.4, 0.6, 0.8, 1];
@@ -83,14 +81,14 @@ export default function RadarChart({ data, width = 300, height = 300, className 
                     stroke="#3B82F6"
                     strokeWidth="2"
                     strokeLinejoin="round"
-                    className="drop-shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-1000 ease-out"
+                    className="drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]"
                 >
-                    <animate attributeName="opacity" from="0" to="1" dur="1s" fill="freeze" />
+                    <animate attributeName="opacity" from="0" to="1" dur="0.6s" fill="freeze" />
                 </polygon>
 
                 {/* Data Points */}
                 {points.map((p, i) => (
-                    <g key={i} className="group cursor-pointer">
+                    <g key={i} className="group/point cursor-pointer" transform="translate(0,0)">
                         <circle
                             cx={p.x}
                             cy={p.y}
@@ -98,7 +96,8 @@ export default function RadarChart({ data, width = 300, height = 300, className 
                             fill="#60A5FA" // Blue-400
                             stroke="#1E293B" // Slate-800
                             strokeWidth="2"
-                            className="transition-transform duration-300 group-hover:scale-150"
+                            className="transition-transform duration-300 group-hover/point:scale-150 origin-center"
+                            style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
                         />
                         {/* Tooltip on hover (SVG title) */}
                         <title>{`${p.label}: ${p.value}`}</title>

@@ -55,6 +55,13 @@ export default async function Home() {
               Start Validation
             </Link>
 
+            <Link
+              href="/example-report"
+              className="px-8 py-4 rounded-full bg-white/5 border border-white/10 text-white font-medium text-lg hover:bg-white/10 hover:border-white/30 transition-all duration-300 backdrop-blur-sm"
+            >
+              View Sample Report
+            </Link>
+
           </div>
 
           {/* Stats */}
