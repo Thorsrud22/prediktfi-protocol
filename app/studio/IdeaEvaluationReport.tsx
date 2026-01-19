@@ -53,6 +53,18 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
         return 'High Risk / Pass';
     };
 
+    const handleShareOnX = () => {
+        const text = `I just evaluated my crypto idea "${result.summary.title}" on @PrediktFi and got a ${result.overallScore}/100 score! 🚀\n\nCheck out the full analysis:`;
+        const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+        window.open(shareUrl, '_blank');
+
+        // Optimistically set status for visual feedback
+        setBonusStatus('claiming');
+        setTimeout(() => {
+            setBonusStatus('claimed');
+        }, 2000);
+    };
+
     const handleDownloadPDF = () => {
         // Use the robust iframe print utility
         printElement('printable-report', `PrediktFi Evaluation - ${result.summary.title}`);
