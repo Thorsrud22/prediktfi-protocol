@@ -38,7 +38,7 @@ export default function Home() {
 
       {/* Aurora Background (WebGL Shader Version) */}
       <Aurora
-        colorStops={['#0F172A', '#38bdf8', '#6366f1']}
+        colorStops={['#0F172A', '#38bdf8', '#2563EB']}
         speed={0.5}
         amplitude={1.2}
         className="fixed inset-0 -z-10 scale-[2.0] md:scale-100"

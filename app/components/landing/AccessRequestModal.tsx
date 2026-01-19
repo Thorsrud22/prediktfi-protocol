@@ -14,7 +14,11 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
     const [step, setStep] = useState<Step>('questions');
     const [formData, setFormData] = useState({
         focus: [] as string[],
-        role: '',
+        role: '', // Keeping for back-compat if needed, or remove. Let's remove it from UI but maybe keep in state or replace?
+        // Replacing role with:
+        twitterHandle: '',
+        walletAddress: '',
+        communities: '',
         email: '',
     });
     const [mounted, setMounted] = useState(false);
@@ -137,21 +141,46 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
                                 </div>
                             </div>
 
-                            {/* Role */}
+                            {/* Twitter / X Handle */}
                             <div className="space-y-3">
-                                <label className="text-sm font-medium text-slate-300">I am primarily a...</label>
-                                <select
-                                    required
-                                    value={formData.role}
-                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, role: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                >
-                                    <option value="" disabled>Select your role</option>
-                                    <option value="investor">DeFi Investor / Trader</option>
-                                    <option value="developer">Developer / Builder</option>
-                                    <option value="researcher">Analyst / Researcher</option>
-                                    <option value="other">Other</option>
-                                </select>
+                                <label className="text-sm font-medium text-slate-300">Twitter / X Handle <span className="text-red-400">*</span></label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">@</span>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="crypto_wizard"
+                                        value={formData.twitterHandle}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, twitterHandle: e.target.value })}
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-8 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Wallet Address */}
+                            <div className="space-y-3">
+                                <label className="text-sm font-medium text-slate-300">
+                                    Solana Wallet Address <span className="text-slate-500 font-normal ml-1">(Optional but recommended)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your public key..."
+                                    value={formData.walletAddress}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, walletAddress: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono text-sm"
+                                />
+                            </div>
+
+                            {/* Communities */}
+                            <div className="space-y-3">
+                                <label className="text-sm font-medium text-slate-300">What crypto communities are you active in?</label>
+                                <textarea
+                                    rows={2}
+                                    placeholder="e.g. Superteam, Mad Lads, MonkeDAO..."
+                                    value={formData.communities}
+                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, communities: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+                                />
                             </div>
 
                             {/* Email */}
@@ -169,7 +198,7 @@ export default function AccessRequestModal({ isOpen, onClose }: AccessRequestMod
 
                             <button
                                 type={"submit" as const}
-                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform hover:-translate-y-0.5"
+                                className="w-full bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform hover:-translate-y-0.5"
                             >
                                 Submit Application
                             </button>
