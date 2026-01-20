@@ -5,7 +5,7 @@ import { InstantLink } from '../InstantLink';
 
 export default function HeroActions() {
     return (
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
+        <div className="flex flex-col items-center justify-center gap-4 pt-8">
             <InstantLink
                 href="/request-access"
                 className="group relative px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold text-lg shadow-lg shadow-blue-500/25 hover:shadow-sky-500/40 transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden"
@@ -17,6 +17,12 @@ export default function HeroActions() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                 </span>
+            </InstantLink>
+            <InstantLink
+                href="/redeem"
+                className="text-slate-400 hover:text-white transition-colors text-sm underline underline-offset-4"
+            >
+                Already have access? Enter your code
             </InstantLink>
         </div>
     );

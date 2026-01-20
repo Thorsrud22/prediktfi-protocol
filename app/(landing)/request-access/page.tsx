@@ -71,7 +71,7 @@ export default function RequestAccessPage() {
 
             {/* Form Content */}
             <div className="relative z-10 flex justify-center px-4 pt-20 pb-12">
-                <div className="w-full max-w-md bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl relative">
+                <div className="w-full max-w-sm bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl relative">
                     {/* Close Button */}
                     <Link
                         href="/"
