@@ -66,7 +66,7 @@ function recordRequest(request: NextRequest, identifier: string): void {
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const startTime = Date.now();
   const pathname = request.nextUrl.pathname;
   const method = request.method;
@@ -83,6 +83,48 @@ export function middleware(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
+
+  // ============================================
+  // ACCESS GATE: Check for valid invite code session
+  // ============================================
+  const publicPaths = [
+    '/',
+    '/request-access',
+    '/redeem',
+    '/legal',
+    '/og',
+  ];
+
+  const isPublicPath = publicPaths.some(p =>
+    pathname === p || pathname.startsWith(p + '/')
+  );
+  const isApiPath = pathname.startsWith('/api/');
+  const isImagePath = pathname.startsWith('/images/');
+
+  // Skip access gate for public paths and API routes
+  if (!isPublicPath && !isApiPath && !isImagePath) {
+    const accessToken = request.cookies.get('predikt_access')?.value;
+
+    if (!accessToken) {
+      // No session - redirect to landing
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+
+    // Verify token (lightweight check - full verification in API routes if needed)
+    try {
+      const { jwtVerify } = await import('jose');
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || 'predikt-access-secret-change-in-production'
+      );
+      await jwtVerify(accessToken, secret);
+    } catch {
+      // Invalid token - clear cookie and redirect
+      const response = NextResponse.redirect(new URL('/', request.url));
+      response.cookies.delete('predikt_access');
+      return response;
+    }
+  }
+
 
   // Skip rate limiting in development
   if (process.env.NODE_ENV !== 'development') {

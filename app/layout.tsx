@@ -16,6 +16,7 @@ import DebugOverlay from "./components/dev/DebugOverlay";
 import IntentStorageGuard from "./components/IntentStorageGuard";
 import AuthGuard from "./components/AuthGuard";
 import RoutePreloader from "./components/RoutePreloader";
+import ShellWrapper from "./components/ShellWrapper";
 import Aurora from "./components/ui/Aurora";
 import SmoothScrolling from "./components/SmoothScrolling";
 import ProgressBarProvider from "./components/ProgressBarProvider";
@@ -224,15 +225,7 @@ export default async function RootLayout({
           <SmoothScrolling>
             <ProgressBarProvider>
               {/* Persistent Aurora background - stays across route changes */}
-              <Aurora
-                colorStops={['#0ea5e9', '#3b82f6', '#0ea5e9']}
-                amplitude={1.2}
-                blend={0.6}
-                speed={0.8}
-                className="fixed inset-0 -z-10"
-              />
-              {/* Gradient overlay for text readability */}
-              <div className="fixed inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-900 -z-[9]" />
+
 
               <IntentStorageGuard />
               <AuthGuard>
@@ -241,11 +234,12 @@ export default async function RootLayout({
                     <ToastProvider>
                       <ConsentGate />
                       <RoutePreloader />
-                      <AppPillNav />
-                      <main className="flex min-h-screen flex-col pt-24">
+                      <ShellWrapper
+                        navbar={<AppPillNav />}
+                        footer={<Footer />}
+                      >
                         {children}
-                      </main>
-                      <Footer />
+                      </ShellWrapper>
                       {process.env.NODE_ENV === "development" && (
                         <DebugProvider>
                           <DebugOverlay />

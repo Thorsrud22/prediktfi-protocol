@@ -96,7 +96,7 @@ export default function ProcessTimeline() {
     }, []);
 
     return (
-        <section ref={containerRef} className="relative py-32 px-4 overflow-hidden">
+        <section ref={containerRef} className="relative py-20 sm:py-32 px-5 sm:px-6 overflow-hidden">
             {/* Background Glow - Optimized */}
             <div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none"
@@ -107,7 +107,7 @@ export default function ProcessTimeline() {
 
             <div className="max-w-6xl mx-auto relative z-10">
                 {/* Section Header */}
-                <div className="text-center mb-32 space-y-4">
+                <div className="text-center mb-16 sm:mb-32 space-y-3 sm:space-y-4">
                     <h2 className="text-sm font-bold tracking-[0.2em] text-cyan-400 uppercase">
                         The Process
                     </h2>
@@ -118,21 +118,21 @@ export default function ProcessTimeline() {
 
                 {/* Timeline Container */}
                 <div className="relative">
-                    {/* Central Line */}
-                    <div className="timeline-line absolute left-4 md:left-1/2 top-0 bottom-0 w-1 md:-ml-0.5 bg-gradient-to-b from-blue-500/20 via-cyan-500/50 to-emerald-500/20 rounded-full" />
+                    {/* Central Line - Hidden on mobile for cleaner layout */}
+                    <div className="timeline-line absolute hidden md:block left-1/2 top-0 bottom-0 w-1 -ml-0.5 bg-gradient-to-b from-blue-500/20 via-cyan-500/50 to-emerald-500/20 rounded-full" />
 
-                    <div className="space-y-24">
+                    <div className="space-y-8 sm:space-y-24">
                         {STEPS.map((step, index) => {
                             const isEven = index % 2 === 0;
                             return (
                                 <div
                                     key={step.id}
                                     ref={el => { stepsRef.current[index] = el }}
-                                    className={`relative flex flex-col md:flex-row gap-12 md:gap-24 items-center ${isEven ? 'md:flex-row-reverse' : ''
+                                    className={`relative flex flex-col md:flex-row gap-6 md:gap-24 items-center ${isEven ? 'md:flex-row-reverse' : ''
                                         }`}
                                 >
                                     {/* Content Side */}
-                                    <div className="flex-1 w-full md:w-1/2 pl-12 md:pl-0">
+                                    <div className="flex-1 w-full md:w-1/2">
                                         <div className="p-8 rounded-2xl bg-slate-900/80 border border-slate-800/50 hover:bg-slate-800/80 hover:border-cyan-500/30 transition-all duration-300 group shadow-2xl">
                                             <div className="flex items-center gap-4 mb-4">
                                                 <div className={`p-3 rounded-xl bg-gradient-to-br ${step.color} bg-opacity-10 opacity-90 group-hover:scale-110 transition-transform duration-300`}>
@@ -146,8 +146,8 @@ export default function ProcessTimeline() {
                                         </div>
                                     </div>
 
-                                    {/* Center Dot */}
-                                    <div className="absolute left-4 md:left-1/2 -ml-[5px] md:-ml-2 w-3 h-3 md:w-4 md:h-4 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.6)] z-20 ring-4 ring-slate-950" />
+                                    {/* Center Dot - Hidden on mobile */}
+                                    <div className="absolute hidden md:block left-1/2 -ml-2 w-4 h-4 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.6)] z-20 ring-4 ring-slate-950" />
 
                                     {/* Empty Side (for Desktop layout balance) */}
                                     <div className="hidden md:block flex-1 w-1/2" />

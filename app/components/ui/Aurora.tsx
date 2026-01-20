@@ -93,7 +93,7 @@ export function Aurora(props: AuroraProps) {
     variant = 'default'
   } = props;
   const resolvedColorStops = useMemo(
-    () => props.colorStops ?? ['#3b82f6', '#06b6d4', '#3b82f6'],
+    () => props.colorStops ?? ['#5227FF', '#7cff67', '#5227FF'],
     [props.colorStops?.join('|') ?? 'default']
   );
   const propsRef = useRef<AuroraProps>({ ...props, colorStops: resolvedColorStops });
@@ -186,13 +186,27 @@ export function Aurora(props: AuroraProps) {
       resize();
 
       let isVisible = true;
+      let isScrolling = false;
+      let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
       let timeAccumulator = 0;
       let lastTime = performance.now();
+
+      // Pause rendering during scroll to prevent flicker
+      const handleScroll = () => {
+        isScrolling = true;
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          isScrolling = false;
+        }, 150); // Resume 150ms after scroll stops
+      };
+
+      window.addEventListener('scroll', handleScroll, { passive: true });
 
       const update = (t: number) => {
         animationFrameId = requestAnimationFrame(update);
 
-        if (!isVisible) return;
+        // Skip rendering during scroll or when not visible
+        if (!isVisible || isScrolling) return;
 
         // Calculate delta time
         const now = performance.now();
@@ -225,7 +239,9 @@ export function Aurora(props: AuroraProps) {
 
       cleanup = () => {
         if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+        if (scrollTimeout) clearTimeout(scrollTimeout);
         window.removeEventListener('resize', resize);
+        window.removeEventListener('scroll', handleScroll);
         observer.disconnect();
         if (ctn && gl.canvas.parentNode === ctn) {
           ctn.removeChild(gl.canvas);
@@ -255,7 +271,7 @@ export function Aurora(props: AuroraProps) {
     };
   }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed]);
 
-  return <div ref={ctnDom} className={`aurora-container pointer-events-none ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''} `} />;
+  return <div ref={ctnDom} className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''} `} />;
 }
 
 // Memoize the component to prevent unnecessary re-renders
