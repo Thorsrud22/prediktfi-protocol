@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Legacy Markets | Predikt — AI-first prediction studio",
+  title: "Legacy Markets | Predikt — AI-first evaluation studio",
   description: "Legacy prediction markets view. Try the new AI-first Studio for creating insights.",
 };
 

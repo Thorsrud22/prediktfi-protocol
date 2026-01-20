@@ -99,19 +99,43 @@ function WalletManager({ children }: { children: React.ReactNode }) {
 
   const disconnect = async () => {
     try {
+      // 1. Attempt Phantom disconnect
       if (window.phantom?.solana?.disconnect) {
-        await window.phantom.solana.disconnect();
+        try {
+          await window.phantom.solana.disconnect();
+        } catch (e) {
+          console.warn('Phantom extension disconnect failed, continuing with local cleanup:', e);
+        }
       }
 
+      // 2. Call server-side signout API
+      try {
+        await fetch('/api/auth/signout', {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch (authError) {
+        console.error('Server signout failed:', authError);
+      }
+
+      // 3. Force reset local state regardless of extension/API success
       setIsConnected(false);
       setPublicKey(null);
 
-      // Clear localStorage
+      // 4. Clear all relevant localStorage
       localStorage.removeItem('predikt:wallet:name');
       localStorage.removeItem('predikt:wallet:pubkey');
       localStorage.removeItem('predikt:auth:v1');
+
+      // Optional: Force a small delay then reload or redirect if needed
+      // window.location.href = '/'; 
     } catch (error) {
       console.error('Wallet disconnect failed:', error);
+      // Even in the catch block, we want to ensure state is reset locally
+      setIsConnected(false);
+      setPublicKey(null);
+      localStorage.removeItem('predikt:wallet:name');
+      localStorage.removeItem('predikt:wallet:pubkey');
     }
   };
 

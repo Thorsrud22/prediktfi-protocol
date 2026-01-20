@@ -42,9 +42,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
     ];
 
     const getScoreColor = (score: number) => {
-        if (score >= 75) return 'text-green-500';
-        if (score >= 50) return 'text-yellow-500';
-        return 'text-red-500';
+        if (score >= 75) return 'text-cyan-400';
+        if (score >= 50) return 'text-blue-400';
+        return 'text-slate-400';
     };
 
     const getScoreLabel = (score: number) => {
@@ -85,16 +85,16 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                 }
             `}</style>
             {/* AUDIT LOG HEADER */}
-            <div id="printable-report" className="bg-slate-900/95 border border-white/10 p-8 mb-6 relative overflow-visible group rounded-xl shadow-2xl text-white">
+            <div id="printable-report" className="bg-slate-900/40 backdrop-blur-md border border-white/5 p-8 mb-6 relative overflow-visible group rounded-3xl shadow-2xl text-white">
                 {/* Removed decorative Activity icon - was distracting on hover */}
 
                 <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6 relative z-10 print:border-black/20">
                     <div>
-                        <div className="text-[10px] text-blue-400 font-mono uppercase tracking-wider mb-2 flex items-center gap-2 print:text-blue-700">
-                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse noprint"></span>
+                        <div className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] italic mb-3 flex items-center gap-2 print:text-blue-700">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse noprint shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
                             Analysis Complete
                         </div>
-                        <h1 className="text-3xl font-bold text-white tracking-tight mb-2 print:text-black">{result.summary.title}</h1>
+                        <h1 className="text-4xl font-black text-white tracking-tighter mb-2 print:text-black uppercase italic">{result.summary.title} <span className="text-blue-500">.</span></h1>
                         <p className="text-white/60 text-sm mt-1 max-w-lg leading-relaxed print:text-gray-600">
                             {result.summary.oneLiner}
                         </p>
@@ -128,16 +128,16 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                     {/* TOTAL SCORE BLOCK */}
                     <div className="flex-1 w-full md:w-1/2 flex flex-col justify-center h-full pt-8">
                         <div className="text-center md:text-right">
-                            <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-2 print:text-gray-500">Overall Rating</div>
-                            <div className="flex flex-col items-center md:items-end gap-2 border border-white/10 p-8 bg-white/[0.02] rounded-xl print:border-black/20 print:bg-gray-50">
-                                <div className={`text-7xl font-black tracking-tighter ${getScoreColor(result.overallScore)} print:text-black`}>
+                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] italic mb-3 print:text-gray-500">Overall Rating</div>
+                            <div className="flex flex-col items-center md:items-end gap-2 border border-blue-500/20 p-8 bg-blue-500/5 rounded-2xl print:border-black/20 print:bg-gray-50">
+                                <div className={`text-8xl font-black tracking-tighter ${getScoreColor(result.overallScore)} print:text-black italic`}>
                                     {result.overallScore}
                                 </div>
                                 <div className="text-center md:text-right">
-                                    <div className={`text-xl font-bold ${getScoreColor(result.overallScore)} print:text-black`}>
+                                    <div className={`text-xl font-black uppercase tracking-tight italic ${getScoreColor(result.overallScore)} print:text-black`}>
                                         {getScoreLabel(result.overallScore)}
                                     </div>
-                                    <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mt-1 print:text-gray-500">
+                                    <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] italic mt-2 print:text-gray-500">
                                         Confidence: High
                                     </div>
                                 </div>
@@ -147,10 +147,10 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                 </div>
 
                 {/* VERDICT SUMMARY */}
-                <div className="border border-white/10 bg-slate-900/95 p-8 mb-6 rounded-xl shadow-lg">
-                    <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
+                <div className="border border-white/5 bg-slate-900/40 backdrop-blur-md p-8 mb-6 rounded-2xl shadow-xl">
+                    <div className="flex items-center gap-2 mb-5 text-white border-b border-white/10 pb-3">
                         <FileText size={18} className="text-blue-400" />
-                        <h3 className="font-bold uppercase tracking-widest text-xs font-mono text-blue-100">Executive Summary</h3>
+                        <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px] text-blue-100">Executive Summary</h3>
                     </div>
                     <p className="text-white/90 text-base leading-relaxed border-l-4 border-blue-500/50 pl-6 py-1 italic">
                         "{result.summary.mainVerdict}"
@@ -159,10 +159,10 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
 
                 {/* REASONING CHAIN */}
                 {result.reasoningSteps && result.reasoningSteps.length > 0 && (
-                    <div className="border border-white/10 bg-black/40 p-6 mb-6 rounded-xl font-mono text-xs break-inside-avoid">
-                        <div className="flex items-center gap-2 mb-4 text-white/60 border-b border-white/5 pb-2">
-                            <Terminal size={14} />
-                            <h3 className="font-bold uppercase tracking-widest">AI Reasoning Chain</h3>
+                    <div className="border border-white/5 bg-slate-900/40 backdrop-blur-md p-6 mb-6 rounded-2xl font-mono text-xs break-inside-avoid shadow-xl">
+                        <div className="flex items-center gap-2 mb-5 text-white/60 border-b border-white/5 pb-3">
+                            <Terminal size={14} className="text-blue-400" />
+                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">AI Reasoning Chain</h3>
                         </div>
                         <ul className="space-y-2 text-white/70">
                             {(result.reasoningSteps ?? []).map((step, i) => (
@@ -178,15 +178,15 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                 {/* ANALYSIS BLOCKS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 print:grid-cols-1">
                     {/* MARKET & COMPETITION (Used as Signals) */}
-                    <div className="border border-green-500/20 bg-green-500/[0.02] p-6 rounded-xl break-inside-avoid">
-                        <div className="flex items-center gap-2 mb-4 text-green-400 border-b border-green-500/20 pb-2">
+                    <div className="border border-blue-500/20 bg-blue-500/5 p-6 rounded-2xl break-inside-avoid shadow-xl">
+                        <div className="flex items-center gap-2 mb-5 text-blue-400 border-b border-blue-500/10 pb-3">
                             <Terminal size={18} />
-                            <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Market Signals</h3>
+                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Market Signals</h3>
                         </div>
                         <ul className="space-y-3">
                             {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
-                                <li key={i} className="flex gap-3 text-green-200/90 text-sm leading-relaxed">
-                                    <span className="text-green-500 font-mono">[+]</span>
+                                <li key={i} className="flex gap-4 text-blue-200/90 text-sm leading-relaxed">
+                                    <span className="text-blue-400 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
                                     <span>{signal}</span>
                                 </li>
                             ))}
@@ -194,15 +194,15 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                     </div>
 
                     {/* RISK FACTORS */}
-                    <div className="border border-red-500/20 bg-red-500/[0.02] p-6 rounded-xl break-inside-avoid">
-                        <div className="flex items-center gap-2 mb-4 text-red-400 border-b border-red-500/20 pb-2">
+                    <div className="border border-slate-700/50 bg-slate-900/60 p-6 rounded-2xl break-inside-avoid shadow-xl">
+                        <div className="flex items-center gap-2 mb-5 text-slate-400 border-b border-white/5 pb-3">
                             <AlertTriangle size={18} />
-                            <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Critical Risks</h3>
+                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Critical Risks</h3>
                         </div>
                         <ul className="space-y-3">
                             {[...(result.technical?.keyRisks ?? []), ...(result.market?.goToMarketRisks ?? [])].slice(0, 5).map((con, i) => (
-                                <li key={i} className="flex gap-3 text-red-200/90 text-sm leading-relaxed">
-                                    <span className="text-red-500 font-mono">[!]</span>
+                                <li key={i} className="flex gap-4 text-slate-300 text-sm leading-relaxed">
+                                    <span className="text-blue-500/50 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
                                     <span>{con}</span>
                                 </li>
                             ))}
@@ -213,34 +213,34 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                 {/* SECURITY & HEALTH CHECK */}
                 {/* SECURITY & HEALTH CHECK */}
                 {result.cryptoNativeChecks && (
-                    <div className="border border-white/10 bg-slate-900/95 p-6 mb-6 rounded-xl break-inside-avoid">
-                        <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                    <div className="border border-white/5 bg-slate-900/40 backdrop-blur-md p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl">
+                        <div className="flex items-center justify-between mb-5 border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-blue-400">
                                 <Shield size={18} />
-                                <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Security Check</h3>
+                                <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Security Check</h3>
                             </div>
-                            <div className="text-[10px] text-white/40 font-mono">v1.0.4</div>
+                            <div className="text-[10px] text-white/20 font-mono font-black italic">v1.0.4</div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
-                                <span className="text-white/60 text-xs font-mono">Rug Pull Risk</span>
-                                <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-green-400' :
-                                    result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-yellow-400' : 'text-red-400'
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl">
+                                <span className="text-white/40 text-[10px] uppercase font-black tracking-widest italic">Rug Pull Risk</span>
+                                <span className={`text-[10px] font-black uppercase italic ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-cyan-400' :
+                                    result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-blue-400' : 'text-slate-400'
                                     }`}>
                                     {result.cryptoNativeChecks.rugPullRisk}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
-                                <span className="text-white/60 text-xs font-mono">Audit Status</span>
-                                <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-green-400' : 'text-yellow-400'
+                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl">
+                                <span className="text-white/40 text-[10px] uppercase font-black tracking-widest italic">Audit Status</span>
+                                <span className={`text-[10px] font-black uppercase italic ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-cyan-400' : 'text-blue-400'
                                     }`}>
                                     {result.cryptoNativeChecks.auditStatus}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-3 transition-colors rounded-lg">
-                                <span className="text-white/60 text-xs font-mono">Liquidity</span>
-                                <span className={`text-xs font-bold uppercase font-mono ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'text-green-400' : 'text-red-400'
+                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl">
+                                <span className="text-white/40 text-[10px] uppercase font-black tracking-widest italic">Liquidity</span>
+                                <span className={`text-[10px] font-black uppercase italic ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'text-cyan-400' : 'text-slate-400'
                                     }`}>
                                     {result.cryptoNativeChecks.liquidityStatus}
                                 </span>
@@ -251,31 +251,31 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
 
                 {/* EXECUTION SIGNALS */}
                 {result.execution && (
-                    <div className="border border-white/10 bg-slate-900/90 p-6 mb-8 rounded-xl break-inside-avoid">
-                        <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-2">
-                            <CheckCircle2 size={18} />
-                            <h3 className="font-bold uppercase tracking-widest text-xs font-mono">Execution Analysis</h3>
+                    <div className="border border-white/5 bg-slate-900/40 backdrop-blur-md p-6 mb-8 rounded-2xl break-inside-avoid shadow-xl">
+                        <div className="flex items-center gap-2 mb-5 text-white border-b border-white/10 pb-3">
+                            <CheckCircle2 size={18} className="text-blue-400" />
+                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Execution Analysis</h3>
                         </div>
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                             {/* EXECUTION SIGNALS */}
-                            <div className="space-y-1">
-                                <div className="text-[10px] text-white/40 font-mono uppercase mb-2">Signals</div>
+                            <div className="space-y-3">
+                                <div className="text-[10px] text-white/20 font-black uppercase tracking-widest italic mb-3">Signals</div>
                                 {result.execution?.executionSignals?.slice(0, 3)?.map((signal, i) => (
                                     <div key={i} className="flex gap-4 items-start opacity-70">
-                                        <span className="text-blue-400 font-mono text-xs">{(i + 1).toString().padStart(2, '0')}</span>
-                                        <p className="text-white/80 text-sm">{signal}</p>
+                                        <span className="text-blue-400 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
+                                        <p className="text-white/80 text-sm leading-relaxed">{signal}</p>
                                     </div>
                                 ))}
                             </div>
 
                             {/* MUST FIX */}
                             {(result.recommendations?.mustFixBeforeBuild ?? []).length > 0 && (
-                                <div className="space-y-1 mt-4">
-                                    <div className="text-[10px] text-red-400/60 font-mono uppercase mb-2 pt-2 border-t border-white/5">Critical Improvements</div>
+                                <div className="space-y-3 mt-4">
+                                    <div className="text-[10px] text-blue-400/30 font-black uppercase tracking-widest italic mb-3 pt-4 border-t border-white/5">Strategic Improvements</div>
                                     {(result.recommendations?.mustFixBeforeBuild ?? []).map((fix, i) => (
                                         <div key={i} className="flex gap-4 items-start">
-                                            <span className="text-red-500 font-mono text-xs">!!</span>
-                                            <p className="text-red-300 text-sm">{fix}</p>
+                                            <span className="text-blue-400 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
+                                            <p className="text-blue-200/80 text-sm leading-relaxed">{fix}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -328,11 +328,11 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                 )}
 
                 {/* ACTION BUTTONS */}
-                <div className="flex flex-col md:flex-row gap-4 border-t border-white/10 pt-6 noprint">
+                <div className="flex flex-col md:flex-row gap-4 border-t border-white/5 pt-8 noprint">
                     {onEdit && (
                         <button
                             onClick={onEdit}
-                            className="flex-1 bg-transparent border border-white/20 text-white p-4 hover:bg-white/5 text-xs font-bold uppercase tracking-widest transition-all rounded-xl hover:border-white/40 flex items-center justify-center gap-2"
+                            className="flex-1 bg-white/5 border border-white/10 text-white p-5 hover:bg-white/10 text-[10px] font-black uppercase tracking-[0.2em] italic transition-all rounded-2xl flex items-center justify-center gap-3 active:scale-95"
                         >
                             <ArrowLeft size={16} /> Refine Input
                         </button>
@@ -340,7 +340,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                     {onStartNew && (
                         <button
                             onClick={onStartNew}
-                            className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-transparent p-4 hover:from-blue-500 hover:to-indigo-500 text-xs font-bold uppercase tracking-widest transition-all rounded-xl shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-2"
+                            className="flex-1 bg-blue-600 text-white border border-transparent p-5 hover:bg-blue-500 text-[10px] font-black uppercase tracking-[0.2em] italic transition-all rounded-2xl shadow-lg shadow-blue-900/40 flex items-center justify-center gap-3 active:scale-95"
                         >
                             New Evaluation <Sparkles size={16} />
                         </button>

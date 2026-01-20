@@ -15,8 +15,8 @@ type LaunchItem = {
 export default function LaunchPage() {
   const [items, setItems] = useState<LaunchItem[]>([
     // NOTE: This is a legacy development dashboard for the old prediction market system.
-    // Predikt has evolved into an AI-first prediction studio platform.
-    
+    // Predikt has evolved into an AI-powered evaluation studio platform.
+
     // Core Platform
     {
       id: "wallet-integration",
@@ -27,7 +27,7 @@ export default function LaunchPage() {
     },
     {
       id: "insight-system",
-      title: "Insight System", 
+      title: "Insight System",
       description: "Real and mock insight logging with memo JSON and referral support",
       status: "completed",
       category: "core",
@@ -56,7 +56,7 @@ export default function LaunchPage() {
 
     // Content & Insights
     {
-      id: "insight-generator", 
+      id: "insight-generator",
       title: "Insight Generator",
       description: "Studio interface for creating AI-backed insights",
       status: "completed",
@@ -65,7 +65,7 @@ export default function LaunchPage() {
     {
       id: "initial-insights",
       title: "Initial Insights",
-      description: "3+ seed insights with creator attribution", 
+      description: "3+ seed insights with creator attribution",
       status: "completed",
       category: "content",
     },
@@ -192,8 +192,8 @@ export default function LaunchPage() {
             {completedCount}/{totalCount} items complete
           </div>
           <div className="flex-1 bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-            <div 
-              className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+            <div
+              className="bg-green-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
@@ -201,7 +201,7 @@ export default function LaunchPage() {
             {completionPercentage}%
           </div>
         </div>
-        
+
         {completionPercentage === 100 && (
           <div className="p-4 bg-green-100 border border-green-300 rounded-lg dark:bg-green-900/20 dark:border-green-700">
             <div className="flex items-center">
@@ -221,7 +221,7 @@ export default function LaunchPage() {
       {categories.map(category => {
         const categoryItems = items.filter(item => item.category === category.id);
         const categoryCompleted = categoryItems.filter(item => item.status === "completed").length;
-        
+
         return (
           <Card key={category.id}>
             <div className="mb-4">
@@ -235,10 +235,10 @@ export default function LaunchPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               {categoryItems.map(item => (
-                <div 
+                <div
                   key={item.id}
                   className="flex items-center justify-between p-3 border border-[var(--border)] rounded-lg hover:bg-[color:var(--surface-2)] transition-colors"
                 >

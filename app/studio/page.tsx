@@ -226,12 +226,12 @@ export default function StudioPage() {
       {/* Aurora Background is handled by layout, we just need to be transparent */}
 
       <main className="relative pt-32 pb-20 px-4 md:px-8 max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-12 border-b border-white/10 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6">
           <div>
-            <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">
+            <h1 className="text-5xl sm:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent uppercase italic">
               Studio <span className="text-blue-500">.</span>
             </h1>
-            <p className="text-white/60 text-base md:text-lg max-w-xl font-light">
+            <p className="text-white/40 text-[10px] sm:text-lg max-w-xl font-medium tracking-[0.2em] uppercase">
               Advanced AI Evaluation Protocol for Web3 Assets
             </p>
           </div>

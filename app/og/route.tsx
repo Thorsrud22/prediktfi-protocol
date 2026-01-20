@@ -96,7 +96,7 @@ export async function GET(request: Request) {
 							</div>
 						</div>
 					) : (
-						<div style={{ fontSize: '32px', color: '#64748B' }}>AI Prediction Studio</div>
+						<div style={{ fontSize: '32px', color: '#64748B' }}>AI Evaluation Studio</div>
 					)}
 				</div>
 

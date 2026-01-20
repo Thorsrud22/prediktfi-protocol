@@ -71,7 +71,7 @@ export default function RequestAccessPage() {
 
             {/* Form Content */}
             <div className="relative z-10 flex justify-center px-4 pt-20 pb-12">
-                <div className="w-full max-w-sm bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl relative">
+                <div className="w-full max-w-[512px] bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl relative">
                     {/* Close Button */}
                     <Link
                         href="/"
@@ -192,9 +192,11 @@ export default function RequestAccessPage() {
 
                                 <button
                                     type="submit"
-                                    className="w-full bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform hover:-translate-y-0.5"
+                                    className="btn-shimmer w-full bg-gradient-to-r from-blue-600 to-cyan-400 text-white font-semibold py-3 rounded-2xl text-base shadow-md transition-all duration-200 ease-out hover:brightness-105"
                                 >
-                                    Submit Application
+                                    <span className="relative">
+                                        Submit Application
+                                    </span>
                                 </button>
                             </form>
                         )}

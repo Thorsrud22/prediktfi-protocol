@@ -51,14 +51,14 @@ const AuthenticationPrompt = React.memo(
     publicKey: string | null;
     onVerify: () => void;
   }) => (
-    <div className="rounded-xl border border-slate-700 p-8 text-center text-slate-200">
-      <div className="mb-6">
+    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
+      <div className="w-20 h-20 bg-slate-900/60 rounded-3xl border border-white/10 flex items-center justify-center mb-6 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
         <svg
-          className="w-16 h-16 mx-auto text-slate-500 mb-4"
+          className="w-10 h-10 text-blue-400 group-hover:scale-110 transition-transform"
           fill="none"
-          stroke="currentColor"
           viewBox="0 0 24 24"
-          aria-hidden="true"
+          stroke="currentColor"
         >
           <path
             strokeLinecap="round"
@@ -67,186 +67,144 @@ const AuthenticationPrompt = React.memo(
             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
           />
         </svg>
-
-        {!isWalletConnected ? (
-          <>
-            <h3 className="text-xl font-semibold text-slate-200 mb-2">
-              Connect Phantom to access your account
-            </h3>
-            <p className="text-slate-400 mb-6 max-w-md mx-auto">
-              Connect your wallet and sign a message to view your account details, subscription
-              status, and transaction history.
-            </p>
-            <SimplifiedConnectButton />
-          </>
-        ) : verifying ? (
-          <>
-            <div className="animate-pulse mb-4" role="status" aria-label="Authenticating">
-              <div className="w-8 h-8 mx-auto bg-indigo-600 rounded-full animate-spin"></div>
-            </div>
-            <h3 className="text-xl font-semibold text-slate-200 mb-2">Authenticating...</h3>
-            <p className="text-slate-400 mb-6 max-w-md mx-auto">
-              Please check your wallet and sign the authentication message.
-            </p>
-          </>
-        ) : (
-          <>
-            <h3 className="text-xl font-semibold text-slate-200 mb-2">Authentication Required</h3>
-            <p className="text-slate-400 mb-6 max-w-md mx-auto">
-              Your wallet is connected ({publicKey ? shortAddress(publicKey) : 'Unknown'}), but you
-              need to sign a message to access your account.
-            </p>
-            <button
-              onClick={onVerify}
-              disabled={verifying}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-              aria-describedby="auth-description"
-            >
-              {verifying ? 'Authenticating...' : 'Sign Message to Continue'}
-            </button>
-            <p id="auth-description" className="sr-only">
-              Click to sign a message with your wallet to authenticate and access your account
-            </p>
-          </>
-        )}
       </div>
+      <h2 className="text-2xl sm:text-3xl font-black text-white mb-3 tracking-tighter uppercase italic">
+        Authentication Required <span className="text-blue-500">_</span>
+      </h2>
+      <p className="text-slate-400 text-sm sm:text-base mb-8 max-w-sm mx-auto leading-relaxed">
+        Please verify ownership of your wallet to access your institutional dashboard.
+      </p>
+
+      {isWalletConnected ? (
+        <button
+          onClick={onVerify}
+          disabled={verifying}
+          className="w-full sm:w-auto px-10 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-900/40 active:scale-95 flex items-center justify-center gap-3"
+        >
+          {verifying ? (
+            <>
+              <div className="w-5 h-5 border-t-2 border-white/30 border-b-2 border-white rounded-full animate-spin"></div>
+              Authenticating...
+            </>
+          ) : (
+            'Sign to Access'
+          )}
+        </button>
+      ) : (
+        <div className="p-4 bg-slate-900/80 rounded-2xl border border-white/5 text-slate-400 text-xs sm:text-sm font-mono flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div>
+          CONNECT WALLET IN HEADER FIRST
+        </div>
+      )}
     </div>
   ),
 );
 
 // Extracted account details component
-const AccountDetails = React.memo(({
-  publicKey,
-  stats,
-  loading
-}: {
-  publicKey: string | null;
-  stats: EvaluationStats | null;
-  loading: boolean;
-}) => {
-  const hasHistory = stats && stats.totalEvaluations > 0;
+const AccountDetails = React.memo(
+  ({
+    publicKey,
+    stats,
+    loading,
+    onDisconnect,
+  }: {
+    publicKey: string | null;
+    stats: EvaluationStats | null;
+    loading: boolean;
+    onDisconnect: () => void;
+  }) => {
+    return (
+      <div className="space-y-4 sm:space-y-8">
+        {/* Consolidated Profile Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 sm:p-6 bg-slate-900/40 backdrop-blur-md rounded-3xl border border-white/5">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-[1px] flex-shrink-0">
+              <div className="w-full h-full rounded-[15px] bg-slate-900 flex items-center justify-center text-xl sm:text-2xl font-black text-white">
+                {publicKey ? publicKey.slice(0, 2).toUpperCase() : '??'}
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-tighter">
+                  Wallet
+                </span>
+                <span className="text-blue-400/60 font-mono text-[10px] hidden sm:inline uppercase tracking-widest">• SOLANA • ACTIVE</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white truncate tracking-tighter">
+                {publicKey ? `${publicKey.slice(0, 8)}...${publicKey.slice(-4)}` : 'Unknown'}
+              </h2>
+            </div>
+          </div>
 
-  return (
-    <div className="space-y-6">
-      {/* Profile Section */}
-      {loading ? (
-        <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
-          <div className="animate-pulse">
-            <div className="h-4 bg-slate-700 rounded w-1/4 mb-4"></div>
-            <div className="h-3 bg-slate-700 rounded w-1/2 mb-3"></div>
-            <div className="h-3 bg-slate-700 rounded w-2/3"></div>
+          <button
+            onClick={() => window.confirm('Disconnect wallet?') && onDisconnect()}
+            className="w-full sm:w-auto px-4 py-2 border border-white/10 hover:border-rose-500/50 hover:bg-rose-500/5 text-[10px] font-black text-slate-500 hover:text-rose-500 uppercase tracking-widest rounded-xl transition-all"
+          >
+            Disconnect
+          </button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-slate-900/40 backdrop-blur-md p-4 sm:p-6 rounded-3xl border border-white/5 text-center group hover:border-blue-500/30 transition-colors">
+            <div className="text-2xl sm:text-4xl font-black text-blue-400 mb-1 group-hover:scale-110 transition-transform">
+              {loading ? '...' : (stats?.averageScore?.toFixed(0) || '0')}
+            </div>
+            <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
+              Avg AI Score
+            </div>
+          </div>
+          <div className="bg-slate-900/40 backdrop-blur-md p-4 sm:p-6 rounded-3xl border border-white/5 text-center group hover:border-blue-500/30 transition-colors">
+            <div className="text-2xl sm:text-4xl font-black text-blue-400 mb-1 group-hover:scale-110 transition-transform">
+              {loading ? '...' : (stats?.totalEvaluations || '0')}
+            </div>
+            <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
+              Total Ideas
+            </div>
           </div>
         </div>
-      ) : hasHistory ? (
-        <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
-          <div className="flex items-start gap-4 mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-              {/* Use first 2 chars of address as avatar */}
-              {publicKey?.slice(0, 2) || '?'}
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold mb-1">
-                {publicKey ? shortAddress(publicKey) : 'Unknown'}
-              </h2>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-xs border border-indigo-500/30">
-                  Idea Validator
+
+        {/* Main Action Call */}
+        <Link
+          href="/studio"
+          className="block w-full text-center py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-900/40 active:scale-[0.98]"
+        >
+          Start New Evaluation
+        </Link>
+
+        {/* Secondary Sections */}
+        <div className="grid grid-cols-1 gap-4">
+          {/* Subscription Card */}
+          <div className="p-6 bg-gradient-to-br from-blue-900/40 to-slate-900/40 backdrop-blur-md rounded-3xl border border-blue-500/20 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="relative z-10 flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest">
+                  Pricing Plan
+                </h3>
+                <span className="text-[10px] font-black text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded uppercase tracking-tighter border border-blue-500/30">
+                  FREE
                 </span>
               </div>
+              <p className="text-sm text-slate-400 leading-relaxed font-medium">
+                Upgrade for Advanced AI & Priority Data
+              </p>
             </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-slate-800/50 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-blue-400 mb-1">
-                {stats?.averageScore || 0}
-              </div>
-              <div className="text-xs text-slate-400">Avg AI Score</div>
-            </div>
-            <div className="bg-slate-800/50 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-indigo-400 mb-1">
-                {stats?.totalEvaluations || 0}
-              </div>
-              <div className="text-xs text-slate-400">Total Evaluations</div>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
             <Link
-              href="/studio"
-              className="flex-1 text-center px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+              href="/pricing"
+              className="relative z-10 w-full sm:w-auto text-center px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex-shrink-0"
             >
-              Start New Evaluation
+              View Plans
             </Link>
           </div>
         </div>
-      ) : (
-        <div className="rounded-xl border border-slate-700 p-6 text-center text-slate-200">
-          <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold mb-2">No Evaluations Yet</h3>
-          <p className="text-sm text-slate-400 mb-4">
-            Validate your first idea to establish your track record.
-          </p>
-          <Link
-            href="/studio"
-            className="inline-block px-6 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-semibold rounded-md hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:-translate-y-0.5 transition-all duration-300"
-          >
-            Start Evaluation
-          </Link>
-        </div>
-      )}
-
-      {/* Wallet Info */}
-      <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
-        <h2 className="text-lg font-semibold mb-4">Wallet Connected</h2>
-        <p className="text-sm text-slate-400 mb-4">
-          Address:{' '}
-          <span className="font-mono bg-slate-800/50 px-2 py-1 rounded">
-            {publicKey ? shortAddress(publicKey) : 'Unknown'}
-          </span>
-        </p>
-        <div className="space-y-2 text-sm">
-          <div>
-            Plan: <span className="font-medium text-indigo-400">Starter (Free)</span>
-          </div>
-          <div>
-            Status: <span className="font-medium text-green-400">Active</span>
-          </div>
-        </div>
       </div>
-
-      {/* Upgrade Section */}
-      <div className="rounded-xl border border-slate-700 p-6 text-slate-200">
-        <h3 className="text-md font-semibold mb-2">Upgrade to Pro</h3>
-        <p className="text-sm text-slate-400 mb-3">
-          Unlock advanced features:
-        </p>
-        <ul className="text-sm space-y-1 text-slate-300 mb-4" role="list">
-          <li>• Advanced AI analysis</li>
-          <li>• Priority support</li>
-          <li>• Historical data access</li>
-          <li>• Custom alerts</li>
-        </ul>
-        <a
-          href="/pricing"
-          className="inline-block px-4 py-2 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-          aria-label="View pricing plans for Pro subscription"
-        >
-          View Pricing
-        </a>
-      </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 export default function AccountClient() {
-  const { isConnected, publicKey } = useSimplifiedWallet();
-  const { isAuthenticated: siwsOk, wallet: authWallet, verify, verifying } = useWalletAuth();
+  const { isConnected, publicKey, disconnect } = useSimplifiedWallet();
+  const { isAuthenticated: siwsOk, wallet: authWallet, verify, verifying, isLoading: isAuthLoading } = useWalletAuth();
   const [mounted, setMounted] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -288,6 +246,7 @@ export default function AccountClient() {
       computedStates.isWalletConnected &&
       !computedStates.isSiwsOk &&
       !verifying &&
+      !isAuthLoading && // IMPORTANT: Wait for initial status check
       !hasTriedAuthRef.current
     ) {
       console.log('Wallet connected but not authenticated, attempting authentication...');
@@ -342,12 +301,12 @@ export default function AccountClient() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
-      <div className="flex justify-between items-end mb-12 border-b border-white/10 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6">
         <div>
-          <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">
+          <h1 className="text-5xl sm:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent uppercase italic">
             Account <span className="text-blue-500">.</span>
           </h1>
-          <p className="text-white/60 text-base md:text-lg max-w-xl font-light">
+          <p className="text-white/40 text-[10px] sm:text-lg max-w-xl font-medium tracking-[0.2em] uppercase">
             Manage your wallet, evaluations, and subscription
           </p>
         </div>
@@ -366,6 +325,7 @@ export default function AccountClient() {
             publicKey={publicKey}
             stats={stats}
             loading={loadingStats}
+            onDisconnect={disconnect}
           />
           <div className="mt-12 border-t border-slate-700 pt-12">
             <IdeaHistory />

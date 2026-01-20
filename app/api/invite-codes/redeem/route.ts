@@ -15,6 +15,13 @@ export async function POST(request: NextRequest) {
     try {
         const { code } = await request.json();
 
+        // Get IP for abuse prevention & session recovery
+        const forwarded = request.headers.get('x-forwarded-for');
+        const realIp = request.headers.get('x-real-ip');
+        const cfConnectingIp = request.headers.get('cf-connecting-ip');
+        const ipAddress = forwarded?.split(',')[0] || realIp || cfConnectingIp || 'unknown';
+        const userAgent = request.headers.get('user-agent') || 'unknown';
+
         if (!code || typeof code !== 'string') {
             return NextResponse.json(
                 { error: 'Invite code is required' },
@@ -27,6 +34,7 @@ export async function POST(request: NextRequest) {
         // Find the invite code
         const inviteCode = await prisma.inviteCode.findUnique({
             where: { code: normalizedCode },
+            include: { redemptions: true }
         });
 
         if (!inviteCode) {
@@ -36,38 +44,73 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (!inviteCode.isActive) {
-            return NextResponse.json(
-                { error: 'This invite code is no longer active' },
-                { status: 400 }
-            );
-        }
-
-        if (inviteCode.expiresAt && inviteCode.expiresAt < new Date()) {
-            return NextResponse.json(
-                { error: 'This invite code has expired' },
-                { status: 400 }
-            );
-        }
-
-        if (inviteCode.usedCount >= inviteCode.maxUses) {
-            return NextResponse.json(
-                { error: 'This invite code has already been used' },
-                { status: 400 }
-            );
-        }
-
-        // Burn the code (increment usedCount)
-        await prisma.inviteCode.update({
-            where: { id: inviteCode.id },
-            data: { usedCount: inviteCode.usedCount + 1 },
+        // --- IP-BASED SESSION RECOVERY ---
+        // Check if this IP has already redeemed this code recently (last 24h)
+        // If so, we re-issue the token without incrementing the usage count.
+        const existingRedemption = await prisma.inviteRedemption.findFirst({
+            where: {
+                inviteCodeId: inviteCode.id,
+                ipAddress: ipAddress,
+                expiresAt: { gt: new Date() } // Still within recovery window
+            }
         });
+
+        let isRecovery = false;
+
+        if (existingRedemption) {
+            // Allow re-entry!
+            isRecovery = true;
+            console.log(`♻️ Session recovery for IP ${ipAddress} on code ${normalizedCode}`);
+        } else {
+            // --- STANDARD VALIDATION ---
+            if (!inviteCode.isActive) {
+                return NextResponse.json(
+                    { error: 'This invite code is no longer active' },
+                    { status: 400 }
+                );
+            }
+
+            if (inviteCode.expiresAt && inviteCode.expiresAt < new Date()) {
+                return NextResponse.json(
+                    { error: 'This invite code has expired' },
+                    { status: 400 }
+                );
+            }
+
+            if (inviteCode.usedCount >= inviteCode.maxUses) {
+                return NextResponse.json(
+                    { error: 'This invite code has already been used' },
+                    { status: 400 }
+                );
+            }
+
+            // Burn the code (increment usedCount)
+            // AND create a redemption record for recovery
+            const recoveryExpiry = new Date();
+            recoveryExpiry.setDate(recoveryExpiry.getDate() + 1); // 24h recovery window
+
+            await prisma.$transaction([
+                prisma.inviteCode.update({
+                    where: { id: inviteCode.id },
+                    data: { usedCount: inviteCode.usedCount + 1 },
+                }),
+                prisma.inviteRedemption.create({
+                    data: {
+                        inviteCodeId: inviteCode.id,
+                        ipAddress: ipAddress,
+                        userAgent: userAgent,
+                        expiresAt: recoveryExpiry
+                    }
+                })
+            ]);
+        }
 
         // Create JWT token
         const token = await new SignJWT({
             type: 'access',
             code: normalizedCode,
             redeemedAt: new Date().toISOString(),
+            recovered: isRecovery
         })
             .setProtectedHeader({ alg: 'HS256' })
             .setIssuedAt()
@@ -77,7 +120,7 @@ export async function POST(request: NextRequest) {
         // Set HTTP-only cookie
         const response = NextResponse.json({
             success: true,
-            message: 'Access granted',
+            message: isRecovery ? 'Access recovered' : 'Access granted',
         });
 
         response.cookies.set('predikt_access', token, {
@@ -85,6 +128,15 @@ export async function POST(request: NextRequest) {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             maxAge: 30 * 24 * 60 * 60, // 30 days
+            path: '/',
+        });
+
+        // Set a public cookie for client-side UI state (not for security)
+        response.cookies.set('predikt_auth_status', '1', {
+            httpOnly: false, // Allow client JS to read this
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 30 * 24 * 60 * 60,
             path: '/',
         });
 

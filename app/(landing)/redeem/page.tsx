@@ -105,7 +105,7 @@ export default function RedeemPage() {
                                 <button
                                     type="submit"
                                     disabled={!code.trim()}
-                                    className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-sky-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="btn-shimmer w-full py-3.5 px-6 bg-gradient-to-r from-blue-600 to-cyan-400 text-white font-semibold rounded-2xl shadow-md transition-all duration-200 ease-out hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Unlock Access
                                 </button>

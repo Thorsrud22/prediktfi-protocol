@@ -15,13 +15,6 @@ export default function LandingLayout({
 }) {
     return (
         <div className="relative min-h-screen">
-            {/* Shared Aurora Background - persists across pages */}
-            <Aurora
-                colorStops={['#0F172A', '#38bdf8', '#2563EB']}
-                speed={0.5}
-                amplitude={1.2}
-                className="fixed inset-0 -z-10 scale-[2.0] md:scale-100"
-            />
             {children}
         </div>
     );

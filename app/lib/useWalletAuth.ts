@@ -41,7 +41,7 @@ export function useWalletAuth() {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     wallet: null,
-    isLoading: false,
+    isLoading: true, // Start in loading state
   });
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const verifyingRef = useRef(false); // prevent double-calls
@@ -99,6 +99,7 @@ export function useWalletAuth() {
   const checkAuthStatus = async () => {
     try {
       console.log('Checking auth status...');
+      setAuthState(prev => ({ ...prev, isLoading: true }));
       const response = await fetch('/api/auth/status');
       if (response.ok) {
         const data = await response.json();

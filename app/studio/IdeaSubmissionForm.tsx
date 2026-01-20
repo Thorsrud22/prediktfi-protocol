@@ -123,11 +123,11 @@ function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: stri
     }, [logs]);
 
     return (
-        <div className="w-full h-[500px] flex flex-col p-8 font-mono text-xs md:text-sm bg-black/50">
+        <div className="w-full h-[500px] flex flex-col p-8 font-mono text-xs md:text-sm bg-slate-900/40 backdrop-blur-md rounded-xl border border-white/5">
             <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-green-500 font-bold tracking-widest uppercase">LIVE ANALYSIS RUNNING</span>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                    <span className="text-blue-400 font-bold tracking-[0.2em] uppercase italic">LIVE ANALYSIS RUNNING</span>
                 </div>
                 <div className="text-white/40 font-mono text-xs">
                     {elapsedSeconds}s elapsed
@@ -349,7 +349,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     const currentStepConfig = STEPS[currentStep];
 
     return (
-        <div className="w-full max-w-4xl mx-auto bg-slate-900/95 border border-white/10 shadow-xl rounded-xl relative overflow-hidden font-sans">
+        <div className="w-full max-w-4xl mx-auto bg-slate-900/40 backdrop-blur-md border border-white/5 shadow-2xl rounded-[32px] relative overflow-hidden font-sans">
 
 
             {/* Terminal Header */}
@@ -394,7 +394,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     {currentStep === 0 && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
-                                <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Target Sector
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -430,20 +430,20 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             </div>
 
                             <div>
-                                <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Data Input: Abstract
                                 </label>
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => handleChange('description', e.target.value)}
                                     placeholder="Describe your project..."
-                                    className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-none min-h-[150px] font-mono text-sm leading-relaxed rounded-xl"
+                                    className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none min-h-[180px] font-mono text-sm leading-relaxed rounded-2xl"
                                 />
 
                                 {/* LIVE COACH TIP UI */}
                                 {(coachTip || isCoaching) && (
-                                    <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-500">
-                                        <div className={`bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 flex gap-3 relative overflow-hidden ${!isConnected ? 'cursor-pointer group' : ''}`}>
+                                    <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                        <div className={`bg-blue-600/5 border border-blue-500/10 rounded-2xl p-5 flex gap-4 relative overflow-hidden ${!isConnected ? 'cursor-pointer group' : ''}`}>
                                             {/* Shimmer effect */}
                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -skew-x-12 animate-shimmer" />
 
@@ -503,7 +503,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             {formData.projectType === 'memecoin' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
                                     <div>
-                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                        <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                             Community Vibe
                                         </label>
                                         <select
@@ -519,7 +519,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                        <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                             Narrative Vector
                                         </label>
                                         <input
@@ -610,7 +610,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     {currentStep === 1 && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
-                                <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Team Composition
                                 </label>
                                 <div className="flex gap-4">
@@ -638,7 +638,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             </div>
 
                             <div>
-                                <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Project Assets & Readiness
                                 </label>
 
@@ -746,7 +746,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                             {(formData.projectType === 'memecoin' || formData.projectType === 'defi') && (
                                 <div>
-                                    <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                    <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                         Existing Token Contract
                                     </label>
                                     <input
@@ -754,9 +754,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                         value={formData.tokenAddress || ''}
                                         onChange={(e) => handleChange('tokenAddress', e.target.value)}
                                         placeholder="Solana CA (7xW...)"
-                                        className="w-full p-4 bg-black border border-white/20 text-white placeholder-white/20 focus:outline-none focus:border-green-500 text-sm font-mono"
+                                        className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-2xl"
                                     />
-                                    <p className="text-[10px] text-green-500/60 mt-2 font-mono">
+                                    <p className="text-[10px] text-blue-400/60 mt-3 font-mono uppercase tracking-wider">
                                         For live tokens only. We'll scan for rug pull risks and liquidity locks.
                                     </p>
                                 </div>
@@ -769,26 +769,26 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     {currentStep === 2 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
-                                <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     MVP Scope (6-12m)
                                 </label>
                                 <textarea
                                     value={formData.mvpScope}
                                     onChange={(e) => handleChange('mvpScope', e.target.value)}
                                     placeholder="Define deliverables..."
-                                    className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-green-500 resize-none min-h-[120px] font-mono text-sm rounded-xl"
+                                    className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 resize-none min-h-[120px] font-mono text-sm rounded-2xl"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Distribution Vector
                                 </label>
                                 <textarea
                                     value={formData.goToMarketPlan}
                                     onChange={(e) => handleChange('goToMarketPlan', e.target.value)}
                                     placeholder="Define target users..."
-                                    className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-green-500 resize-none min-h-[120px] font-mono text-sm rounded-xl"
+                                    className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 resize-none min-h-[120px] font-mono text-sm rounded-2xl"
                                 />
                             </div>
 
@@ -813,7 +813,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     {currentStep === 3 && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
-                                <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Success Metric
                                 </label>
 
@@ -828,7 +828,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                                     handleChange('successDefinition', `Target MC: ${e.target.value}`);
                                                 }}
                                                 placeholder="Target Market Cap (e.g. $10M)"
-                                                className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 text-sm font-mono rounded-lg"
+                                                className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-2xl"
                                             />
                                         </div>
                                     </div>
@@ -843,7 +843,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                                     handleChange('successDefinition', `Target TVL: ${e.target.value}`);
                                                 }}
                                                 placeholder="Target TVL (e.g. $1M)"
-                                                className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500 text-sm font-mono rounded-lg"
+                                                className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-2xl"
                                             />
                                         </div>
                                     </div>
@@ -853,14 +853,14 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                         value={formData.successDefinition}
                                         onChange={(e) => handleChange('successDefinition', e.target.value)}
                                         placeholder="Define success..."
-                                        className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-green-500 text-sm font-mono rounded-lg"
+                                        className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-2xl"
                                     />
                                 )}
-                                {errors.successDefinition && <p className="text-red-500 text-xs mt-2 font-mono">:: ERROR :: {errors.successDefinition}</p>}
+                                {errors.successDefinition && <p className="text-rose-500 text-[10px] mt-3 font-black uppercase tracking-widest pl-3 border-l border-rose-500/50">ERROR: {errors.successDefinition}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
+                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Output Format
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -873,18 +873,18 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                             key={style.id}
                                             type="button"
                                             onClick={() => handleChange('responseStyle', style.id)}
-                                            className={`p-4 text-left transition-all hover:bg-white/5 relative border rounded-xl ${formData.responseStyle === style.id
-                                                ? 'bg-blue-500/10 border-blue-500/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.1)]'
-                                                : 'bg-white/5 border-white/10 text-white/40 hover:text-white/80 hover:border-white/20'
+                                            className={`p-5 text-left transition-all relative border rounded-2xl ${formData.responseStyle === style.id
+                                                ? 'bg-blue-500/10 border-blue-500/50 text-white'
+                                                : 'bg-white/5 border-white/5 text-white/40 hover:text-white/80 hover:border-white/10'
                                                 }`}
                                         >
-                                            {formData.responseStyle === style.id && <span className="absolute top-3 right-3 text-blue-500 text-[10px] bg-blue-500/10 px-2 py-0.5 rounded-full">Active</span>}
-                                            <div className="font-bold mb-1 text-sm tracking-wide">{style.label}</div>
-                                            <div className="text-[10px] opacity-60 font-mono uppercase">{style.desc}</div>
+                                            {formData.responseStyle === style.id && <span className="absolute top-3 right-3 text-blue-400 text-[10px] font-black uppercase tracking-tighter italic">Active</span>}
+                                            <div className="font-black mb-1 text-sm tracking-tight uppercase italic">{style.label}</div>
+                                            <div className="text-[10px] opacity-40 font-mono uppercase tracking-widest">{style.desc}</div>
                                         </button>
                                     ))}
                                 </div>
-                                {errors.responseStyle && <p className="text-red-500 text-xs mt-2 font-mono">:: ERROR :: {errors.responseStyle}</p>}
+                                {errors.responseStyle && <p className="text-rose-500 text-[10px] mt-3 font-black uppercase tracking-widest pl-3 border-l border-rose-500/50">ERROR: {errors.responseStyle}</p>}
                             </div>
                         </div>
                     )}
@@ -892,13 +892,13 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
             </div>
 
             {/* Terminal Footer */}
-            <div className="px-8 py-6 border-t border-white/10 bg-white/[0.02] flex items-center justify-between">
+            <div className="px-8 py-6 border-t border-white/5 bg-slate-900/40 backdrop-blur-md flex items-center justify-between">
                 <div>
                     {currentStep > 0 && (
                         <button
                             type="button"
                             onClick={handleBack}
-                            className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-xs uppercase tracking-widest font-bold"
+                            className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-[10px] uppercase tracking-[0.2em] font-black italic"
                         >
                             <ArrowLeft size={14} /> Back
                         </button>
@@ -910,27 +910,27 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         <button
                             type="button"
                             onClick={handleNext}
-                            className="flex items-center gap-2 bg-white text-black px-6 py-3 text-sm font-bold uppercase tracking-wider hover:bg-blue-100 transition-colors rounded-full"
+                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] italic transition-all rounded-2xl border border-white/10"
                         >
                             Next Step <ArrowRight size={14} />
                         </button>
                     ) : (
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-6">
                             {quota && (
-                                <div className={`text-[10px] font-mono border px-3 py-1.5 rounded-full ${quota.remaining === 0
-                                    ? 'border-red-500 text-red-500 bg-red-500/10'
-                                    : 'border-green-500 text-green-500 bg-green-500/10'
+                                <div className={`text-[10px] font-black uppercase tracking-widest border px-4 py-2 rounded-full ${quota.remaining === 0
+                                    ? 'border-rose-500/50 text-rose-500 bg-rose-500/10'
+                                    : 'border-blue-500/50 text-blue-400 bg-blue-500/10'
                                     }`}>
-                                    Quota: {quota.remaining}/{quota.limit}
+                                    QUOTA: {quota.remaining === -1 ? '∞' : `${quota.remaining}/${quota.limit}`}
                                 </div>
                             )}
                             <button
                                 type="button"
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || (quota?.remaining === 0)}
-                                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-3 font-bold uppercase tracking-wider transition-all shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:grayscale rounded-full"
+                                className="flex items-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 font-black uppercase tracking-[0.2em] italic transition-all shadow-lg shadow-blue-900/40 hover:shadow-blue-500/40 disabled:opacity-50 disabled:grayscale rounded-2xl active:scale-95"
                             >
-                                {isSubmitting ? 'Processing...' : 'Analyze Idea'} <Sparkles size={14} />
+                                {isSubmitting ? 'Analyzing...' : 'Analyze Idea'} <Sparkles size={16} />
                             </button>
                         </div>
                     )}

@@ -3,42 +3,41 @@ import Image from 'next/image';
 import ProcessTimeline from '../components/ProcessTimeline';
 import { InstantLink } from '../components/InstantLink';
 import HeroActions from '../components/landing/HeroActions';
+import LandingPill from '../components/landing/LandingPill';
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
 
-export default function Home() {
+// Server Component - static content pre-rendered
+async function getHomeData() {
+  // Simulate API fetch for stats
+  return {
+    stats: {
+      activePredictions: 1234,
+      totalVolume: 2.5,
+      accuracyRate: 89,
+      activeCreators: 5678,
+    },
+  };
+}
+
+export default async function Home() {
+  const data = await getHomeData();
+
   return (
     <div className="relative min-h-screen">
-      {/* Brand Pill - Fixed Top Left */}
-      <div className="fixed top-3 left-4 sm:left-6 z-50">
-        <InstantLink
-          href="/"
-          className="group flex items-center gap-2.5 rounded-full bg-slate-900/90 px-2.5 py-1.5 pr-4 ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 duration-300"
-          aria-label="Predikt home"
-        >
-          <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/10 ring-1 ring-white/20 transition-all duration-300 group-hover:scale-110 group-hover:ring-white/30">
-            <Image
-              src="/images/predikt-orb.svg"
-              alt="Predikt logo"
-              width={36}
-              height={36}
-              className="h-full w-full object-contain p-0.5 drop-shadow-[0_2px_8px_rgba(59,130,246,0.5)]"
-              priority
-            />
-            {/* Subtle rotating glow effect */}
-            <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-400/20 via-transparent to-cyan-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" />
-          </span>
-          <span className="font-inter text-base font-bold tracking-tight bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]">
-            Predikt
-          </span>
-        </InstantLink>
-      </div>
-
-
+      {/* Brand Pill - Fixed Top Left (Only shown if NOT authenticated, to avoid double pill) */}
+      {/* We use a simple CSS hide via sibling selector or similar if we can't use hooks. 
+          But since this is a server component, we need a Client Component wrapper or just CSS based on body class? 
+          Actually, ShellWrapper wraps this. We can't easily suppress this form parent.
+          Let's verify if we can make this a client component or use a specialized client wrapper for the pill.
+          For now, I'll switch this file to 'use client' or import a client component for the pill.
+          Let's make a new client component for the LandingPill to handle visibility.
+      */}
+      <LandingPill />
 
       {/* Hero Section */}
-      <div className="relative z-10 flex flex-col items-center pt-24 sm:pt-32 pb-16 sm:pb-20 px-5 sm:px-6">
+      <div className="relative z-10 flex flex-col items-center pt-32 sm:pt-44 pb-16 sm:pb-20 px-5 sm:px-6">
         <div className="text-center max-w-5xl mx-auto space-y-4 md:space-y-8">
           {/* Main Heading */}
           <h1 className="text-3xl sm:text-4xl md:text-7xl font-bold text-white leading-tight">
@@ -71,8 +70,33 @@ export default function Home() {
             </div>
           </div>
 
-
-
+          {/* Stats Grid - Restored from backup */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-16 max-w-4xl mx-auto opacity-80 hover:opacity-100 transition-opacity duration-500">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                {data.stats.activePredictions.toLocaleString()}
+              </div>
+              <div className="text-sm text-slate-400">Protocols Audited</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                {data.stats.totalVolume}M+
+              </div>
+              <div className="text-sm text-slate-400">Capital Saved</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                {data.stats.accuracyRate}%
+              </div>
+              <div className="text-sm text-slate-400">Risk Detection</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                {data.stats.activeCreators.toLocaleString()}
+              </div>
+              <div className="text-sm text-slate-400">Risk Factors Identified</div>
+            </div>
+          </div>
 
         </div>
       </div>

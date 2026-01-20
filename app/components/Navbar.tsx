@@ -11,17 +11,18 @@ import { useInstantRouter } from "./InstantRouter";
 
 // Lazy load the wallet component since it's heavy
 const SimplifiedConnectButton = lazy(() => import("./wallet/SimplifiedConnectButton"));
+import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider';
 
 // Extract constants to prevent recreating on each render
 const SCROLL_THRESHOLD = 10;
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), [tabindex="0"]';
 
 // Memoized mobile menu component to prevent unnecessary re-renders
-const MobileMenu = memo(function MobileMenu({ 
-  open, 
-  onClose, 
-  pathname, 
-  isPro, 
+const MobileMenu = memo(function MobileMenu({
+  open,
+  onClose,
+  pathname,
+  isPro,
   isInsightPage,
   panelRef
 }: {
@@ -32,6 +33,8 @@ const MobileMenu = memo(function MobileMenu({
   isInsightPage: boolean;
   panelRef: React.RefObject<HTMLDivElement | null>;
 }) {
+  const { isConnected, disconnect } = useSimplifiedWallet();
+
   const navigationItems = useMemo(() => [
     { href: "/feed", label: "Feed", primary: true },
     { href: "/studio", label: "Studio", primary: true },
@@ -56,7 +59,7 @@ const MobileMenu = memo(function MobileMenu({
         role="dialog"
         aria-modal="true"
         aria-label="Navigation"
-        className="absolute right-0 top-0 h-full w-[78%] max-w-[320px] translate-x-0 rounded-l-xl border-l border-slate-700 bg-slate-900/95 backdrop-blur-md p-5 shadow-2xl"
+        className="absolute right-0 top-0 h-full w-[78%] max-w-[320px] translate-x-0 rounded-l-xl border-l border-slate-700 bg-slate-900/95 backdrop-blur-md p-5 shadow-2xl flex flex-col"
       >
         <div className="mb-4 flex items-center justify-between">
           <div className="font-semibold text-slate-100">Menu</div>
@@ -69,75 +72,94 @@ const MobileMenu = memo(function MobileMenu({
             <span aria-hidden>✕</span>
           </button>
         </div>
-        <nav className="flex flex-col gap-3">
-          {/* Primary navigation */}
-          <div className="space-y-2">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Main</div>
-            {navigationItems.filter(item => item.primary).map(item => (
-              <FastLink
-                key={item.href}
-                href={item.href}
-                className={`rounded-md px-3 py-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
-                  pathname === item.href 
-                    ? 'text-white bg-blue-500/20' 
+
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+          <nav className="flex flex-col gap-3">
+            {/* Primary navigation */}
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Main</div>
+              {navigationItems.filter(item => item.primary).map(item => (
+                <FastLink
+                  key={item.href}
+                  href={item.href}
+                  className={`rounded-md px-3 py-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${pathname === item.href
+                    ? 'text-white bg-blue-500/20'
                     : 'text-slate-100 hover:bg-slate-800/70'
-                }`}
-                onClick={onClose}
-              >
-                {item.label}
-              </FastLink>
-            ))}
-          </div>
-          
-          {/* Wallet Authentication */}
-          <div className="space-y-2 mb-4">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Wallet</div>
-            <div className="w-full">
-              <Suspense fallback={
-                <button className="w-full px-4 py-2 bg-slate-700 rounded-lg animate-pulse">
-                  <div className="h-5 bg-slate-600 rounded w-24 mx-auto"></div>
-                </button>
-              }>
-                <SimplifiedConnectButton />
-              </Suspense>
+                    }`}
+                  onClick={onClose}
+                >
+                  {item.label}
+                </FastLink>
+              ))}
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">More</div>
-            {navigationItems.filter(item => !item.primary).map(item => (
-              <FastLink
-                key={item.href}
-                href={item.href}
-                className={`rounded-md px-3 py-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 flex items-center gap-2 ${
-                  pathname === item.href 
-                    ? 'text-white bg-blue-500/20' 
+
+            {/* Wallet Authentication */}
+            <div className="space-y-2 mb-4">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Wallet</div>
+              <div className="w-full">
+                <Suspense fallback={
+                  <button className="w-full px-4 py-2 bg-slate-700 rounded-lg animate-pulse">
+                    <div className="h-5 bg-slate-600 rounded w-24 mx-auto"></div>
+                  </button>
+                }>
+                  <SimplifiedConnectButton />
+                </Suspense>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">More</div>
+              {navigationItems.filter(item => !item.primary).map(item => (
+                <FastLink
+                  key={item.href}
+                  href={item.href}
+                  className={`rounded-md px-3 py-2 font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 flex items-center gap-2 ${pathname === item.href
+                    ? 'text-white bg-blue-500/20'
                     : 'text-slate-300 hover:bg-slate-800/70'
-                }`}
-                onClick={onClose}
-              >
-                {item.label}
-                {item.showPro && isPro && (
-                  <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#F7931E] px-1.5 py-0.5 text-[10px] font-medium text-white">
-                    PRO
-                  </span>
-                )}
-              </FastLink>
-            ))}
+                    }`}
+                  onClick={onClose}
+                >
+                  {item.label}
+                  {item.showPro && isPro && (
+                    <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#F7931E] px-1.5 py-0.5 text-[10px] font-medium text-white">
+                      PRO
+                    </span>
+                  )}
+                </FastLink>
+              ))}
+            </div>
+          </nav>
+        </div>
+
+        {/* Bottom Disconnect Button for Mobile */}
+        {isConnected && (
+          <div className="mt-auto pt-6 border-t border-slate-800">
+            <button
+              onClick={() => {
+                disconnect();
+                onClose();
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 py-3 text-sm font-bold text-red-400 transition-all hover:bg-red-500/10 active:scale-95"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Disconnect Wallet
+            </button>
           </div>
-        </nav>
+        )}
       </div>
     </div>
   );
 });
 
 // Memoized navigation link component
-const NavLink = memo(function NavLink({ 
-  href, 
-  children, 
-  pathname, 
+const NavLink = memo(function NavLink({
+  href,
+  children,
+  pathname,
   className = "",
-  ...props 
+  ...props
 }: {
   href: string;
   children: React.ReactNode;
@@ -147,17 +169,16 @@ const NavLink = memo(function NavLink({
 }) {
   const isActive = pathname === href;
   const { instantNavigate, preloadOnHover, isTransitioning } = useInstantRouter();
-  
+
   return (
     <a
       href={href}
       onClick={(e) => instantNavigate(href, e)}
       onMouseEnter={() => preloadOnHover(href)}
-      className={`flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
-        isActive 
-          ? 'text-white bg-blue-500/20 rounded-lg' 
-          : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-      } ${isTransitioning ? 'opacity-70' : ''} ${className}`}
+      className={`flex h-14 items-center px-3 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${isActive
+        ? 'text-white bg-blue-500/20 rounded-lg'
+        : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+        } ${isTransitioning ? 'opacity-70' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -166,9 +187,9 @@ const NavLink = memo(function NavLink({
 });
 
 // Account dropdown menu component
-const AccountDropdown = memo(function AccountDropdown({ 
-  pathname, 
-  isPro 
+const AccountDropdown = memo(function AccountDropdown({
+  pathname,
+  isPro
 }: {
   pathname: string;
   isPro: boolean;
@@ -176,7 +197,7 @@ const AccountDropdown = memo(function AccountDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { instantNavigate, preloadOnHover } = useInstantRouter();
-  
+
   const isAccountPage = pathname.startsWith('/account') || pathname === '/my-predictions';
 
   useEffect(() => {
@@ -200,11 +221,10 @@ const AccountDropdown = memo(function AccountDropdown({
           preloadOnHover('/account');
           preloadOnHover('/my-predictions');
         }}
-        className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
-          isAccountPage
-            ? 'text-white bg-blue-500/20 rounded-lg' 
-            : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-        }`}
+        className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${isAccountPage
+          ? 'text-white bg-blue-500/20 rounded-lg'
+          : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+          }`}
       >
         Account
         {isPro && (
@@ -212,16 +232,16 @@ const AccountDropdown = memo(function AccountDropdown({
             PRO
           </span>
         )}
-        <svg 
+        <svg
           className={`ml-1 h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none" 
-          stroke="currentColor" 
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      
+
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-700 bg-slate-900/95 backdrop-blur-md shadow-xl z-50">
           <div className="py-1">
@@ -231,11 +251,10 @@ const AccountDropdown = memo(function AccountDropdown({
                 instantNavigate('/my-predictions', e);
                 setIsOpen(false);
               }}
-              className={`block px-4 py-2 text-sm transition-colors ${
-                pathname === '/my-predictions'
-                  ? 'text-white bg-blue-500/20'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
-              }`}
+              className={`block px-4 py-2 text-sm transition-colors ${pathname === '/my-predictions'
+                ? 'text-white bg-blue-500/20'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
             >
               My Predictions
             </a>
@@ -246,11 +265,10 @@ const AccountDropdown = memo(function AccountDropdown({
                   instantNavigate('/account/billing', e);
                   setIsOpen(false);
                 }}
-                className={`block px-4 py-2 text-sm transition-colors ${
-                  pathname === '/account/billing'
-                    ? 'text-white bg-blue-500/20'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                }`}
+                className={`block px-4 py-2 text-sm transition-colors ${pathname === '/account/billing'
+                  ? 'text-white bg-blue-500/20'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  }`}
               >
                 Billing
               </a>
@@ -290,7 +308,7 @@ export default function Navbar() {
   // Handle scroll state with throttled updates
   useEffect(() => {
     let ticking = false;
-    
+
     const throttledScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
@@ -301,7 +319,7 @@ export default function Navbar() {
         ticking = true;
       }
     };
-    
+
     window.addEventListener('scroll', throttledScroll, { passive: true });
     return () => window.removeEventListener('scroll', throttledScroll);
   }, []);
@@ -309,7 +327,7 @@ export default function Navbar() {
   // Enhanced focus management and keyboard navigation
   useEffect(() => {
     if (!open) return;
-    
+
     lastFocusedRef.current = document.activeElement ?? null;
     document.body.style.overflow = 'hidden';
 
@@ -324,11 +342,11 @@ export default function Navbar() {
           closeMenu();
           return;
         }
-        
+
         if (e.key === "Tab" && focusables.length > 0) {
           const first = focusables[0];
           const last = focusables[focusables.length - 1];
-          
+
           if (e.shiftKey && document.activeElement === first) {
             e.preventDefault();
             last.focus();
@@ -338,7 +356,7 @@ export default function Navbar() {
           }
         }
       };
-      
+
       document.addEventListener("keydown", onKeyDown);
       return () => {
         document.removeEventListener("keydown", onKeyDown);
@@ -356,9 +374,8 @@ export default function Navbar() {
   }, [open]);
 
   return (
-    <nav className={`sticky top-0 z-50 bg-[#0F172A]/90 backdrop-blur-md transition-all ${
-      scrolled ? 'border-b border-blue-700/40' : 'border-b border-transparent'
-    }`}>
+    <nav className={`sticky top-0 z-50 bg-[#0F172A]/90 backdrop-blur-md transition-all ${scrolled ? 'border-b border-blue-700/40' : 'border-b border-transparent'
+      }`}>
       <div className="mx-auto max-w-7xl px-4 flex h-14 items-center justify-between">
         <Link
           href="/"
@@ -379,63 +396,58 @@ export default function Navbar() {
             href="/feed"
             onClick={(e) => instantNavigate('/feed', e)}
             onMouseEnter={() => preloadOnHover('/feed')}
-            className={`flex h-14 items-center px-4 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
-              pathname === '/feed' 
-                ? 'text-white bg-blue-500/20 rounded-lg' 
-                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-            } ${isTransitioning ? 'opacity-70' : ''}`}
+            className={`flex h-14 items-center px-4 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${pathname === '/feed'
+              ? 'text-white bg-blue-500/20 rounded-lg'
+              : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+              } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             Feed
           </a>
-          
+
           <a
             href="/studio"
             onClick={(e) => instantNavigate('/studio', e)}
             onMouseEnter={() => preloadOnHover('/studio')}
-            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
-              pathname === '/studio' 
-                ? 'text-white bg-blue-500/20 rounded-lg' 
-                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-            } ${isTransitioning ? 'opacity-70' : ''}`}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${pathname === '/studio'
+              ? 'text-white bg-blue-500/20 rounded-lg'
+              : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+              } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             Studio
           </a>
-          
+
           <a
             href="/leaderboard"
             onClick={(e) => instantNavigate('/leaderboard', e)}
             onMouseEnter={() => preloadOnHover('/leaderboard')}
-            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
-              pathname === '/leaderboard' 
-                ? 'text-white bg-blue-500/20 rounded-lg' 
-                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-            } ${isTransitioning ? 'opacity-70' : ''}`}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${pathname === '/leaderboard'
+              ? 'text-white bg-blue-500/20 rounded-lg'
+              : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+              } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             Leaderboard
           </a>
-          
+
           <a
             href="/my-predictions"
             onClick={(e) => instantNavigate('/my-predictions', e)}
             onMouseEnter={() => preloadOnHover('/my-predictions')}
-            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
-              pathname === '/my-predictions' 
-                ? 'text-white bg-blue-500/20 rounded-lg' 
-                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-            } ${isTransitioning ? 'opacity-70' : ''}`}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${pathname === '/my-predictions'
+              ? 'text-white bg-blue-500/20 rounded-lg'
+              : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+              } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             My Predictions
           </a>
-          
+
           <a
             href="/account"
             onClick={(e) => instantNavigate('/account', e)}
             onMouseEnter={() => preloadOnHover('/account')}
-            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${
-              pathname.startsWith('/account')
-                ? 'text-white bg-blue-500/20 rounded-lg' 
-                : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-            } ${isTransitioning ? 'opacity-70' : ''}`}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${pathname.startsWith('/account')
+              ? 'text-white bg-blue-500/20 rounded-lg'
+              : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+              } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             Account
             {isPro && (
@@ -445,7 +457,7 @@ export default function Navbar() {
             )}
           </a>
         </div>
-        
+
         {/* Right side - Optimized with conditional rendering */}
         <div className="flex items-center gap-3">
           {mounted && (

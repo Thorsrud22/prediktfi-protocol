@@ -9,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from 'react-dom';
 
 type ToastVariant = "success" | "error" | "info";
 
@@ -62,8 +63,8 @@ function getColors(variant: ToastVariant | undefined) {
       };
     default:
       return {
-        bg: "rgba(255,255,255,0.1)",
-        border: "1px solid rgba(255,255,255,0.2)",
+        bg: "#1e293b", // Slate-800 solid
+        border: "1px solid #475569", // Slate-600
         color: "#ffffff",
       };
   }
@@ -85,18 +86,18 @@ export default function ToastProvider({
       prev.map((t) =>
         t.id === id
           ? {
-              ...t,
-              title: opts.title ?? t.title,
-              description: opts.description ?? t.description,
-              variant: opts.variant ?? t.variant,
-              duration:
-                typeof opts.duration === "number" ? opts.duration : t.duration,
-              actionLabel: opts.actionLabel ?? t.actionLabel,
-              onAction: opts.onAction ?? t.onAction,
-              loading: opts.loading ?? (t as any).loading,
-              linkLabel: opts.linkLabel ?? (t as any).linkLabel,
-              linkHref: opts.linkHref ?? (t as any).linkHref,
-            }
+            ...t,
+            title: opts.title ?? t.title,
+            description: opts.description ?? t.description,
+            variant: opts.variant ?? t.variant,
+            duration:
+              typeof opts.duration === "number" ? opts.duration : t.duration,
+            actionLabel: opts.actionLabel ?? t.actionLabel,
+            onAction: opts.onAction ?? t.onAction,
+            loading: opts.loading ?? (t as any).loading,
+            linkLabel: opts.linkLabel ?? (t as any).linkLabel,
+            linkHref: opts.linkHref ?? (t as any).linkHref,
+          }
           : t
       )
     );
@@ -123,8 +124,10 @@ export default function ToastProvider({
         a.title === toast.title &&
         a.description === toast.description &&
         a.variant === toast.variant;
+      console.log('🍞 addToast called:', toast);
       setToasts((prev) => {
         if (prev.length > 0 && same(prev[0])) {
+          console.log('🍞 Duplicate toast ignored');
           return prev; // keep current toast; avoid re-announcement spam
         }
         // Show only one toast at a time: replace any existing toast
@@ -140,30 +143,41 @@ export default function ToastProvider({
     [addToast, removeToast, updateToast]
   );
 
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toastContainer = mounted ? createPortal(
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      aria-relevant="additions"
+      style={{
+        position: "fixed",
+        top: 100,
+        right: 20,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        zIndex: 99999, // Max Z-Index
+        pointerEvents: "none",
+      }}
+    >
+      {toasts.slice(0, 1).map((t) => (
+        <ToastItem key={t.id} toast={t} onClose={() => removeToast(t.id)} />
+      ))}
+    </div>,
+    document.body
+  ) : null;
+
   return (
     <ToastContext.Provider value={value}>
       {children}
-      {/* Live region for toasts */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        aria-relevant="additions"
-        style={{
-          position: "fixed",
-          top: 12,
-          right: 12,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          zIndex: 1000,
-          pointerEvents: "none",
-        }}
-      >
-        {toasts.slice(0, 1).map((t) => (
-          <ToastItem key={t.id} toast={t} onClose={() => removeToast(t.id)} />
-        ))}
-      </div>
+      {toastContainer}
     </ToastContext.Provider>
   );
 }

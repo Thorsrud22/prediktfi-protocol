@@ -26,26 +26,26 @@ export default function PolicyPage() {
             </h2>
             <div className="space-y-4 text-[color:var(--muted)]">
               <p>
-                Predikt is an AI-first prediction studio built on Solana. 
+                Predikt is an AI-powered evaluation studio built on Solana.
                 Our platform enables users to create AI-backed insights and log them on-chain for verification.
               </p>
               <p>
-                <strong className="text-[color:var(--text)]">Geographic Restrictions:</strong> 
-                Access to certain features may be restricted in specific jurisdictions based on local regulations. 
+                <strong className="text-[color:var(--text)]">Geographic Restrictions:</strong>
+                Access to certain features may be restricted in specific jurisdictions based on local regulations.
                 We comply with applicable laws and regulations in the regions where we operate.
               </p>
               <p>
-                <strong className="text-[color:var(--text)]">Responsible Use:</strong> 
-                Users are expected to use the platform responsibly and in accordance with applicable laws. 
+                <strong className="text-[color:var(--text)]">Responsible Use:</strong>
+                Users are expected to use the platform responsibly and in accordance with applicable laws.
                 Predictions should be used for information discovery and insight sharing purposes.
               </p>
               <p>
-                <strong className="text-[color:var(--text)]">Age Restriction:</strong> 
-                Users must be at least 18 years old to use our prediction studio.
+                <strong className="text-[color:var(--text)]">Age Restriction:</strong>
+                Users must be at least 18 years old to use our evaluation studio.
               </p>
               <p>
-                <strong className="text-[color:var(--text)]">Data Collection:</strong> 
-                We store only minimal referral codes in localStorage for attribution purposes. 
+                <strong className="text-[color:var(--text)]">Data Collection:</strong>
+                We store only minimal referral codes in localStorage for attribution purposes.
                 No personal information is collected or stored on our servers.
               </p>
             </div>
@@ -60,9 +60,9 @@ export default function PolicyPage() {
                 For questions about this policy or platform access, please contact us:
               </p>
               <p>
-                <strong className="text-[color:var(--text)]">Email:</strong> 
-                <a 
-                  href="mailto:support@prediktfi.com" 
+                <strong className="text-[color:var(--text)]">Email:</strong>
+                <a
+                  href="mailto:support@prediktfi.com"
                   className="text-[color:var(--primary)] hover:underline ml-2"
                 >
                   support@prediktfi.com

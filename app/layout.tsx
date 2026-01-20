@@ -18,7 +18,7 @@ import AuthGuard from "./components/AuthGuard";
 import RoutePreloader from "./components/RoutePreloader";
 import ShellWrapper from "./components/ShellWrapper";
 import Aurora from "./components/ui/Aurora";
-import SmoothScrolling from "./components/SmoothScrolling";
+
 import ProgressBarProvider from "./components/ProgressBarProvider";
 import { CSPostHogProvider } from "./providers/CSPostHogProvider";
 import PostHogPageView from "./components/PostHogPageView";
@@ -222,35 +222,33 @@ export default async function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased min-h-screen bg-[#0F172A] text-slate-100`}>
         <CSPostHogProvider>
           <PostHogPageView />
-          <SmoothScrolling>
-            <ProgressBarProvider>
-              {/* Persistent Aurora background - stays across route changes */}
+          <ProgressBarProvider>
+            {/* Persistent Aurora background - stays across route changes */}
 
 
-              <IntentStorageGuard />
-              <AuthGuard>
-                <SimplifiedWalletProvider>
-                  <ClientErrorBoundary>
-                    <ToastProvider>
-                      <ConsentGate />
-                      <RoutePreloader />
-                      <ShellWrapper
-                        navbar={<AppPillNav />}
-                        footer={<Footer />}
-                      >
-                        {children}
-                      </ShellWrapper>
-                      {process.env.NODE_ENV === "development" && (
-                        <DebugProvider>
-                          <DebugOverlay />
-                        </DebugProvider>
-                      )}
-                    </ToastProvider>
-                  </ClientErrorBoundary>
-                </SimplifiedWalletProvider>
-              </AuthGuard>
-            </ProgressBarProvider>
-          </SmoothScrolling>
+            <IntentStorageGuard />
+            <AuthGuard>
+              <SimplifiedWalletProvider>
+                <ClientErrorBoundary>
+                  <ToastProvider>
+                    <ConsentGate />
+                    <RoutePreloader />
+                    <ShellWrapper
+                      navbar={<AppPillNav />}
+                      footer={<Footer />}
+                    >
+                      {children}
+                    </ShellWrapper>
+                    {process.env.NODE_ENV === "development" && (
+                      <DebugProvider>
+                        <DebugOverlay />
+                      </DebugProvider>
+                    )}
+                  </ToastProvider>
+                </ClientErrorBoundary>
+              </SimplifiedWalletProvider>
+            </AuthGuard>
+          </ProgressBarProvider>
         </CSPostHogProvider>
       </body>
     </html>

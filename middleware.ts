@@ -100,10 +100,27 @@ export async function middleware(request: NextRequest) {
   );
   const isApiPath = pathname.startsWith('/api/');
   const isImagePath = pathname.startsWith('/images/');
+  const accessToken = request.cookies.get('predikt_access')?.value;
 
-  // Skip access gate for public paths and API routes
+  // 1. Redirect authenticated users AWAY from public landing/redeem pages to the app
+  // ONLY redirect for /redeem or /request-access (let landing page be visible)
+  if ((pathname === '/redeem' || pathname === '/request-access') && accessToken) {
+    try {
+      const { jwtVerify } = await import('jose');
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || 'predikt-access-secret-change-in-production'
+      );
+      await jwtVerify(accessToken, secret);
+      // If verify succeeds, they are logged in. Send them to studio.
+      return NextResponse.redirect(new URL('/studio', request.url));
+    } catch {
+      // Token invalid, let them stay on landing page (cookie will be cleared by access gate logic if they try to enter app)
+    }
+  }
+
+  // 2. Access Gate: Protect private routes
+  // Skip access gate for public paths and API routes/images
   if (!isPublicPath && !isApiPath && !isImagePath) {
-    const accessToken = request.cookies.get('predikt_access')?.value;
 
     if (!accessToken) {
       // No session - redirect to landing
@@ -117,10 +134,12 @@ export async function middleware(request: NextRequest) {
         process.env.JWT_SECRET || 'predikt-access-secret-change-in-production'
       );
       await jwtVerify(accessToken, secret);
-    } catch {
+    } catch (err) {
+      console.log('🔴 Middleware: Invalid access token.', err);
       // Invalid token - clear cookie and redirect
       const response = NextResponse.redirect(new URL('/', request.url));
       response.cookies.delete('predikt_access');
+      response.cookies.delete('predikt_auth_status'); // Also clear status
       return response;
     }
   }
@@ -169,6 +188,23 @@ export async function middleware(request: NextRequest) {
 
   // Create response
   const response = NextResponse.next();
+
+  // 3. AUTO-FIX: Ensure client-side status cookie exists if they are authenticated (checked above)
+  const hasAccessToken = request.cookies.get('predikt_access')?.value;
+  const hasStatusCookie = request.cookies.get('predikt_auth_status')?.value;
+
+  // We only set this if we are confident they are logged in. 
+  // Above we have a block that verifies the token. Ideally we'd pass a flag down.
+  // But checking existence of access token here is a decent proxy since invalid ones are stripped above.
+  if (hasAccessToken && !hasStatusCookie) {
+    response.cookies.set('predikt_auth_status', '1', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60,
+      path: '/',
+    });
+  }
 
   // Apply security headers
   applySecurityHeaders(response);

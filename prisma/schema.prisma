@@ -406,10 +406,25 @@ model InviteCode {
   isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   expiresAt DateTime?
+  redemptions InviteRedemption[]
 
   @@index([code])
   @@index([isActive])
   @@map("invite_codes")
+}
+
+model InviteRedemption {
+  id           String   @id @default(cuid())
+  inviteCodeId String
+  ipAddress    String
+  userAgent    String?
+  redeemedAt   DateTime @default(now())
+  expiresAt    DateTime // When this "session recovery" window expires (e.g. 24h)
+  inviteCode   InviteCode @relation(fields: [inviteCodeId], references: [id], onDelete: Cascade)
+
+  @@index([ipAddress, inviteCodeId])
+  @@index([expiresAt])
+  @@map("invite_redemptions")
 }
 
 model AssetLossCap {

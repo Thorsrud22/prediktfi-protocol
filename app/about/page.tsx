@@ -3,133 +3,113 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Learn about Predikt - the AI-first prediction studio built on Solana.",
+  description: "Learn about Predikt - the AI-powered evaluation studio built on Solana.",
 };
 
 export default function AboutPage() {
   return (
-    <div className="relative min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="relative z-10 bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-all duration-200 hover:scale-105">
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold text-gray-900 leading-tight">Predikt</span>
-                <span className="text-xs text-gray-500 font-medium tracking-wider uppercase">AI Studio</span>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </div>
+    <div className="relative min-h-screen">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-white/10 p-8 md:p-12 shadow-2xl">
+          <h1 className="text-5xl font-black tracking-tighter text-white mb-8 bg-gradient-to-r from-white via-white to-white/40 bg-clip-text text-transparent">
+            About Predikt
+          </h1>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">About Predikt</h1>
-
-          <div className="prose prose-lg max-w-none">
-            <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">What is Predikt?</h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                Predikt is an AI-first prediction studio that transforms how we think about forecasting and insights.
-                Instead of traditional betting or speculation, we focus on creating verifiable, shareable AI-powered
-                predictions that are permanently logged on the Solana blockchain.
+          <div className="space-y-16">
+            <section>
+              <h2 className="text-2xl font-bold text-sky-400 mb-4">What is Predikt?</h2>
+              <p className="text-slate-300 text-lg leading-relaxed mb-6">
+                Predikt is an AI-powered evaluation studio that transforms how we think about analyzing ideas and insights.
+                Instead of traditional speculation, we focus on creating verifiable, shareable AI-powered
+                evaluations that are permanently logged on the Solana blockchain.
               </p>
-              <p className="text-gray-700 leading-relaxed">
+              <p className="text-slate-400 leading-relaxed">
                 Our platform bridges the gap between AI prediction capabilities and blockchain verification,
                 creating a new category of transparent, accountable forecasting tools.
               </p>
             </section>
 
-            <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">How It Works</h2>
-              <div className="space-y-4">
-                <div className="border-l-4 border-indigo-500 pl-4">
-                  <h3 className="font-medium text-gray-900 mb-2">1. Ask → AI Analysis</h3>
-                  <p className="text-gray-700">
-                    Start with any yes/no question about the future. Our AI analyzes the question using
-                    multiple data sources and reasoning frameworks to generate a probability estimate.
+            <section>
+              <h2 className="text-2xl font-bold text-sky-400 mb-8">How It Works</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-sky-500/30 transition-colors group">
+                  <div className="w-12 h-12 bg-sky-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-sky-400 font-black">01</span>
+                  </div>
+                  <h3 className="text-white font-bold text-xl mb-2">Ask → AI Analysis</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Start with any yes/no question. Our AI analyzes multiple data sources and reasoning frameworks to generate a probability estimate.
                   </p>
                 </div>
 
-                <div className="border-l-4 border-purple-500 pl-4">
-                  <h3 className="font-medium text-gray-900 mb-2">2. AI → Probability + Rationale</h3>
-                  <p className="text-gray-700">
-                    Get a percentage probability (0-100%) along with detailed reasoning, key factors,
-                    and the AI model's confidence assessment for your prediction.
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-purple-500/30 transition-colors group">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-purple-400 font-black">02</span>
+                  </div>
+                  <h3 className="text-white font-bold text-xl mb-2">AI → Evaluation</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Get a percentage probability (0-100%) along with detailed reasoning and the AI model's confidence assessment.
                   </p>
                 </div>
 
-                <div className="border-l-4 border-green-500 pl-4">
-                  <h3 className="font-medium text-gray-900 mb-2">3. Log On-Chain → Verification</h3>
-                  <p className="text-gray-700">
-                    Stamp your insight permanently on Solana with a cryptographic signature,
-                    creating an immutable record with timestamp and verification.
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-green-500/30 transition-colors group">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-green-400 font-black">03</span>
+                  </div>
+                  <h3 className="text-white font-bold text-xl mb-2">Log On-Chain</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Stamp your insight permanently on Solana with a cryptographic signature, creating an immutable record.
                   </p>
                 </div>
 
-                <div className="border-l-4 border-blue-500 pl-4">
-                  <h3 className="font-medium text-gray-900 mb-2">4. Share/Verify → Community</h3>
-                  <p className="text-gray-700">
-                    Share your verified predictions with permanent links that anyone can verify
-                    on-chain, building a community of transparent forecasting.
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-blue-500/30 transition-colors group">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-blue-400 font-black">04</span>
+                  </div>
+                  <h3 className="text-white font-bold text-xl mb-2">Share & Verify</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Share verified links that anyone can verify on-chain, building a reputation for transparent forecasting.
                   </p>
                 </div>
               </div>
             </section>
 
-            <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Why On-Chain Receipts Matter</h2>
-              <ul className="space-y-3 text-gray-700">
-                <li className="flex items-start">
-                  <span className="flex-shrink-0 w-2 h-2 bg-indigo-500 rounded-full mt-2 mr-3"></span>
-                  <div>
-                    <strong>Tamper-Proof:</strong> Once logged, predictions cannot be altered or deleted,
-                    ensuring complete transparency in forecasting accuracy.
+            <section>
+              <h2 className="text-2xl font-bold text-sky-400 mb-6">Why It Matters</h2>
+              <div className="space-y-4">
+                {[
+                  { title: "Tamper-Proof", desc: "Evaluations cannot be altered or deleted once logged." },
+                  { title: "Timestamped", desc: "Blockchain proof of exactly when an evaluation was made." },
+                  { title: "Verifiable", desc: "Independent verification of authenticity using blockchain explorers." }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 items-start p-4 rounded-xl hover:bg-white/5 transition-colors">
+                    <div className="mt-1">
+                      <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-white font-bold">{item.title}</h4>
+                      <p className="text-slate-400 text-sm">{item.desc}</p>
+                    </div>
                   </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="flex-shrink-0 w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3"></span>
-                  <div>
-                    <strong>Timestamped:</strong> Blockchain timestamps prove exactly when a prediction
-                    was made, eliminating hindsight bias and retroactive editing.
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></span>
-                  <div>
-                    <strong>Verifiable:</strong> Anyone can independently verify the authenticity and
-                    timing of predictions using blockchain explorers.
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></span>
-                  <div>
-                    <strong>Shareable:</strong> Permanent public URLs allow predictions to be shared
-                    across social media with built-in verification.
-                  </div>
-                </li>
-              </ul>
+                ))}
+              </div>
             </section>
 
-            <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Get Started</h2>
-              <p className="text-gray-700 mb-6">
-                Ready to create your first AI-backed prediction? Our studio makes it easy to go from
-                question to verified insight in minutes.
-              </p>
+            <section className="pt-8">
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
                   href="/studio"
-                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                  className="inline-flex items-center justify-center px-8 py-4 rounded-full font-bold text-slate-900 bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform shadow-xl shadow-blue-500/20"
                 >
-                  Go to Studio
+                  Start Evaluation
                 </Link>
                 <Link
-                  href="/feed"
-                  className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  href="/"
+                  className="inline-flex items-center justify-center px-8 py-4 rounded-full font-bold text-white border border-white/10 hover:bg-white/5 transition-colors"
                 >
-                  View Community Feed
+                  Back Home
                 </Link>
               </div>
             </section>

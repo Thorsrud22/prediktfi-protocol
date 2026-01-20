@@ -18,7 +18,7 @@ export default function LegacyMarketPage() {
           Page Moved
         </h1>
         <p className="text-[color:var(--muted)] mb-6">
-          Prediction markets have been replaced with our AI-first prediction studio.
+          Prediction markets have been replaced with our AI-powered evaluation studio.
         </p>
         <p className="text-[color:var(--muted)] text-sm">
           Redirecting to Studio...

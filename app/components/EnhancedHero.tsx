@@ -8,29 +8,29 @@ import Badge from "./ui/Badge";
 
 export default function EnhancedHero() {
   const [isMockMode, setIsMockMode] = useState(false);
-  
+
   // Check if we're in production
-  const isProduction = process.env.NODE_ENV === 'production' && 
-    (process.env.NEXT_PUBLIC_APP_ENV === 'production' || 
-     (typeof window !== 'undefined' && window.location.hostname !== 'localhost'));
+  const isProduction = process.env.NODE_ENV === 'production' &&
+    (process.env.NEXT_PUBLIC_APP_ENV === 'production' ||
+      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'));
 
   useEffect(() => {
     // Don't show mock mode in production
     if (isProduction) {
       return;
     }
-    
+
     // Check for mock mode from URL or localStorage
     const urlParams = new URLSearchParams(window.location.search);
     const hasMockParam = urlParams.get('mock') === '1';
     const hasStoredMock = localStorage.getItem('NEXT_PUBLIC_MOCK_TX') === '1';
-    
+
     if (hasMockParam && !hasStoredMock) {
       localStorage.setItem('NEXT_PUBLIC_MOCK_TX', '1');
       window.location.reload();
       return;
     }
-    
+
     setIsMockMode(hasStoredMock || process.env.NEXT_PUBLIC_MOCK_TX === '1');
   }, [isProduction]);
 
@@ -52,14 +52,14 @@ export default function EnhancedHero() {
             <span className="mr-1">●</span>
             Live on Devnet
           </Badge>
-          
+
           {!isProduction && isMockMode && (
             <Badge variant="warning" size="md">
               <span className="mr-1">⚡</span>
               Mock Mode
             </Badge>
           )}
-          
+
           {!isProduction && !isMockMode && (
             <button
               onClick={handleTryMockMode}
@@ -83,7 +83,7 @@ export default function EnhancedHero() {
 
           {/* Subtitle */}
           <p className="text-lg sm:text-xl text-slate-200 mb-8 max-w-2xl leading-relaxed">
-            Predikt is an AI-first prediction studio. Ask a question, get a probability with rationale, and stamp it on Solana.
+            Predikt is an AI-powered evaluation studio. Stress-test ideas, get a probability with rationale, and stamp it on Solana.
           </p>
 
           {/* CTA Buttons */}
