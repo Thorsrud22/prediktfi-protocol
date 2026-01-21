@@ -25,30 +25,30 @@ export async function GET(request: NextRequest) {
       });
 
       if (!inviteCode) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Invalid invite code' 
+        return NextResponse.json({
+          success: false,
+          error: 'Invalid invite code'
         }, { status: 404 });
       }
 
       if (!inviteCode.isActive) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Invite code is no longer active' 
+        return NextResponse.json({
+          success: false,
+          error: 'Invite code is no longer active'
         }, { status: 400 });
       }
 
       if (inviteCode.expiresAt && inviteCode.expiresAt < new Date()) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Invite code has expired' 
+        return NextResponse.json({
+          success: false,
+          error: 'Invite code has expired'
         }, { status: 400 });
       }
 
       if (inviteCode.usedCount >= inviteCode.maxUses) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Invite code has reached maximum uses' 
+        return NextResponse.json({
+          success: false,
+          error: 'Invite code has reached maximum uses'
         }, { status: 400 });
       }
 
@@ -83,9 +83,9 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Invite codes API error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Internal server error' 
+    return NextResponse.json({
+      success: false,
+      error: 'Internal server error'
     }, { status: 500 });
   }
 }
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     const codes = [];
     for (let i = 0; i < count; i++) {
       const code = generateInviteCode();
-      const expiresAt = expiresInDays 
+      const expiresAt = expiresInDays
         ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
         : null;
 
@@ -128,9 +128,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Create invite codes error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Failed to create invite codes' 
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to create invite codes'
     }, { status: 500 });
   }
 }
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 6; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;

@@ -74,9 +74,9 @@ export default function RedeemPage() {
                                     type="text"
                                     value={code}
                                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                                    placeholder="XXXX-XXXX"
+                                    placeholder="XXXXXX"
                                     className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white text-center text-xl font-mono tracking-widest placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    maxLength={12}
+                                    maxLength={6}
                                     autoFocus
                                 />
                                 <button
