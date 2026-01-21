@@ -32,6 +32,7 @@
     "advisor:tick": "tsx scripts/cron-advisor-tick.ts",
     "advisor:test": "tsx scripts/cron-advisor-tick.ts",
     "db:seed:creators": "tsx prisma/seed-creators.ts",
+    "db:seed:codes": "tsx prisma/seed-invite-codes.ts",
     "guard:json": "grep -R \"JSON.parse(\" app/advisor | grep -v safe-fetch.ts && echo 'Found raw JSON.parse in app/advisor/*' && exit 1 || exit 0",
     "precommit": "npm run guard:json",
     "eval:model": "tsx scripts/eval-model.ts",
