@@ -24,12 +24,12 @@ model Creator {
   insights        Insight[]
 
   @@index([lastScoreUpdate])
-  @@index([score, accuracy, insightsCount]) // Composite index for leaderboard queries
+  @@index([score, accuracy, insightsCount])
   @@map("creators")
 }
 
 model Insight {
-  id              String        @id @default(cuid())
+  id              String            @id @default(cuid())
   creatorId       String?
   question        String
   category        String
@@ -43,29 +43,29 @@ model Insight {
   metrics         String
   sources         String
   dataQuality     Float
-  modelVersion    String        @default("e8.1")
-  stamped         Boolean       @default(false)
+  modelVersion    String            @default("e8.1")
+  stamped         Boolean           @default(false)
   txSig           String?
   stampId         String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   canonical       String?
   p               Decimal?
   deadline        DateTime?
   resolverKind    ResolverKind?
   resolverRef     String?
-  status          InsightStatus @default(OPEN)
+  status          InsightStatus     @default(OPEN)
   memoSig         String?
   slot            Int?
   externalMarkets String?
-  tradingEnabled  Boolean       @default(false)
+  tradingEnabled  Boolean           @default(false)
   marketVolume    Float?
   lastMarketSync  DateTime?
-  featuredDate    DateTime?     // Date when this insight is featured as Daily Challenge
+  featuredDate    DateTime?
   visibility      InsightVisibility @default(PUBLIC)
   events          Event[]
-  creator         Creator?      @relation(fields: [creatorId], references: [id])
-  stamp           Stamp?        @relation(fields: [stampId], references: [id])
+  stamp           Stamp?            @relation(fields: [stampId], references: [id])
+  creator         Creator?          @relation(fields: [creatorId], references: [id])
   outcomes        Outcome[]
 
   @@index([createdAt])
@@ -78,7 +78,7 @@ model Insight {
   @@index([status, deadline, marketVolume])
   @@index([deadline])
   @@index([featuredDate])
-  @@index([createdAt, category, status]) // Composite index for feed queries
+  @@index([createdAt, category, status])
   @@index([visibility])
   @@map("insights")
 }
@@ -116,8 +116,8 @@ model Event {
   meta          String
   createdAt     DateTime @default(now())
   insightId     String?
-  experimentKey String?  // A/B test experiment key
-  variant       String?  // A/B test variant (A, B, etc.)
+  experimentKey String?
+  variant       String?
   user          Creator? @relation(fields: [userId], references: [id])
   insight       Insight? @relation(fields: [insightId], references: [id])
 
@@ -182,13 +182,13 @@ model Wallet {
   strategies    Strategy[]
   assetLossCaps AssetLossCap[]
   dailyLossCaps DailyLossCap[]
+  ideas         IdeaEvaluation[]
   intents       Intent[]
   proTrials     ProTrial[]
   shares        SocialShare[]
   events        UserEvent[]
   retention     UserRetention?
   subscription  UserSubscription?
-  ideas         IdeaEvaluation[]
 
   @@index([address])
   @@index([chain])
@@ -325,29 +325,29 @@ model SocialShare {
 }
 
 model Intent {
-  id            String          @id @default(cuid())
-  walletId      String
-  strategyId    String?
-  chain         String          @default("solana")
-  base          String
-  quote         String          @default("USDC")
-  side          String
-  sizeJson      String
-  tpJson        String?
-  slJson        String?
-  rationale     String?
-  confidence    Float?
-  backtestWin   Float?
-  expectedDur   String?
-  guardsJson    String
-  venuePref     String?         @default("jupiter")
-  simOnly       Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  sourceModelId String? // Model ID when copied from a model strategy
-  sourceModelIdHashed String? // Hashed model ID for privacy-safe analytics joins
-  receipts      IntentReceipt[]
-  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  shares        SocialShare[]
+  id                  String          @id @default(cuid())
+  walletId            String
+  strategyId          String?
+  chain               String          @default("solana")
+  base                String
+  quote               String          @default("USDC")
+  side                String
+  sizeJson            String
+  tpJson              String?
+  slJson              String?
+  rationale           String?
+  confidence          Float?
+  backtestWin         Float?
+  expectedDur         String?
+  guardsJson          String
+  venuePref           String?         @default("jupiter")
+  simOnly             Boolean         @default(false)
+  createdAt           DateTime        @default(now())
+  sourceModelId       String?
+  sourceModelIdHashed String?
+  receipts            IntentReceipt[]
+  wallet              Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  shares              SocialShare[]
 
   @@index([walletId, createdAt])
   @@index([base, quote])
@@ -399,13 +399,13 @@ model SimulatorAccuracy {
 }
 
 model InviteCode {
-  id        String    @id @default(cuid())
-  code      String    @unique
-  usedCount Int       @default(0)
-  maxUses   Int       @default(100)
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  expiresAt DateTime?
+  id          String             @id @default(cuid())
+  code        String             @unique
+  usedCount   Int                @default(0)
+  maxUses     Int                @default(100)
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  expiresAt   DateTime?
   redemptions InviteRedemption[]
 
   @@index([code])
@@ -414,12 +414,12 @@ model InviteCode {
 }
 
 model InviteRedemption {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   inviteCodeId String
   ipAddress    String
   userAgent    String?
-  redeemedAt   DateTime @default(now())
-  expiresAt    DateTime // When this "session recovery" window expires (e.g. 24h)
+  redeemedAt   DateTime   @default(now())
+  expiresAt    DateTime
   inviteCode   InviteCode @relation(fields: [inviteCodeId], references: [id], onDelete: Cascade)
 
   @@index([ipAddress, inviteCodeId])
@@ -469,10 +469,10 @@ model UserSubscription {
   tier           UserTier           @default(FREE)
   status         SubscriptionStatus @default(ACTIVE)
   trialEndsAt    DateTime?
-  planExpiresAt  DateTime?
   subscriptionId String?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
+  planExpiresAt  DateTime?
   quotas         UserQuota[]
   wallet         Wallet             @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
@@ -536,39 +536,39 @@ model AnalyticsEvent {
 }
 
 model CreatorDaily {
-  id            String   @id @default(cuid())
-  creatorId     String
-  day           DateTime
-  maturedN      Int
-  brierMean     Float    // matured-only, winsorize brukt i input
-  retStd30d     Float?
-  notional30d   Float    // USDC
-  accuracy      Float    // 1 - brierMean (clamp)
-  consistency   Float    // 1/(1+retStd30d)
-  volumeScore   Float
-  recencyScore  Float
-  score         Float    // W*komponenter
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  creatorId    String
+  day          DateTime
+  maturedN     Int
+  brierMean    Float
+  retStd30d    Float?
+  notional30d  Float
+  accuracy     Float
+  consistency  Float
+  volumeScore  Float
+  recencyScore Float
+  score        Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@unique([creatorId, day])
   @@index([creatorId, day])
-  @@index([day, score]) // For leaderboard queries
+  @@index([day, score])
   @@map("creator_daily")
 }
 
 model Invoice {
-  id          String        @id @default(cuid())
-  userId      String
-  plan        String        // 'starter' | 'pro'
-  reference   String        @unique
-  amountUsd   Float
-  token       String        // 'USDC' | 'SOL'
-  status      InvoiceStatus @default(PENDING)
-  txSig       String?
-  createdAt   DateTime      @default(now())
-  paidAt      DateTime?
-  expiresAt   DateTime
+  id        String        @id @default(cuid())
+  userId    String
+  plan      String
+  reference String        @unique
+  amountUsd Float
+  token     String
+  status    InvoiceStatus @default(PENDING)
+  txSig     String?
+  createdAt DateTime      @default(now())
+  paidAt    DateTime?
+  expiresAt DateTime
 
   @@index([userId])
   @@index([reference])
@@ -578,19 +578,36 @@ model Invoice {
 }
 
 model Payment {
-  id          String   @id @default(cuid())
-  userId      String
-  plan        String   // 'starter' | 'pro'
-  token       String   // 'USDC' | 'SOL'
-  amountUsd   Float
-  txSig       String   @unique
-  chain       String   @default("solana")
-  receivedAt  DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  plan       String
+  token      String
+  amountUsd  Float
+  txSig      String   @unique
+  chain      String   @default("solana")
+  receivedAt DateTime @default(now())
 
   @@index([userId])
   @@index([txSig])
   @@index([receivedAt])
   @@map("payments")
+}
+
+model IdeaEvaluation {
+  id             String   @id @default(cuid())
+  walletId       String?
+  submissionJson String
+  resultJson     String
+  score          Float
+  title          String
+  projectType    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  wallet         Wallet?  @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([score])
+  @@map("idea_evaluations")
 }
 
 enum ResolverKind {
@@ -651,26 +668,4 @@ enum InvoiceStatus {
   PENDING
   PAID
   EXPIRED
-}
-
-model IdeaEvaluation {
-  id             String   @id @default(cuid())
-  walletId       String?
-  
-  submissionJson String   // Stores the full user input
-  resultJson     String   // Stores the full AI output
-
-  // Metadata for easy querying/listing
-  score          Float
-  title          String
-  projectType    String
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  wallet         Wallet?  @relation(fields: [walletId], references: [id])
-
-  @@index([walletId])
-  @@index([score])
-  @@map("idea_evaluations")
 }

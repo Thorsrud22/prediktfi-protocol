@@ -91,9 +91,8 @@ const AuthenticationPrompt = React.memo(
           )}
         </button>
       ) : (
-        <div className="p-4 bg-slate-900/80 rounded-2xl border border-white/5 text-slate-400 text-xs sm:text-sm font-mono flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div>
-          CONNECT WALLET IN HEADER FIRST
+        <div className="flex justify-center mt-2">
+          <SimplifiedConnectButton />
         </div>
       )}
     </div>
