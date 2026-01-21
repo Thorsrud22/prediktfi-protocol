@@ -11,11 +11,28 @@ const JWT_SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || 'predikt-access-secret-change-in-production'
 );
 
+// EMERGENCY BYPASS CODES (Skip DB check)
+const BYPASS_CODES = [
+    'PREDIKT-BETA',
+    'ALPHA-ALPHA',
+    'PREDIKT-LAUNCH-01',
+    'PREDIKT-LAUNCH-02',
+    'PREDIKT-LAUNCH-03',
+    'PREDIKT-LAUNCH-04',
+    'PREDIKT-LAUNCH-05',
+    'PREDIKT-LAUNCH-06',
+    'PREDIKT-LAUNCH-07',
+    'PREDIKT-LAUNCH-08',
+    'PREDIKT-LAUNCH-09',
+    'PREDIKT-LAUNCH-10'
+];
+
 export async function POST(request: NextRequest) {
     try {
         const { code } = await request.json();
 
         // Get IP for abuse prevention & session recovery
+
         const forwarded = request.headers.get('x-forwarded-for');
         const realIp = request.headers.get('x-real-ip');
         const cfConnectingIp = request.headers.get('cf-connecting-ip');
@@ -30,6 +47,46 @@ export async function POST(request: NextRequest) {
         }
 
         const normalizedCode = code.trim().toUpperCase();
+
+        // --- EMERGENCY BYPASS CHECK ---
+        if (BYPASS_CODES.includes(normalizedCode)) {
+            console.log(`🔓 Bypassing DB for code ${normalizedCode}`);
+
+            // Create JWT token directly (skipping DB)
+            const token = await new SignJWT({
+                type: 'access',
+                code: normalizedCode,
+                redeemedAt: new Date().toISOString(),
+                recovered: false
+            })
+                .setProtectedHeader({ alg: 'HS256' })
+                .setIssuedAt()
+                .setExpirationTime('30d')
+                .sign(JWT_SECRET);
+
+            const response = NextResponse.json({
+                success: true,
+                message: 'Access granted (Bypass)',
+            });
+
+            response.cookies.set('predikt_access', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 30 * 24 * 60 * 60,
+                path: '/',
+            });
+
+            response.cookies.set('predikt_auth_status', '1', {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 30 * 24 * 60 * 60,
+                path: '/',
+            });
+
+            return response;
+        }
 
         // Find the invite code
         const inviteCode = await prisma.inviteCode.findUnique({
