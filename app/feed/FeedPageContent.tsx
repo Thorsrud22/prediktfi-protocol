@@ -296,7 +296,7 @@ const InsightCard = memo(({ item }: { item: ExtendedFeedItem }) => {
       href={linkHref}
       prefetch={false}
       aria-label={item.title}
-      className="group block rounded-xl bg-slate-800/60 border border-white/20 p-6 shadow-sm hover:shadow-md hover:border-blue-400/40 hover:bg-slate-700/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-all duration-200 backdrop-blur-sm"
+      className="group block rounded-xl bg-slate-800/60 border border-white/20 p-6 shadow-sm hover:shadow-md hover:border-blue-400/40 hover:bg-slate-700/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 transition-all duration-200"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-2">
@@ -340,13 +340,12 @@ const InsightCard = memo(({ item }: { item: ExtendedFeedItem }) => {
       <div className="flex items-center justify-between text-xs text-gray-500">
         {hasStatus(item) && (
           <span
-            className={`px-2 py-1 rounded ${
-              item.status === 'active'
+            className={`px-2 py-1 rounded ${item.status === 'active'
                 ? 'bg-green-100 text-green-700'
                 : item.status === 'resolved'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-100 text-gray-700'
-            }`}
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
           >
             {item.status}
           </span>
@@ -618,17 +617,17 @@ const FeedPage = memo(() => {
     // Convert local overlay items to FeedItem format
     const normalizedOverlay = localOverlayItems.map(
       item =>
-        ({
-          id: item.id,
-          createdAt: item.createdAt,
-          title: item.title,
-          category: mapCategory(item.category),
-          probability: item.probability,
-          confidence: item.confidence,
-          source: 'wallet' as const,
-          subtitle: item.subtitle,
-          author: item.author,
-        } as ExtendedFeedItem),
+      ({
+        id: item.id,
+        createdAt: item.createdAt,
+        title: item.title,
+        category: mapCategory(item.category),
+        probability: item.probability,
+        confidence: item.confidence,
+        source: 'wallet' as const,
+        subtitle: item.subtitle,
+        author: item.author,
+      } as ExtendedFeedItem),
     );
 
     // Merge all items with local items first (priority)
@@ -728,7 +727,7 @@ const FeedPage = memo(() => {
         {/* Enhanced Header */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-teal-600/20 to-cyan-600/20"></div>
-          <div className="relative bg-[#0B1426]/80 border-b border-blue-800/30 backdrop-blur-sm">
+          <div className="relative bg-[#0B1426]/95 border-b border-blue-800/30">
             <div className="max-w-7xl mx-auto px-4 py-8">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div className="flex-1">
@@ -747,7 +746,7 @@ const FeedPage = memo(() => {
                         placeholder="Search insights..."
                         value={searchQuery}
                         onChange={e => handleSearchChange(e.target.value)}
-                        className="w-full px-4 py-3 pl-10 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200/60 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent backdrop-blur-sm"
+                        className="w-full px-4 py-3 pl-10 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200/60 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent"
                       />
                       <svg
                         className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-300"
@@ -951,11 +950,10 @@ const FeedPage = memo(() => {
               {/* Mine filter */}
               <button
                 onClick={() => setShowMine(!showMine)}
-                className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  showMine
+                className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${showMine
                     ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
                     : 'bg-white/10 text-blue-200 hover:bg-white/20 hover:scale-105'
-                }`}
+                  }`}
               >
                 <span className="mr-2 text-lg">👤</span>
                 Mine
@@ -965,11 +963,10 @@ const FeedPage = memo(() => {
                 <button
                   key={filter}
                   onClick={() => handleFilterChange(filter)}
-                  className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                    currentFilter === filter
+                  className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${currentFilter === filter
                       ? 'bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg'
                       : 'bg-white/10 text-blue-200 hover:bg-white/20 hover:scale-105'
-                  }`}
+                    }`}
                 >
                   {filter !== 'all' && (
                     <span className="mr-2 text-lg">{getCategoryIcon(filter)}</span>
@@ -1107,11 +1104,10 @@ const FeedPage = memo(() => {
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 ${
-                        currentPage === pageNum
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 ${currentPage === pageNum
                           ? 'bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg'
                           : 'bg-white/10 text-blue-200 hover:bg-white/20 border border-white/20'
-                      }`}
+                        }`}
                     >
                       {pageNum}
                     </button>

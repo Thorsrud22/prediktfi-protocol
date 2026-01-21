@@ -90,7 +90,7 @@ const ActivityFeed = memo(function ActivityFeed({ className = '' }: { className?
         timestamp: 'just now',
         icon: '🔮'
       };
-      
+
       setActivities(prev => [newActivity, ...prev.slice(0, 4)]);
     }, 30000);
 
@@ -99,7 +99,7 @@ const ActivityFeed = memo(function ActivityFeed({ className = '' }: { className?
 
   if (loading) {
     return (
-      <div className={`bg-white/5 backdrop-blur-sm rounded-xl p-6 ${className}`}>
+      <div className={`bg-white/5 rounded-xl p-6 ${className}`}>
         <h3 className="text-xl font-bold text-white mb-4">🔥 Live Activity</h3>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
@@ -111,7 +111,7 @@ const ActivityFeed = memo(function ActivityFeed({ className = '' }: { className?
   }
 
   return (
-    <div className={`bg-white/5 backdrop-blur-sm rounded-xl p-6 ${className}`}>
+    <div className={`bg-white/5 rounded-xl p-6 ${className}`}>
       <h3 className="text-xl font-bold text-white mb-4 flex items-center">
         <span className="relative flex h-3 w-3 mr-2">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -119,17 +119,17 @@ const ActivityFeed = memo(function ActivityFeed({ className = '' }: { className?
         </span>
         Live Activity
       </h3>
-      
+
       <div className="space-y-4">
         {activities.map((activity, index) => (
-          <div 
+          <div
             key={activity.id}
             className="flex items-start space-x-3"
           >
             <span className="text-2xl">{activity.icon}</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white">
-                <Link 
+                <Link
                   href={`/creator/${activity.user}`}
                   className="font-semibold hover:text-blue-400 transition-colors"
                 >

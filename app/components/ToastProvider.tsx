@@ -9,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+// @ts-ignore
 import { createPortal } from 'react-dom';
 
 type ToastVariant = "success" | "error" | "info";

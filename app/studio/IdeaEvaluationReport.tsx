@@ -85,7 +85,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                 }
             `}</style>
             {/* AUDIT LOG HEADER */}
-            <div id="printable-report" className="bg-slate-900/40 backdrop-blur-md border border-white/5 p-8 mb-6 relative overflow-visible group rounded-3xl shadow-2xl text-white">
+            <div id="printable-report" className="bg-slate-900 border border-white/5 p-8 mb-6 relative overflow-visible group rounded-3xl shadow-2xl text-white">
                 {/* Removed decorative Activity icon - was distracting on hover */}
 
                 <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6 relative z-10 print:border-black/20">
@@ -147,7 +147,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                 </div>
 
                 {/* VERDICT SUMMARY */}
-                <div className="border border-white/5 bg-slate-900/40 backdrop-blur-md p-8 mb-6 rounded-2xl shadow-xl">
+                <div className="border border-white/5 bg-slate-900 p-8 mb-6 rounded-2xl shadow-xl">
                     <div className="flex items-center gap-2 mb-5 text-white border-b border-white/10 pb-3">
                         <FileText size={18} className="text-blue-400" />
                         <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px] text-blue-100">Executive Summary</h3>
@@ -159,7 +159,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
 
                 {/* REASONING CHAIN */}
                 {result.reasoningSteps && result.reasoningSteps.length > 0 && (
-                    <div className="border border-white/5 bg-slate-900/40 backdrop-blur-md p-6 mb-6 rounded-2xl font-mono text-xs break-inside-avoid shadow-xl">
+                    <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl font-mono text-xs break-inside-avoid shadow-xl">
                         <div className="flex items-center gap-2 mb-5 text-white/60 border-b border-white/5 pb-3">
                             <Terminal size={14} className="text-blue-400" />
                             <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">AI Reasoning Chain</h3>
@@ -213,7 +213,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                 {/* SECURITY & HEALTH CHECK */}
                 {/* SECURITY & HEALTH CHECK */}
                 {result.cryptoNativeChecks && (
-                    <div className="border border-white/5 bg-slate-900/40 backdrop-blur-md p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl">
+                    <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl">
                         <div className="flex items-center justify-between mb-5 border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-blue-400">
                                 <Shield size={18} />
@@ -251,7 +251,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
 
                 {/* EXECUTION SIGNALS */}
                 {result.execution && (
-                    <div className="border border-white/5 bg-slate-900/40 backdrop-blur-md p-6 mb-8 rounded-2xl break-inside-avoid shadow-xl">
+                    <div className="border border-white/5 bg-slate-900 p-6 mb-8 rounded-2xl break-inside-avoid shadow-xl">
                         <div className="flex items-center gap-2 mb-5 text-white border-b border-white/10 pb-3">
                             <CheckCircle2 size={18} className="text-blue-400" />
                             <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Execution Analysis</h3>
@@ -286,7 +286,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
 
                 {/* VIRAL QUOTA INCENTIVE */}
                 {!hideBonus && (
-                    <div className="mb-6 p-6 rounded-xl border border-blue-500/30 bg-blue-500/[0.03] backdrop-blur-sm overflow-hidden relative group">
+                    <div className="mb-6 p-6 rounded-xl border border-blue-500/30 bg-blue-500/[0.05] overflow-hidden relative group">
                         <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity text-white">
                             <XLogo size={100} />
                         </div>

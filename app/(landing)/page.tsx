@@ -26,76 +26,58 @@ export default async function Home() {
 
   return (
     <div className="relative min-h-screen">
-      {/* Brand Pill - Fixed Top Left (Only shown if NOT authenticated, to avoid double pill) */}
-      {/* We use a simple CSS hide via sibling selector or similar if we can't use hooks. 
-          But since this is a server component, we need a Client Component wrapper or just CSS based on body class? 
-          Actually, ShellWrapper wraps this. We can't easily suppress this form parent.
-          Let's verify if we can make this a client component or use a specialized client wrapper for the pill.
-          For now, I'll switch this file to 'use client' or import a client component for the pill.
-          Let's make a new client component for the LandingPill to handle visibility.
-      */}
-      <LandingPill />
-
       {/* Hero Section */}
       <div className="relative z-10 flex flex-col items-center pt-32 sm:pt-44 pb-16 sm:pb-20 px-5 sm:px-6">
         <div className="text-center max-w-5xl mx-auto space-y-4 md:space-y-8">
           {/* Main Heading */}
-          <h1 className="text-3xl sm:text-4xl md:text-7xl font-bold text-white leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-[0.9] tracking-tight uppercase italic">
             Turn your idea into an{' '}
-            <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
+            <span className="whitespace-nowrap bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
               investor-grade answer
             </span>
           </h1>
 
           {/* Subheading */}
-          <p className="text-base md:text-2xl text-slate-300 max-w-3xl mx-auto">
+          <p className="text-base md:text-2xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
             Predikt is an AI-native evaluator built to stress-test AI, DeFi and emerging digital assets instead of giving you generic AI replies.
           </p>
 
           {/* CTA Buttons */}
           <HeroActions />
 
-          <div className="pt-8 sm:pt-12 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-x-8 sm:gap-y-4 text-sm font-medium text-slate-400">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+          <div className="pt-8 sm:pt-14 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-x-12 sm:gap-y-4 text-[10px] font-black uppercase tracking-[0.2em] italic text-slate-500">
+            <div className="flex items-center gap-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
               Live Market Data
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]" />
-              Deep Semantic Analysis
+            <div className="flex items-center gap-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
+              Semantic Analysis
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.5)]" />
+            <div className="flex items-center gap-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
               Risk Modeling
             </div>
           </div>
 
-          {/* Stats Grid - Restored from backup */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-16 max-w-4xl mx-auto opacity-80 hover:opacity-100 transition-opacity duration-500">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                {data.stats.activePredictions.toLocaleString()}
+          {/* Stats Grid - Enhanced with Institutional Styling */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 pt-16 sm:pt-24 max-w-5xl mx-auto">
+            {[
+              { label: 'Protocols Audited', value: `${data.stats.activePredictions.toLocaleString()}` },
+              { label: 'Capital Evaluated', value: `${data.stats.totalVolume}M+` },
+              { label: 'Risk Detection', value: `${data.stats.accuracyRate}%` },
+              { label: 'Signals Identified', value: `${data.stats.activeCreators.toLocaleString()}` },
+            ].map((stat, i) => (
+
+              <div key={i} className="p-6 md:p-8 bg-slate-900/80 rounded-[32px] border border-white/5 flex flex-col items-center justify-center group hover:bg-slate-900 transition-all duration-500 hover:border-blue-500/20 shadow-xl">
+                <div className="text-3xl md:text-5xl font-black text-white mb-2 tracking-tighter italic group-hover:text-blue-400 transition-colors">
+                  {stat.value}
+                </div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] italic text-slate-500 group-hover:text-slate-400 transition-colors text-center">
+                  {stat.label}
+                </div>
               </div>
-              <div className="text-sm text-slate-400">Protocols Audited</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                {data.stats.totalVolume}M+
-              </div>
-              <div className="text-sm text-slate-400">Capital Saved</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                {data.stats.accuracyRate}%
-              </div>
-              <div className="text-sm text-slate-400">Risk Detection</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                {data.stats.activeCreators.toLocaleString()}
-              </div>
-              <div className="text-sm text-slate-400">Risk Factors Identified</div>
-            </div>
+            ))}
           </div>
 
         </div>

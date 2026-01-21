@@ -23,7 +23,7 @@ interface AIAnalysisProps {
 export default function AIAnalysis({ selectedTemplate }: AIAnalysisProps) {
   const { data: aiAnalysis, loading: analysisLoading } = useOptimizedFetch<AIAnalysis>(
     `/api/studio/analysis/${selectedTemplate.id}`,
-    { 
+    {
       cacheTime: 10 * 60 * 1000, // 10 minutes cache
       staleTime: 5 * 60 * 1000, // 5 minutes stale time
       timeoutMs: 3000, // 3 second timeout
@@ -32,7 +32,7 @@ export default function AIAnalysis({ selectedTemplate }: AIAnalysisProps) {
   );
 
   return (
-    <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl border border-purple-400/30 p-6 backdrop-blur-sm">
+    <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl border border-purple-400/30 p-6">
       <h3 className="text-lg font-semibold mb-4 flex items-center text-white">
         <span className="mr-2">🤖</span>
         AI Analysis for "{selectedTemplate.title}"
@@ -70,22 +70,20 @@ export default function AIAnalysis({ selectedTemplate }: AIAnalysisProps) {
               </div>
               <div className="flex items-center space-x-2">
                 <div
-                  className={`w-3 h-3 rounded-full ${
-                    aiAnalysis.recommendation === 'Bullish'
+                  className={`w-3 h-3 rounded-full ${aiAnalysis.recommendation === 'Bullish'
                       ? 'bg-green-400'
                       : aiAnalysis.recommendation === 'Bearish'
-                      ? 'bg-red-400'
-                      : 'bg-yellow-400'
-                  }`}
+                        ? 'bg-red-400'
+                        : 'bg-yellow-400'
+                    }`}
                 ></div>
                 <span
-                  className={`font-semibold ${
-                    aiAnalysis.recommendation === 'Bullish'
+                  className={`font-semibold ${aiAnalysis.recommendation === 'Bullish'
                       ? 'text-green-300'
                       : aiAnalysis.recommendation === 'Bearish'
-                      ? 'text-red-300'
-                      : 'text-yellow-300'
-                  }`}
+                        ? 'text-red-300'
+                        : 'text-yellow-300'
+                    }`}
                 >
                   {aiAnalysis.recommendation}
                 </span>

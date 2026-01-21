@@ -105,7 +105,7 @@ export default function PredictionForm({ selectedTemplate, onSuccess }: Predicti
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
+    <div className="bg-white/10 rounded-xl border border-white/20 p-6">
       <h3 className="text-lg font-semibold mb-4 flex items-center text-white">
         <span className="mr-2">✏️</span>
         Create Your Prediction

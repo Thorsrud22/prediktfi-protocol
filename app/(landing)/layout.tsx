@@ -1,4 +1,5 @@
 import Aurora from '../components/ui/Aurora';
+import LandingPill from '../components/landing/LandingPill';
 
 export const metadata = {
     title: 'Predikt - Investor-Grade AI Analysis',
@@ -15,6 +16,7 @@ export default function LandingLayout({
 }) {
     return (
         <div className="relative min-h-screen">
+            <LandingPill />
             {children}
         </div>
     );

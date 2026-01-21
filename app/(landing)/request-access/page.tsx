@@ -46,32 +46,11 @@ export default function RequestAccessPage() {
     return (
         <div className="relative min-h-screen">
 
-            {/* Brand Pill - Fixed Top Left */}
-            <div className="fixed top-3 left-4 sm:left-6 z-50">
-                <Link
-                    href="/"
-                    className="group flex items-center gap-2.5 rounded-full bg-slate-900/90 px-2.5 py-1.5 pr-4 ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 duration-300"
-                    aria-label="Predikt home"
-                >
-                    <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/10 ring-1 ring-white/20 transition-all duration-300 group-hover:scale-110 group-hover:ring-white/30">
-                        <Image
-                            src="/images/predikt-orb.svg"
-                            alt="Predikt logo"
-                            width={36}
-                            height={36}
-                            className="h-full w-full object-contain p-0.5 drop-shadow-[0_2px_8px_rgba(59,130,246,0.5)]"
-                            priority
-                        />
-                    </span>
-                    <span className="font-inter text-base font-bold tracking-tight bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]">
-                        Predikt
-                    </span>
-                </Link>
-            </div>
+            {/* Brand Pill - Handled by LandingLayout */}
 
             {/* Form Content */}
             <div className="relative z-10 flex justify-center px-4 pt-20 pb-12">
-                <div className="w-full max-w-[512px] bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl relative">
+                <div className="w-full max-w-[512px] bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-[32px] shadow-2xl relative">
                     {/* Close Button */}
                     <Link
                         href="/"
@@ -111,8 +90,8 @@ export default function RequestAccessPage() {
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="space-y-2">
-                                    <h3 className="text-xl font-bold text-white">Request Early Access</h3>
-                                    <p className="text-slate-400 text-sm">Help us tailor your experience.</p>
+                                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Request Access <span className="text-blue-500">.</span></h3>
+                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">Institutional Alpha Protocol</p>
                                 </div>
 
                                 {/* Focus Areas */}
@@ -192,7 +171,7 @@ export default function RequestAccessPage() {
 
                                 <button
                                     type="submit"
-                                    className="btn-shimmer w-full bg-gradient-to-r from-blue-600 to-cyan-400 text-white font-semibold py-3 rounded-2xl text-base shadow-md transition-all duration-200 ease-out hover:brightness-105"
+                                    className="btn-shimmer w-full bg-blue-600 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-[0.2em] italic shadow-lg shadow-blue-900/40 transition-all duration-300 hover:brightness-110 active:scale-95"
                                 >
                                     <span className="relative">
                                         Submit Application

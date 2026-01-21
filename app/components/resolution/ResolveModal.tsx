@@ -66,7 +66,7 @@ export default function ResolveModal({ insight, isOpen, onClose, onSuccess }: Re
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
       <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 rounded-xl border border-white/20 max-w-2xl w-full p-6 shadow-2xl">
@@ -111,11 +111,10 @@ export default function ResolveModal({ insight, isOpen, onClose, onSuccess }: Re
               <button
                 type="button"
                 onClick={() => setResult('YES')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  result === 'YES'
+                className={`p-4 rounded-lg border-2 transition-all ${result === 'YES'
                     ? 'border-green-500 bg-green-500/20 text-green-300'
                     : 'border-white/20 bg-white/5 text-gray-400 hover:border-white/30'
-                }`}
+                  }`}
               >
                 <div className="text-2xl mb-1">✓</div>
                 <div className="font-semibold">YES</div>
@@ -125,11 +124,10 @@ export default function ResolveModal({ insight, isOpen, onClose, onSuccess }: Re
               <button
                 type="button"
                 onClick={() => setResult('NO')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  result === 'NO'
+                className={`p-4 rounded-lg border-2 transition-all ${result === 'NO'
                     ? 'border-red-500 bg-red-500/20 text-red-300'
                     : 'border-white/20 bg-white/5 text-gray-400 hover:border-white/30'
-                }`}
+                  }`}
               >
                 <div className="text-2xl mb-1">✗</div>
                 <div className="font-semibold">NO</div>
@@ -139,11 +137,10 @@ export default function ResolveModal({ insight, isOpen, onClose, onSuccess }: Re
               <button
                 type="button"
                 onClick={() => setResult('INVALID')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  result === 'INVALID'
+                className={`p-4 rounded-lg border-2 transition-all ${result === 'INVALID'
                     ? 'border-yellow-500 bg-yellow-500/20 text-yellow-300'
                     : 'border-white/20 bg-white/5 text-gray-400 hover:border-white/30'
-                }`}
+                  }`}
               >
                 <div className="text-2xl mb-1">?</div>
                 <div className="font-semibold">INVALID</div>

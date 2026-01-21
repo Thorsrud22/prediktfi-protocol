@@ -13,132 +13,7 @@ import { useToast } from './ToastProvider';
 const SCROLL_THRESHOLD = 50;
 const WALLET_ADDRESS_DISPLAY_LENGTH = { start: 4, end: 3 };
 
-// Wallet Dropdown Component
-function WalletDropdown({
-  publicKey,
-  isOpen,
-  onClose,
-  onDisconnect,
-}: {
-  publicKey: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onDisconnect: () => void;
-}) {
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(publicKey);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy address:', err);
-    }
-  }, [publicKey]);
-
-  const handleDisconnect = useCallback(() => {
-    onDisconnect();
-    onClose();
-  }, [onDisconnect, onClose]);
-
-  // Close on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      // Use mousedown/touchstart to trigger before potential click handlers
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [isOpen, onClose]);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen, onClose]);
-
-  const shortAddress = useMemo(
-    () =>
-      `${publicKey.slice(0, WALLET_ADDRESS_DISPLAY_LENGTH.start)}...${publicKey.slice(-WALLET_ADDRESS_DISPLAY_LENGTH.end)}`,
-    [publicKey]
-  );
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      ref={dropdownRef}
-      className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-14 sm:w-64 bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl overflow-hidden z-[1000]"
-      role="menu"
-      aria-label="Wallet options"
-    >
-      <div className="p-4 border-b border-slate-700/50">
-        <p className="text-xs text-slate-400 mb-1">Wallet Address</p>
-        <div className="flex items-center justify-between gap-2">
-          {/* Show truncated on mobile, full on desktop */}
-          <p className="text-sm text-slate-200 font-mono sm:hidden">{`${publicKey.slice(0, 6)}...${publicKey.slice(-4)}`}</p>
-          <p className="text-sm text-slate-200 font-mono break-all flex-1 hidden sm:block">{publicKey}</p>
-          <button
-            onClick={handleCopy}
-            className="flex-shrink-0 p-1.5 hover:bg-slate-800 rounded transition-colors"
-            title="Copy address"
-          >
-            {copied ? (
-              <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            )}
-          </button>
-        </div>
-      </div>
-      <div className="p-2">
-        <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleDisconnect();
-          }}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleDisconnect();
-          }}
-          className="w-full px-4 py-2 text-sm text-red-400 hover:bg-slate-800 rounded-lg transition-colors text-left font-semibold active:bg-slate-700/50"
-          role="menuitem"
-        >
-          Disconnect
-        </button>
-      </div>
-    </div>
-  );
-}
+// Wallet Dropdown and associated logic removed as account management moved to /account page
 
 export default function AppPillNav() {
   const pathname = usePathname();
@@ -151,7 +26,6 @@ export default function AppPillNav() {
   // Timer ref to handle cleanup if clicked rapidly
   const tooltipTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const indicatorRef = useRef<HTMLSpanElement>(null);
   const navListRef = useRef<HTMLUListElement>(null);
@@ -242,13 +116,6 @@ export default function AppPillNav() {
     return `${addr.slice(0, WALLET_ADDRESS_DISPLAY_LENGTH.start)}...${addr.slice(-WALLET_ADDRESS_DISPLAY_LENGTH.end)}`;
   }, []);
 
-  const toggleWalletDropdown = useCallback(() => {
-    setIsWalletDropdownOpen((prev) => !prev);
-  }, []);
-
-  const closeWalletDropdown = useCallback(() => {
-    setIsWalletDropdownOpen(false);
-  }, []);
 
   const handleUpgradeClick = useCallback(() => {
     // Clear existing timer if any
@@ -272,7 +139,7 @@ export default function AppPillNav() {
     () => (
       <InstantLink
         href="/"
-        className="group flex items-center gap-2.5 rounded-full bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-slate-900/80 px-2.5 py-1.5 pr-4 backdrop-blur-xl ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] duration-300"
+        className="group flex items-center gap-2.5 rounded-full bg-slate-900/95 px-2.5 py-1.5 pr-4 ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] duration-300"
         aria-label="Predikt home"
       >
         <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/20 shadow-[0_8px_32px_rgba(59,130,246,0.4)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_12px_40px_rgba(59,130,246,0.6)] group-hover:ring-white/30 overflow-hidden">
@@ -312,8 +179,7 @@ export default function AppPillNav() {
       >
         {/* Pill Nav - Outer wrapper with ring */}
         <nav
-          className={`rounded-full bg-white/5 backdrop-blur-md ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300 ${isScrolled ? 'backdrop-blur-lg shadow-xl' : ''
-            }`}
+          className="rounded-full bg-slate-900/95 ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300"
           aria-label="Main navigation"
         >
           {/* Inner wrapper with overflow-hidden to clip animated pill */}
@@ -349,50 +215,21 @@ export default function AppPillNav() {
 
       {/* Wallet & Upgrade Actions - Positioned absolutely on the right */}
       <div className="fixed top-3 right-4 sm:right-6 z-[100] flex items-center gap-2">
-        {/* Wallet button - Connected state */}
-        {publicKey && (
-          <div className="relative">
-            <button
-              onClick={toggleWalletDropdown}
-              className="h-10 sm:h-12 px-3 sm:px-4 bg-white/5 backdrop-blur-md text-slate-200 rounded-full font-medium text-sm hover:bg-white/10 transition-all flex items-center gap-2"
-              aria-expanded={isWalletDropdownOpen}
-              aria-haspopup="menu"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                />
-              </svg>
-              <span className="hidden sm:inline">{shortAddress(publicKey)}</span>
-            </button>
-
-            <WalletDropdown
-              publicKey={publicKey}
-              isOpen={isWalletDropdownOpen}
-              onClose={closeWalletDropdown}
-              onDisconnect={disconnect}
-            />
-          </div>
-        )}
-
-        {/* Connect Wallet button - Disconnected state */}
-        {!publicKey && (
-          <button
-            onClick={connect}
-            className="h-10 sm:h-12 px-3 sm:px-4 bg-white/5 backdrop-blur-md text-slate-200 rounded-full font-medium text-sm hover:bg-white/10 transition-all flex items-center gap-2"
+        {/* User Account Button */}
+        <div className="relative">
+          <InstantLink
+            href="/account"
+            className={`h-10 sm:h-12 w-10 sm:w-12 flex items-center justify-center rounded-full transition-all ${publicKey
+              ? 'bg-white/5 text-slate-200 hover:bg-white/10 ring-1 ring-inset ring-white/10'
+              : 'bg-white/5 text-slate-400 hover:bg-white/10 ring-1 ring-inset ring-white/5'
+              }`}
+            aria-label="Account Dashboard"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-              />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <span className="hidden sm:inline">Connect</span>
-          </button>
-        )}
+          </InstantLink>
+        </div>
 
         {/* Upgrade button - only show if not pro */}
         {!isPro && (
@@ -428,7 +265,7 @@ export default function AppPillNav() {
       </div>
 
       {/* Mobile Bottom Navigation - Only visible on mobile */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-lg border-t border-slate-700/50 safe-area-pb">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-700/50 safe-area-pb">
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => {
             const active = pathname === item.href || pathname?.startsWith(item.href + '/');

@@ -11,13 +11,15 @@ export default function AboutPage() {
     <div className="relative min-h-screen">
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-white/10 p-8 md:p-12 shadow-2xl">
-          <h1 className="text-5xl font-black tracking-tighter text-white mb-8 bg-gradient-to-r from-white via-white to-white/40 bg-clip-text text-transparent">
-            About Predikt
+          <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-white mb-12 uppercase italic leading-[0.9]">
+            About Predikt <span className="text-blue-500">.</span>
           </h1>
+          Broadway
 
           <div className="space-y-16">
             <section>
-              <h2 className="text-2xl font-bold text-sky-400 mb-4">What is Predikt?</h2>
+              <h2 className="text-[10px] font-black uppercase tracking-[0.2em] italic text-blue-500 border-l-2 border-blue-500 pl-3 mb-6 inline-block">Institutional Analysis</h2>
+              <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-4">What is Predikt?</h3>
               <p className="text-slate-300 text-lg leading-relaxed mb-6">
                 Predikt is an AI-powered evaluation studio that transforms how we think about analyzing ideas and insights.
                 Instead of traditional speculation, we focus on creating verifiable, shareable AI-powered
@@ -30,7 +32,8 @@ export default function AboutPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-sky-400 mb-8">How It Works</h2>
+              <h2 className="text-[10px] font-black uppercase tracking-[0.2em] italic text-blue-500 border-l-2 border-blue-500 pl-3 mb-8 inline-block">The Workflow</h2>
+              <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-8 text-center sm:text-left">Operational Mechanics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-sky-500/30 transition-colors group">
                   <div className="w-12 h-12 bg-sky-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -75,7 +78,8 @@ export default function AboutPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-sky-400 mb-6">Why It Matters</h2>
+              <h2 className="text-[10px] font-black uppercase tracking-[0.2em] italic text-blue-500 border-l-2 border-blue-500 pl-3 mb-8 inline-block">Value Propositions</h2>
+              <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-6 text-center sm:text-left">Strategic Edge</h3>
               <div className="space-y-4">
                 {[
                   { title: "Tamper-Proof", desc: "Evaluations cannot be altered or deleted once logged." },
@@ -98,16 +102,16 @@ export default function AboutPage() {
             </section>
 
             <section className="pt-8">
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-6">
                 <Link
                   href="/studio"
-                  className="inline-flex items-center justify-center px-8 py-4 rounded-full font-bold text-slate-900 bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform shadow-xl shadow-blue-500/20"
+                  className="inline-flex items-center justify-center px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] italic text-white bg-blue-600 shadow-xl shadow-blue-900/40 hover:brightness-110 active:scale-95 transition-all"
                 >
                   Start Evaluation
                 </Link>
                 <Link
                   href="/"
-                  className="inline-flex items-center justify-center px-8 py-4 rounded-full font-bold text-white border border-white/10 hover:bg-white/5 transition-colors"
+                  className="inline-flex items-center justify-center px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] italic text-slate-400 border border-white/5 bg-white/5 hover:bg-white/10 hover:text-white transition-all"
                 >
                   Back Home
                 </Link>

@@ -18,7 +18,7 @@ export default function EnhancedNavbar() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -27,7 +27,7 @@ export default function EnhancedNavbar() {
   useEffect(() => {
     // Ensure we're on the client side
     if (typeof window === 'undefined') return;
-    
+
     // Check if wallet is connected from localStorage or wallet provider
     const checkWallet = () => {
       try {
@@ -44,7 +44,7 @@ export default function EnhancedNavbar() {
   const handleWalletConnect = () => {
     // Ensure we're on the client side
     if (typeof window === 'undefined') return;
-    
+
     try {
       // This would be replaced with actual wallet connection logic
       if (walletConnected) {
@@ -71,26 +71,25 @@ export default function EnhancedNavbar() {
   ];
 
   return (
-    <nav 
-      className={`sticky top-0 z-50 transition-all duration-200 ${
-        scrolled 
-          ? 'bg-[color:var(--bg)]/95 backdrop-blur-md border-b border-[var(--border)]' 
+    <nav
+      className={`sticky top-0 z-50 transition-all duration-200 ${scrolled
+          ? 'bg-[color:var(--bg)] border-b border-[var(--border)]'
           : 'bg-transparent'
-      }`}
+        }`}
     >
       <div className="mx-auto max-w-[1100px] px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="flex items-center gap-3 hover:scale-105 transition-all duration-200"
           >
-          {/* Logo Text */}
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-teal-200 to-cyan-200 bg-clip-text text-transparent leading-tight">
-              Predikt
-            </span>
-          </div>
+            {/* Logo Text */}
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-teal-200 to-cyan-200 bg-clip-text text-transparent leading-tight">
+                Predikt
+              </span>
+            </div>
           </Link>
 
           {/* Navigation Links */}
@@ -101,30 +100,28 @@ export default function EnhancedNavbar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`text-sm font-medium transition-all duration-200 hover:text-[color:var(--text)] px-3 py-2 rounded-lg ${
-                    pathname === item.href
+                  className={`text-sm font-medium transition-all duration-200 hover:text-[color:var(--text)] px-3 py-2 rounded-lg ${pathname === item.href
                       ? 'text-[color:var(--text)] bg-blue-500/20'
-                      : item.primary 
+                      : item.primary
                         ? 'text-[color:var(--text)] font-semibold hover:bg-blue-500/10'
                         : 'text-[color:var(--muted)] hover:bg-blue-500/10'
-                  }`}
+                    }`}
                 >
                   {item.name}
                 </Link>
               ))}
             </div>
-            
+
             {/* Secondary navigation - grouped */}
             <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-600">
               {secondaryNavigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`text-sm font-medium transition-all duration-200 hover:text-[color:var(--text)] px-3 py-2 rounded-lg ${
-                    pathname === item.href
+                  className={`text-sm font-medium transition-all duration-200 hover:text-[color:var(--text)] px-3 py-2 rounded-lg ${pathname === item.href
                       ? 'text-[color:var(--text)] bg-blue-500/20'
                       : 'text-[color:var(--muted)] hover:bg-blue-500/10'
-                  }`}
+                    }`}
                 >
                   {item.name}
                 </Link>

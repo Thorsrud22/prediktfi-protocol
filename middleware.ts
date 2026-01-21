@@ -85,113 +85,39 @@ export async function middleware(request: NextRequest) {
   }
 
   // ============================================
-  // ACCESS GATE: Check for valid invite code session
+  // ACCESS GATE: RESTORED
   // ============================================
-  const publicPaths = [
-    '/',
-    '/request-access',
-    '/redeem',
-    '/legal',
-    '/og',
-  ];
 
-  const isPublicPath = publicPaths.some(p =>
-    pathname === p || pathname.startsWith(p + '/')
-  );
-  const isApiPath = pathname.startsWith('/api/');
-  const isImagePath = pathname.startsWith('/images/');
-  const accessToken = request.cookies.get('predikt_access')?.value;
+  // Define protected routes that require an access token
+  const isProtectedRoute =
+    pathname.startsWith('/studio') ||
+    pathname.includes('/idea-evaluator/') ||
+    pathname.startsWith('/api/studio') ||
+    pathname.startsWith('/api/idea-evaluator');
 
-  // 1. Redirect authenticated users AWAY from public landing/redeem pages to the app
-  // ONLY redirect for /redeem or /request-access (let landing page be visible)
-  if ((pathname === '/redeem' || pathname === '/request-access') && accessToken) {
-    try {
-      const { jwtVerify } = await import('jose');
-      const secret = new TextEncoder().encode(
-        process.env.JWT_SECRET || 'predikt-access-secret-change-in-production'
-      );
-      await jwtVerify(accessToken, secret);
-      // If verify succeeds, they are logged in. Send them to studio.
-      return NextResponse.redirect(new URL('/studio', request.url));
-    } catch {
-      // Token invalid, let them stay on landing page (cookie will be cleared by access gate logic if they try to enter app)
+  // Check for access token
+  const hasAccessToken = request.cookies.get('predikt_access')?.value;
+  const hasStatusCookie = request.cookies.get('predikt_auth_status')?.value;
+
+  if (isProtectedRoute) {
+    // If no access token, redirect to home or return 401
+    if (!hasAccessToken) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { error: 'Unauthorized', message: 'Invite code required' },
+          { status: 401 }
+        );
+      } else {
+        // For page visits, redirect to home (or request access page)
+        const url = request.nextUrl.clone();
+        url.pathname = '/';
+        return NextResponse.redirect(url);
+      }
     }
-  }
-
-  // 2. Access Gate: Protect private routes
-  // Skip access gate for public paths and API routes/images
-  if (!isPublicPath && !isApiPath && !isImagePath) {
-
-    if (!accessToken) {
-      // No session - redirect to landing
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-
-    // Verify token (lightweight check - full verification in API routes if needed)
-    try {
-      const { jwtVerify } = await import('jose');
-      const secret = new TextEncoder().encode(
-        process.env.JWT_SECRET || 'predikt-access-secret-change-in-production'
-      );
-      await jwtVerify(accessToken, secret);
-    } catch (err) {
-      console.log('🔴 Middleware: Invalid access token.', err);
-      // Invalid token - clear cookie and redirect
-      const response = NextResponse.redirect(new URL('/', request.url));
-      response.cookies.delete('predikt_access');
-      response.cookies.delete('predikt_auth_status'); // Also clear status
-      return response;
-    }
-  }
-
-
-  // Skip rate limiting in development
-  if (process.env.NODE_ENV !== 'development') {
-    // Check rate limiting
-    if (checkRateLimit(request, identifier)) {
-      console.log(`🚨 Rate limit exceeded for ${identifier} on ${pathname}`);
-
-      // Log abuse event
-      abuseDetector.logAbuseEvent({
-        type: 'rate_limit',
-        identifier,
-        endpoint: pathname,
-        details: {
-          method,
-          userAgent: request.headers.get('user-agent') || 'unknown'
-        }
-      });
-
-      return NextResponse.json(
-        {
-          error: 'Too Many Requests',
-          message: 'Rate limit exceeded. To protect our free AI service, we limit evaluations per hour. Please try again later.',
-          retryAfter: 3600 // 1 hour
-        },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': '3600',
-            'X-RateLimit-Limit': '5',
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': String(Date.now() + 60 * 60 * 1000)
-          }
-        }
-      );
-    }
-  }
-
-  // Record request for rate limiting (only in production)
-  if (process.env.NODE_ENV !== 'development') {
-    recordRequest(request, identifier);
   }
 
   // Create response
   const response = NextResponse.next();
-
-  // 3. AUTO-FIX: Ensure client-side status cookie exists if they are authenticated (checked above)
-  const hasAccessToken = request.cookies.get('predikt_access')?.value;
-  const hasStatusCookie = request.cookies.get('predikt_auth_status')?.value;
 
   // We only set this if we are confident they are logged in. 
   // Above we have a block that verifies the token. Ideally we'd pass a flag down.

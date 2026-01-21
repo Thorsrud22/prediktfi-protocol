@@ -91,7 +91,7 @@ export class PredictionAnalyzer {
 
     // Get AI analysis from GPT-4 with shorter timeout
     const response = await this.openai!.chat.completions.create({
-      model: 'gpt-3.5-turbo', // Use faster model
+      model: 'gpt-4o', // Upgraded to latest model
       messages: [
         {
           role: 'system',

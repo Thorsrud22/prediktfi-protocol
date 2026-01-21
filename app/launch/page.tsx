@@ -148,11 +148,11 @@ export default function LaunchPage() {
   ]);
 
   const categories = [
-    { id: "core", name: "Core Platform", color: "bg-blue-500" },
-    { id: "content", name: "Content", color: "bg-green-500" },
-    { id: "legal", name: "Legal", color: "bg-yellow-500" },
-    { id: "testing", name: "Testing", color: "bg-purple-500" },
-    { id: "deployment", name: "Deployment", color: "bg-red-500" },
+    { id: "core", name: "Core Platform", color: "bg-blue-600" },
+    { id: "content", name: "Content", color: "bg-cyan-400" },
+    { id: "legal", name: "Legal", color: "bg-blue-400" },
+    { id: "testing", name: "Testing", color: "bg-indigo-500" },
+    { id: "deployment", name: "Deployment", color: "bg-slate-500" },
   ];
 
   const getStatusIcon = (status: LaunchItem["status"]) => {
@@ -169,11 +169,11 @@ export default function LaunchPage() {
   const getStatusBadge = (status: LaunchItem["status"]) => {
     switch (status) {
       case "completed":
-        return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Complete</span>;
+        return <span className="px-3 py-1 text-[8px] font-black uppercase tracking-widest italic rounded-full bg-cyan-400/10 text-cyan-400 border border-cyan-400/20">Operational</span>;
       case "in-progress":
-        return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">In Progress</span>;
+        return <span className="px-3 py-1 text-[8px] font-black uppercase tracking-widest italic rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Processing</span>;
       case "pending":
-        return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">Pending</span>;
+        return <span className="px-3 py-1 text-[8px] font-black uppercase tracking-widest italic rounded-full bg-slate-800 text-slate-500 border border-white/5">Queued</span>;
     }
   };
 
@@ -183,21 +183,22 @@ export default function LaunchPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[color:var(--text)] mb-4">
-          Predikt Devnet Alpha Launch
+      <div className="mb-12 bg-slate-900/40 backdrop-blur-md p-10 rounded-[32px] border border-white/5">
+        <h2 className="text-[10px] font-black tracking-[0.2em] text-blue-500 uppercase italic border-l-2 border-blue-500 pl-3 mb-6 inline-block">Protocol Roadmap</h2>
+        <h1 className="text-4xl md:text-7xl font-black text-white uppercase italic tracking-tighter mb-8 leading-[0.9]">
+          Alpha Launch <span className="text-blue-500">.</span>
         </h1>
-        <div className="flex items-center gap-4 mb-4">
-          <div className="text-[color:var(--muted)]">
-            {completedCount}/{totalCount} items complete
+        <div className="flex items-center gap-6 mb-4">
+          <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
+            {completedCount}/{totalCount} Signals Synchronized
           </div>
-          <div className="flex-1 bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+          <div className="flex-1 bg-white/5 rounded-full h-1.5 overflow-hidden">
             <div
-              className="bg-green-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-blue-600 to-cyan-400 h-full transition-all duration-1000 ease-out"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
-          <div className="text-2xl font-bold text-green-500">
+          <div className="text-3xl font-black italic text-cyan-400 tracking-tighter">
             {completionPercentage}%
           </div>
         </div>
@@ -224,14 +225,14 @@ export default function LaunchPage() {
 
         return (
           <Card key={category.id}>
-            <div className="mb-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`w-3 h-3 rounded-full ${category.color}`} />
-                <h2 className="text-xl font-semibold text-[color:var(--text)]">
+            <div className="mb-6">
+              <div className="flex items-center gap-4 mb-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${category.color} shadow-[0_0_10px_rgba(59,130,246,0.3)]`} />
+                <h2 className="text-sm font-black text-white uppercase italic tracking-widest">
                   {category.name}
                 </h2>
-                <div className="text-sm text-[color:var(--muted)]">
-                  {categoryCompleted}/{categoryItems.length}
+                <div className="text-[10px] font-black text-slate-500 uppercase italic ml-auto">
+                  Status: {categoryCompleted}/{categoryItems.length}
                 </div>
               </div>
             </div>
@@ -240,15 +241,15 @@ export default function LaunchPage() {
               {categoryItems.map(item => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-3 border border-[var(--border)] rounded-lg hover:bg-[color:var(--surface-2)] transition-colors"
+                  className="flex items-center justify-between p-4 border border-white/5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] transition-all group"
                 >
-                  <div className="flex items-center gap-3 flex-1">
-                    {getStatusIcon(item.status)}
+                  <div className="flex items-center gap-4 flex-1">
+                    <span className="opacity-40 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all">{getStatusIcon(item.status)}</span>
                     <div>
-                      <div className="font-medium text-[color:var(--text)]">
+                      <div className="font-black text-xs text-white uppercase italic tracking-tight mb-0.5">
                         {item.title}
                       </div>
-                      <div className="text-sm text-[color:var(--muted)]">
+                      <div className="text-[10px] text-slate-500 font-medium leading-tight">
                         {item.description}
                       </div>
                     </div>
@@ -287,28 +288,30 @@ export default function LaunchPage() {
         </Card>
 
         <Card>
-          <h3 className="text-lg font-semibold text-[color:var(--text)] mb-4">
+          <h3 className="text-xs font-black text-white uppercase italic underline underline-offset-8 mt-2 mb-8 inline-block decoration-blue-500">
             Quick Actions
           </h3>
-          <div className="space-y-3">
-            <Link
-              href="/feed"
-              className="block w-full text-center px-4 py-2 bg-[color:var(--accent)] text-white rounded-lg hover:opacity-90 transition-opacity"
-            >
-              View Feed
-            </Link>
+          <div className="space-y-4">
             <Link
               href="/studio"
-              className="block w-full text-center px-4 py-2 border border-[var(--border)] text-[color:var(--text)] rounded-lg hover:bg-[color:var(--surface-2)] transition-colors"
+              className="block w-full text-center px-6 py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] italic shadow-lg shadow-blue-900/40 hover:brightness-110 active:scale-95 transition-all"
             >
               Open Studio
             </Link>
-            <Link
-              href="/legal"
-              className="block w-full text-center px-4 py-2 border border-[var(--border)] text-[color:var(--text)] rounded-lg hover:bg-[color:var(--surface-2)] transition-colors"
-            >
-              Legal Terms
-            </Link>
+            <div className="grid grid-cols-2 gap-4">
+              <Link
+                href="/feed"
+                className="block text-center px-6 py-4 bg-white/5 border border-white/5 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] italic hover:bg-white/10 hover:text-white transition-all"
+              >
+                View Feed
+              </Link>
+              <Link
+                href="/legal"
+                className="block text-center px-6 py-4 bg-white/5 border border-white/5 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] italic hover:bg-white/10 hover:text-white transition-all"
+              >
+                Legal Terms
+              </Link>
+            </div>
           </div>
         </Card>
       </div>

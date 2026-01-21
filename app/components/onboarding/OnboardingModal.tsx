@@ -168,7 +168,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
       <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 rounded-xl border border-white/20 max-w-2xl w-full shadow-2xl">

@@ -15,34 +15,34 @@ gsap.registerPlugin(ScrollTrigger);
 const STEPS = [
     {
         id: 1,
-        title: 'Submit Idea',
-        description: 'Enter your ticker or concept. Our system instantly prepares the workspace for deep analysis.',
+        title: 'Submit Concept',
+        description: 'Initialize the protocol with your ticker or project abstract. Workspace prepares for deep analysis.',
         icon: Lightbulb,
-        color: 'from-blue-500 to-cyan-400',
+        color: 'from-blue-600 to-blue-400',
         delay: 0
     },
     {
         id: 2,
-        title: 'AI Swarm Analysis',
-        description: 'Multiple AI agents dive deep—analyzing tokenomics, whitepapers, and team backgrounds.',
+        title: 'Core Extraction',
+        description: 'AI swarm agents deconstruct the project—extracting tokenomics, technical debt, and team intent.',
         icon: BrainCircuit,
-        color: 'from-cyan-400 to-teal-400',
+        color: 'from-blue-400 to-cyan-400',
         delay: 0.2
     },
     {
         id: 3,
-        title: 'Market Validation',
-        description: 'We cross-reference with live market data, competitor landscape, and historical sentiment.',
+        title: 'Market Resonance',
+        description: 'Real-time cross-referencing against competitor signals, liquidity depth, and narrative trends.',
         icon: Scale,
-        color: 'from-teal-400 to-emerald-400',
+        color: 'from-cyan-400 to-indigo-500',
         delay: 0.4
     },
     {
         id: 4,
-        title: 'Verdict & Report',
-        description: 'Receive a final 0-100 score and a comprehensive report with actionable insights.',
+        title: 'Final Verdict',
+        description: 'Generate a 0-100 institutional score and a comprehensive risk report with actionable intelligence.',
         icon: FileText,
-        color: 'from-emerald-400 to-green-400',
+        color: 'from-indigo-600 to-blue-700',
         delay: 0.6
     }
 ];
@@ -107,19 +107,19 @@ export default function ProcessTimeline() {
 
             <div className="max-w-6xl mx-auto relative z-10">
                 {/* Section Header */}
-                <div className="text-center mb-16 sm:mb-32 space-y-3 sm:space-y-4">
-                    <h2 className="text-sm font-bold tracking-[0.2em] text-cyan-400 uppercase">
-                        The Process
+                <div className="text-center mb-16 sm:mb-32 space-y-4">
+                    <h2 className="text-[10px] font-black tracking-[0.2em] text-blue-500 uppercase italic border-l-2 border-blue-500 pl-3 inline-block">
+                        The Protocol
                     </h2>
-                    <h3 className="text-3xl md:text-5xl font-bold text-white">
-                        From Idea to <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Verdict</span>
+                    <h3 className="text-4xl md:text-7xl font-black text-white uppercase italic tracking-tighter">
+                        From Idea to <span className="text-blue-500">Verdict</span>
                     </h3>
                 </div>
 
                 {/* Timeline Container */}
                 <div className="relative">
                     {/* Central Line - Hidden on mobile for cleaner layout */}
-                    <div className="timeline-line absolute hidden md:block left-1/2 top-0 bottom-0 w-1 -ml-0.5 bg-gradient-to-b from-blue-500/20 via-cyan-500/50 to-emerald-500/20 rounded-full" />
+                    <div className="timeline-line absolute hidden md:block left-1/2 top-0 bottom-0 w-1 -ml-0.5 bg-gradient-to-b from-blue-600/20 via-blue-500/50 to-indigo-600/20 rounded-full" />
 
                     <div className="space-y-8 sm:space-y-24">
                         {STEPS.map((step, index) => {
@@ -133,21 +133,22 @@ export default function ProcessTimeline() {
                                 >
                                     {/* Content Side */}
                                     <div className="flex-1 w-full md:w-1/2">
-                                        <div className="p-8 rounded-2xl bg-slate-900/80 border border-slate-800/50 hover:bg-slate-800/80 hover:border-cyan-500/30 transition-all duration-300 group shadow-2xl">
-                                            <div className="flex items-center gap-4 mb-4">
-                                                <div className={`p-3 rounded-xl bg-gradient-to-br ${step.color} bg-opacity-10 opacity-90 group-hover:scale-110 transition-transform duration-300`}>
+                                        <div className="p-10 rounded-[32px] bg-slate-900/90 border border-white/5 hover:bg-slate-900 transition-all duration-500 group shadow-xl relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <div className="flex items-center gap-5 mb-5">
+                                                <div className={`p-4 rounded-2xl bg-gradient-to-br ${step.color} shadow-lg shadow-blue-900/20 group-hover:scale-110 transition-transform duration-500`}>
                                                     <step.icon className="w-6 h-6 text-white" />
                                                 </div>
-                                                <h4 className="text-xl font-bold text-white">{step.title}</h4>
+                                                <h4 className="text-2xl font-black text-white uppercase italic tracking-tight">{step.title}</h4>
                                             </div>
-                                            <p className="text-slate-400 leading-relaxed">
+                                            <p className="text-slate-400 leading-relaxed font-medium">
                                                 {step.description}
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* Center Dot - Hidden on mobile */}
-                                    <div className="absolute hidden md:block left-1/2 -ml-2 w-4 h-4 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.6)] z-20 ring-4 ring-slate-950" />
+                                    <div className="absolute hidden md:block left-1/2 -ml-2.5 w-5 h-5 rounded-full bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.8)] z-20 ring-4 ring-slate-950" />
 
                                     {/* Empty Side (for Desktop layout balance) */}
                                     <div className="hidden md:block flex-1 w-1/2" />

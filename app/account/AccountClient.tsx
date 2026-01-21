@@ -116,7 +116,7 @@ const AccountDetails = React.memo(
     return (
       <div className="space-y-4 sm:space-y-8">
         {/* Consolidated Profile Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 sm:p-6 bg-slate-900/40 backdrop-blur-md rounded-3xl border border-white/5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 sm:p-6 bg-slate-900 rounded-3xl border border-white/5">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-[1px] flex-shrink-0">
               <div className="w-full h-full rounded-[15px] bg-slate-900 flex items-center justify-center text-xl sm:text-2xl font-black text-white">
@@ -146,7 +146,7 @@ const AccountDetails = React.memo(
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-slate-900/40 backdrop-blur-md p-4 sm:p-6 rounded-3xl border border-white/5 text-center group hover:border-blue-500/30 transition-colors">
+          <div className="bg-slate-900/80 p-4 sm:p-6 rounded-3xl border border-white/5 text-center group hover:border-blue-500/30 transition-colors">
             <div className="text-2xl sm:text-4xl font-black text-blue-400 mb-1 group-hover:scale-110 transition-transform">
               {loading ? '...' : (stats?.averageScore?.toFixed(0) || '0')}
             </div>
@@ -154,7 +154,7 @@ const AccountDetails = React.memo(
               Avg AI Score
             </div>
           </div>
-          <div className="bg-slate-900/40 backdrop-blur-md p-4 sm:p-6 rounded-3xl border border-white/5 text-center group hover:border-blue-500/30 transition-colors">
+          <div className="bg-slate-900/80 p-4 sm:p-6 rounded-3xl border border-white/5 text-center group hover:border-blue-500/30 transition-colors">
             <div className="text-2xl sm:text-4xl font-black text-blue-400 mb-1 group-hover:scale-110 transition-transform">
               {loading ? '...' : (stats?.totalEvaluations || '0')}
             </div>
@@ -175,7 +175,7 @@ const AccountDetails = React.memo(
         {/* Secondary Sections */}
         <div className="grid grid-cols-1 gap-4">
           {/* Subscription Card */}
-          <div className="p-6 bg-gradient-to-br from-blue-900/40 to-slate-900/40 backdrop-blur-md rounded-3xl border border-blue-500/20 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="p-6 bg-gradient-to-br from-blue-900/40 to-slate-900 rounded-3xl border border-blue-500/20 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="relative z-10 flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest">
@@ -189,12 +189,11 @@ const AccountDetails = React.memo(
                 Upgrade for Advanced AI & Priority Data
               </p>
             </div>
-            <Link
-              href="/pricing"
-              className="relative z-10 w-full sm:w-auto text-center px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex-shrink-0"
+            <div
+              className="relative z-10 w-full sm:w-auto text-center px-8 py-3 bg-slate-800/50 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 flex-shrink-0"
             >
-              View Plans
-            </Link>
+              Coming Soon
+            </div>
           </div>
         </div>
       </div>

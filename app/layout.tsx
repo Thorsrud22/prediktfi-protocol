@@ -219,12 +219,19 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased min-h-screen bg-[#0F172A] text-slate-100`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased min-h-screen bg-transparent text-slate-100 relative`}>
         <CSPostHogProvider>
           <PostHogPageView />
           <ProgressBarProvider>
             {/* Persistent Aurora background - stays across route changes */}
-
+            {/* Persistent Aurora background - stays across route changes */}
+            <Aurora
+              colorStops={['#1e293b', '#60A5FA', '#3B82F6']} // Lighter base (slate-800) and brighter blues (blue-400, blue-500)
+              amplitude={1.2}
+              blend={0.6}
+              speed={0.5}
+              className="fixed inset-0 -z-10"
+            />
 
             <IntentStorageGuard />
             <AuthGuard>

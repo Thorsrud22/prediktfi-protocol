@@ -5,74 +5,102 @@
 
 :root {
   /* Brand Colors - Deep Blue Theme matching the image */
-  --brand-primary: #1E3A8A;    /* Deep Blue */
-  --brand-secondary: #3B82F6;  /* Bright Blue */
-  --brand-accent: #60A5FA;     /* Light Blue accent */
-  
+  --brand-primary: #1E3A8A;
+  /* Deep Blue */
+  --brand-secondary: #3B82F6;
+  /* Bright Blue */
+  --brand-accent: #60A5FA;
+  /* Light Blue accent */
+
   /* Background System - Deep Blue Gradient */
-  --background-primary: #0F172A;     /* Very dark navy (darkest part of gradient) */
-  --background-secondary: #1E293B;   /* Dark slate blue */
-  --background-tertiary: #334155;    /* Medium slate for cards/surfaces */
-  
+  --background-primary: #0F172A;
+  /* Very dark navy (darkest part of gradient) */
+  --background-secondary: #1E293B;
+  /* Dark slate blue */
+  --background-tertiary: #334155;
+  /* Medium slate for cards/surfaces */
+
   /* Gradients - Matching the image gradient */
   --gradient-brand: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 50%, #60A5FA 100%);
   --gradient-hero: linear-gradient(180deg, #0F172A 0%, #1E293B 25%, #334155 50%, #475569 75%, #1E293B 100%);
-  
+
   /* Text Colors */
-  --text-primary: #F8FAFC;      /* Pure white text */
-  --text-secondary: #CBD5E1;    /* Muted text */
-  --text-tertiary: #94A3B8;     /* Subtle text */
-  
+  --text-primary: #F8FAFC;
+  /* Pure white text */
+  --text-secondary: #CBD5E1;
+  /* Muted text */
+  --text-tertiary: #94A3B8;
+  /* Subtle text */
+
   /* Interactive Elements - Blue theme */
   --interactive-primary: #3B82F6;
   --interactive-hover: #2563EB;
   --interactive-focus: #1D4ED8;
-  
+
   /* Borders and Dividers - Matching blue theme */
   --border-primary: #475569;
   --border-secondary: #64748B;
-  
+
   /* Spacing Scale */
-  --space-xs: 0.25rem;    /* 4px */
-  --space-sm: 0.5rem;     /* 8px */
-  --space-md: 1rem;       /* 16px */
-  --space-lg: 1.5rem;     /* 24px */
-  --space-xl: 2rem;       /* 32px */
-  --space-2xl: 3rem;      /* 48px */
-  --space-3xl: 4rem;      /* 64px */
-  
+  --space-xs: 0.25rem;
+  /* 4px */
+  --space-sm: 0.5rem;
+  /* 8px */
+  --space-md: 1rem;
+  /* 16px */
+  --space-lg: 1.5rem;
+  /* 24px */
+  --space-xl: 2rem;
+  /* 32px */
+  --space-2xl: 3rem;
+  /* 48px */
+  --space-3xl: 4rem;
+  /* 64px */
+
   /* Typography Scale */
-  --text-xs: 0.75rem;     /* 12px */
-  --text-sm: 0.875rem;    /* 14px */
-  --text-base: 1rem;      /* 16px */
-  --text-lg: 1.125rem;    /* 18px */
-  --text-xl: 1.25rem;     /* 20px */
-  --text-2xl: 1.5rem;     /* 24px */
-  --text-3xl: 1.875rem;   /* 30px */
-  --text-4xl: 2.25rem;    /* 36px */
-  
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-sm: 0.875rem;
+  /* 14px */
+  --text-base: 1rem;
+  /* 16px */
+  --text-lg: 1.125rem;
+  /* 18px */
+  --text-xl: 1.25rem;
+  /* 20px */
+  --text-2xl: 1.5rem;
+  /* 24px */
+  --text-3xl: 1.875rem;
+  /* 30px */
+  --text-4xl: 2.25rem;
+  /* 36px */
+
   /* Container Widths */
   --container-sm: 640px;
   --container-md: 768px;
   --container-lg: 1024px;
   --container-xl: 1280px;
-  
+
   /* Border Radius */
-  --radius-sm: 0.25rem;   /* 4px */
-  --radius-md: 0.5rem;    /* 8px */
-  --radius-lg: 0.75rem;   /* 12px */
-  --radius-xl: 1rem;      /* 16px */
-  
+  --radius-sm: 0.25rem;
+  /* 4px */
+  --radius-md: 0.5rem;
+  /* 8px */
+  --radius-lg: 0.75rem;
+  /* 12px */
+  --radius-xl: 1rem;
+  /* 16px */
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  
+
   /* Animation */
   --transition-fast: 150ms ease-in-out;
   --transition-normal: 300ms ease-in-out;
   --transition-slow: 500ms ease-in-out;
-  
+
   /* Aliases for compatibility with existing components */
   --text: var(--text-primary);
   --text-muted: var(--text-secondary);
@@ -85,22 +113,22 @@
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-/* Prevent theme flicker by setting initial dark theme */
+/* Prevent theme flicker - keeping text color but allowing transparent bg for Aurora */
 html {
-  background-color: var(--background-primary) !important;
+  background-color: transparent !important;
   color: var(--text-primary) !important;
 }
 
 body {
-  background-color: var(--background-primary) !important;
+  background-color: transparent !important;
   color: var(--text-primary) !important;
 }
 
 /* Global smooth transitions for theme changes */
 * {
-  transition: background-color var(--transition-fast), 
-              color var(--transition-fast), 
-              border-color var(--transition-fast);
+  transition: background-color var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 /* Focus styles for accessibility */
