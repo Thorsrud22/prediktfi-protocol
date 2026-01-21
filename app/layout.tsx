@@ -70,14 +70,6 @@ export const metadata: Metadata = {
     description: "Institutional-grade AI evaluation for Web3, DeFi, and Memecoins. Real-time market signals and on-chain security verification.",
     images: ["/og"],
   },
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon.png", type: "image/png" },
-    ],
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
-  },
 };
 
 export const viewport: Viewport = {
