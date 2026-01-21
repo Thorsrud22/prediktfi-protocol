@@ -3,6 +3,7 @@ import { openai } from "@/lib/openaiClient";
 import { CompetitiveMemo, CompetitiveMemoResult } from "./competitiveTypes";
 import { searchCompetitors } from "@/lib/tavilyClient";
 import { generateDeFiCompetitiveSummary, getDeFiCompetitors, formatTVL } from "@/lib/defiLlamaClient";
+import { analyzeMemecoinNarrative, generateMemecoinCompetitiveSummary } from "@/lib/dexscreenerClient";
 
 const COMPETITIVE_SYSTEM_PROMPT = `You are a Competitive Intelligence Scout for specialized crypto/tech sectors.
 Your goal is to produce a "Competitive Memo" that provides a reality check on an idea's landscape.
@@ -60,6 +61,35 @@ Constraint:
 - If the idea is nonsense, be honest in "evaluatorNotes".
 - For DeFi: Reference ACTUAL TVL numbers from DeFiLlama when comparing to competitors.
 `;
+
+/**
+ * Extract memecoin narrative keywords from description.
+ * Looks for common narrative patterns (animals, politics, AI, etc.)
+ */
+function extractNarrativeFromDescription(description: string): string | null {
+    const text = description.toLowerCase();
+
+    // Animal narratives
+    if (text.includes('dog') || text.includes('doge') || text.includes('shiba') || text.includes('puppy')) return 'dog';
+    if (text.includes('cat') || text.includes('kitty') || text.includes('kitten') || text.includes('popcat')) return 'cat';
+    if (text.includes('frog') || text.includes('pepe')) return 'frog pepe';
+    if (text.includes('bird') || text.includes('penguin')) return 'bird';
+
+    // Theme narratives
+    if (text.includes('trump') || text.includes('maga') || text.includes('politi')) return 'trump politifi';
+    if (text.includes('elon') || text.includes('musk') || text.includes('tesla')) return 'elon musk';
+    if (text.includes('ai agent') || text.includes('artificial intelligence')) return 'ai agent';
+    if (text.includes('anime') || text.includes('waifu')) return 'anime';
+    if (text.includes('chad') || text.includes('gigachad') || text.includes('alpha')) return 'chad';
+
+    // Generic fallback - try to extract the main noun
+    const words = description.split(/\s+/).filter(w => w.length > 3);
+    if (words.length > 0) {
+        return words[0]; // Use first significant word as search term
+    }
+
+    return null;
+}
 
 /**
  * Detect DeFi mechanism type from idea data
@@ -164,7 +194,34 @@ If user's target TVL is provided, compare it to these actual figures.
         }
     }
 
-    // 4. Prepare Prompt
+    // 4. Fetch DexScreener data for Memecoin projects
+    let dexScreenerContext = "";
+    if (normalizedCategory === 'memecoin') {
+        try {
+            // Extract narrative from idea (use memecoinNarrative field or parse from description)
+            const narrative = idea.memecoinNarrative || extractNarrativeFromDescription(idea.description);
+
+            if (narrative) {
+                const snapshot = await analyzeMemecoinNarrative(narrative);
+
+                if (snapshot && snapshot.solanaPairs > 0) {
+                    dexScreenerContext = `
+${generateMemecoinCompetitiveSummary(snapshot)}
+
+INSTRUCTION: Use this REAL on-chain data to assess narrative crowdedness and competitive positioning.
+- If crowdedness is "saturated" or "high", be skeptical of differentiation claims.
+- Compare the user's idea to the top performers listed above.
+- If no clear leader exists, there may be opportunity.
+`;
+                    console.log(`[Competitive] Found ${snapshot.solanaPairs} memecoin pairs via DexScreener ("${narrative}")`);
+                }
+            }
+        } catch (err) {
+            console.warn("[Competitive] DexScreener fetch failed (non-blocking):", err);
+        }
+    }
+
+    // 5. Prepare Prompt
     const userContent = `
 Analyze this idea for Competitive Intelligence.
 Category: ${normalizedCategory}
@@ -180,6 +237,7 @@ ${JSON.stringify({
     }, null, 2)}
 ${webSearchContext}
 ${defiLlamaContext}
+${dexScreenerContext}
 `;
 
     try {
