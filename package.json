@@ -81,7 +81,7 @@
     "langfuse": "^3.38.6",
     "lenis": "^1.3.17",
     "lucide-react": "^0.542.0",
-    "next": "^15.5.2",
+    "next": "^16.1.4",
     "next-nprogress-bar": "^2.4.7",
     "ogl": "^1.0.11",
     "openai": "^5.20.2",

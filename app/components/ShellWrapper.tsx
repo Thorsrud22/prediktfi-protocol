@@ -2,6 +2,7 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import PersistentLogo from './PersistentLogo';
 
 interface ShellWrapperProps {
     children: React.ReactNode;
@@ -30,12 +31,6 @@ export default function ShellWrapper({ children, navbar, footer }: ShellWrapperP
         };
 
         checkAccess();
-
-        // Listen for custom event from dev toggle
-        const handleAccessChange = () => checkAccess();
-        window.addEventListener('predikt-access-changed', handleAccessChange);
-
-        return () => window.removeEventListener('predikt-access-changed', handleAccessChange);
     }, []);
 
     // Public pages where we never show full nav
@@ -50,19 +45,26 @@ export default function ShellWrapper({ children, navbar, footer }: ShellWrapperP
 
     if (hideNav) {
         return (
-            <main className="min-h-screen pt-24">{children}</main>
+            <>
+                <PersistentLogo />
+                <main className="min-h-screen pt-24">{children}</main>
+            </>
         );
     }
 
     // While checking access, show minimal shell
     if (hasAccess === null && isPublicPage) {
         return (
-            <main className="min-h-screen pt-24">{children}</main>
+            <>
+                <PersistentLogo />
+                <main className="min-h-screen pt-24">{children}</main>
+            </>
         );
     }
 
     return (
         <>
+            <PersistentLogo />
             {navbar}
             <main className="flex min-h-screen flex-col pt-24">
                 {children}

@@ -26,8 +26,6 @@ function deleteCookie(name: string) {
 export default function HeroActions() {
     const [hasAccess, setHasAccess] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const isDev = process.env.NODE_ENV === 'development';
-
     useEffect(() => {
         const checkAccess = () => {
             // Check public status cookie first (fastest)
@@ -37,18 +35,6 @@ export default function HeroActions() {
         };
         checkAccess();
     }, []);
-
-    const toggleAccess = () => {
-        if (hasAccess) {
-            deleteCookie('predikt_auth_status');
-            setHasAccess(false);
-        } else {
-            setCookie('predikt_auth_status', 'invited', 30);
-            setHasAccess(true);
-        }
-        // Dispatch event to notify ShellWrapper
-        window.dispatchEvent(new Event('predikt-access-changed'));
-    };
 
     // Prevent hydration mismatch by rendering a placeholder or default valid state initially
     // However, for SEO/Performance on hero, we might default to Request Access
@@ -93,15 +79,6 @@ export default function HeroActions() {
                 </div>
             )}
 
-            {/* DEV TOGGLE - Remove before production push */}
-            {isDev && (
-                <button
-                    onClick={toggleAccess}
-                    className="mt-6 px-4 py-2 rounded-lg bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 text-xs font-mono hover:bg-yellow-500/30 transition-all"
-                >
-                    🔧 DEV: {hasAccess ? 'Switch to Guest View' : 'Switch to Invited View'}
-                </button>
-            )}
         </div>
     );
 }

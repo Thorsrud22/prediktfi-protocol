@@ -2,42 +2,44 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { InstantLink } from '../InstantLink';
+import { InstantLink } from './InstantLink';
 
-function getCookie(name: string) {
-    if (typeof document === 'undefined') return null;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift();
-    return null;
-}
+const SCROLL_THRESHOLD = 50;
 
-export default function LandingPill() {
-    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+export default function PersistentLogo() {
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        const checkAccess = () => {
-            const status = getCookie('predikt_auth_status');
-            setHasAccess(!!status);
+        setMounted(true);
+        let frame = -1;
+        const handleScroll = () => {
+            if (frame === -1) {
+                frame = window.requestAnimationFrame(() => {
+                    setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
+                    frame = -1;
+                });
+            }
         };
 
-        checkAccess();
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll();
 
-        // Listen for access change events from dev toggle
-        const handleAccessChange = () => checkAccess();
-        window.addEventListener('predikt-access-changed', handleAccessChange);
-
-        return () => window.removeEventListener('predikt-access-changed', handleAccessChange);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            if (frame !== -1) {
+                window.cancelAnimationFrame(frame);
+            }
+        };
     }, []);
 
-    // Don't render for invited users (they see AppPillNav instead)
-    if (hasAccess === true) return null;
-
-    // Don't render while checking (avoid flash)
-    if (hasAccess === null) return null;
+    // During SSR/initial mount, render with default state to prevent hydration mismatch/layout shift
+    const scaleClass = mounted && isScrolled ? 'scale-[0.98]' : 'scale-100';
 
     return (
-        <div className="fixed top-3 left-4 sm:left-6 z-50 animate-in fade-in zoom-in duration-500">
+        <div
+            className={`fixed top-3 left-4 sm:left-6 z-50 transition-transform duration-300 ${scaleClass}`}
+        >
             <InstantLink
                 href="/"
                 className="group flex items-center gap-2.5 rounded-full bg-slate-900/95 px-2.5 py-1.5 pr-4 ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] duration-300"
@@ -55,11 +57,10 @@ export default function LandingPill() {
                     {/* Subtle rotating glow effect */}
                     <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-400/20 via-transparent to-cyan-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" />
                 </span>
-                <span className="font-inter text-base font-bold tracking-tight bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]">
+                <span className="font-inter text-base font-bold tracking-tight bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)] hidden sm:inline-block">
                     Predikt
                 </span>
             </InstantLink>
         </div>
     );
 }
-

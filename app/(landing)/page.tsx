@@ -3,7 +3,7 @@ import Image from 'next/image';
 import ProcessTimeline from '../components/ProcessTimeline';
 import { InstantLink } from '../components/InstantLink';
 import HeroActions from '../components/landing/HeroActions';
-import LandingPill from '../components/landing/LandingPill';
+
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
