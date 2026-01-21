@@ -27,10 +27,10 @@ export default async function Home() {
   return (
     <div className="relative min-h-screen">
       {/* Hero Section */}
-      <div className="relative z-10 flex flex-col items-center pt-32 sm:pt-44 pb-16 sm:pb-20 px-5 sm:px-6">
+      <div className="relative z-10 flex flex-col items-center pt-32 sm:pt-44 pb-16 sm:pb-20 px-3 sm:px-6">
         <div className="text-center max-w-5xl mx-auto space-y-4 md:space-y-8">
           {/* Main Heading */}
-          <h1 className="text-2xl sm:text-5xl md:text-7xl font-black text-white leading-[0.9] tracking-tight uppercase italic">
+          <h1 className="text-[28px] sm:text-5xl md:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase italic">
             Turn your idea into an{' '}
             <span className="whitespace-nowrap bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
               investor-grade answer
