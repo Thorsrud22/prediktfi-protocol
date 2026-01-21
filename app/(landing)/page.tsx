@@ -32,7 +32,7 @@ export default async function Home() {
           {/* Main Heading */}
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-[0.9] tracking-tight uppercase italic">
             Turn your idea into an{' '}
-            <span className="whitespace-normal sm:whitespace-nowrap bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
+            <span className="whitespace-nowrap bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
               investor-grade answer
             </span>
           </h1>
