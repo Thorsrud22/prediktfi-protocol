@@ -6,6 +6,8 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Anti-Gaming Dashboard | Predikt Admin',
   description: 'Monitor spam detection and anti-gaming measures.',
@@ -45,11 +47,11 @@ async function getSpamDetectionMetrics(): Promise<SpamDetectionMetrics | null> {
       },
       cache: 'no-store'
     });
-    
+
     if (!response.ok) {
       return null;
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching spam detection metrics:', error);
@@ -64,7 +66,7 @@ function MetricCard({ title, value, color = 'blue' }: { title: string; value: nu
     yellow: 'bg-yellow-50 border-yellow-200 text-yellow-800',
     green: 'bg-green-50 border-green-200 text-green-800'
   };
-  
+
   return (
     <div className={`rounded-lg border p-6 ${colorClasses[color as keyof typeof colorClasses]}`}>
       <h3 className="text-sm font-medium opacity-75">{title}</h3>
@@ -83,17 +85,16 @@ function ViolationTypeCard({ type, count, description }: { type: string; count: 
       default: return 'blue';
     }
   };
-  
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-2">
         <h4 className="font-medium text-gray-900 capitalize">{type} Violations</h4>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          getColor(type) === 'red' ? 'bg-red-100 text-red-800' :
-          getColor(type) === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
-          getColor(type) === 'blue' ? 'bg-blue-100 text-blue-800' :
-          'bg-green-100 text-green-800'
-        }`}>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getColor(type) === 'red' ? 'bg-red-100 text-red-800' :
+            getColor(type) === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+              getColor(type) === 'blue' ? 'bg-blue-100 text-blue-800' :
+                'bg-green-100 text-green-800'
+          }`}>
           {count}
         </span>
       </div>
@@ -137,7 +138,7 @@ function RecentPatternRow({ pattern }: { pattern: any }) {
     if (type.includes('notional')) return 'text-green-600 bg-green-50';
     return 'text-gray-600 bg-gray-50';
   };
-  
+
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
       <div className="flex-1">
@@ -160,7 +161,7 @@ function RecentPatternRow({ pattern }: { pattern: any }) {
 
 export default async function AntiGamingDashboard() {
   const metrics = await getSpamDetectionMetrics();
-  
+
   if (!metrics) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -171,7 +172,7 @@ export default async function AntiGamingDashboard() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -182,31 +183,31 @@ export default async function AntiGamingDashboard() {
             Monitoring spam detection and violation patterns for the last 7 days
           </p>
         </div>
-        
+
         {/* Overview Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <MetricCard 
-            title="Total Violations" 
-            value={metrics.totalViolations} 
+          <MetricCard
+            title="Total Violations"
+            value={metrics.totalViolations}
             color="red"
           />
-          <MetricCard 
-            title="Burst Patterns" 
-            value={metrics.violationsByType.burst} 
+          <MetricCard
+            title="Burst Patterns"
+            value={metrics.violationsByType.burst}
             color="red"
           />
-          <MetricCard 
-            title="Similar Predictions" 
-            value={metrics.violationsByType.similar} 
+          <MetricCard
+            title="Similar Predictions"
+            value={metrics.violationsByType.similar}
             color="yellow"
           />
-          <MetricCard 
-            title="Rate Limit Hits" 
-            value={metrics.violationsByType.rateLimit} 
+          <MetricCard
+            title="Rate Limit Hits"
+            value={metrics.violationsByType.rateLimit}
             color="blue"
           />
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Violation Types */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -234,17 +235,17 @@ export default async function AntiGamingDashboard() {
               />
             </div>
           </div>
-          
+
           {/* Top Offenders */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Offenders</h2>
             {metrics.topOffenders.length > 0 ? (
               <div className="space-y-0">
                 {metrics.topOffenders.map((offender, index) => (
-                  <TopOffenderRow 
-                    key={offender.walletId} 
-                    offender={offender} 
-                    rank={index + 1} 
+                  <TopOffenderRow
+                    key={offender.walletId}
+                    offender={offender}
+                    rank={index + 1}
                   />
                 ))}
               </div>
@@ -253,7 +254,7 @@ export default async function AntiGamingDashboard() {
             )}
           </div>
         </div>
-        
+
         {/* Recent Patterns */}
         <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Violation Patterns</h2>
@@ -267,7 +268,7 @@ export default async function AntiGamingDashboard() {
             <p className="text-gray-500 text-center py-8">No recent violations</p>
           )}
         </div>
-        
+
         {/* Time Range Info */}
         <div className="mt-8 text-center text-sm text-gray-500">
           Data from {new Date(metrics.timeRange.start).toLocaleDateString()} to{' '}
