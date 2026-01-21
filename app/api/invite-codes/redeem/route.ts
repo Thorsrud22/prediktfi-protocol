@@ -200,6 +200,33 @@ export async function POST(request: NextRequest) {
         return response;
     } catch (error: any) {
         console.error('[InviteRedeem] Critical error:', error);
+
+        // --- FAILSAFE FALLBACK ---
+        // If DB fails (e.g. SQLite on Vercel), check against known active codes.
+        try {
+            const FAILSAFE_CODES = new Set([
+                'PREDIKT-BETA', 'ALPHA-ALPHA',
+                '7WQQY1OW', 'Q9BTGK8Q', 'WJHRJ3VB', 'PJ145VEQ', 'P2BE3UIS',
+                '72W9Z05K', 'STVRK1RT', '7J9BFEG2', 'G1VB74EK', 'POUDX7LN'
+            ]);
+
+            const body = await request.clone().json().catch(() => ({}));
+            const code = body.code?.trim()?.toUpperCase();
+
+            if (code && FAILSAFE_CODES.has(code)) {
+                console.log(`🛡️ Failsafe access granted for code ${code}`);
+                const token = await new SignJWT({
+                    type: 'access', code, redeemedAt: new Date().toISOString(), recovered: false, failsafe: true
+                }).setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('30d').sign(JWT_SECRET);
+
+                const response = NextResponse.json({ success: true, message: 'Access granted (Recovery)' });
+                response.cookies.set('predikt_access', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 2592000, path: '/' });
+                response.cookies.set('predikt_auth_status', '1', { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 2592000, path: '/' });
+                return response;
+            }
+        } catch (fbError) { console.error('Failsafe failed:', fbError); }
+        // --- END FAILSAFE ---
+
         return NextResponse.json(
             {
                 error: 'System error: ' + (error.message || 'Unknown error'),
