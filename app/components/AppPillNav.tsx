@@ -199,37 +199,7 @@ export default function AppPillNav() {
           </InstantLink>
         </div>
 
-        {/* Upgrade button - only show if not pro */}
-        {!isPro && (
-          <div className="relative">
-            <button
-              onClick={handleUpgradeClick}
-              className="h-10 sm:h-12 px-3 sm:px-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-slate-900 rounded-full font-semibold text-sm hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                />
-              </svg>
-              <span className="hidden sm:inline">Upgrade</span>
-            </button>
-            {/* Local Coming Soon Tooltip */}
-            {tooltipState !== 'hidden' && (
-              <div
-                className={`fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-full sm:mt-3 sm:w-64 p-3 bg-slate-800 text-white text-sm rounded-xl shadow-xl border border-slate-700 z-[1000]
-                  animate-tooltip-enter
-                  ${tooltipState === 'fading' ? 'animate-tooltip-exit' : ''}
-                `}              >
-                <div className="font-bold mb-1 text-sky-400">Coming Soon</div>
-                <div className="text-slate-300 text-xs leading-relaxed">
-                  Predikt Pro is currently being rolled out to select users.
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Upgrade button removed - Pro waitlist available at /request-access */}
       </div>
 
       {/* Mobile Bottom Navigation - Only visible on mobile */}
