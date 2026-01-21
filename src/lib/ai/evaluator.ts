@@ -195,20 +195,18 @@ ${JSON_OUTPUT_SCHEMA}`;
     });
 
     // Call OpenAI
-    // @ts-ignore - responses API might not be in the types yet
-    const response = await openai().responses.create({
+    // Call OpenAI
+    const response = await openai().chat.completions.create({
       model: model,
-      input: [
+      messages: [
         { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
         { role: "user", content: userContent }
       ],
-      reasoning: {
-        effort: reasoningEffort
-      },
-      text: {
-        format: { type: "json_object" }
-      },
-    } as unknown);
+      // O1 models don't support response_format yet, but GPT-4o does.
+      // We'll leave it out for O1 or if uncertain, but keeping it for GPT-4o compatibility if model supports it.
+      // For safety with unknown "gpt-5.2", we'll check if it starts with 'o1'.
+      response_format: model.startsWith('o1') ? undefined : { type: "json_object" },
+    });
 
     // Parse response
     let result = parseEvaluationResponse(response);

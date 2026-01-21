@@ -107,24 +107,32 @@ export async function POST(request: NextRequest) {
                 ...FINAL_STEPS,
             ];
 
-            // Send reasoning steps with delays
-            for (let i = 0; i < steps.length; i++) {
-                await sendEvent("step", { step: steps[i], index: i, total: steps.length });
+            // 1. Start Actual Work (Background)
+            // We start this IMMEDIATELY so it runs in parallel with the animation
+            const evaluationPromise = (async () => {
+                const marketSnapshot = await getMarketSnapshot();
+                const res = await evaluateIdea(parsed.data, { market: marketSnapshot });
+                return res;
+            })();
 
-                // Variable delay: faster at start, slower in middle
-                const baseDelay = 600;
-                const variance = Math.random() * 400;
-                const delay = i < 3 ? baseDelay : baseDelay + variance + 200;
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
+            // 2. Run Animation Loop (Foreground)
+            // We ensure this runs for at least some time so the user sees the steps
+            const animationPromise = (async () => {
+                for (let i = 0; i < steps.length; i++) {
+                    await sendEvent("step", { step: steps[i], index: i, total: steps.length });
 
-            // Fetch market context
-            await sendEvent("step", { step: "Fetching real-time market data...", index: steps.length, total: steps.length + 1 });
-            const marketSnapshot = await getMarketSnapshot();
+                    // Variable delay: slightly faster now to ensure we don't block if eval is fast
+                    // But 'evaluationPromise' usually takes 15-20s, so we have time.
+                    const baseDelay = 500;
+                    const variance = Math.random() * 300;
+                    const delay = i < 3 ? baseDelay : baseDelay + variance;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            })();
 
-            // Run the actual evaluation
-            await sendEvent("step", { step: "Running AI evaluation model...", index: steps.length + 1, total: steps.length + 2 });
-            const result = await evaluateIdea(parsed.data, { market: marketSnapshot });
+            // 3. Wait for BOTH to finish
+            // This ensures the animation completes (good UX) AND the result is ready
+            const [_, result] = await Promise.all([animationPromise, evaluationPromise]);
 
             // Send final result
             await sendEvent("complete", { result });
