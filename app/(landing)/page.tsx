@@ -34,7 +34,7 @@ export default async function Home() {
             <span className="text-base sm:text-2xl tracking-[0.2em] text-slate-300 font-bold not-italic mb-2 sm:mb-4">
               Turn your idea into an
             </span>
-            <span className="text-[29px] sm:text-6xl md:text-7xl tracking-tighter bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 bg-clip-text text-transparent filter drop-shadow-2xl">
+            <span className="text-[27px] sm:text-6xl md:text-7xl tracking-tighter bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 bg-clip-text text-transparent filter drop-shadow-2xl pr-2">
               investor-grade answer
             </span>
           </h1>
