@@ -47,37 +47,14 @@ export default function RedeemPage() {
     };
 
     return (
-        <div className="relative min-h-screen">
-            {/* Brand Pill - Fixed Top Left */}
-            <div className="fixed top-3 left-4 sm:left-6 z-50">
-                <Link
-                    href="/"
-                    className="group flex items-center gap-2.5 rounded-full bg-slate-900/90 px-2.5 py-1.5 pr-4 ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 duration-300"
-                    aria-label="Predikt home"
-                >
-                    <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/10 ring-1 ring-white/20 transition-all duration-300 group-hover:scale-110 group-hover:ring-white/30">
-                        <Image
-                            src="/images/predikt-orb.svg"
-                            alt="Predikt logo"
-                            width={36}
-                            height={36}
-                            className="h-full w-full object-contain p-0.5 drop-shadow-[0_2px_8px_rgba(59,130,246,0.5)]"
-                            priority
-                        />
-                    </span>
-                    <span className="font-inter text-base font-bold tracking-tight bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]">
-                        Predikt
-                    </span>
-                </Link>
-            </div>
-
+        <div className="relative min-h-screen flex items-center justify-center">
             {/* Main Content */}
-            <div className="relative z-10 flex justify-center px-4 pt-24 pb-12">
-                <div className="w-full max-w-md bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl p-8">
-                    {/* Close Button */}
+            <div className="relative z-10 w-full max-w-md mx-4">
+                <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-[32px] shadow-2xl p-8 relative">
+                    {/* Close Button - Inside card */}
                     <Link
                         href="/"
-                        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white transition-colors"
+                        className="absolute top-6 right-6 p-1 text-slate-500 hover:text-white transition-colors"
                         aria-label="Close"
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -87,9 +64,9 @@ export default function RedeemPage() {
 
                     {step === 'input' && (
                         <>
-                            <h1 className="text-2xl font-bold text-white mb-2">Enter Your Invite Code</h1>
-                            <p className="text-slate-400 mb-6">
-                                Paste the invite code you received to unlock full access.
+                            <h1 className="text-3xl font-black text-white mb-2 uppercase italic tracking-tighter">Access Key <span className="text-blue-500">.</span></h1>
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3 mb-8">
+                                Institutional Alpha Redemption
                             </p>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
@@ -105,7 +82,7 @@ export default function RedeemPage() {
                                 <button
                                     type="submit"
                                     disabled={!code.trim()}
-                                    className="btn-shimmer w-full py-3.5 px-6 bg-gradient-to-r from-blue-600 to-cyan-400 text-white font-semibold rounded-2xl shadow-md transition-all duration-200 ease-out hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="btn-shimmer w-full py-4 px-6 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-900/40 transition-all duration-300 hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:grayscale text-[10px] uppercase tracking-[0.2em] italic"
                                 >
                                     Unlock Access
                                 </button>

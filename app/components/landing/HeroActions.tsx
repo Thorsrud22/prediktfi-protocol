@@ -12,9 +12,21 @@ function getCookie(name: string) {
     return null;
 }
 
+function setCookie(name: string, value: string, days: number = 30) {
+    if (typeof document === 'undefined') return;
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${value}; expires=${expires}; path=/`;
+}
+
+function deleteCookie(name: string) {
+    if (typeof document === 'undefined') return;
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+}
+
 export default function HeroActions() {
     const [hasAccess, setHasAccess] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const isDev = process.env.NODE_ENV === 'development';
 
     useEffect(() => {
         const checkAccess = () => {
@@ -26,6 +38,18 @@ export default function HeroActions() {
         checkAccess();
     }, []);
 
+    const toggleAccess = () => {
+        if (hasAccess) {
+            deleteCookie('predikt_auth_status');
+            setHasAccess(false);
+        } else {
+            setCookie('predikt_auth_status', 'invited', 30);
+            setHasAccess(true);
+        }
+        // Dispatch event to notify ShellWrapper
+        window.dispatchEvent(new Event('predikt-access-changed'));
+    };
+
     // Prevent hydration mismatch by rendering a placeholder or default valid state initially
     // However, for SEO/Performance on hero, we might default to Request Access
     // and only swap if we detect the cookie client-side.
@@ -36,7 +60,7 @@ export default function HeroActions() {
                 <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in zoom-in duration-300">
                     <InstantLink
                         href="/studio"
-                        className="btn-shimmer px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-400 text-white font-semibold text-lg shadow-md transition-all duration-200 ease-out hover:brightness-105 min-w-[200px] text-center"
+                        className="btn-shimmer px-10 py-5 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] italic shadow-lg shadow-blue-900/40 transition-all duration-300 hover:brightness-110 min-w-[220px] text-center"
                     >
                         <span className="relative">
                             Start Validation
@@ -45,16 +69,16 @@ export default function HeroActions() {
 
                     <InstantLink
                         href="/example-report"
-                        className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-medium text-lg hover:bg-white/10 hover:border-white/30 transition-all duration-300 backdrop-blur-sm min-w-[200px] text-center"
+                        className="px-10 py-5 rounded-2xl bg-white/5 border border-white/5 text-slate-300 font-black text-xs uppercase tracking-[0.2em] italic hover:bg-white/10 hover:border-white/10 transition-all duration-300 min-w-[220px] text-center"
                     >
                         View Sample Report
                     </InstantLink>
                 </div>
             ) : (
-                <>
+                <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
                     <InstantLink
                         href="/request-access"
-                        className="btn-shimmer px-10 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-400 text-white font-semibold text-lg shadow-md transition-all duration-200 ease-out hover:brightness-105"
+                        className="btn-shimmer px-12 py-5 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] italic shadow-lg shadow-blue-900/40 transition-all duration-300 hover:brightness-110"
                     >
                         <span className="relative">
                             Request Access
@@ -62,12 +86,23 @@ export default function HeroActions() {
                     </InstantLink>
                     <InstantLink
                         href="/redeem"
-                        className="text-slate-400 hover:text-white transition-colors text-sm underline underline-offset-4"
+                        className="text-slate-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest italic"
                     >
                         Already have access?
                     </InstantLink>
-                </>
+                </div>
+            )}
+
+            {/* DEV TOGGLE - Remove before production push */}
+            {isDev && (
+                <button
+                    onClick={toggleAccess}
+                    className="mt-6 px-4 py-2 rounded-lg bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 text-xs font-mono hover:bg-yellow-500/30 transition-all"
+                >
+                    🔧 DEV: {hasAccess ? 'Switch to Guest View' : 'Switch to Invited View'}
+                </button>
             )}
         </div>
     );
 }
+
