@@ -198,10 +198,13 @@ export async function POST(request: NextRequest) {
         });
 
         return response;
-    } catch (error) {
-        console.error('Invite code redemption error:', error);
+    } catch (error: any) {
+        console.error('[InviteRedeem] Critical error:', error);
         return NextResponse.json(
-            { error: 'Something went wrong. Please try again.' },
+            {
+                error: 'System error: ' + (error.message || 'Unknown error'),
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            },
             { status: 500 }
         );
     }
