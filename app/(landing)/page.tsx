@@ -30,9 +30,11 @@ export default async function Home() {
       <div className="relative z-10 flex flex-col items-center pt-32 sm:pt-44 pb-16 sm:pb-20 px-3 sm:px-6">
         <div className="text-center max-w-5xl mx-auto space-y-4 md:space-y-8">
           {/* Main Heading */}
-          <h1 className="text-[28px] sm:text-5xl md:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase italic">
-            Turn your idea into an{' '}
-            <span className="whitespace-nowrap bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
+          <h1 className="flex flex-col items-center justify-center font-black text-white leading-[0.9] uppercase italic">
+            <span className="text-base sm:text-2xl tracking-[0.2em] text-slate-300 font-bold not-italic mb-2 sm:mb-4">
+              Turn your idea into an
+            </span>
+            <span className="text-[29px] sm:text-6xl md:text-7xl tracking-tighter bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 bg-clip-text text-transparent filter drop-shadow-2xl">
               investor-grade answer
             </span>
           </h1>
