@@ -205,9 +205,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         }
 
         const timer = setTimeout(async () => {
-            // If not connected, we still show the "UI" but blurred/locked
+            // Skip coach tip if not connected (no wallet prompt)
             if (!isConnected) {
-                setCoachTip("LOCKED"); // Special flag
+                setCoachTip(null);
                 return;
             }
 
@@ -362,7 +362,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         <h2 className="text-xl font-bold text-white tracking-tight leading-none mb-1">
                             {currentStepConfig.title}
                         </h2>
-                        <p className="text-white/40 text-sm">
+                        <p className="text-white/60 text-sm">
                             {currentStepConfig.subtitle}
                         </p>
                     </div>
@@ -394,7 +394,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     {currentStep === 0 && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
-                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Target Sector
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -430,7 +430,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             </div>
 
                             <div>
-                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Data Input: Abstract
                                 </label>
                                 <textarea
@@ -503,7 +503,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             {formData.projectType === 'memecoin' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
                                     <div>
-                                        <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                        <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                             Community Vibe
                                         </label>
                                         <select
@@ -519,7 +519,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                        <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                             Narrative Vector
                                         </label>
                                         <input
@@ -610,7 +610,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     {currentStep === 1 && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
-                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Team Composition
                                 </label>
                                 <div className="flex gap-4">
@@ -638,7 +638,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             </div>
 
                             <div>
-                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Project Assets & Readiness
                                 </label>
 
@@ -746,7 +746,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                             {(formData.projectType === 'memecoin' || formData.projectType === 'defi') && (
                                 <div>
-                                    <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                    <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                         Existing Token Contract
                                     </label>
                                     <input
@@ -769,7 +769,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     {currentStep === 2 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
-                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     MVP Scope (6-12m)
                                 </label>
                                 <textarea
@@ -781,7 +781,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             </div>
 
                             <div>
-                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Distribution Vector
                                 </label>
                                 <textarea
@@ -813,7 +813,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     {currentStep === 3 && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
-                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Success Metric
                                 </label>
 
@@ -860,7 +860,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             </div>
 
                             <div>
-                                <label className="block text-white/40 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                     Output Format
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -918,10 +918,10 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         <div className="flex items-center gap-6">
                             {quota && (
                                 <div className={`text-[10px] font-black uppercase tracking-widest border px-4 py-2 rounded-full ${quota.remaining === 0
-                                    ? 'border-rose-500/50 text-rose-500 bg-rose-500/10'
+                                    ? 'border-amber-500/50 text-amber-500 bg-amber-500/10'
                                     : 'border-blue-500/50 text-blue-400 bg-blue-500/10'
                                     }`}>
-                                    QUOTA: {quota.remaining === -1 ? '∞' : `${quota.remaining}/${quota.limit}`}
+                                    {quota.remaining === -1 ? '∞ UNLIMITED' : `${quota.remaining} REMAINING`}
                                 </div>
                             )}
                             <button

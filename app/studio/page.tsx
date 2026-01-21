@@ -85,7 +85,7 @@ export default function StudioPage() {
 
       if (!response.ok) {
         if (response.status === 429) {
-          throw new Error('Daily quota exceeded. Share your last report on X to get +1 extra credit instantly!');
+          throw new Error('Daily limit reached. Your limit resets at midnight UTC. Want unlimited access? Join the Pro waitlist at /request-access');
         }
         throw new Error('Evaluation failed');
       }
@@ -236,13 +236,18 @@ export default function StudioPage() {
             </p>
           </div>
 
-          {/* QUOTA DISPLAY - TERMINAL STYLE */}
+          {/* FAIR USE LIMIT DISPLAY */}
           {quota && (
             <div className="text-right hidden md:block">
-              <div className="text-[10px] uppercase text-blue-300/60 mb-1 tracking-widest font-mono">DAILY QUOTA</div>
-              <div className={`font-bold text-2xl font-mono ${quota.remaining === 0 ? 'text-red-400' : 'text-blue-400'}`}>
+              <div className="text-[10px] uppercase text-blue-300/60 mb-1 tracking-widest font-mono">DAILY LIMIT</div>
+              <div className={`font-bold text-2xl font-mono ${quota.remaining === 0 ? 'text-amber-400' : 'text-blue-400'}`}>
                 {quota.remaining === -1 ? 'UNLIMITED' : `${quota.remaining}/${quota.limit}`}
               </div>
+              {quota.remaining === 0 && (
+                <a href="/request-access" className="text-[9px] text-amber-400/80 hover:text-amber-300 uppercase tracking-widest mt-1 block">
+                  Want more? Join Pro waitlist →
+                </a>
+              )}
             </div>
           )}
         </div>
