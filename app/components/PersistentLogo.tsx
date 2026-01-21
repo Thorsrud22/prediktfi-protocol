@@ -38,7 +38,7 @@ export default function PersistentLogo() {
 
     return (
         <div
-            className={`fixed top-3 left-4 sm:left-6 z-50 transition-transform duration-300 ${scaleClass}`}
+            className={`fixed top-6 left-6 z-[9999] transition-transform duration-300 ${scaleClass}`}
         >
             <InstantLink
                 href="/"
