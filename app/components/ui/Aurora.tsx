@@ -119,9 +119,9 @@ export function Aurora(props: AuroraProps) {
         alpha: true,
         premultipliedAlpha: true,
         antialias: false,
-        powerPreference: 'default',
+        powerPreference: 'high-performance', // optimize for speed
         depth: false,
-        dpr: 1, // Standard resolution (1x) for best performance on all devices
+        dpr: Math.min(window.devicePixelRatio, 1.5), // Cap at 1.5 for better quality but good performance
       });
       const gl = renderer.gl;
       gl.clearColor(0, 0, 0, 0);
@@ -190,8 +190,9 @@ export function Aurora(props: AuroraProps) {
       let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
       let timeAccumulator = 0;
       let lastTime = performance.now();
+      let frameCount = 0;
 
-      // Pause rendering during scroll to prevent flicker
+      // Scroll pause handler - stop rendering while scrolling for smooth performance
       const handleScroll = () => {
         isScrolling = true;
         if (scrollTimeout) clearTimeout(scrollTimeout);
@@ -205,8 +206,12 @@ export function Aurora(props: AuroraProps) {
       const update = (t: number) => {
         animationFrameId = requestAnimationFrame(update);
 
-        // Skip rendering during scroll or when not visible
+        // Skip rendering when not visible or during scroll
         if (!isVisible || isScrolling) return;
+
+        // Throttle to 30fps (render every other frame)
+        frameCount++;
+        if (frameCount % 2 !== 0) return;
 
         // Calculate delta time
         const now = performance.now();
@@ -255,13 +260,8 @@ export function Aurora(props: AuroraProps) {
       cancelIdleCallback?: (handle: number) => void;
     };
 
-    if (idleWindow.requestIdleCallback) {
-      idleId = idleWindow.requestIdleCallback(() => {
-        startAurora();
-      }, { timeout: 300 });
-    } else {
-      startAurora();
-    }
+    // Force immediate start
+    startAurora();
 
     return () => {
       if (idleId !== null && idleWindow.cancelIdleCallback) {

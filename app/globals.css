@@ -3,7 +3,7 @@
 /* Force dark mode globally to prevent hydration issues */
 html {
   color-scheme: dark;
-  background-color: #0A0F1C;
+  background-color: transparent;
 }
 
 /* Force dark mode classes to always apply */
@@ -33,17 +33,12 @@ html {
 
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  background: #0F172A;
+  background: transparent;
   min-height: 100vh;
   /* Performance optimizations */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeSpeed;
-  /* Changed from optimizeLegibility for performance */
-  scroll-behavior: auto;
-  /* Remove smooth scrolling for better performance */
-  /* Critical scroll performance optimizations */
-  contain: layout style paint;
 }
 
 /* Performance optimizations for scrolling */
@@ -227,7 +222,7 @@ textarea:focus-visible {
 }
 
 body {
-  background: var(--bg);
+  /* background: var(--bg); -- Removed to allow Aurora visibility */
   color: var(--text);
   font-family: var(--font-sans);
   overflow-x: hidden;
@@ -408,7 +403,7 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-    transform: none !important;
+    /* Removed transform: none !important - was causing layout thrashing */
   }
 
   .skeleton::after {
