@@ -4,6 +4,10 @@ import { evaluateIdea } from "@/lib/ai/evaluator";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
 import { checkRateLimit } from "@/app/lib/ratelimit";
 
+// Vercel Serverless Function Config
+export const maxDuration = 60; // Max duration for Hobby (10s is default, can go up to 60)
+export const runtime = 'nodejs'; // Use Node.js runtime (not Edge) for full timeouts
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();

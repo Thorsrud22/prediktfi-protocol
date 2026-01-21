@@ -11,6 +11,10 @@ import { evaluateIdea } from "@/lib/ai/evaluator";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
 import { checkRateLimit } from "@/app/lib/ratelimit";
 
+// Vercel Serverless Function Config
+export const maxDuration = 60; // Max duration for Hobby (10s default)
+export const runtime = 'nodejs'; // Ensure Node.js runtime
+
 // Reasoning step templates based on project type
 const REASONING_STEPS: Record<string, string[]> = {
     memecoin: [
