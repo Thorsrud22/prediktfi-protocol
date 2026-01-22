@@ -146,7 +146,8 @@ export async function POST(request: NextRequest) {
 
             } catch (error) {
                 console.error("Streaming evaluation error:", error);
-                await sendEvent("error", { error: "Internal server error" });
+                const errorMessage = error instanceof Error ? error.message : "Unknown error";
+                await sendEvent("error", { error: errorMessage });
                 await writer.close();
             }
         })();
