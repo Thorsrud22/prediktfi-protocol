@@ -215,8 +215,11 @@ export function Aurora(props: AuroraProps) {
 
         // Calculate delta time
         const now = performance.now();
-        const dt = (now - lastTime) * 0.001; // seconds
+        let dt = (now - lastTime) * 0.001; // seconds
         lastTime = now;
+
+        // Cap dt to prevent large jumps when resuming from pause (e.g. scroll)
+        if (dt > 0.05) dt = 0.05;
 
         // Wrap time to avoid float precision loss (lag) over time
         // 1000 is arbitrary large number, period of sine is 2PI

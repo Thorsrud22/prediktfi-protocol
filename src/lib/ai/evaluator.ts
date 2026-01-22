@@ -196,17 +196,38 @@ ${JSON_OUTPUT_SCHEMA}`;
 
     // Call OpenAI
     // Call OpenAI
-    const response = await openai().chat.completions.create({
+    // Construct parameters based on model type
+    const isReasoningModel = model.startsWith('o1') || model.startsWith('gpt-5');
+
+    const params: any = {
       model: model,
       messages: [
         { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
         { role: "user", content: userContent }
       ],
-      // O1 models don't support response_format yet, but GPT-4o does.
-      // We'll leave it out for O1 or if uncertain, but keeping it for GPT-4o compatibility if model supports it.
-      // For safety with unknown "gpt-5.2", we'll check if it starts with 'o1'.
-      response_format: model.startsWith('o1') ? undefined : { type: "json_object" },
-    });
+    };
+
+    if (isReasoningModel) {
+      // Reasoning models (O1/GPT-5) handling
+      // 1. Use max_completion_tokens (though we let it default to max if not set)
+      // 2. reasoning_effort is supported on some O1 versions
+      if (model.startsWith('o1') && !model.includes('mini')) {
+        params.reasoning_effort = reasoningEffort;
+      }
+
+      // 3. Response Format
+      // Our tests confirmed gpt-5.2 supports json_object, but o1-preview/mini might not.
+      // We'll trust the config: if it's gpt-5.2, use JSON. If o1-preview, maybe skip.
+      if (!model.startsWith('o1-preview')) {
+        params.response_format = { type: "json_object" };
+      }
+    } else {
+      // Standard models (GPT-4o)
+      params.response_format = { type: "json_object" };
+    }
+
+    // Call OpenAI
+    const response = await openai().chat.completions.create(params);
 
     // Parse response
     let result = parseEvaluationResponse(response);

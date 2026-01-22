@@ -14,8 +14,8 @@ export default function Footer() {
             <a href="/legal/privacy" className="flex items-center h-full hover:text-white transition-colors">
               Privacy
             </a>
-            <a href="/methodology" className="flex items-center h-full hover:text-white transition-colors">
-              Methodology
+            <a href="/transparency" className="flex items-center h-full hover:text-white transition-colors">
+              Transparency
             </a>
             <a href="/about" className="flex items-center h-full hover:text-white transition-colors">
               About
