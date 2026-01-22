@@ -104,7 +104,7 @@ export default function PricingPage() {
       {/* Footer Note */}
       <div className="text-center pb-20 px-6">
         <p className="text-slate-500 text-xs uppercase tracking-widest font-bold">
-          Built for the <span className="text-slate-400">Solarpunk</span> Future
+          Built for the <span className="text-slate-400">Institutional</span> Future
         </p>
       </div>
 
