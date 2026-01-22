@@ -87,56 +87,7 @@ export async function middleware(request: NextRequest) {
   // Create response
   const response = NextResponse.next();
 
-  // ============================================
-  // ACCESS GATE (invite-only) — bypass in non-prod or when explicitly disabled
-  // ============================================
 
-  const gateDisabled =
-    process.env.NEXT_PUBLIC_DISABLE_ACCESS_GATE === '1' ||
-    process.env.NODE_ENV !== 'production';
-
-  if (!gateDisabled) {
-    // Define protected routes that require an access token
-    const isProtectedRoute =
-      pathname.startsWith('/studio') ||
-      pathname.includes('/idea-evaluator/') ||
-      pathname.startsWith('/api/studio') ||
-      pathname.startsWith('/api/idea-evaluator');
-
-    // Check for access token
-    const hasAccessToken = request.cookies.get('predikt_access')?.value;
-    const hasStatusCookie = request.cookies.get('predikt_auth_status')?.value;
-
-    if (isProtectedRoute) {
-      // If no access token, redirect to home or return 401
-      if (!hasAccessToken) {
-        if (pathname.startsWith('/api/')) {
-          return NextResponse.json(
-            { error: 'Unauthorized', message: 'Invite code required' },
-            { status: 401 }
-          );
-        } else {
-          // For page visits, redirect to home (or request access page)
-          const url = request.nextUrl.clone();
-          url.pathname = '/';
-          return NextResponse.redirect(url);
-        }
-      }
-    }
-
-    // We only set this if we are confident they are logged in. 
-    // Above we have a block that verifies the token. Ideally we'd pass a flag down.
-    // But checking existence of access token here is a decent proxy since invalid ones are stripped above.
-    if (hasAccessToken && !hasStatusCookie) {
-      response.cookies.set('predikt_auth_status', '1', {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60,
-        path: '/',
-      });
-    }
-  }
 
 
   // Apply security headers
