@@ -168,7 +168,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
-        projectType: undefined,
+        projectType: 'ai',
         teamSize: 'solo',
         resources: [],
         successDefinition: '',
@@ -395,7 +395,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
                                 <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                    Target Sector
+                                    Target Sector <span className="text-blue-400 ml-1">*</span>
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {[
@@ -431,7 +431,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                             <div>
                                 <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                    Data Input: Abstract
+                                    Data Input: Abstract <span className="text-blue-400 ml-1">*</span>
                                 </label>
                                 <textarea
                                     value={formData.description}
@@ -611,7 +611,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
                                 <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                    Team Composition
+                                    Team Composition <span className="text-blue-400 ml-1">*</span>
                                 </label>
                                 <div className="flex gap-4">
                                     {['solo', 'team_2_5', 'team_6_plus'].map((size) => (
@@ -814,7 +814,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
                                 <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                    Success Metric
+                                    Success Metric <span className="text-blue-400 ml-1">*</span>
                                 </label>
 
                                 {formData.projectType === 'memecoin' ? (
@@ -861,7 +861,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                             <div>
                                 <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                    Output Format
+                                    Output Format <span className="text-blue-400 ml-1">*</span>
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {[

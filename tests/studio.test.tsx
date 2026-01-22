@@ -122,11 +122,12 @@ describe('AI Idea Evaluator Studio', () => {
         // Wait for state update and check for any validation error
         await waitFor(() => {
             // Check for the error paragraph elements
-            const errorElement = screen.getByText(/Please select a project type/i);
+            const errorElement = screen.getByText(/Description is too short/i);
             expect(errorElement).toBeInTheDocument();
         });
 
-        expect(screen.getByText(/Description is too short/i)).toBeInTheDocument();
+        // Project Type should NOT error because it has a default
+        expect(screen.queryByText(/Please select a project type/i)).not.toBeInTheDocument();
     }, 15000);
 
     it('submits successfully with valid data through wizard steps', async () => {

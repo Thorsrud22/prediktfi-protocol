@@ -39,7 +39,11 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
         { label: 'Execution', value: 100 - (result.execution?.executionRiskScore || 50), fullMark: 100 }, // Invert risk for "Goodness" score
         { label: 'Tokenomics', value: result.tokenomics.designScore, fullMark: 100 },
         { label: 'Overall', value: result.overallScore, fullMark: 100 },
-    ];
+    ].filter(item => {
+        // Hide Tokenomics for AI projects unless they explicitly have a token
+        if (result.projectType === 'ai' && item.label === 'Tokenomics') return false;
+        return true;
+    });
 
     const getScoreColor = (score: number) => {
         if (score >= 75) return 'text-cyan-400';
@@ -162,14 +166,14 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                                 return (
                                     <div key={i} className="flex gap-4 items-start text-sm">
                                         <div className={`mt-0.5 min-w-[20px] h-5 rounded flex items-center justify-center text-[10px] font-black uppercase ${isNegative ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                                isPositive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                                                    'bg-slate-700 text-slate-400'
+                                            isPositive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                                                'bg-slate-700 text-slate-400'
                                             }`}>
                                             {isNegative ? '-' : isPositive ? '+' : 'i'}
                                         </div>
                                         <p className={`${isNegative ? 'text-red-200/80' :
-                                                isPositive ? 'text-emerald-200/80' :
-                                                    'text-slate-300'
+                                            isPositive ? 'text-emerald-200/80' :
+                                                'text-slate-300'
                                             } leading-relaxed font-medium`}>
                                             {note}
                                         </p>
@@ -249,7 +253,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
 
                 {/* SECURITY & HEALTH CHECK */}
                 {/* SECURITY & HEALTH CHECK */}
-                {result.cryptoNativeChecks && (
+                {result.cryptoNativeChecks && result.projectType !== 'ai' && (
                     <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl">
                         <div className="flex items-center justify-between mb-5 border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-blue-400">

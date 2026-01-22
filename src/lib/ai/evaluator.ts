@@ -241,6 +241,9 @@ ${JSON_OUTPUT_SCHEMA}`;
       ideaSubmission: input
     });
 
+    // Explicitly set project type for frontend logic
+    result.projectType = input.projectType;
+
     // Log to Langfuse
     generation.end({ output: result });
     trace.update({ output: result });
