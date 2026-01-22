@@ -19,8 +19,18 @@ JSON Structure Requirements:
   "categoryLabel": string, // e.g. "DeFi - Lending", "Memecoin - Animal"
   "crowdednessLevel": "empty" | "moderate" | "high" | "saturated",
   "shortLandscapeSummary": string, // 1-2 sentence high-level summary.
-  "referenceProjects": [
-    { "name": string, "chainOrPlatform": string, "note": string }
+    { 
+        "name": string, 
+        "chainOrPlatform": string, 
+        "note": string,
+        "metrics": {
+            "marketCap": string, // e.g. "$1.2B" or "N/A"
+            "tvl": string, // e.g. "$500M" or "N/A"
+            "dailyUsers": string, // e.g. "150k DAU" or "N/A"
+            "funding": string, // e.g. "$5M Seed" or "Bootstrapped"
+            "revenue": string // e.g. "$1M ARR" or "N/A"
+        }
+    }
   ],
   "tractionDifficulty": {
     "label": "low" | "medium" | "high" | "extreme",
@@ -60,6 +70,9 @@ Constraint:
 - Keep notes concise (under 20 words).
 - If the idea is nonsense, be honest in "evaluatorNotes".
 - For DeFi: Reference ACTUAL TVL numbers from DeFiLlama when comparing to competitors.
+- **CRITICAL**: Populate the "metrics" object for each reference project using the Web Search Context.
+    - Look for "raised", "funding", "TVL", "revenue", "users".
+    - If unknown, set to "N/A".
 `;
 
 /**

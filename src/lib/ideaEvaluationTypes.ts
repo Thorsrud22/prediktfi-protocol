@@ -35,6 +35,17 @@ export type IdeaEvaluationResult = {
     marketFitScore: number;
     targetAudience: string[];
     competitorSignals: string[];
+    competitors?: {
+      name: string;
+      price?: string;
+      metrics?: {
+        marketCap?: string;
+        tvl?: string;
+        dailyUsers?: string;
+        funding?: string;
+        revenue?: string;
+      };
+    }[];
     goToMarketRisks: string[];
   };
 

@@ -52,6 +52,13 @@ export interface ReferenceProject {
     name: string;
     chainOrPlatform: string;
     note: string;
+    metrics?: {
+        marketCap?: string;
+        tvl?: string;
+        dailyUsers?: string;
+        funding?: string; // e.g. "$5M Seed"
+        revenue?: string;
+    };
 }
 
 export type CompetitiveMemoResult =

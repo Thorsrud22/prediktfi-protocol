@@ -148,6 +148,18 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
     "marketFitScore": <number 0-100>,
     "targetAudience": ["<audience1>", "<audience2>"],
     "competitorSignals": ["<competitor1>", "<competitor2>"],
+    "competitors": [
+       {
+         "name": "<name>",
+         "metrics": {
+            "marketCap": "<val>",
+            "tvl": "<val>",
+            "dailyUsers": "<val>",
+            "funding": "<val>",
+            "revenue": "<val>"
+         }
+       }
+    ],
     "goToMarketRisks": ["<risk1>", "<risk2>"]
   },
   "execution": {

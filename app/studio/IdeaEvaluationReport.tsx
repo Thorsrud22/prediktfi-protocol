@@ -236,14 +236,62 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                             <Terminal size={18} />
                             <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Market Signals</h3>
                         </div>
-                        <ul className="space-y-3">
-                            {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
-                                <li key={i} className="flex gap-4 text-blue-200/90 text-sm leading-relaxed">
-                                    <span className="text-blue-400 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
-                                    <span>{signal}</span>
-                                </li>
-                            ))}
-                        </ul>
+
+                        {/* Structured Competitors (New) */}
+                        {result.market?.competitors && result.market.competitors.length > 0 ? (
+                            <div className="space-y-4">
+                                {result.market.competitors.slice(0, 3).map((comp, i) => (
+                                    <div key={i} className="bg-black/20 p-3 rounded-lg border border-blue-500/10 group hover:border-blue-500/30 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-blue-500/50 font-mono text-[10px] font-black">{(i + 1).toString().padStart(2, '0')}</span>
+                                                <span className="text-blue-100 font-bold text-sm tracking-tight">{comp.name}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Metrics Grid */}
+                                        {comp.metrics && (
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                {comp.metrics.funding && comp.metrics.funding !== 'N/A' && (
+                                                    <div className="bg-blue-500/5 px-2 py-1 rounded">
+                                                        <span className="text-[9px] uppercase text-blue-400/60 font-black tracking-wider block">Raised</span>
+                                                        <span className="text-xs text-blue-100 font-mono">{comp.metrics.funding}</span>
+                                                    </div>
+                                                )}
+                                                {comp.metrics.tvl && comp.metrics.tvl !== 'N/A' && (
+                                                    <div className="bg-blue-500/5 px-2 py-1 rounded">
+                                                        <span className="text-[9px] uppercase text-blue-400/60 font-black tracking-wider block">TVL</span>
+                                                        <span className="text-xs text-blue-100 font-mono">{comp.metrics.tvl}</span>
+                                                    </div>
+                                                )}
+                                                {comp.metrics.revenue && comp.metrics.revenue !== 'N/A' && (
+                                                    <div className="bg-blue-500/5 px-2 py-1 rounded">
+                                                        <span className="text-[9px] uppercase text-blue-400/60 font-black tracking-wider block">Est. Rev</span>
+                                                        <span className="text-xs text-blue-100 font-mono">{comp.metrics.revenue}</span>
+                                                    </div>
+                                                )}
+                                                {comp.metrics.dailyUsers && comp.metrics.dailyUsers !== 'N/A' && (
+                                                    <div className="bg-blue-500/5 px-2 py-1 rounded">
+                                                        <span className="text-[9px] uppercase text-blue-400/60 font-black tracking-wider block">Users</span>
+                                                        <span className="text-xs text-blue-100 font-mono">{comp.metrics.dailyUsers}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            /* Fallback to legacy string list */
+                            <ul className="space-y-3">
+                                {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
+                                    <li key={i} className="flex gap-4 text-blue-200/90 text-sm leading-relaxed">
+                                        <span className="text-blue-400 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
+                                        <span>{signal}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
 
                     {/* RISK FACTORS */}
