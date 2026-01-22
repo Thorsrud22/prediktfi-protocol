@@ -24,6 +24,13 @@ export type IdeaEvaluationResult = {
     suggestions: string[];
   };
 
+  aiStrategy?: {
+    modelQualityScore: number;
+    dataMoatScore: number;
+    userAcquisitionScore: number;
+    notes: string[];
+  };
+
   market: {
     marketFitScore: number;
     targetAudience: string[];

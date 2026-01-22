@@ -66,6 +66,12 @@ TONE INSTRUCTIONS (Context-Aware):
   - Focus on: Moat, Defensibility, Technical Debt.
   - IF 'AI Model Strategy' IS 'Wrapper': Be highly skepticism of "Moat".
   - IF 'AI Data Moat' IS 'Public Scraping': Penalize defensibility scrore.
+  - YOU MUST FILL the 'aiStrategy' block:
+    - 'modelQualityScore': 0-100 based on model choice (fine-tuned > wrapper).
+    - 'dataMoatScore': 0-100 based on proprietary data.
+    - 'userAcquisitionScore': 0-100 based on GTM.
+    - 'notes': specific comments on these factors.
+  - IGNORE 'tokenomics' block for AI projects (fill with nulls or empty arrays if needed, but 'aiStrategy' is priority).
 
 CRITICAL:
 - Your "mainVerdict" MUST be a direct thesis statement (e.g., "Pass - Liquidity risk too high" or "Watchlist - Strong tech but early").
@@ -131,6 +137,12 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
     "designScore": <number 0-100>,
     "mainIssues": ["<issue1>", "<issue2>"],
     "suggestions": ["<suggestion1>", "<suggestion2>"]
+  },
+  "aiStrategy": {
+    "modelQualityScore": <number 0-100>,
+    "dataMoatScore": <number 0-100>,
+    "userAcquisitionScore": <number 0-100>,
+    "notes": ["<note1>", "<note2>"]
   },
   "market": {
     "marketFitScore": <number 0-100>,

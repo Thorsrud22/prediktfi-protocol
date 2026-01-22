@@ -33,17 +33,29 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
     const [bonusStatus, setBonusStatus] = React.useState<'idle' | 'claiming' | 'claimed' | 'error'>('idle');
 
     // Prepare Chart Data
-    const chartData = [
-        { label: 'Technical', value: result.technical.feasibilityScore, fullMark: 100 },
-        { label: 'Market', value: result.market.marketFitScore, fullMark: 100 },
-        { label: 'Execution', value: 100 - (result.execution?.executionRiskScore || 50), fullMark: 100 }, // Invert risk for "Goodness" score
-        { label: 'Tokenomics', value: result.tokenomics.designScore, fullMark: 100 },
-        { label: 'Overall', value: result.overallScore, fullMark: 100 },
-    ].filter(item => {
-        // Hide Tokenomics for AI projects unless they explicitly have a token
-        if (result.projectType === 'ai' && item.label === 'Tokenomics') return false;
-        return true;
-    });
+    // Prepare Chart Data
+    const chartData = React.useMemo(() => {
+        const baseData = [
+            { label: 'Technical', value: result.technical.feasibilityScore, fullMark: 100 },
+            { label: 'Market', value: result.market.marketFitScore, fullMark: 100 },
+            { label: 'Execution', value: 100 - (result.execution?.executionRiskScore || 50), fullMark: 100 },
+        ];
+
+        if (result.projectType === 'ai') {
+            // For AI, Use AI Strategy Score (Average of sub-scores)
+            const aiScore = result.aiStrategy
+                ? Math.round((result.aiStrategy.modelQualityScore + result.aiStrategy.dataMoatScore + result.aiStrategy.userAcquisitionScore) / 3)
+                : 50; // Fallback
+
+            baseData.push({ label: 'AI Strategy', value: aiScore, fullMark: 100 });
+        } else {
+            baseData.push({ label: 'Tokenomics', value: result.tokenomics.designScore, fullMark: 100 });
+        }
+
+        baseData.push({ label: 'Overall', value: result.overallScore, fullMark: 100 });
+
+        return baseData;
+    }, [result]);
 
     const getScoreColor = (score: number) => {
         if (score >= 75) return 'text-cyan-400';
@@ -287,6 +299,50 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                                 </span>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* AI STRATEGY DEEP DIVE */}
+                {result.projectType === 'ai' && result.aiStrategy && (
+                    <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl">
+                        <div className="flex items-center justify-between mb-5 border-b border-white/10 pb-3">
+                            <div className="flex items-center gap-2 text-cyan-400">
+                                <Sparkles size={18} />
+                                <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">AI Strategy Core</h3>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                            <div>
+                                <div className="text-[10px] text-white/40 font-black uppercase tracking-widest italic mb-1">Model Quality</div>
+                                <div className={`text-2xl font-black italic ${getScoreColor(result.aiStrategy.modelQualityScore)}`}>
+                                    {result.aiStrategy.modelQualityScore}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[10px] text-white/40 font-black uppercase tracking-widest italic mb-1">Data Moat</div>
+                                <div className={`text-2xl font-black italic ${getScoreColor(result.aiStrategy.dataMoatScore)}`}>
+                                    {result.aiStrategy.dataMoatScore}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[10px] text-white/40 font-black uppercase tracking-widest italic mb-1">Acquisition</div>
+                                <div className={`text-2xl font-black italic ${getScoreColor(result.aiStrategy.userAcquisitionScore)}`}>
+                                    {result.aiStrategy.userAcquisitionScore}
+                                </div>
+                            </div>
+                        </div>
+
+                        {(result.aiStrategy.notes?.length > 0) && (
+                            <ul className="space-y-2">
+                                {result.aiStrategy.notes.map((note, i) => (
+                                    <li key={i} className="flex gap-3 text-sm text-white/70">
+                                        <span className="text-cyan-500/50">•</span>
+                                        <span>{note}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 )}
 
