@@ -5,7 +5,7 @@ import { Check, ArrowRight } from 'lucide-react'
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen text-slate-100 selection:bg-blue-500/30">
 
       {/* Header */}
       <div className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 px-6 text-center z-10">
