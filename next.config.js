@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Performance: External packages that should not be bundled
   serverExternalPackages: ['@solana/web3.js', '@coral-xyz/anchor'],
 

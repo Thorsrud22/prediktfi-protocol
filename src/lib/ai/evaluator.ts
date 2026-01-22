@@ -65,11 +65,9 @@ export function buildIdeaContextSummary(idea: IdeaSubmission): string {
  */
 function getEnvModelConfig() {
   const model = process.env.EVAL_MODEL || "gpt-5.2";
-  const approvedModels = ["gpt-5.2", "gpt-5.2-pro", "o1-preview", "o1"];
-
-  if (!approvedModels.includes(model)) {
-    throw new Error(`Configured model '${model}' is not in the allowlist.`);
-  }
+  // We used to enforce an allowlist here, but to support fallback logic 
+  // and newer models without code changes, we now allow any string.
+  // The API call will fail/fallback if invalid.
 
   return {
     model,
@@ -226,8 +224,29 @@ ${JSON_OUTPUT_SCHEMA}`;
       params.response_format = { type: "json_object" };
     }
 
-    // Call OpenAI
-    const response = await openai().chat.completions.create(params);
+    // Call OpenAI with Fallback Logic
+    let response;
+    try {
+      response = await openai().chat.completions.create(params);
+    } catch (error: any) {
+      // Check for specific error codes suggesting model unavailability or invalid params
+      const isModelError = error.status === 404 || error.status === 400 || (error.message && (error.message.includes('model') || error.message.includes('found')));
+
+      if (isModelError && model !== 'gpt-4o') {
+        console.warn(`[Evaluator] Primary model '${model}' failed (${error.status}). Falling back to 'gpt-4o'.`);
+
+        // Retry with gpt-4o
+        const fallbackParams = {
+          model: 'gpt-4o',
+          messages: params.messages,
+          response_format: { type: "json_object" }
+        };
+
+        response = await openai().chat.completions.create(fallbackParams as any);
+      } else {
+        throw error; // Re-throw if it's not a recoverable model error
+      }
+    }
 
     // Parse response
     let result = parseEvaluationResponse(response);
