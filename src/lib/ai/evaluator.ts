@@ -243,15 +243,20 @@ ${JSON_OUTPUT_SCHEMA}`;
         response = await openai().chat.completions.create(params);
       }
     } catch (error: any) {
-      // Check for specific error codes suggesting model unavailability or invalid params
-      const isModelError = error.status === 404 || error.status === 400 || (error.message && (error.message.includes('model') || error.message.includes('found')));
+      // Catch-all: If it's a model error OR if the SDK failed (e.g. responses API missing), fallback.
+      // We want to be aggressive with fallback here to ensure user gets a result.
+      const shouldFallback =
+        error.status === 404 ||
+        error.status === 400 ||
+        (error.message && (error.message.includes('model') || error.message.includes('found') || error.message.includes('not a function'))) ||
+        error instanceof TypeError; // Catch SDK compatibility issues
 
-      if (isModelError && model !== 'gpt-4o') {
-        console.warn(`[Evaluator] Primary model '${model}' failed (${error.status}). Falling back to 'gpt-4o'.`);
+      if (shouldFallback && model !== 'gpt-5.2-chat-latest') {
+        console.warn(`[Evaluator] Primary model '${model}' failed (${error.message || error.status}). Falling back to 'gpt-5.2-chat-latest'.`);
 
-        // Retry with gpt-4o
+        // Retry with gpt-5.2-chat-latest
         const fallbackParams = {
-          model: 'gpt-4o',
+          model: 'gpt-5.2-chat-latest',
           messages: messages,
           response_format: { type: "json_object" }
         };
