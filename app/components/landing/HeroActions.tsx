@@ -63,7 +63,7 @@ export default function HeroActions() {
             ) : (
                 <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
                     <InstantLink
-                        href="/request-access"
+                        href="/pricing"
                         className="btn-shimmer px-12 py-5 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] italic shadow-lg shadow-blue-900/40 transition-all duration-300 hover:brightness-110"
                     >
                         <span className="relative">

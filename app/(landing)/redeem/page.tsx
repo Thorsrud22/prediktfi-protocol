@@ -90,7 +90,7 @@ export default function RedeemPage() {
 
                             <p className="text-slate-500 text-sm mt-6 text-center">
                                 Don&apos;t have a code?{' '}
-                                <Link href="/request-access" className="text-blue-400 hover:text-blue-300">
+                                <Link href="/pricing" className="text-blue-400 hover:text-blue-300">
                                     Request access
                                 </Link>
                             </p>

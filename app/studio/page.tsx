@@ -85,7 +85,7 @@ export default function StudioPage() {
 
       if (!response.ok) {
         if (response.status === 429) {
-          throw new Error('Daily limit reached. Your limit resets at midnight UTC. Want unlimited access? Join the Pro waitlist at /request-access');
+          throw new Error('Daily limit reached. Your limit resets at midnight UTC. Want unlimited access? Join the Pro waitlist at /pricing');
         }
         throw new Error('Evaluation failed');
       }
@@ -244,7 +244,7 @@ export default function StudioPage() {
                 {quota.remaining === -1 ? 'UNLIMITED' : `${quota.remaining}/${quota.limit}`}
               </div>
               {quota.remaining === 0 && (
-                <a href="/request-access" className="text-[9px] text-amber-400/80 hover:text-amber-300 uppercase tracking-widest mt-1 block">
+                <a href="/pricing" className="text-[9px] text-amber-400/80 hover:text-amber-300 uppercase tracking-widest mt-1 block">
                   Want more? Join Pro waitlist →
                 </a>
               )}
