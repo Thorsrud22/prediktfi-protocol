@@ -8,22 +8,7 @@ import HeroActions from '../components/landing/HeroActions';
 export const dynamic = "force-static";
 export const revalidate = 86400;
 
-// Server Component - static content pre-rendered
-async function getHomeData() {
-  // Simulate API fetch for stats
-  return {
-    stats: {
-      activePredictions: 1234,
-      totalVolume: 2.5,
-      accuracyRate: 89,
-      activeCreators: 5678,
-    },
-  };
-}
-
 export default async function Home() {
-  const data = await getHomeData();
-
   return (
     <div className="relative min-h-screen">
       {/* Hero Section */}
@@ -60,26 +45,6 @@ export default async function Home() {
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
               Risk Modeling
             </div>
-          </div>
-
-          {/* Stats Grid - Enhanced with Institutional Styling */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 pt-16 sm:pt-24 max-w-5xl mx-auto">
-            {[
-              { label: 'Protocols Audited', value: `${data.stats.activePredictions.toLocaleString()}` },
-              { label: 'Capital Evaluated', value: `${data.stats.totalVolume}M+` },
-              { label: 'Risk Detection', value: `${data.stats.accuracyRate}%` },
-              { label: 'Signals Identified', value: `${data.stats.activeCreators.toLocaleString()}` },
-            ].map((stat, i) => (
-
-              <div key={i} className="p-6 md:p-8 bg-slate-900/80 rounded-[32px] border border-white/5 flex flex-col items-center justify-center group hover:bg-slate-900 transition-all duration-500 hover:border-blue-500/20 shadow-xl">
-                <div className="text-3xl md:text-5xl font-black text-white mb-2 tracking-tighter italic group-hover:text-blue-400 transition-colors">
-                  {stat.value}
-                </div>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] italic text-slate-500 group-hover:text-slate-400 transition-colors text-center">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
           </div>
 
         </div>
