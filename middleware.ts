@@ -89,7 +89,6 @@ export async function middleware(request: NextRequest) {
 
 
 
-
   // Apply security headers
   applySecurityHeaders(response);
 
