@@ -21,6 +21,7 @@ function getOpenAIClient(): OpenAI {
 
     openaiInstance = new OpenAI({
         apiKey,
+        timeout: 50 * 1000, // 50s timeout to trigger fallback before Vercel Hobby limit (60s)
     });
 
     return openaiInstance;
