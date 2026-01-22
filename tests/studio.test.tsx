@@ -33,6 +33,48 @@ vi.mock('../app/components/ui/Aurora', () => ({
     },
 }));
 
+// Mock the ideaSchema to ensure validation works correctly in tests
+vi.mock('@/lib/ideaSchema', async () => {
+    const { z } = await import('zod');
+    const schema = z.object({
+        description: z.string().min(10, 'Description must be at least 10 characters long'),
+        projectType: z.enum(['memecoin', 'defi', 'nft', 'game', 'ai', 'other'], {
+            errorMap: () => ({ message: 'Please select a project type' }),
+        }),
+        teamSize: z.enum(['solo', 'team_2_5', 'team_6_plus'], {
+            errorMap: () => ({ message: 'Please select a team size' }),
+        }),
+        resources: z.array(z.string()).optional(),
+        successDefinition: z.string().min(5, 'Please define what success means to you'),
+        attachments: z.string().optional(),
+        responseStyle: z.enum(['short', 'full', 'next_steps'], {
+            errorMap: () => ({ message: 'Please select a response style' }),
+        }),
+        focusHints: z.array(z.string()).optional(),
+        // Add new optional fields to match real schema to prevent "unrecognized key" stripping if z.strict() was used (it's not but safe practice)
+        memecoinNarrative: z.string().optional(),
+        memecoinVibe: z.string().optional(),
+        defiRevenue: z.string().optional(),
+        defiMechanism: z.string().optional(),
+        aiModelType: z.string().optional(),
+        aiDataMoat: z.string().optional(),
+        defiSecurityMarks: z.array(z.string()).optional(),
+        memecoinLaunchPreparation: z.array(z.string()).optional(),
+        aiInfraReadiness: z.array(z.string()).optional(),
+        targetTVL: z.string().optional(),
+        targetMarketCap: z.string().optional(),
+        targetDAU: z.string().optional(),
+        mvpScope: z.string().optional(),
+        goToMarketPlan: z.string().optional(),
+        launchLiquidityPlan: z.string().optional(),
+        tokenAddress: z.string().optional(),
+    });
+    return {
+        ideaSubmissionSchema: schema,
+        IdeaSubmission: {} as any,
+    };
+});
+
 // Mock fetch for API calls
 global.fetch = vi.fn();
 
@@ -51,7 +93,59 @@ describe('AI Idea Evaluator Studio', () => {
             }
             return Promise.resolve({ ok: true, json: async () => ({}) });
         });
+
+        // Mock window.alert
+        window.alert = vi.fn();
     });
+
+    it('renders the landing view initially', () => {
+        render(<StudioPage />);
+
+        // Check for heading content
+        const heading = screen.getByRole('heading', { level: 1 });
+        expect(heading).toHaveTextContent(/AI Idea Evaluator/i);
+        expect(heading).toHaveTextContent(/Studio/i);
+
+        // Check for description (partial match is safer with <br> tags)
+        expect(screen.getByText(/Validate your crypto, memecoin, or web3 project ideas instantly/i)).toBeInTheDocument();
+
+        // Check for new button text (Title Case)
+        expect(screen.getByRole('button', { name: /Start New Evaluation/i })).toBeInTheDocument();
+    });
+
+    it('switches to evaluation flow when CTA is clicked', () => {
+        render(<StudioPage />);
+
+        const ctaButton = screen.getByRole('button', { name: /Start new evaluation/i });
+        fireEvent.click(ctaButton);
+
+        expect(screen.getByText('Submit Your Idea')).toBeInTheDocument();
+        expect(screen.getByText('Project Type')).toBeInTheDocument();
+    });
+
+    it('shows validation errors when submitting empty form', async () => {
+        render(<StudioPage />);
+
+        // Enter flow
+        fireEvent.click(screen.getByRole('button', { name: /Start new evaluation/i }));
+
+        // Get the form and submit it
+        const form = screen.getByRole('button', { name: /Evaluate Idea/i }).closest('form')!;
+
+        // Trigger form submit
+        fireEvent.submit(form);
+
+        // Wait for state update and check for any validation error
+        await waitFor(() => {
+            // Check for the error paragraph elements (they have class text-red-400)
+            const errorElements = document.querySelectorAll('p.text-red-400');
+            expect(errorElements.length).toBeGreaterThan(0);
+        }, { timeout: 5000 });
+
+        // Now check for specific messages
+        expect(screen.getByText('Please select a project type')).toBeInTheDocument();
+        expect(screen.getByText('Description must be at least 10 characters long')).toBeInTheDocument();
+    }, 15000);
 
     it('submits successfully with valid data through wizard steps', async () => {
         // Mock API responses based on URL
