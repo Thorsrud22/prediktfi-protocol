@@ -3,30 +3,30 @@ import { getUserSubscription } from '@/lib/subscription';
 import { getWalletIdentifier } from '@/lib/rate-limit-wallet';
 import { isFeatureEnabled } from '@/lib/flags';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
     // Check if monetization is enabled
     if (!isFeatureEnabled('MONETIZATION')) {
-      return NextResponse.json({ 
-        tier: 'free', 
-        isPro: false, 
-        quotas: null 
+      return NextResponse.json({
+        tier: 'free',
+        isPro: false,
+        quotas: null
       });
     }
 
     const walletId = getWalletIdentifier(request);
     if (!walletId) {
-      return NextResponse.json({ 
-        tier: 'free', 
-        isPro: false, 
-        quotas: null 
+      return NextResponse.json({
+        tier: 'free',
+        isPro: false,
+        quotas: null
       });
     }
 
     const subscription = await getUserSubscription(walletId);
-    
+
     return NextResponse.json({
       tier: subscription.tier.toLowerCase(),
       isPro: subscription.isPro,
@@ -36,10 +36,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Subscription status error:', error);
-    return NextResponse.json({ 
-      tier: 'free', 
-      isPro: false, 
-      quotas: null 
+    return NextResponse.json({
+      tier: 'free',
+      isPro: false,
+      quotas: null
     });
   }
 }
