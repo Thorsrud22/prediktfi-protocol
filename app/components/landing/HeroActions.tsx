@@ -1,3 +1,5 @@
+import { InstantLink } from '../InstantLink';
+
 export default function HeroActions() {
     // Static view - no client-side checks needed anymore
     // This resolves hydration mismatches by ensuring server and client always render the same thing.
