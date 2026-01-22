@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { Connection, PublicKey, ParsedTransactionWithMeta } from '@solana/web3.js';
 import { getSolanaConnection, getPaymentWallet, getUsdcMint } from '@/src/lib/solana';
 import { upgradeToPro } from '@/lib/subscription';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/app/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,7 +63,7 @@ export async function GET(request: NextRequest) {
         // Check if this is a USDC transfer
         if (invoice.token === 'USDC') {
           const usdcTransfer = tx.meta.postTokenBalances?.find(
-            (balance: any) => 
+            (balance: any) =>
               balance.mint === usdcMint.toString() &&
               balance.owner === paymentWallet.toString() &&
               balance.uiTokenAmount.uiAmount === invoice.amountUsd

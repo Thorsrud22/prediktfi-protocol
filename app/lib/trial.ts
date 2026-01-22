@@ -1,9 +1,6 @@
-import 'server-only';
-import { PrismaClient } from '@prisma/client';
 import { TrialTriggerType } from '@prisma/client';
+import { prisma } from './prisma';
 import { startProTrial, canStartTrial } from './subscription';
-
-const prisma = new PrismaClient();
 
 export interface TrialEligibility {
   canStart: boolean;
@@ -41,8 +38,8 @@ export async function checkTrialEligibility(walletId: string): Promise<TrialElig
 
   return {
     canStart: canStartTrialFromShares,
-    reason: canStartTrialFromShares 
-      ? undefined 
+    reason: canStartTrialFromShares
+      ? undefined
       : `Need ${requiredCount - sharedCount} more shared receipts`,
     sharedCount,
     requiredCount,
@@ -54,7 +51,7 @@ export async function checkTrialEligibility(walletId: string): Promise<TrialElig
  */
 export async function startTrialFromSharing(walletId: string): Promise<{ success: boolean; message: string }> {
   const eligibility = await checkTrialEligibility(walletId);
-  
+
   if (!eligibility.canStart) {
     return {
       success: false,

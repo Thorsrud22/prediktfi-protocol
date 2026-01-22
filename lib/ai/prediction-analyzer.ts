@@ -287,6 +287,7 @@ Focus on being realistic and data-driven. Consider:
       eth: 'ethereum',
       solana: 'solana',
       sol: 'solana',
+      sui: 'sui',
     };
 
     return Object.keys(cryptoMap)

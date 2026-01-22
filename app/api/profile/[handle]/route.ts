@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '../../../lib/prisma';
+import { prisma } from '@/app/lib/prisma';
 import { validateCreatorHandle } from '../../../lib/url-validation';
 import { calculateBrierMetrics, calculateCalibrationBins, type CalibrationBin } from '../../../../lib/score';
 
@@ -51,7 +51,7 @@ export async function GET(
 ) {
   try {
     const { handle } = await params;
-    
+
     if (!handle) {
       return NextResponse.json(
         { error: 'Handle is required' },
@@ -69,7 +69,7 @@ export async function GET(
     }
 
     const decodedHandle = handleValidation.sanitized!;
-    
+
     // Try to find creator by handle first, then by hashed id
     let creator = await prisma.creator.findUnique({
       where: { handle: decodedHandle },
@@ -86,7 +86,7 @@ export async function GET(
         }
       }
     });
-    
+
     // If not found by handle, try to find by hashed id
     if (!creator) {
       creator = await prisma.creator.findUnique({
@@ -105,32 +105,32 @@ export async function GET(
         }
       });
     }
-    
+
     if (!creator) {
       return NextResponse.json(
         { error: 'Creator not found' },
         { status: 404 }
       );
     }
-    
+
     // Calculate stats
     const allInsights = creator.insights;
-    const resolvedInsights = allInsights.filter(insight => 
+    const resolvedInsights = allInsights.filter(insight =>
       insight.status === 'RESOLVED' && insight.outcomes.length > 0
     );
-    const pendingInsights = allInsights.filter(insight => 
+    const pendingInsights = allInsights.filter(insight =>
       insight.status !== 'RESOLVED'
     );
-    
+
     // Filter for 90-day period
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    const recent90dInsights = allInsights.filter(insight => 
+    const recent90dInsights = allInsights.filter(insight =>
       insight.createdAt >= ninetyDaysAgo
     );
-    const recent90dResolved = recent90dInsights.filter(insight => 
+    const recent90dResolved = recent90dInsights.filter(insight =>
       insight.status === 'RESOLVED' && insight.outcomes.length > 0
     );
-    
+
     // Prepare predictions for metric calculations
     const allPredictions = resolvedInsights
       .filter(insight => insight.p !== null)
@@ -138,18 +138,18 @@ export async function GET(
         predicted: typeof insight.p === 'number' ? insight.p : insight.p!.toNumber(),
         actual: insight.outcomes[0].result as 'YES' | 'NO' | 'INVALID'
       }));
-    
+
     const recent90dPredictions = recent90dResolved
       .filter(insight => insight.p !== null)
       .map(insight => ({
         predicted: typeof insight.p === 'number' ? insight.p : insight.p!.toNumber(),
         actual: insight.outcomes[0].result as 'YES' | 'NO' | 'INVALID'
       }));
-    
+
     // Calculate metrics
     const allMetrics = calculateBrierMetrics(allPredictions);
     const recent90dMetrics = calculateBrierMetrics(recent90dPredictions);
-    
+
     // Use stored calibration bins if available, otherwise calculate
     let calibrationBins = calculateCalibrationBins(allPredictions);
     if (creator.calibration) {
@@ -162,21 +162,21 @@ export async function GET(
         console.warn('Failed to parse stored calibration data:', error);
       }
     }
-    
+
     // Prepare recent insights with Brier scores
     const recentInsights = allInsights.slice(0, 20).map(insight => {
       let brierScore: number | undefined;
-      
-      if (insight.status === 'RESOLVED' && 
-          insight.outcomes.length > 0 && 
-          insight.p !== null &&
-          insight.outcomes[0].result !== 'INVALID') {
-        
+
+      if (insight.status === 'RESOLVED' &&
+        insight.outcomes.length > 0 &&
+        insight.p !== null &&
+        insight.outcomes[0].result !== 'INVALID') {
+
         const predicted = typeof insight.p === 'number' ? insight.p : insight.p!.toNumber();
         const actual = insight.outcomes[0].result === 'YES' ? 1 : 0;
         brierScore = Math.pow(predicted - actual, 2);
       }
-      
+
       return {
         id: insight.id,
         question: insight.question,
@@ -188,7 +188,7 @@ export async function GET(
         resolvedAt: insight.outcomes.length > 0 ? insight.outcomes[0].decidedAt.toISOString() : undefined
       };
     });
-    
+
     // Calculate ranks (simplified - in production you'd cache these)
     const allCreators = await prisma.creator.findMany({
       where: {
@@ -200,12 +200,12 @@ export async function GET(
       },
       orderBy: { score: 'desc' }
     });
-    
+
     const overallRank = allCreators.findIndex(c => c.id === creator.id) + 1;
-    
+
     // For 90d rank, we'd need more complex query - simplified for now
     const period90dRank = overallRank; // TODO: Implement proper 90d ranking
-    
+
     const response: ProfileResponse = {
       creator: {
         id: creator.id,
@@ -233,9 +233,9 @@ export async function GET(
         period90d: period90dRank
       }
     };
-    
+
     return NextResponse.json(response);
-    
+
   } catch (error) {
     console.error('Profile API error:', error);
     return NextResponse.json(

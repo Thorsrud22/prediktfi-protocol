@@ -1,8 +1,5 @@
-import 'server-only';
-import { PrismaClient } from '@prisma/client';
 import { UserTier, SubscriptionStatus, QuotaType, TrialTriggerType } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from './prisma';
 
 export interface QuotaLimits {
   intentsWeekly: number;
@@ -97,7 +94,7 @@ export async function getUserSubscription(walletId: string): Promise<UserSubscri
   // Check if plan has expired (for paid plans)
   const planExpiresAt = subscription.planExpiresAt;
   const isPlanExpired = planExpiresAt ? new Date() > planExpiresAt : false;
-  
+
   // If plan expired, downgrade to free
   if (isPlanExpired && subscription.tier === 'PRO') {
     await prisma.userSubscription.update({

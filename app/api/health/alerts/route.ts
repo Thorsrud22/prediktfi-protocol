@@ -1,8 +1,6 @@
 // app/api/health/alerts/route.ts
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/app/lib/prisma';
 import { isFeatureEnabled } from '../../../lib/flags';
 
 export async function GET() {
@@ -40,7 +38,7 @@ export async function GET() {
         const activeRules = await prisma.alertRule.count({
           where: { enabled: true }
         });
-        
+
         const pendingAlerts = await prisma.alertEvent.count({
           where: { delivered: false }
         });
@@ -63,7 +61,7 @@ export async function GET() {
     }
 
     const statusCode = health.status === 'healthy' ? 200 : 503;
-    
+
     return NextResponse.json(health, { status: statusCode });
   } catch (error) {
     console.error('Health check failed:', error);

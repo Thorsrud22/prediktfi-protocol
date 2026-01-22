@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/app/lib/prisma';
 import { calculateBrierMetrics, calculateCalibrationBins } from '@/lib/score';
 
 interface CalibrationHighlight {

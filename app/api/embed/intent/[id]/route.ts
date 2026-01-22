@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { isFeatureEnabled } from '../../../../lib/flags';
-import { prisma } from '../../../../lib/prisma';
+import { prisma } from '@/app/lib/prisma';
 
 export async function GET(
   request: NextRequest,
@@ -18,7 +18,7 @@ export async function GET(
 
   try {
     const { id: intentId } = await params;
-    
+
     // Get intent with latest receipt
     const intent = await prisma.intent.findUnique({
       where: { id: intentId },
@@ -29,16 +29,16 @@ export async function GET(
         }
       }
     });
-    
+
     if (!intent) {
       return new NextResponse('Intent not found', { status: 404 });
     }
-    
+
     const latestReceipt = intent.receipts[0];
-    
+
     // Generate HTML for iframe
     const html = generateEmbedHTML(intent, latestReceipt);
-    
+
     return new NextResponse(html, {
       headers: {
         'Content-Type': 'text/html',
@@ -46,7 +46,7 @@ export async function GET(
         'Cache-Control': 'public, max-age=60, s-maxage=300'
       }
     });
-    
+
   } catch (error) {
     console.error('Embed intent page error:', error);
     return new NextResponse('Internal server error', { status: 500 });
@@ -55,14 +55,14 @@ export async function GET(
 
 function generateEmbedHTML(intent: any, receipt: any) {
   const statusColor = getStatusColor(receipt?.status);
-  
+
   // Generate OG meta tags for social sharing
   const ogTitle = `Predikt Trade: ${intent.side} ${intent.base}/${intent.quote}`;
   const ogDescription = `Trading intent with ${Math.round(intent.confidence * 100)}% confidence. ${intent.rationale?.substring(0, 100)}...`;
   const ogImage = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://predikt.fi'}/api/og/intent/${intent.id}`;
   const ogUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://predikt.fi'}/embed/intent/${intent.id}`;
   const statusIcon = getStatusIcon(receipt?.status);
-  
+
   return `
 <!DOCTYPE html>
 <html lang="en">

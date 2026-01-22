@@ -4,10 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/app/lib/prisma';
 import { isProvisional } from '../../../lib/creatorScore';
-
-const prisma = new PrismaClient();
 
 export interface CreatorProfileResponse {
   creator: {
@@ -54,14 +52,14 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Creator ID is required' },
         { status: 400 }
       );
     }
-    
+
     console.time(`creatorProfile:fetchCreator:${id}`);
     const creator = await prisma.creator.findUnique({
       where: { id },
@@ -83,18 +81,18 @@ export async function GET(
       }
     });
     console.timeEnd(`creatorProfile:fetchCreator:${id}`);
-    
+
     if (!creator) {
       return NextResponse.json(
         { error: 'Creator not found' },
         { status: 404 }
       );
     }
-    
+
     // Get 90 days of CreatorDaily data
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-    
+
     console.time(`creatorProfile:dailyRecords:${id}`);
     const [dailyRecords, resolvedInsights] = await Promise.all([
       prisma.creatorDaily.findMany({
@@ -116,7 +114,7 @@ export async function GET(
       })
     ]);
     console.timeEnd(`creatorProfile:dailyRecords:${id}`);
-    
+
     // Calculate current score components from latest daily record
     const latestRecord = dailyRecords[dailyRecords.length - 1];
     const scoreComponents = latestRecord ? {
@@ -130,7 +128,7 @@ export async function GET(
       volumeScore: 0,
       recencyScore: 0
     };
-    
+
     // Calculate stats
     const totalInsights = creator._count.insights;
 
@@ -148,25 +146,25 @@ export async function GET(
       resolvedInsights === 0
         ? Promise.resolve(0)
         : prisma.creator.count({
-            where: {
-              score: { gte: creator.score },
-              insights: {
-                some: {
-                  status: 'RESOLVED'
-                }
+          where: {
+            score: { gte: creator.score },
+            insights: {
+              some: {
+                status: 'RESOLVED'
               }
             }
-          });
+          }
+        });
 
     const period90dRankCountPromise =
       resolvedInsights === 0 || !latestDay
         ? Promise.resolve(0)
         : prisma.creatorDaily.count({
-            where: {
-              day: latestDay,
-              score: { gte: latestScore }
-            }
-          });
+          where: {
+            day: latestDay,
+            score: { gte: latestScore }
+          }
+        });
 
     console.time(`creatorProfile:ranksAndPending:${id}`);
     const [pendingInsights, overallRankCount, period90dRankCount] = await Promise.all([
@@ -175,10 +173,10 @@ export async function GET(
       period90dRankCountPromise
     ]);
     console.timeEnd(`creatorProfile:ranksAndPending:${id}`);
-    
+
     const maturedInsights = latestRecord?.maturedN || 0;
     const isProvisionalFlag = isProvisional(maturedInsights);
-    
+
     // Prepare daily data for graphs
     const dailyData = dailyRecords.map(record => ({
       date: record.day.toISOString().split('T')[0],
@@ -189,11 +187,11 @@ export async function GET(
       recencyScore: record.recencyScore,
       maturedN: record.maturedN
     }));
-    
+
     // Calculate ranks
     const overallRank = overallRankCount;
     const period90dRank = latestDay ? period90dRankCount : overallRankCount;
-    
+
     const response: CreatorProfileResponse = {
       creator: {
         id: creator.id,
@@ -219,16 +217,14 @@ export async function GET(
         period90d: period90dRank
       }
     };
-    
+
     return NextResponse.json(response);
-    
+
   } catch (error) {
     console.error('Creator profile API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

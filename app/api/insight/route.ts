@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ulid } from 'ulid';
 import { z } from 'zod';
-import { prisma } from '../../lib/prisma';
+import { prisma } from '@/app/lib/prisma';
 import { normalizePrediction } from '../../../lib/normalize';
 import { generateSolanaMemo, generatePredictionHash } from '../../../lib/memo';
 import { CreateInsightSchema, CreateInsightResponse } from './_schemas';
@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
               resolverKind: validatedData.resolverKind,
               resolverConfig: validatedData.resolverRef
                 ? {
-                    [validatedData.resolverKind]: JSON.parse(validatedData.resolverRef),
-                  }
+                  [validatedData.resolverKind]: JSON.parse(validatedData.resolverRef),
+                }
                 : undefined,
             });
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openaiClient";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { copilotSubmissionSchema } from "@/lib/ideaSchema";
 
 export const runtime = "edge";
 
@@ -36,9 +37,16 @@ export async function POST(request: NextRequest) {
         const rateLimitRes = await checkRateLimit(request, { plan: 'copilot' });
         if (rateLimitRes) return rateLimitRes;
 
-        const { text, field, projectType } = await request.json();
+        const body = await request.json();
+        const parsed = copilotSubmissionSchema.safeParse(body);
 
-        if (!text || text.length < 15) {
+        if (!parsed.success) {
+            return NextResponse.json({ suggestion: null }, { status: 400 });
+        }
+
+        const { text, field, projectType } = parsed.data;
+
+        if (text.length < 15) {
             return NextResponse.json({ suggestion: null });
         }
 

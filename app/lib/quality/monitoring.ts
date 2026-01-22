@@ -1,7 +1,4 @@
-import 'server-only';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../prisma';
 
 export interface QualityMetrics {
   simAccuracy7d: number;
@@ -47,7 +44,7 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
   const quoteFillDeviation = await getQuoteFillDeviation(thirtyDaysAgo, now);
 
   // Get conversion rates
-  const { simToSignRate, executeFailRate, totalSimulations, totalSigns, totalExecutions, totalFailures } = 
+  const { simToSignRate, executeFailRate, totalSimulations, totalSigns, totalExecutions, totalFailures } =
     await getConversionRates(thirtyDaysAgo, now);
 
   return {

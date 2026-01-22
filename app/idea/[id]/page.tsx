@@ -1,5 +1,5 @@
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/app/lib/prisma';
 import IdeaEvaluationReport from '@/app/studio/IdeaEvaluationReport';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';

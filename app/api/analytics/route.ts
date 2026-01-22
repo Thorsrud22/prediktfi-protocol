@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
 export const runtime = 'nodejs';
 
-const prisma = new PrismaClient();
+import { prisma } from '@/app/lib/prisma';
 
 // Handle all HTTP methods gracefully
 export async function POST(request: NextRequest) {

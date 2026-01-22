@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { FeedQuerySchema, FeedResponse, FeedInsight } from './_schemas';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/app/lib/prisma';
 import { trackServer } from '@/lib/analytics';
 
 // Simple in-memory cache for feed results

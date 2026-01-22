@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { performance } from 'perf_hooks';
-import { prisma } from '../../../lib/prisma';
+import { prisma } from '@/app/lib/prisma';
 import {
   LeaderboardPeriod,
   MAX_CACHE_LIMIT,

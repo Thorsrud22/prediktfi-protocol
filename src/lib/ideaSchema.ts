@@ -51,3 +51,11 @@ export const ideaSubmissionSchema = z.object({
 });
 
 export type IdeaSubmission = z.infer<typeof ideaSubmissionSchema>;
+
+export const copilotSubmissionSchema = z.object({
+    text: z.string().min(1, 'Text is required'),
+    field: z.string().optional(),
+    projectType: z.enum(['memecoin', 'defi', 'ai']).optional(),
+});
+
+export type CopilotSubmission = z.infer<typeof copilotSubmissionSchema>;

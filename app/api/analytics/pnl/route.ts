@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/app/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +43,7 @@ export async function POST(request: NextRequest) {
     const simulatedPnl7d = receipts7d.reduce((sum, receipt) => {
       if (receipt.realizedPx && receipt.intent.sizeJson) {
         const size = parseFloat(receipt.intent.sizeJson.toString());
-        const pnl = receipt.intent.side === 'BUY' 
+        const pnl = receipt.intent.side === 'BUY'
           ? (receipt.realizedPx - parseFloat(receipt.intent.sizeJson.toString())) * size
           : (parseFloat(receipt.intent.sizeJson.toString()) - receipt.realizedPx) * size;
         return sum + pnl;
@@ -56,7 +54,7 @@ export async function POST(request: NextRequest) {
     const simulatedPnl30d = receipts30d.reduce((sum, receipt) => {
       if (receipt.realizedPx && receipt.intent.sizeJson) {
         const size = parseFloat(receipt.intent.sizeJson.toString());
-        const pnl = receipt.intent.side === 'BUY' 
+        const pnl = receipt.intent.side === 'BUY'
           ? (receipt.realizedPx - parseFloat(receipt.intent.sizeJson.toString())) * size
           : (parseFloat(receipt.intent.sizeJson.toString()) - receipt.realizedPx) * size;
         return sum + pnl;
@@ -70,7 +68,7 @@ export async function POST(request: NextRequest) {
       .reduce((sum, receipt) => {
         if (receipt.realizedPx && receipt.intent.sizeJson) {
           const size = parseFloat(receipt.intent.sizeJson.toString());
-          const pnl = receipt.intent.side === 'BUY' 
+          const pnl = receipt.intent.side === 'BUY'
             ? (receipt.realizedPx - parseFloat(receipt.intent.sizeJson.toString())) * size
             : (parseFloat(receipt.intent.sizeJson.toString()) - receipt.realizedPx) * size;
           return sum + pnl;
@@ -83,7 +81,7 @@ export async function POST(request: NextRequest) {
       .reduce((sum, receipt) => {
         if (receipt.realizedPx && receipt.intent.sizeJson) {
           const size = parseFloat(receipt.intent.sizeJson.toString());
-          const pnl = receipt.intent.side === 'BUY' 
+          const pnl = receipt.intent.side === 'BUY'
             ? (receipt.realizedPx - parseFloat(receipt.intent.sizeJson.toString())) * size
             : (parseFloat(receipt.intent.sizeJson.toString()) - receipt.realizedPx) * size;
           return sum + pnl;
@@ -97,7 +95,7 @@ export async function POST(request: NextRequest) {
       const profitableTrades = receipts.filter(receipt => {
         if (receipt.realizedPx && receipt.intent.sizeJson) {
           const size = parseFloat(receipt.intent.sizeJson.toString());
-          const pnl = receipt.intent.side === 'BUY' 
+          const pnl = receipt.intent.side === 'BUY'
             ? (receipt.realizedPx - parseFloat(receipt.intent.sizeJson.toString())) * size
             : (parseFloat(receipt.intent.sizeJson.toString()) - receipt.realizedPx) * size;
           return pnl > 0;

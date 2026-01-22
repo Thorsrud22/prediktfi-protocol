@@ -3,9 +3,7 @@
  * Creates 2 demo creators with 90 days of CreatorDaily data
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/app/lib/prisma';
 
 interface CreatorDailyData {
   creatorId: string;
@@ -30,35 +28,35 @@ function generateCreatorDailyData(
 ): CreatorDailyData[] {
   const data: CreatorDailyData[] = [];
   const now = new Date();
-  
+
   for (let i = days - 1; i >= 0; i--) {
     const day = new Date(now);
     day.setDate(day.getDate() - i);
-    
+
     // Add some realistic variation
     const dayVariation = (Math.random() - 0.5) * 0.1;
     const score = Math.max(0, Math.min(1, baseScore + dayVariation));
     const accuracy = Math.max(0, Math.min(1, baseAccuracy + dayVariation * 0.5));
     const brierMean = 1 - accuracy; // Brier score is 1 - accuracy
-    
+
     // Volume score decreases over time (more recent = more activity)
     const volumeScore = Math.max(0.1, Math.min(1, 0.3 + (days - i) / days * 0.7 + Math.random() * 0.2));
-    
+
     // Consistency improves over time
     const consistency = Math.max(0.5, Math.min(1, 0.6 + (days - i) / days * 0.3 + Math.random() * 0.1));
-    
+
     // Recency score (higher for more recent days)
     const recencyScore = Math.max(0.1, Math.min(1, 0.3 + (days - i) / days * 0.7));
-    
+
     // Matured insights (accumulates over time)
     const maturedN = Math.max(0, Math.floor((days - i) / 3) + Math.floor(Math.random() * 3));
-    
+
     // Notional volume in USDC (increases over time)
     const notional30d = Math.max(100, Math.floor((days - i) / 10) * 1000 + Math.floor(Math.random() * 5000));
-    
+
     // Return standard deviation (optional)
     const retStd30d = Math.random() * 0.3 + 0.1;
-    
+
     data.push({
       creatorId,
       day,
@@ -73,13 +71,13 @@ function generateCreatorDailyData(
       retStd30d
     });
   }
-  
+
   return data;
 }
 
 async function seedCreators() {
   console.log('🌱 Seeding creators...');
-  
+
   try {
     // Create Creator 1: High performer
     const creator1 = await prisma.creator.upsert({
@@ -96,9 +94,9 @@ async function seedCreators() {
         lastScoreUpdate: new Date(),
       }
     });
-    
+
     console.log(`✅ Created creator: ${creator1.handle}`);
-    
+
     // Create Creator 2: Rising performer
     const creator2 = await prisma.creator.upsert({
       where: { handle: 'bob_analyst' },
@@ -114,13 +112,13 @@ async function seedCreators() {
         lastScoreUpdate: new Date(),
       }
     });
-    
+
     console.log(`✅ Created creator: ${creator2.handle}`);
-    
+
     // Generate CreatorDaily data for both creators
     const creator1Daily = generateCreatorDailyData(creator1.id, 0.92, 0.89, 90);
     const creator2Daily = generateCreatorDailyData(creator2.id, 0.78, 0.75, 90);
-    
+
     // Insert daily data (upsert to handle re-runs)
     for (const daily of [...creator1Daily, ...creator2Daily]) {
       await prisma.creatorDaily.upsert({
@@ -134,9 +132,9 @@ async function seedCreators() {
         create: daily
       });
     }
-    
+
     console.log(`✅ Created ${creator1Daily.length + creator2Daily.length} daily records`);
-    
+
     // Create some sample insights for the creators
     const insights = [
       {
@@ -206,7 +204,7 @@ async function seedCreators() {
         updatedAt: new Date('2024-08-15'),
       }
     ];
-    
+
     for (const insight of insights) {
       await prisma.insight.upsert({
         where: { id: `insight_${insight.creatorId}_${insight.question.slice(0, 20)}` },
@@ -217,15 +215,15 @@ async function seedCreators() {
         }
       });
     }
-    
+
     console.log(`✅ Created ${insights.length} sample insights`);
-    
+
     console.log('🎉 Creator seeding completed successfully!');
     console.log(`📊 Created 2 creators with 90 days of daily data`);
     console.log(`🔗 Test URLs:`);
     console.log(`   http://localhost:3000/creator/${creator1.handle}`);
     console.log(`   http://localhost:3000/creator/${creator2.handle}`);
-    
+
   } catch (error) {
     console.error('❌ Error seeding creators:', error);
     throw error;

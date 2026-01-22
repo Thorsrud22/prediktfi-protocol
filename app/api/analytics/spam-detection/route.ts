@@ -4,10 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { createHmac } from 'crypto';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/app/lib/prisma';
 
 export interface SpamDetectionMetrics {
   totalViolations: number;
@@ -47,7 +45,7 @@ function verifyHMACSignature(
     const expectedSignature = createHmac('sha256', secret)
       .update(payload)
       .digest('hex');
-    
+
     return signature === expectedSignature;
   } catch (error) {
     console.error('HMAC verification error:', error);
@@ -60,7 +58,7 @@ export async function GET(request: NextRequest) {
     // Check for HMAC signature
     const signature = request.headers.get('x-ops-signature');
     const opsSecret = process.env.OPS_SECRET;
-    
+
     if (!opsSecret) {
       console.error('OPS_SECRET not configured');
       return NextResponse.json(
@@ -68,17 +66,17 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     if (!signature) {
       return NextResponse.json(
         { error: 'Missing x-ops-signature header' },
         { status: 401 }
       );
     }
-    
+
     // Get request body for signature verification (empty for GET)
     const body = '';
-    
+
     if (!verifyHMACSignature(body, signature, opsSecret)) {
       console.error('Invalid HMAC signature');
       return NextResponse.json(
@@ -86,24 +84,24 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
-    
+
     // Parse query parameters
     const url = new URL(request.url);
     const daysParam = url.searchParams.get('days');
     const days = daysParam ? parseInt(daysParam, 10) : 7;
-    
+
     if (days < 1 || days > 30) {
       return NextResponse.json(
         { error: 'days parameter must be between 1 and 30' },
         { status: 400 }
       );
     }
-    
+
     // Calculate time range
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
-    
+
     // Get anti-gaming violations
     const violations = await prisma.event.findMany({
       where: {
@@ -117,7 +115,7 @@ export async function GET(request: NextRequest) {
         createdAt: 'desc'
       }
     });
-    
+
     // Process violations
     const totalViolations = violations.length;
     const violationsByType = {
@@ -126,25 +124,25 @@ export async function GET(request: NextRequest) {
       rateLimit: 0,
       notional: 0
     };
-    
+
     const walletViolations = new Map<string, {
       count: number;
       lastViolation: Date;
       types: Set<string>;
     }>();
-    
+
     const recentPatterns: Array<{
       timestamp: string;
       type: string;
       walletId: string;
       description: string;
     }> = [];
-    
+
     for (const violation of violations) {
       try {
         const meta = JSON.parse(violation.meta || '{}');
         const violationType = meta.violation || 'unknown';
-        
+
         // Categorize violation type
         if (violationType.includes('Burst pattern')) {
           violationsByType.burst++;
@@ -155,7 +153,7 @@ export async function GET(request: NextRequest) {
         } else if (violationType.includes('notional')) {
           violationsByType.notional++;
         }
-        
+
         // Track per wallet
         if (violation.userId) {
           const existing = walletViolations.get(violation.userId) || {
@@ -163,15 +161,15 @@ export async function GET(request: NextRequest) {
             lastViolation: violation.createdAt,
             types: new Set<string>()
           };
-          
+
           existing.count++;
-          existing.lastViolation = violation.createdAt > existing.lastViolation ? 
+          existing.lastViolation = violation.createdAt > existing.lastViolation ?
             violation.createdAt : existing.lastViolation;
           existing.types.add(violationType);
-          
+
           walletViolations.set(violation.userId, existing);
         }
-        
+
         // Add to recent patterns
         recentPatterns.push({
           timestamp: violation.createdAt.toISOString(),
@@ -179,12 +177,12 @@ export async function GET(request: NextRequest) {
           walletId: violation.userId || 'unknown',
           description: violationType
         });
-        
+
       } catch (error) {
         console.warn('Failed to parse violation meta:', error);
       }
     }
-    
+
     // Get top offenders
     const topOffenders = Array.from(walletViolations.entries())
       .map(([walletId, data]) => ({
@@ -195,7 +193,7 @@ export async function GET(request: NextRequest) {
       }))
       .sort((a, b) => b.violationCount - a.violationCount)
       .slice(0, 10);
-    
+
     const metrics: SpamDetectionMetrics = {
       totalViolations,
       violationsByType,
@@ -206,20 +204,20 @@ export async function GET(request: NextRequest) {
         end: endDate.toISOString()
       }
     };
-    
+
     console.log(`📊 Spam detection metrics: ${totalViolations} violations in last ${days} days`);
-    
+
     return NextResponse.json(metrics, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
-    
+
   } catch (error) {
     console.error('Spam detection analytics error:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: `Spam detection analytics failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timeRange: {
           start: new Date().toISOString(),
@@ -236,7 +234,7 @@ export async function GET(request: NextRequest) {
 // Health check endpoint
 export async function HEAD(request: NextRequest) {
   try {
-    return new NextResponse(null, { 
+    return new NextResponse(null, {
       status: 200,
       headers: {
         'Cache-Control': 'no-cache'

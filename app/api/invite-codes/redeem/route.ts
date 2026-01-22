@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/app/lib/prisma';
 import { SignJWT } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
