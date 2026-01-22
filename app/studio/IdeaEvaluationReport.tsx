@@ -146,6 +146,43 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                     </div>
                 </div>
 
+                {/* CALIBRATION AUDIT - SCORE TRANSPARENCY */}
+                {result.calibrationNotes && result.calibrationNotes.length > 0 && (
+                    <div className="border border-white/5 bg-slate-900/80 p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 opacity-50"></div>
+                        <div className="flex items-center gap-2 mb-4 text-white/90 border-b border-white/5 pb-3">
+                            <Activity size={18} className="text-purple-400" />
+                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Score Calibration Audit</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {result.calibrationNotes.map((note, i) => {
+                                const isNegative = note.toLowerCase().includes("minus") || note.toLowerCase().includes("penalty");
+                                const isPositive = note.toLowerCase().includes("plus") || note.toLowerCase().includes("bonus");
+
+                                return (
+                                    <div key={i} className="flex gap-4 items-start text-sm">
+                                        <div className={`mt-0.5 min-w-[20px] h-5 rounded flex items-center justify-center text-[10px] font-black uppercase ${isNegative ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                                isPositive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                                                    'bg-slate-700 text-slate-400'
+                                            }`}>
+                                            {isNegative ? '-' : isPositive ? '+' : 'i'}
+                                        </div>
+                                        <p className={`${isNegative ? 'text-red-200/80' :
+                                                isPositive ? 'text-emerald-200/80' :
+                                                    'text-slate-300'
+                                            } leading-relaxed font-medium`}>
+                                            {note}
+                                        </p>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        <div className="mt-4 pt-3 border-t border-white/5 text-[10px] text-white/30 uppercase tracking-widest font-mono">
+                            Deterministic Rules Applied v2.1
+                        </div>
+                    </div>
+                )}
+
                 {/* VERDICT SUMMARY */}
                 <div className="border border-white/5 bg-slate-900 p-8 mb-6 rounded-2xl shadow-xl">
                     <div className="flex items-center gap-2 mb-5 text-white border-b border-white/10 pb-3">
