@@ -33,34 +33,8 @@ export default function ShellWrapper({ children, navbar, footer }: ShellWrapperP
         checkAccess();
     }, []);
 
-    // Public pages where we never show full nav
-    const isPublicPage =
-        pathname === '/' ||
-        pathname === '/redeem' ||
-        pathname?.startsWith('/request-access') ||
-        pathname?.startsWith('/images/');
-
-    // Hide nav if: guest view explicitly requested, or on public page without access
-    const hideNav = isGuestView || (isPublicPage && hasAccess === false);
-
-    if (hideNav) {
-        return (
-            <>
-                <PersistentLogo />
-                <main className="min-h-screen pt-24">{children}</main>
-            </>
-        );
-    }
-
-    // While checking access, show minimal shell
-    if (hasAccess === null && isPublicPage) {
-        return (
-            <>
-                <PersistentLogo />
-                <main className="min-h-screen pt-24">{children}</main>
-            </>
-        );
-    }
+    // We now allow full navigation for everyone (Public Beta)
+    // Legacy logic for hiding nav is removed.
 
     return (
         <>
