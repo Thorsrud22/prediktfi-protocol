@@ -3,7 +3,7 @@ import { openai } from "@/lib/openaiClient";
 import { checkRateLimit } from "@/lib/ratelimit";
 import { copilotSubmissionSchema } from "@/lib/ideaSchema";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 // ... (PROMPTS remain here) 
 
