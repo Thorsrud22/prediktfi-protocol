@@ -5,8 +5,10 @@ import { IdeaSubmission } from '../../src/lib/ideaSchema';
 // Mock OpenAI
 vi.mock('@/lib/openaiClient', () => ({
     openai: vi.fn().mockReturnValue({
-        responses: {
-            create: vi.fn()
+        chat: {
+            completions: {
+                create: vi.fn()
+            }
         }
     })
 }));
@@ -56,8 +58,8 @@ describe('fetchCompetitiveMemo', () => {
         };
 
         // Mock OpenAI response
-        (openai() as any).responses.create.mockResolvedValueOnce({
-            output: mockMemo
+        (openai() as any).chat.completions.create.mockResolvedValueOnce({
+            choices: [{ message: { content: JSON.stringify(mockMemo) } }]
         });
 
         const result = await fetchCompetitiveMemo(mockIdea, 'memecoin');
@@ -90,8 +92,8 @@ describe('fetchCompetitiveMemo', () => {
             timestamp: "2023-01-01"
         };
 
-        (openai() as any).responses.create.mockResolvedValueOnce({
-            output: mockMemo
+        (openai() as any).chat.completions.create.mockResolvedValueOnce({
+            choices: [{ message: { content: JSON.stringify(mockMemo) } }]
         });
 
         const result = await fetchCompetitiveMemo({ ...mockIdea, projectType: 'defi' }, 'defi');
@@ -106,8 +108,8 @@ describe('fetchCompetitiveMemo', () => {
 
     it('handles invalid LLM response gracefully', async () => {
         // Mock invalid response (missing required fields)
-        (openai() as any).responses.create.mockResolvedValueOnce({
-            output: { foo: "bar" }
+        (openai() as any).chat.completions.create.mockResolvedValueOnce({
+            choices: [{ message: { content: JSON.stringify({ foo: "bar" }) } }]
         });
 
         const result = await fetchCompetitiveMemo(mockIdea, 'memecoin');
@@ -118,7 +120,7 @@ describe('fetchCompetitiveMemo', () => {
     });
 
     it('handles LLM failure gracefully', async () => {
-        (openai() as any).responses.create.mockRejectedValueOnce(new Error("API Error"));
+        (openai() as any).chat.completions.create.mockRejectedValueOnce(new Error("API Error"));
 
         const result = await fetchCompetitiveMemo(mockIdea, 'memecoin');
         expect(result.status).toBe('not_available');

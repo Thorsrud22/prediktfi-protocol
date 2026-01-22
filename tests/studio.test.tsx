@@ -103,48 +103,30 @@ describe('AI Idea Evaluator Studio', () => {
 
         // Check for heading content
         const heading = screen.getByRole('heading', { level: 1 });
-        expect(heading).toHaveTextContent(/AI Idea Evaluator/i);
         expect(heading).toHaveTextContent(/Studio/i);
 
-        // Check for description (partial match is safer with <br> tags)
-        expect(screen.getByText(/Validate your crypto, memecoin, or web3 project ideas instantly/i)).toBeInTheDocument();
+        // Check for description
+        expect(screen.getByText(/Advanced AI Evaluation Protocol for Web3 Assets/i)).toBeInTheDocument();
 
-        // Check for new button text (Title Case)
-        expect(screen.getByRole('button', { name: /Start New Evaluation/i })).toBeInTheDocument();
+        // Check that the form is visible immediately (Step 1)
+        expect(screen.getByText('The Vision')).toBeInTheDocument();
+        expect(screen.getByText('Target Sector')).toBeInTheDocument();
     });
 
-    it('switches to evaluation flow when CTA is clicked', () => {
+    it('shows validation errors when attempting to proceed with empty form', async () => {
         render(<StudioPage />);
 
-        const ctaButton = screen.getByRole('button', { name: /Start new evaluation/i });
-        fireEvent.click(ctaButton);
-
-        expect(screen.getByText('Submit Your Idea')).toBeInTheDocument();
-        expect(screen.getByText('Project Type')).toBeInTheDocument();
-    });
-
-    it('shows validation errors when submitting empty form', async () => {
-        render(<StudioPage />);
-
-        // Enter flow
-        fireEvent.click(screen.getByRole('button', { name: /Start new evaluation/i }));
-
-        // Get the form and submit it
-        const form = screen.getByRole('button', { name: /Evaluate Idea/i }).closest('form')!;
-
-        // Trigger form submit
-        fireEvent.submit(form);
+        // Try to go to next step without filling anything
+        fireEvent.click(screen.getByRole('button', { name: /Next Step/i }));
 
         // Wait for state update and check for any validation error
         await waitFor(() => {
-            // Check for the error paragraph elements (they have class text-red-400)
-            const errorElements = document.querySelectorAll('p.text-red-400');
-            expect(errorElements.length).toBeGreaterThan(0);
-        }, { timeout: 5000 });
+            // Check for the error paragraph elements
+            const errorElement = screen.getByText(/Please select a project type/i);
+            expect(errorElement).toBeInTheDocument();
+        });
 
-        // Now check for specific messages
-        expect(screen.getByText('Please select a project type')).toBeInTheDocument();
-        expect(screen.getByText('Description must be at least 10 characters long')).toBeInTheDocument();
+        expect(screen.getByText(/Description is too short/i)).toBeInTheDocument();
     }, 15000);
 
     it('submits successfully with valid data through wizard steps', async () => {

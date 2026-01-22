@@ -1,6 +1,22 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import { createSolanaPayUrl, calculateSolAmount } from '../src/lib/solana';
+
+// Mock Prisma
+const mockPrisma = {
+  payment: {
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    create: vi.fn().mockImplementation(({ data }: { data: any }) => Promise.resolve({ id: 'test-id', ...data })),
+  },
+  invoice: {
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    create: vi.fn().mockImplementation(({ data }: { data: any }) => Promise.resolve({ id: 'test-id', ...data })),
+  },
+};
+
+vi.mock('@prisma/client', () => ({
+  PrismaClient: vi.fn().mockImplementation(() => mockPrisma),
+}));
 
 const prisma = new PrismaClient();
 

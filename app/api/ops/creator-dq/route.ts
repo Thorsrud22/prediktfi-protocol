@@ -5,9 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/app/lib/prisma';
 
 export interface DataQualityViolation {
   creatorId: string;
@@ -52,7 +50,7 @@ function verifyHMACSignature(
     const expectedSignature = createHmac('sha256', secret)
       .update(payload)
       .digest('hex');
-    
+
     return signature === expectedSignature;
   } catch (error) {
     console.error('HMAC verification error:', error);
@@ -79,9 +77,9 @@ function isWithinTolerance(actual: number, expected: number, tolerance: number =
  * Validate component values are in [0,1] range
  */
 function validateComponentRange(
-  value: number, 
-  field: string, 
-  creatorId: string, 
+  value: number,
+  field: string,
+  creatorId: string,
   day: string
 ): DataQualityViolation | null {
   if (value < 0 || value > 1) {
@@ -109,7 +107,7 @@ function validateAccuracyCalculation(
   day: string
 ): DataQualityViolation | null {
   const expectedAccuracy = Math.max(0, Math.min(1, 1 - brierMean));
-  
+
   if (!isWithinTolerance(accuracy, expectedAccuracy)) {
     return {
       creatorId,
@@ -137,12 +135,12 @@ function validateScoreCalculation(
   creatorId: string,
   day: string
 ): DataQualityViolation | null {
-  const expectedScore = 
+  const expectedScore =
     SCORE_WEIGHTS.W_ACC * accuracy +
     SCORE_WEIGHTS.W_CONS * consistency +
     SCORE_WEIGHTS.W_VOL * volumeScore +
     SCORE_WEIGHTS.W_REC * recencyScore;
-  
+
   if (!isWithinTolerance(score, expectedScore)) {
     return {
       creatorId,
@@ -232,13 +230,13 @@ function validateNotional30d(
  */
 async function runDataQualityChecks(days: number = 7): Promise<DataQualityReport> {
   const violations: DataQualityViolation[] = [];
-  
+
   // Get records from the last N days
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
-  
+
   console.log(`🔍 Running data quality checks on CreatorDaily records from last ${days} days`);
-  
+
   const records = await prisma.creatorDaily.findMany({
     where: {
       day: {
@@ -249,12 +247,12 @@ async function runDataQualityChecks(days: number = 7): Promise<DataQualityReport
       day: 'desc'
     }
   });
-  
+
   console.log(`📊 Found ${records.length} CreatorDaily records to validate`);
-  
+
   for (const record of records) {
     const dayStr = record.day.toISOString().split('T')[0];
-    
+
     // Check component ranges [0,1]
     const componentViolations = [
       validateComponentRange(record.accuracy, 'accuracy', record.creatorId, dayStr),
@@ -262,9 +260,9 @@ async function runDataQualityChecks(days: number = 7): Promise<DataQualityReport
       validateComponentRange(record.volumeScore, 'volumeScore', record.creatorId, dayStr),
       validateComponentRange(record.recencyScore, 'recencyScore', record.creatorId, dayStr)
     ].filter(Boolean) as DataQualityViolation[];
-    
+
     violations.push(...componentViolations);
-    
+
     // Check accuracy calculation
     const accuracyViolation = validateAccuracyCalculation(
       record.accuracy,
@@ -273,7 +271,7 @@ async function runDataQualityChecks(days: number = 7): Promise<DataQualityReport
       dayStr
     );
     if (accuracyViolation) violations.push(accuracyViolation);
-    
+
     // Check score calculation
     const scoreViolation = validateScoreCalculation(
       record.score,
@@ -285,23 +283,23 @@ async function runDataQualityChecks(days: number = 7): Promise<DataQualityReport
       dayStr
     );
     if (scoreViolation) violations.push(scoreViolation);
-    
+
     // Check maturedN
     const maturedViolation = validateMaturedN(record.maturedN, record.creatorId, dayStr);
     if (maturedViolation) violations.push(maturedViolation);
-    
+
     // Check retStd30d
     const retStdViolation = validateRetStd30d(record.retStd30d, record.creatorId, dayStr);
     if (retStdViolation) violations.push(retStdViolation);
-    
+
     // Check notional30d
     const notionalViolation = validateNotional30d(record.notional30d, record.creatorId, dayStr);
     if (notionalViolation) violations.push(notionalViolation);
   }
-  
+
   const errorCount = violations.filter(v => v.severity === 'error').length;
   const warningCount = violations.filter(v => v.severity === 'warning').length;
-  
+
   return {
     ok: violations.length === 0,
     violations,
@@ -320,7 +318,7 @@ export async function GET(request: NextRequest) {
     // Check for HMAC signature
     const signature = request.headers.get('x-ops-signature');
     const opsSecret = process.env.OPS_SECRET;
-    
+
     if (!opsSecret) {
       console.error('OPS_SECRET not configured');
       return NextResponse.json(
@@ -328,17 +326,17 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     if (!signature) {
       return NextResponse.json(
         { error: 'Missing x-ops-signature header' },
         { status: 401 }
       );
     }
-    
+
     // Get request body for signature verification (empty for GET)
     const body = '';
-    
+
     if (!verifyHMACSignature(body, signature, opsSecret)) {
       console.error('Invalid HMAC signature');
       return NextResponse.json(
@@ -346,35 +344,35 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
-    
+
     // Parse query parameters
     const url = new URL(request.url);
     const daysParam = url.searchParams.get('days');
     const days = daysParam ? parseInt(daysParam, 10) : 7;
-    
+
     if (days < 1 || days > 30) {
       return NextResponse.json(
         { error: 'days parameter must be between 1 and 30' },
         { status: 400 }
       );
     }
-    
+
     // Run data quality checks
     const report = await runDataQualityChecks(days);
-    
+
     console.log(`📊 Data quality check completed: ${report.summary.violationCount} violations found`);
-    
+
     return NextResponse.json(report, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
-    
+
   } catch (error) {
     console.error('Data quality check error:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         ok: false,
         error: `Data quality check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         checkedAt: new Date().toISOString()
@@ -382,14 +380,14 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   } finally {
-    await prisma.$disconnect();
+    // Singleton pattern does not require manual disconnect per request
   }
 }
 
 // Health check endpoint
 export async function HEAD(request: NextRequest) {
   try {
-    return new NextResponse(null, { 
+    return new NextResponse(null, {
       status: 200,
       headers: {
         'Cache-Control': 'no-cache'

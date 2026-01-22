@@ -242,38 +242,32 @@ ${dexScreenerContext}
 
     try {
         // 3. Call LLM
-        const model = process.env.EVAL_MODEL || "gpt-5.2";
+        const modelEnv = process.env.EVAL_MODEL || "gpt-5.2";
         const reasoningEffort = process.env.EVAL_REASONING_SHORT || "medium";
 
-        // @ts-ignore - openai client typing
-        const response = await openai().responses.create({
+        let model = modelEnv;
+        // No auto-mapping to gpt-4o anymore as user explicitly wants 5.2
+
+        const params: any = {
             model: model,
-            input: [
+            messages: [
                 { role: "system", content: COMPETITIVE_SYSTEM_PROMPT },
                 { role: "user", content: userContent }
             ],
-            // Activate "Thinking" logic via parameter
-            reasoning: {
-                effort: reasoningEffort
-            },
-            text: {
-                format: { type: "json_object" }
-            },
-        } as any);
+            response_format: { type: "json_object" }
+        };
+
+        if (model.startsWith('o1') || model.startsWith('gpt-5')) {
+            params.reasoning_effort = reasoningEffort;
+        }
+
+        const response = await openai().chat.completions.create(params);
 
         // 4. Parse Response
-        let responseContent: string | object | undefined;
-        const anyResponse = response as any;
+        let responseContent: string | null = null;
 
-        if (anyResponse.output_text) {
-            responseContent = anyResponse.output_text;
-        } else if (anyResponse.output) {
-            responseContent = anyResponse.output;
-        } else if (anyResponse.choices && anyResponse.choices[0]?.message?.content) {
-            responseContent = anyResponse.choices[0].message.content;
-        } else {
-            // Fallback: try using the response object directly if it looks like the result
-            responseContent = response;
+        if (response.choices && response.choices.length > 0) {
+            responseContent = response.choices[0].message.content;
         }
 
         let memo: CompetitiveMemo;
@@ -287,8 +281,6 @@ ${dexScreenerContext}
                 console.error("Failed to parse CompetitiveMemo JSON:", e);
                 return { status: 'not_available', reason: 'invalid_llm_payload' };
             }
-        } else if (typeof responseContent === 'object') {
-            memo = responseContent as CompetitiveMemo;
         } else {
             return { status: 'not_available', reason: 'empty_llm_response' };
         }

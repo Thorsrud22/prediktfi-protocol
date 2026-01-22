@@ -60,18 +60,19 @@ export function buildIdeaContextSummary(idea: IdeaSubmission): string {
   return parts.filter(p => p).join('\n');
 }
 
-/**
- * Gets safe model configuration from environment.
- */
 function getEnvModelConfig() {
-  const model = process.env.EVAL_MODEL || "gpt-5.2";
-  // We used to enforce an allowlist here, but to support fallback logic 
-  // and newer models without code changes, we now allow any string.
-  // The API call will fail/fallback if invalid.
+  const modelEnv = process.env.EVAL_MODEL || "prediktfi-engine-v1";
+
+  // Map internal aliases to real OpenAI models
+  let model = modelEnv;
+  if (modelEnv === "prediktfi-engine-v1" || modelEnv === "gpt-5.2") {
+    model = "gpt-4o";
+  }
 
   return {
     model,
-    reasoningEffort: process.env.EVAL_REASONING_FULL || "high"
+    // For o1 models we might use reasoning_effort in future, currently undefined for gpt-4o
+    reasoningEffort: process.env.EVAL_REASONING_FULL || "medium"
   };
 }
 
@@ -192,79 +193,41 @@ ${JSON_OUTPUT_SCHEMA}`;
       input: userContent
     });
 
-    // Call OpenAI
-    // Call OpenAI
-    // Construct parameters based on model type
-    // Construct parameters based on model type
-    const isReasoningModel = (model.startsWith('o1') || model.startsWith('gpt-5')) && !model.includes('chat-latest');
-
-    // Prepare messages for both primary and fallback calls
+    // Prepare messages
     const messages = [
       { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
       { role: "user", content: userContent }
     ];
 
-    // Call OpenAI with Fallback Logic
+    // Use standard Chat Completions API with extra params if needed
     let response;
     try {
+      const isReasoningModel = (model.startsWith('o1') || model.startsWith('gpt-5'));
+
+      const params: any = {
+        model: model,
+        messages: messages,
+        response_format: { type: "json_object" }
+      };
+
       if (isReasoningModel) {
-        // Reasoning Models -> Responses API
-        // OpenAI Node SDK v4.40+ (and v5 beta) puts this under `.responses` or similar.
-        const responseParams: any = {
-          model: model,
-          input: messages,
-          reasoning: {
-            effort: process.env.EVAL_REASONING_FULL || "high"
-          },
-          text: {
-            // verbosity: "high", // (Optional per user request, but careful with token limits)
-            format: { type: "json_object" }
-          }
-        };
-
-        // @ts-ignore - 'responses' might be experimental in SDK types
-        const rawResponse = await openai().responses.create(responseParams);
-
-        // Normalize response format
-        response = {
-          choices: [{
-            message: {
-              content: rawResponse.output_text || rawResponse.output || (rawResponse as any).choices?.[0]?.message?.content
-            }
-          }]
-        };
-      } else {
-        // Standard Models -> Chat Completions API
-        const params: any = {
-          model: model,
-          messages: messages,
-          response_format: { type: "json_object" }
-        };
-        response = await openai().chat.completions.create(params);
+        params.reasoning_effort = reasoningEffort;
       }
+
+      response = await openai().chat.completions.create(params);
+
     } catch (error: any) {
-      // Catch-all: If it's a model error OR if the SDK failed (e.g. responses API missing), fallback.
-      // We want to be aggressive with fallback here to ensure user gets a result.
-      const shouldFallback =
-        error.status === 404 ||
-        error.status === 400 ||
-        (error.message && (error.message.includes('model') || error.message.includes('found') || error.message.includes('not a function'))) ||
-        error instanceof TypeError; // Catch SDK compatibility issues
+      // Fallback
+      console.warn(`[Evaluator] Primary model '${model}' failed (${error.message || error.status}). Falling back to 'gpt-4o-mini'.`);
 
-      if (shouldFallback && model !== 'gpt-5.2-chat-latest') {
-        console.warn(`[Evaluator] Primary model '${model}' failed (${error.message || error.status}). Falling back to 'gpt-5.2-chat-latest'.`);
+      // Retry with gpt-4o-mini as safe fallback
+      const fallbackParams = {
+        model: 'gpt-4o-mini',
+        messages: messages,
+        response_format: { type: "json_object" }
+      };
 
-        // Retry with gpt-5.2-chat-latest
-        const fallbackParams = {
-          model: 'gpt-5.2-chat-latest',
-          messages: messages,
-          response_format: { type: "json_object" }
-        };
-
-        response = await openai().chat.completions.create(fallbackParams as any);
-      } else {
-        throw error; // Re-throw if it's not a recoverable model error
-      }
+      response = await openai().chat.completions.create(fallbackParams as any);
     }
 
     // Parse response

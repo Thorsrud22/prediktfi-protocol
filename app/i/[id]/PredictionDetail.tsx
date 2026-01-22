@@ -33,7 +33,7 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
   try {
     if (insight.resolverRef && typeof insight.resolverRef === 'string') {
       resolverRef = JSON.parse(insight.resolverRef);
-      verifiability = verifiabilityScore(insight.resolverKind, {
+      verifiability = verifiabilityScore({
         kind: insight.resolverKind as any,
         deadline: new Date(insight.deadline),
         evidenceCount: resolverRef ? 1 : 0,
@@ -193,9 +193,8 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
 
   return (
     <div
-      className={`min-h-screen transition-all duration-1000 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}
+      className={`min-h-screen transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
     >
       {/* Hero Section */}
       <div className="relative overflow-hidden">
@@ -319,9 +318,8 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                   <div className="text-left">
                     <div className="text-xs text-white/60 uppercase tracking-wide">Time Left</div>
                     <div
-                      className={`text-sm font-bold ${
-                        isOverdue ? 'text-red-400' : 'text-blue-400'
-                      }`}
+                      className={`text-sm font-bold ${isOverdue ? 'text-red-400' : 'text-blue-400'
+                        }`}
                     >
                       {isOverdue ? 'Overdue' : getTimeRemaining()}
                     </div>
@@ -584,11 +582,10 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    activeTab === tab.id
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
                       ? 'bg-white/20 text-white shadow-lg'
                       : 'text-gray-300 hover:text-white hover:bg-white/10'
-                  }`}
+                    }`}
                 >
                   <span className="mr-1">{tab.icon}</span>
                   {tab.label}
@@ -852,13 +849,12 @@ export default function PredictionDetail({ insight, id }: PredictionDetailProps)
                 <div className="bg-white/5 rounded-lg p-3">
                   <div className="text-xs text-gray-400 mb-1">Status</div>
                   <div
-                    className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                      insight.status === 'COMMITTED'
+                    className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${insight.status === 'COMMITTED'
                         ? 'bg-green-500/20 text-green-400'
                         : insight.status === 'RESOLVED'
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'bg-yellow-500/20 text-yellow-400'
-                    }`}
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-yellow-500/20 text-yellow-400'
+                      }`}
                   >
                     {insight.status}
                   </div>

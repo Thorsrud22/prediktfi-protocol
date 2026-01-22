@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/app/lib/prisma';
+import { z } from 'zod';
 import {
   selectResolver,
   verifiabilityScore,
@@ -7,18 +8,31 @@ import {
   canonicalize,
 } from '@/app/lib/resolvers';
 
-const prisma = new PrismaClient();
+const submitSchema = z.object({
+  templateId: z.string(),
+  predictionText: z.string().min(5),
+  confidence: z.enum(['low', 'medium', 'high']),
+  timeHorizon: z.enum(['1h', '24h', '1w', '1m', '3m']),
+  stakeAmount: z.union([z.string(), z.number()]).transform((val) => {
+    const num = typeof val === 'string' ? parseFloat(val) : val;
+    return isNaN(num) ? 0.1 : num; // Default to 0.1 if invalid
+  }),
+});
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Validate required fields
-    const { templateId, predictionText, confidence, timeHorizon, stakeAmount } = body;
-
-    if (!templateId || !predictionText || !confidence || !timeHorizon || !stakeAmount) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    // Validate input using Zod
+    const parsed = submitSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: parsed.error.format() },
+        { status: 400 }
+      );
     }
+
+    const { templateId, predictionText, confidence, timeHorizon, stakeAmount } = parsed.data;
 
     // Calculate expiration date based on time horizon
     const deadline = calculateExpirationDate(timeHorizon);
@@ -33,7 +47,7 @@ export async function POST(request: Request) {
     const probability = confidenceToProbability(confidence);
 
     // Calculate verifiability score
-    const vScore = verifiabilityScore(resolver.kind, {
+    const vScore = verifiabilityScore({
       kind: resolver.kind,
       deadline,
       evidenceCount: resolver.resolverRef ? 1 : 0,
@@ -46,17 +60,16 @@ export async function POST(request: Request) {
         category: getCategoryFromTemplate(templateId),
         horizon: deadline,
         probability: probability,
-        confidence: parseFloat(stakeAmount), // Store stake as confidence for now
+        confidence: stakeAmount, // Store stake as confidence for now
         intervalLower: Math.max(0, probability - 0.1),
         intervalUpper: Math.min(1, probability + 0.1),
-        rationale: `Auto-generated from Studio. Resolver: ${
-          resolver.kind
-        }. Reasons: ${resolver.reasons.join(', ')}`,
+        rationale: `Auto-generated from Studio. Resolver: ${resolver.kind
+          }. Reasons: ${resolver.reasons.join(', ')}`,
         scenarios: JSON.stringify({ verifiabilityScore: vScore }),
         metrics: JSON.stringify({
           timeHorizon,
           confidence,
-          stakeAmount: parseFloat(stakeAmount),
+          stakeAmount: stakeAmount,
           templateId,
         }),
         sources: resolver.resolverRef || '',
@@ -105,7 +118,7 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   } finally {
-    await prisma.$disconnect();
+    // Singleton pattern does not require manual disconnect per request
   }
 }
 

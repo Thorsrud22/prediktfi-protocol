@@ -47,7 +47,7 @@ export default function PersistentLogo() {
             >
                 <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/20 shadow-[0_8px_32px_rgba(59,130,246,0.4)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_12px_40px_rgba(59,130,246,0.6)] group-hover:ring-white/30 overflow-hidden">
                     <Image
-                        src="/images/logo-v2.png"
+                        src="/images/logo.png"
                         alt="Predikt logo"
                         width={40}
                         height={40}

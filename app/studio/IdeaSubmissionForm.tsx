@@ -169,11 +169,11 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
         projectType: undefined,
-        teamSize: undefined,
+        teamSize: 'solo',
         resources: [],
         successDefinition: '',
         attachments: '',
-        responseStyle: undefined,
+        responseStyle: 'short',
         focusHints: [],
         mvpScope: '',
         goToMarketPlan: '',

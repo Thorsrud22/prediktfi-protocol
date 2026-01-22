@@ -6,7 +6,7 @@
   "scripts": {
     "test": "vitest run",
     "prebuild": "echo '🔍 Starting build process...'",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "validate:build": "node -e \"console.log('🔍 Validating build...'); if (!require('fs').existsSync('app/page.tsx')) { console.error('❌ Invalid app root - app/page.tsx not found'); process.exit(1); } if (!require('fs').existsSync('app/api/status/route.ts')) { console.error('❌ Status endpoint missing'); process.exit(1); } console.log('✅ Build validation passed');\"",
     "deploy": "anchor deploy",
     "lint": "next lint",

@@ -102,7 +102,7 @@ export function selectResolver(input: string): ResolverSelection {
 /**
  * Calculate verifiability score (0.0 to 1.0) based on resolver type and other factors
  */
-export function verifiabilityScore(resolverKind: string, args: {
+export function verifiabilityScore(args: {
   kind: ResolverKind;
   deadline: Date;
   evidenceCount?: number; // suggested sources, if any
