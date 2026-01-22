@@ -24,7 +24,7 @@ const STEPS = [
     {
         id: 2,
         title: 'Core Extraction',
-        description: 'AI swarm agents deconstruct the project—extracting tokenomics, technical debt, and team intent.',
+        description: 'Advanced analysis deconstructs the project—extracting tokenomics, technical debt, and team intent.',
         icon: BrainCircuit,
         color: 'from-blue-400 to-cyan-400',
         delay: 0.2
