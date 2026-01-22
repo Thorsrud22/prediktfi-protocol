@@ -32,34 +32,12 @@ export default function QuotaGuard({ children, onExhausted, className }: QuotaGu
               <p className="text-sm text-gray-600 mb-2">
                 Daily free limit reached ({quota.limit})
               </p>
-              <Link 
-                href="/pay"
+              <Link
+                href="/pricing"
                 className="text-[--accent] hover:text-[--accent]/80 text-sm font-medium"
               >
-                Upgrade to Pro for unlimited insights →
+                Join Pro Waitlist for unlimited insights →
               </Link>
-              <button
-                onClick={() => {
-                  const code = prompt('Have a license? Paste it to redeem');
-                  if (!code) return;
-                  fetch('/api/billing/redeem', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ license: code })
-                  }).then((r) => {
-                    if (r.ok) {
-                      trackClient('license_redeemed');
-                      trackClient('pro_activated');
-                      window.location.reload();
-                    } else {
-                      alert('Invalid or not yet confirmed');
-                    }
-                  });
-                }}
-                className="ml-3 text-sm text-gray-600 underline"
-              >
-                Redeem code
-              </button>
             </div>
           </div>
         </div>
