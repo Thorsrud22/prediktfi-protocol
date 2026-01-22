@@ -21,7 +21,7 @@ export default function PricingPage() {
       </div>
 
       {/* Tiers */}
-      <div className="max-w-5xl mx-auto px-6 pb-32 grid md:grid-cols-2 gap-8 relative z-10">
+      <div className="max-w-5xl mx-auto px-6 pb-32 grid md:grid-cols-2 gap-8 relative z-20">
 
         {/* Beta Tier */}
         <div className="p-8 rounded-3xl bg-slate-900/60 border border-white/10 flex flex-col relative overflow-hidden group hover:border-blue-500/30 transition-colors duration-500">
