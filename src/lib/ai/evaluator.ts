@@ -195,39 +195,53 @@ ${JSON_OUTPUT_SCHEMA}`;
     // Call OpenAI
     // Call OpenAI
     // Construct parameters based on model type
-    const isReasoningModel = model.startsWith('o1') || model.startsWith('gpt-5');
+    // Construct parameters based on model type
+    const isReasoningModel = (model.startsWith('o1') || model.startsWith('gpt-5')) && !model.includes('chat-latest');
 
-    const params: any = {
-      model: model,
-      messages: [
-        { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
-        { role: "user", content: userContent }
-      ],
-    };
-
-    if (isReasoningModel) {
-      // Reasoning models (O1/GPT-5) handling
-      // 1. Use max_completion_tokens (though we let it default to max if not set)
-      // 2. reasoning_effort is supported on some O1 versions
-      if (model.startsWith('o1') && !model.includes('mini')) {
-        params.reasoning_effort = reasoningEffort;
-      }
-
-      // 3. Response Format
-      // Our tests confirmed gpt-5.2 supports json_object, but o1-preview/mini might not.
-      // We'll trust the config: if it's gpt-5.2, use JSON. If o1-preview, maybe skip.
-      if (!model.startsWith('o1-preview')) {
-        params.response_format = { type: "json_object" };
-      }
-    } else {
-      // Standard models (GPT-4o)
-      params.response_format = { type: "json_object" };
-    }
+    // Prepare messages for both primary and fallback calls
+    const messages = [
+      { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
+      { role: "user", content: userContent }
+    ];
 
     // Call OpenAI with Fallback Logic
     let response;
     try {
-      response = await openai().chat.completions.create(params);
+      if (isReasoningModel) {
+        // Reasoning Models -> Responses API
+        // OpenAI Node SDK v4.40+ (and v5 beta) puts this under `.responses` or similar.
+        const responseParams: any = {
+          model: model,
+          input: messages,
+          reasoning: {
+            effort: process.env.EVAL_REASONING_FULL || "high"
+          },
+          text: {
+            // verbosity: "high", // (Optional per user request, but careful with token limits)
+            format: { type: "json_object" }
+          }
+        };
+
+        // @ts-ignore - 'responses' might be experimental in SDK types
+        const rawResponse = await openai().responses.create(responseParams);
+
+        // Normalize response format
+        response = {
+          choices: [{
+            message: {
+              content: rawResponse.output_text || rawResponse.output || (rawResponse as any).choices?.[0]?.message?.content
+            }
+          }]
+        };
+      } else {
+        // Standard Models -> Chat Completions API
+        const params: any = {
+          model: model,
+          messages: messages,
+          response_format: { type: "json_object" }
+        };
+        response = await openai().chat.completions.create(params);
+      }
     } catch (error: any) {
       // Check for specific error codes suggesting model unavailability or invalid params
       const isModelError = error.status === 404 || error.status === 400 || (error.message && (error.message.includes('model') || error.message.includes('found')));
@@ -238,7 +252,7 @@ ${JSON_OUTPUT_SCHEMA}`;
         // Retry with gpt-4o
         const fallbackParams = {
           model: 'gpt-4o',
-          messages: params.messages,
+          messages: messages,
           response_format: { type: "json_object" }
         };
 
