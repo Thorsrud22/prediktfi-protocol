@@ -25,7 +25,7 @@ const LoadingSkeleton = React.memo(() => (
           Account <span className="text-blue-500">.</span>
         </h1>
         <p className="text-white/60 text-base md:text-lg max-w-xl font-light">
-          Manage your wallet, evaluations, and subscription
+          Manage your wallet and evaluations
         </p>
       </div>
     </div>
@@ -171,28 +171,18 @@ const AccountDetails = React.memo(
           Start New Evaluation
         </Link>
 
-        {/* Secondary Sections */}
-        <div className="grid grid-cols-1 gap-4">
-          {/* Subscription Card */}
-          <div className="p-6 bg-gradient-to-br from-blue-900/40 to-slate-900 rounded-3xl border border-blue-500/20 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-            <div className="relative z-10 flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest">
-                  Pricing Plan
-                </h3>
-                <span className="text-[10px] font-black text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded uppercase tracking-tighter border border-blue-500/30">
-                  FREE
-                </span>
-              </div>
-              <p className="text-sm text-slate-400 leading-relaxed font-medium">
-                Upgrade for Advanced AI & Priority Data
-              </p>
-            </div>
-            <div
-              className="relative z-10 w-full sm:w-auto text-center px-8 py-3 bg-slate-800/50 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 flex-shrink-0"
-            >
-              Coming Soon
-            </div>
+        {/* Beta Access Notice */}
+        <div className="p-6 bg-slate-900/60 rounded-3xl border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-1">
+            <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest mb-1">
+              Beta Access
+            </h3>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              You have full access to PrediktFi during our beta program.
+            </p>
+          </div>
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            3 evaluations / day
           </div>
         </div>
       </div>
@@ -305,7 +295,7 @@ export default function AccountClient() {
             Account <span className="text-blue-500">.</span>
           </h1>
           <p className="text-white/40 text-[10px] sm:text-lg max-w-xl font-medium tracking-[0.2em] uppercase">
-            Manage your wallet, evaluations, and subscription
+            Manage your wallet and evaluations
           </p>
         </div>
       </div>
