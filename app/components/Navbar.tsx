@@ -40,6 +40,7 @@ const MobileMenu = memo(function MobileMenu({
     { href: "/studio", label: "Studio", primary: true },
     { href: "/leaderboard", label: "Leaderboard", primary: true },
     { href: "/my-predictions", label: "My Predictions", primary: true },
+    { href: "/pricing", label: "Pricing", primary: true },
     { href: "/account", label: "Account", primary: false, showPro: true },
     ...(isPro ? [{ href: "/account/billing", label: "Billing", primary: false }] : []),
   ], [isPro]);
@@ -438,6 +439,18 @@ export default function Navbar() {
               } ${isTransitioning ? 'opacity-70' : ''}`}
           >
             My Predictions
+          </a>
+
+          <a
+            href="/pricing"
+            onClick={(e) => instantNavigate('/pricing', e)}
+            onMouseEnter={() => preloadOnHover('/pricing')}
+            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${pathname === '/pricing'
+              ? 'text-white bg-blue-500/20 rounded-lg'
+              : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
+              } ${isTransitioning ? 'opacity-70' : ''}`}
+          >
+            Pricing
           </a>
 
           <a
