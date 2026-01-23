@@ -72,7 +72,9 @@ Constraint:
 - If the idea is nonsense, be honest in "evaluatorNotes".
 - For DeFi: Reference ACTUAL TVL numbers from DeFiLlama when comparing to competitors.
 - **CRITICAL**: Populate the "metrics" object for each reference project using the Web Search Context.
-    - Look for "raised", "funding", "TVL", "revenue", "users".
+    - Look for "raised", "funding", "TVL", "revenue", "users", "marketCap".
+    - FOR MEMECOINS: You MUST populate "marketCap" and "dailyUsers" (proxy for holders/vol). Set "tvl" to "N/A".
+    - FOR DEFI: You MUST populate "tvl".
     - If unknown, set to "N/A".
 `;
 

@@ -223,15 +223,14 @@ export function generateMemecoinCompetitiveSummary(
     const lines = [
         `MEMECOIN LANDSCAPE (DexScreener Live Data):`,
         `- "${snapshot.narrative}" narrative on Solana: ${snapshot.solanaPairs} active pairs`,
-        `- ${topLine}`,
-        `- Avg market cap: ${formatMarketCap(snapshot.avgMarketCap)}, Avg liquidity: ${formatMarketCap(snapshot.avgLiquidity)}`,
-        `- Avg token age: ${snapshot.avgAgeHours.toFixed(0)} hours`,
         `- Crowdedness: ${snapshot.crowdednessSignal.toUpperCase()}`,
+        `- Avg market cap: ${formatMarketCap(snapshot.avgMarketCap)}, Avg liquidity: ${formatMarketCap(snapshot.avgLiquidity)}`,
+        ``,
+        `TOP COMPETITORS (Reference these in your analysis):`,
+        ...snapshot.topTokens.slice(0, 5).map((t, i) =>
+            `${i + 1}. ${t.name} ($${t.symbol}) - MCap: ${formatMarketCap(t.marketCap)} | Vol24h: ${formatMarketCap(t.volume24h)} | Age: ${t.ageHours.toFixed(1)}h`
+        )
     ];
-
-    if (snapshot.topTokens.length > 1) {
-        lines.push(`- Other notable: ${snapshot.topTokens.slice(1, 3).map(t => `$${t.symbol}`).join(", ")}`);
-    }
 
     return lines.join("\n");
 }

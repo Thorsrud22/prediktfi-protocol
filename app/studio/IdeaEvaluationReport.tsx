@@ -182,20 +182,39 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                             {/* Structured Competitors */}
                             {result.market?.competitors && result.market.competitors.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {result.market.competitors.slice(0, 4).map((comp, i) => (
-                                        <div key={i} className="bg-black/20 p-3 rounded-lg border border-blue-500/10">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className="text-blue-100 font-bold text-xs tracking-tight">{comp.name}</span>
-                                                {comp.metrics?.funding && (
-                                                    <span className="text-[9px] bg-blue-500/10 text-blue-300 px-1.5 py-0.5 rounded font-mono">{comp.metrics.funding}</span>
-                                                )}
+                                    {result.market.competitors.slice(0, 4).map((comp, i) => {
+                                        // Helper to get the best primary metric
+                                        const primaryMetric =
+                                            comp.metrics?.marketCap && comp.metrics.marketCap !== 'N/A' ? { label: 'MCap', value: comp.metrics.marketCap } :
+                                                comp.metrics?.tvl && comp.metrics.tvl !== 'N/A' ? { label: 'TVL', value: comp.metrics.tvl } :
+                                                    comp.metrics?.funding && comp.metrics.funding.includes('$') ? { label: 'Raised', value: comp.metrics.funding } : null;
+
+                                        // Helper to get secondary metric
+                                        const secondaryMetric =
+                                            comp.metrics?.revenue && comp.metrics.revenue !== 'N/A' ? { label: 'Rev', value: comp.metrics.revenue } :
+                                                comp.metrics?.dailyUsers && comp.metrics.dailyUsers !== 'N/A' ? { label: 'Users', value: comp.metrics.dailyUsers } :
+                                                    (!primaryMetric && comp.metrics?.funding) ? { label: 'Funding', value: comp.metrics.funding } : null;
+
+                                        return (
+                                            <div key={i} className="bg-black/20 p-3 rounded-lg border border-blue-500/10">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-blue-100 font-bold text-xs tracking-tight truncate max-w-[100px]">{comp.name}</span>
+                                                    {primaryMetric && (
+                                                        <span className="text-[9px] bg-blue-500/10 text-blue-300 px-1.5 py-0.5 rounded font-mono whitespace-nowrap">
+                                                            {primaryMetric.label}: {primaryMetric.value}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-2 text-[10px] text-white/40 font-mono">
+                                                    {secondaryMetric ? (
+                                                        <span>{secondaryMetric.label}: {secondaryMetric.value}</span>
+                                                    ) : (
+                                                        <span className="italic opacity-50">Data unavailable</span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="flex gap-2 text-[10px] text-white/40 font-mono">
-                                                {comp.metrics?.tvl && <span>TVL: {comp.metrics.tvl}</span>}
-                                                {comp.metrics?.revenue && <span>• Rev: {comp.metrics.revenue}</span>}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <ul className="space-y-2">
