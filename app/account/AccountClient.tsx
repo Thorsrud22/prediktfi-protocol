@@ -69,10 +69,13 @@ const AuthenticationPrompt = React.memo(
         </svg>
       </div>
       <h2 className="text-2xl sm:text-3xl font-black text-white mb-3 tracking-tighter uppercase italic">
-        Authentication Required <span className="text-blue-500">_</span>
+        Wallet Login <span className="text-blue-500">_</span>
       </h2>
-      <p className="text-slate-400 text-sm sm:text-base mb-8 max-w-sm mx-auto leading-relaxed">
-        Please verify ownership of your wallet to access your institutional dashboard.
+      <p className="text-slate-400 text-sm sm:text-base mb-6 max-w-sm mx-auto leading-relaxed">
+        Connect your Solana wallet to save evaluations and track your history.
+      </p>
+      <p className="text-slate-500 text-xs mb-8 max-w-sm mx-auto">
+        No wallet? No problem. <a href="/studio" className="text-blue-400 hover:text-blue-300 underline">Run evaluations</a> without logging in.
       </p>
 
       {isWalletConnected ? (

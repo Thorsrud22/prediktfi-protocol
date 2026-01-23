@@ -138,7 +138,10 @@ Do not output anything outside the JSON.
 If the idea is mostly hype or a meme coin with no real value, say it clearly in the JSON fields and lower the scores.
 
 IMPORTANT: You must include a 'reasoningSteps' array (5-7 items) in the output.
-These should look like system log actions: 'Analyzing tokenomics...', 'Checking market saturation...', 'Verifying founder background...'.`;
+These should look like system log actions. Use sector-appropriate examples:
+- FOR AI PROJECTS: 'Evaluating model architecture...', 'Assessing data moat...', 'Checking GTM strategy...', 'Analyzing competitive landscape...', 'Verifying founder background...'
+- FOR MEMECOIN/DEFI: 'Analyzing tokenomics...', 'Checking LP plan...', 'Assessing rug risk...', 'Verifying liquidity lock...', 'Checking market saturation...'
+CRITICAL: For AI projects, do NOT include tokenomics-related reasoning steps like 'Verifying need for a token' - they are irrelevant for SaaS/AI products.`;
 
 
 /**

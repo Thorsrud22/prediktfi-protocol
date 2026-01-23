@@ -100,14 +100,14 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-          <button
-            disabled
-            className="w-full py-4 rounded-xl bg-blue-600 opacity-80 cursor-not-allowed text-white font-bold text-center uppercase tracking-widest text-xs border border-transparent"
+          <a
+            href="mailto:founders@predikt.fi?subject=Notify%20me%20when%20Founder%20Pro%20opens&body=Hi%2C%0A%0APlease%20notify%20me%20when%20Founder%20Pro%20becomes%20available.%0A%0AThanks!"
+            className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-center uppercase tracking-widest text-xs border border-transparent transition-all block"
           >
-            Waitlist Full
-          </button>
+            Notify Me
+          </a>
           <p className="text-[10px] text-center mt-3 text-slate-500 uppercase tracking-widest">
-            Opening Q2 2026
+            Waitlist full — Opening Q2 2026
           </p>
         </div>
 

@@ -131,11 +131,18 @@ Could not verify token address: ${input.tokenAddress}. Assume "Unverified" statu
   let competitiveContext = "";
   const normalizedCategory = input.projectType.toLowerCase();
 
+  // Store reference projects for later merging into result
+  let referenceProjectsFromMemo: { name: string; chainOrPlatform: string; note: string; metrics?: { marketCap?: string; tvl?: string; dailyUsers?: string; funding?: string; revenue?: string } }[] = [];
+
   if (['memecoin', 'defi', 'ai'].includes(normalizedCategory)) {
     try {
       const compResult = await fetchCompetitiveMemo(input, normalizedCategory);
       if (compResult.status === 'ok') {
         const memo = compResult.memo;
+
+        // Capture referenceProjects for merging into final result
+        referenceProjectsFromMemo = memo.referenceProjects || [];
+
         const competitorList = memo.referenceProjects
           .map(p => `${p.name} (${p.note})`)
           .join(', ');
@@ -248,6 +255,25 @@ ${JSON_OUTPUT_SCHEMA}`;
 
     // Explicitly set project type for frontend logic
     result.projectType = input.projectType;
+
+    // Merge real competitor data from competitive memo into result
+    // This ensures Market Intelligence displays actual competitors with metrics
+    if (referenceProjectsFromMemo.length > 0) {
+      // Map referenceProjects to the competitors format expected by the report
+      const mappedCompetitors = referenceProjectsFromMemo.map(p => ({
+        name: p.name,
+        metrics: p.metrics || {}
+      }));
+
+      // Merge with any competitors the LLM may have returned (prefer real data)
+      const existingNames = new Set((result.market?.competitors || []).map(c => c.name.toLowerCase()));
+      const uniqueNewCompetitors = mappedCompetitors.filter(c => !existingNames.has(c.name.toLowerCase()));
+
+      result.market = {
+        ...result.market,
+        competitors: [...(result.market?.competitors || []), ...uniqueNewCompetitors]
+      };
+    }
 
     // Log to Langfuse
     generation.end({ output: result });
