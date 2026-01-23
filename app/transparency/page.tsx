@@ -59,10 +59,10 @@ export default function TransparencyPage() {
                             <div className="bg-black/50 rounded-xl p-4 border border-white/5 font-mono text-xs text-slate-300">
                                 <div className="text-slate-500 mb-2 border-b border-white/5 pb-2">Internal Chain-of-Thought Log</div>
                                 <div className="space-y-2 opacity-80">
-                                    <p>&gt; Analyzing market saturation for 'Cat Memes'...</p>
-                                    <p>&gt; Integrating Solana liquidity data...</p>
-                                    <p>&gt; DETECTED: Team is anon but claims "ex-Faang"...</p>
-                                    <p>&gt; VERDICT: Discounting execution score by 15% due to unverifiable claim.</p>
+                                    <p>&gt; Analyzing market saturation for 'AI wrapper'...</p>
+                                    <p>&gt; Querying product hunt trends & git activity...</p>
+                                    <p>&gt; DETECTED: Core logic is just an OpenAI API call...</p>
+                                    <p>&gt; VERDICT: Discounting innovation score by 40% (Wrapper Tax).</p>
                                 </div>
                             </div>
                         </div>
@@ -78,7 +78,7 @@ export default function TransparencyPage() {
                             <div className="bg-slate-900/50 border border-white/5 p-6 rounded-2xl">
                                 <h4 className="font-bold text-blue-200 mb-2 text-sm uppercase tracking-wider">Context Injection</h4>
                                 <p className="text-slate-400 text-sm">
-                                    We don't just send your text. We inject live <span className="text-white">Solana price data</span>, <span className="text-white">BTC dominance</span>, and <span className="text-white">Trend Narratives</span> into the context window.
+                                    We don't just send your text. We inject live <span className="text-white">Solana price data</span>, <span className="text-white">SaaS metrics</span>, and <span className="text-white">Trend Narratives</span> into the context window.
                                 </p>
                             </div>
                         </div>
@@ -114,7 +114,7 @@ export default function TransparencyPage() {
                                 </h3>
                                 <div className="space-y-4">
                                     <p className="text-sm text-slate-400">
-                                        If you are a solo founder building a <span className="text-white">Complex DeFi Protocol</span>,
+                                        If you are a solo founder building a <span className="text-white">Complex Platform</span>,
                                         algorithm caps your Execution Score at <strong>60/100</strong>.
                                     </p>
                                     <div className="bg-black/40 p-4 rounded-lg border border-white/5 font-mono text-xs text-green-400 overflow-x-auto">
@@ -130,15 +130,15 @@ export default function TransparencyPage() {
                             <div className="p-8">
                                 <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
                                     <Activity size={14} className="text-red-400" />
-                                    The Narrative Tax
+                                    The Buzzword Tax
                                 </h3>
                                 <div className="space-y-4">
                                     <p className="text-sm text-slate-400">
-                                        If your memecoin description uses generic keywords like "moon", "pepe killer", or "community takeover" without unique art/vibes,
+                                        If your SaaS or token pitch relies on generic keywords like "AI-powered" or "Quantum" without technical depth,
                                         we deduct <strong>-20 points</strong> instantly.
                                     </p>
                                     <div className="bg-black/40 p-4 rounded-lg border border-white/5 font-mono text-xs text-green-400 overflow-x-auto">
-                                        <span className="text-purple-400">if</span> (isGenericMeme) {'{'}<br />
+                                        <span className="text-purple-400">if</span> (isGenericBuzzword) {'{'}<br />
                                         &nbsp;&nbsp;score -= 20;<br />
                                         &nbsp;&nbsp;flags.push(<span className="text-yellow-200">"Penalty: Generic Narrative"</span>);<br />
                                         {'}'}
@@ -149,15 +149,15 @@ export default function TransparencyPage() {
                     </div>
                 </div>
 
-                {/* 3. On-Chain Truth */}
+                {/* 3. Verification Layer */}
                 <div className="mb-20">
                     <div className="flex items-center gap-4 mb-8">
                         <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
                             <Search size={32} />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-white">On-Chain Truth</h2>
-                            <p className="text-slate-400 text-sm">Verification Layer (RPC)</p>
+                            <h2 className="text-2xl font-bold text-white">Verification Layer</h2>
+                            <p className="text-slate-400 text-sm">Fact-Checking (RPC & APIS)</p>
                         </div>
                     </div>
 

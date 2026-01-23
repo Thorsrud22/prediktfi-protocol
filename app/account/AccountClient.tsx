@@ -51,7 +51,7 @@ const AuthenticationPrompt = React.memo(
     publicKey: string | null;
     onVerify: () => void;
   }) => (
-    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
       <div className="w-20 h-20 bg-slate-900/60 rounded-3xl border border-white/10 flex items-center justify-center mb-6 shadow-2xl relative overflow-hidden group">
         <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
         <svg
@@ -69,35 +69,61 @@ const AuthenticationPrompt = React.memo(
         </svg>
       </div>
       <h2 className="text-2xl sm:text-3xl font-black text-white mb-3 tracking-tighter uppercase italic">
-        Wallet Login <span className="text-blue-500">_</span>
+        Authentication <span className="text-blue-500">_</span>
       </h2>
-      <p className="text-slate-400 text-sm sm:text-base mb-6 max-w-sm mx-auto leading-relaxed">
-        Connect your Solana wallet to save evaluations and track your history.
-      </p>
-      <p className="text-slate-500 text-xs mb-8 max-w-sm mx-auto">
-        No wallet? No problem. <a href="/studio" className="text-blue-400 hover:text-blue-300 underline">Run evaluations</a> without logging in.
+      <p className="text-slate-400 text-sm sm:text-base mb-8 max-w-sm mx-auto leading-relaxed">
+        Choose how you want to access your dashboard.
       </p>
 
-      {isWalletConnected ? (
+      <div className="w-full max-w-sm space-y-4 mb-8">
+        {/* Option 1: Wallet (Primary) */}
+        {isWalletConnected ? (
+          <button
+            onClick={onVerify}
+            disabled={verifying}
+            className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-900/40 active:scale-95 flex items-center justify-center gap-3"
+          >
+            {verifying ? (
+              <>
+                <div className="w-5 h-5 border-t-2 border-white/30 border-b-2 border-white rounded-full animate-spin"></div>
+                Authenticating...
+              </>
+            ) : (
+              'Sign with Wallet'
+            )}
+          </button>
+        ) : (
+          <div className="flex justify-center w-full [&>button]:w-full">
+            <SimplifiedConnectButton />
+          </div>
+        )}
+
+        {/* Option 2: Email (Secondary) */}
         <button
-          onClick={onVerify}
-          disabled={verifying}
-          className="w-full sm:w-auto px-10 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-blue-900/40 active:scale-95 flex items-center justify-center gap-3"
+          onClick={() => alert("Email login is coming soon. For now, please use a wallet to save your progress on-chain, or use the Studio without logging in.")}
+          className="w-full px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-3 group"
         >
-          {verifying ? (
-            <>
-              <div className="w-5 h-5 border-t-2 border-white/30 border-b-2 border-white rounded-full animate-spin"></div>
-              Authenticating...
-            </>
-          ) : (
-            'Sign to Access'
-          )}
+          <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <span className="text-sm uppercase tracking-wider">Continue with Email</span>
         </button>
-      ) : (
-        <div className="flex justify-center mt-2">
-          <SimplifiedConnectButton />
-        </div>
-      )}
+      </div>
+
+      {/* Explainer / Trust Signal */}
+      <div className="max-w-xs bg-blue-500/5 rounded-2xl p-4 border border-blue-500/10 text-left">
+        <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-2 flex items-center gap-2">
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          Why a Wallet?
+        </h3>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Predikt logging uses Solana signatures to create an <strong>immutable proof</strong> of your evaluations. Email accounts (Read-Only) are coming soon.
+        </p>
+      </div>
+
+      <p className="text-slate-500 text-xs mt-6">
+        Just want to test it? <a href="/studio" className="text-blue-400 hover:text-blue-300 underline">Enter Studio</a> without login.
+      </p>
     </div>
   ),
 );

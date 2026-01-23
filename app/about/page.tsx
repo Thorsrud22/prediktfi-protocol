@@ -21,13 +21,12 @@ export default function AboutPage() {
               <h2 className="text-[10px] font-black uppercase tracking-[0.2em] italic text-blue-500 border-l-2 border-blue-500 pl-3 mb-6 inline-block">Institutional Analysis</h2>
               <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-4">What is Predikt?</h3>
               <p className="text-slate-300 text-lg leading-relaxed mb-6">
-                Predikt is an AI-powered evaluation studio that transforms how we think about analyzing ideas and insights.
-                Instead of traditional speculation, we focus on creating verifiable, shareable AI-powered
-                evaluations that are permanently logged on the Solana blockchain.
+                Predikt is an AI-powered evaluation studio for <span className="text-white font-bold">Web3 protocols, AI agents, and SaaS startups</span>.
+                We bridge the gap between speculative markets and fundamental analysis by creating verifiable, shareable evaluations.
               </p>
               <p className="text-slate-400 leading-relaxed">
-                Our platform bridges the gap between AI prediction capabilities and blockchain verification,
-                creating a new category of transparent, accountable forecasting tools.
+                Whether you're launching a memecoin or a B2B platform, our neuro-symbolic AI provides the rigorous "System 2" thinking
+                that founders need and smart investors require.
               </p>
             </section>
 
@@ -39,9 +38,9 @@ export default function AboutPage() {
                   <div className="w-12 h-12 bg-sky-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <span className="text-sky-400 font-black">01</span>
                   </div>
-                  <h3 className="text-white font-bold text-xl mb-2">Ask → AI Analysis</h3>
+                  <h3 className="text-white font-bold text-xl mb-2">Submit Idea</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    Start with any yes/no question. Our AI analyzes multiple data sources and reasoning frameworks to generate a probability estimate.
+                    Drop your pitch—whether it's a CA, a URL, or a napkin sketch. Our AI ingests whitepapers, competitor data, and market trends.
                   </p>
                 </div>
 
@@ -49,9 +48,9 @@ export default function AboutPage() {
                   <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <span className="text-purple-400 font-black">02</span>
                   </div>
-                  <h3 className="text-white font-bold text-xl mb-2">AI → Evaluation</h3>
+                  <h3 className="text-white font-bold text-xl mb-2">AI Stress-Test</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    Get a percentage probability (0-100%) along with detailed reasoning and the AI model's confidence assessment.
+                    The model simulates an investment committee debate, attacking your weaknesses before outputting a Probability Score (0-100%).
                   </p>
                 </div>
 
@@ -59,9 +58,9 @@ export default function AboutPage() {
                   <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <span className="text-green-400 font-black">03</span>
                   </div>
-                  <h3 className="text-white font-bold text-xl mb-2">Log On-Chain</h3>
+                  <h3 className="text-white font-bold text-xl mb-2">Immutable Record</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    Stamp your insight permanently on Solana with a cryptographic signature, creating an immutable record.
+                    We log the evaluation hash on Solana. This proves <strong>exactly</strong> what realized potential looked like at inception.
                   </p>
                 </div>
 
@@ -69,22 +68,22 @@ export default function AboutPage() {
                   <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <span className="text-blue-400 font-black">04</span>
                   </div>
-                  <h3 className="text-white font-bold text-xl mb-2">Share & Verify</h3>
+                  <h3 className="text-white font-bold text-xl mb-2">Proof of Work</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    Share verified links that anyone can verify on-chain, building a reputation for transparent forecasting.
+                    Share a verified report link with VCs, angels, or your community. Demonstrate that you're building with conviction, not just hope.
                   </p>
                 </div>
               </div>
             </section>
 
             <section>
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em] italic text-blue-500 border-l-2 border-blue-500 pl-3 mb-8 inline-block">Value Propositions</h2>
-              <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-6 text-center sm:text-left">Strategic Edge</h3>
+              <h2 className="text-[10px] font-black uppercase tracking-[0.2em] italic text-blue-500 border-l-2 border-blue-500 pl-3 mb-8 inline-block">App Value</h2>
+              <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-6 text-center sm:text-left">For Builders & Backers</h3>
               <div className="space-y-4">
                 {[
-                  { title: "Tamper-Proof", desc: "Evaluations cannot be altered or deleted once logged." },
-                  { title: "Timestamped", desc: "Blockchain proof of exactly when an evaluation was made." },
-                  { title: "Verifiable", desc: "Independent verification of authenticity using blockchain explorers." }
+                  { title: "Market Validation", desc: "Get an unbiased, instant \"No\" before you spend months building the wrong thing." },
+                  { title: "Intellectual Honesty", desc: "We don't hallucinate product-market fit. If it's a wrapper, we call it a wrapper." },
+                  { title: "On-Chain Reputation", desc: "Build a track record of high-scoring, high-quality shipping that lives forever." }
                 ].map((item, i) => (
                   <div key={i} className="flex gap-4 items-start p-4 rounded-xl hover:bg-white/5 transition-colors">
                     <div className="mt-1">
