@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, FileText, Gift, Loader2, Download } from 'lucide-react';
+import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, Gift, Loader2, Download } from 'lucide-react';
 import RadarChart from '../components/charts/RadarChart';
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 import { printElement } from '../utils/print';
@@ -104,6 +104,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
             <div id="printable-report" className="bg-slate-900 border border-white/5 p-8 mb-6 relative overflow-visible group rounded-3xl shadow-2xl text-white">
                 {/* Removed decorative Activity icon - was distracting on hover */}
 
+                {/* HEADER */}
                 <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6 relative z-10 print:border-black/20">
                     <div>
                         <div className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] italic mb-3 flex items-center gap-2 print:text-blue-700">
@@ -121,8 +122,6 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                             <div className="text-white text-xs font-mono print:text-black">{new Date().toISOString().split('T')[0]}</div>
                             <div className="text-xs text-white/20 mt-1 font-mono print:text-gray-400">ID: {(result.summary.title.length * result.overallScore).toString(16).toUpperCase().padStart(6, '0')}</div>
                         </div>
-
-                        {/* Download Button (Hidden in Print) */}
                         <button
                             onClick={handleDownloadPDF}
                             className="noprint flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-white/5"
@@ -133,107 +132,100 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                     </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-8 items-center md:items-start relative z-10">
-                    {/* RADAR CHART BLOCK */}
-                    <div className="w-full md:w-1/2 flex justify-center">
-                        <div className="relative w-[280px] h-[280px] md:w-[320px] md:h-[320px]">
-                            <RadarChart data={chartData} width={320} height={320} className="w-full h-full" />
+                {/* STRATEGIC ACTION PLAN & RISKS */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    {/* LEFT: ACTION PLAN (2/3) */}
+                    <div className="lg:col-span-2 border border-blue-500/30 bg-blue-500/10 p-6 rounded-2xl shadow-lg relative overflow-hidden">
+                        <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-3 relative z-10">
+                            <CheckCircle2 size={18} className="text-blue-400" />
+                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px] text-blue-100">Immediate Action Plan</h3>
+                        </div>
+
+                        {(result.recommendations?.mustFixBeforeBuild ?? []).length > 0 ? (
+                            <div className="space-y-3 relative z-10">
+                                {(result.recommendations?.mustFixBeforeBuild ?? []).map((fix, i) => (
+                                    <div key={i} className="flex gap-4 items-start group">
+                                        <div className="mt-0.5 w-5 h-5 rounded-full border-2 border-blue-500/40 flex items-center justify-center bg-black/20 group-hover:border-blue-400 transition-colors">
+                                            <span className="text-[10px] font-black text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">✓</span>
+                                        </div>
+                                        <p className="text-white/90 text-sm leading-relaxed font-medium">{fix}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-white/60 italic text-sm">No critical blockers identified. Proceed to execution.</p>
+                        )}
+
+                        {/* Decorative background element */}
+                        <div className="absolute -right-10 -bottom-10 opacity-5">
+                            <CheckCircle2 size={200} />
                         </div>
                     </div>
 
-                    {/* TOTAL SCORE BLOCK */}
-                    <div className="flex-1 w-full md:w-1/2 flex flex-col justify-center h-full pt-8">
-                        <div className="text-center md:text-right">
-                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] italic mb-3 print:text-gray-500">Overall Rating</div>
-                            <div className="flex flex-col items-center md:items-end gap-2 border border-blue-500/20 p-8 bg-blue-500/5 rounded-2xl print:border-black/20 print:bg-gray-50">
-                                <div className={`text-8xl font-black tracking-tighter ${getScoreColor(result.overallScore)} print:text-black italic`}>
-                                    {result.overallScore}
-                                </div>
-                                <div className="text-center md:text-right">
-                                    <div className={`text-xl font-black uppercase tracking-tight italic ${getScoreColor(result.overallScore)} print:text-black`}>
-                                        {getScoreLabel(result.overallScore)}
-                                    </div>
-                                    <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] italic mt-2 print:text-gray-500">
-                                        Confidence: High
-                                    </div>
-                                </div>
-
-                                {/* Score Breakdown */}
-                                <div className="mt-4 pt-4 border-t border-blue-500/10 w-full">
-                                    <div className="flex justify-between text-[10px] uppercase font-black tracking-widest text-slate-500 mb-2">
-                                        <span>Contribution</span>
-                                        <span>Points</span>
-                                    </div>
-                                    <div className="space-y-1.5 font-mono text-xs">
-                                        <div className="flex justify-between items-center text-slate-400">
-                                            <span>Market (30%)</span>
-                                            <span className="text-white">{Math.round(result.market.marketFitScore * 0.3)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-slate-400">
-                                            <span>Tech (25%)</span>
-                                            <span className="text-white">{Math.round(result.technical.feasibilityScore * 0.25)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-slate-400">
-                                            <span>Execution (25%)</span>
-                                            <span className="text-white">{Math.round((100 - (result.execution?.executionRiskScore || 50)) * 0.25)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-slate-400">
-                                            <span>Strategy (20%)</span>
-                                            <span className="text-white">
-                                                {result.projectType === 'ai'
-                                                    ? Math.round(((result.aiStrategy?.modelQualityScore || 50) + (result.aiStrategy?.dataMoatScore || 50) + (result.aiStrategy?.userAcquisitionScore || 50)) / 3 * 0.2)
-                                                    : Math.round(result.tokenomics.designScore * 0.20)
-                                                }
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-blue-400 pt-1 border-t border-white/5 font-bold">
-                                            <span>Modifiers</span>
-                                            <span>
-                                                {result.overallScore - (
-                                                    Math.round(result.market.marketFitScore * 0.3) +
-                                                    Math.round(result.technical.feasibilityScore * 0.25) +
-                                                    Math.round((100 - (result.execution?.executionRiskScore || 50)) * 0.25) +
-                                                    (result.projectType === 'ai'
-                                                        ? Math.round(((result.aiStrategy?.modelQualityScore || 50) + (result.aiStrategy?.dataMoatScore || 50) + (result.aiStrategy?.userAcquisitionScore || 50)) / 3 * 0.2)
-                                                        : Math.round(result.tokenomics.designScore * 0.20))
-                                                ) > 0 ? '+' : ''}
-                                                {result.overallScore - (
-                                                    Math.round(result.market.marketFitScore * 0.3) +
-                                                    Math.round(result.technical.feasibilityScore * 0.25) +
-                                                    Math.round((100 - (result.execution?.executionRiskScore || 50)) * 0.25) +
-                                                    (result.projectType === 'ai'
-                                                        ? Math.round(((result.aiStrategy?.modelQualityScore || 50) + (result.aiStrategy?.dataMoatScore || 50) + (result.aiStrategy?.userAcquisitionScore || 50)) / 3 * 0.2)
-                                                        : Math.round(result.tokenomics.designScore * 0.20))
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    {/* RIGHT: CRITICAL RISKS (1/3) */}
+                    <div className="border border-slate-700/50 bg-slate-900/60 p-6 rounded-2xl shadow-lg flex flex-col">
+                        <div className="flex items-center gap-2 mb-4 text-slate-400 border-b border-white/5 pb-3">
+                            <AlertTriangle size={18} />
+                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Threat Detection</h3>
                         </div>
+                        <ul className="space-y-3 flex-1">
+                            {[...(result.technical?.keyRisks ?? []), ...(result.market?.goToMarketRisks ?? [])].slice(0, 5).map((con, i) => (
+                                <li key={i} className="flex gap-3 text-slate-300 text-xs leading-relaxed">
+                                    <span className="text-red-500/50 font-mono font-black">•</span>
+                                    <span>{con}</span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 </div>
 
-                {/* FATAL FLAW ALERT (RED TEAM) */}
-                {result.fatalFlaw?.identified && (
-                    <div className="mt-8 border border-red-500/50 bg-red-500/10 p-5 rounded-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
-                            <AlertTriangle size={64} className="text-red-500" />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-2 text-red-400 mb-2">
-                                <AlertTriangle size={20} />
-                                <h3 className="font-black uppercase tracking-[0.2em] italic text-xs">Red Team Alert: Fatal Flaw Detected</h3>
-                            </div>
-                            <h4 className="text-xl font-bold text-red-200 mb-1">{result.fatalFlaw.flawTitle}</h4>
-                            <p className="text-red-100/80 mb-3">{result.fatalFlaw.flawDescription}</p>
-                            <div className="bg-red-950/50 p-3 rounded-lg border border-red-500/20 inline-block">
-                                <span className="text-[10px] uppercase font-black text-red-400 block mb-1">Evidence</span>
-                                <span className="text-sm font-mono text-red-200">{result.fatalFlaw.evidence}</span>
-                            </div>
+                {/* DETAILED ANALYSIS GRID (Charts & Deep Dives) */}
+                <div className="flex flex-col md:flex-row gap-8 items-start relative z-10 mb-8 border-t border-white/5 pt-8">
+                    {/* RADAR CHART (Moved Down) */}
+                    <div className="w-full md:w-1/3 flex justify-center py-4">
+                        <div className="relative w-[240px] h-[240px]">
+                            <RadarChart data={chartData} width={240} height={240} className="w-full h-full" />
                         </div>
                     </div>
-                )}
+
+                    {/* MARKET SIGNALS */}
+                    <div className="flex-1 w-full md:w-2/3">
+                        <div className="border border-blue-500/20 bg-blue-500/5 p-6 rounded-2xl break-inside-avoid shadow-xl h-full">
+                            <div className="flex items-center gap-2 mb-5 text-blue-400 border-b border-blue-500/10 pb-3">
+                                <Terminal size={18} />
+                                <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Market Intelligence</h3>
+                            </div>
+                            {/* Structured Competitors */}
+                            {result.market?.competitors && result.market.competitors.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {result.market.competitors.slice(0, 4).map((comp, i) => (
+                                        <div key={i} className="bg-black/20 p-3 rounded-lg border border-blue-500/10">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-blue-100 font-bold text-xs tracking-tight">{comp.name}</span>
+                                                {comp.metrics?.funding && (
+                                                    <span className="text-[9px] bg-blue-500/10 text-blue-300 px-1.5 py-0.5 rounded font-mono">{comp.metrics.funding}</span>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2 text-[10px] text-white/40 font-mono">
+                                                {comp.metrics?.tvl && <span>TVL: {comp.metrics.tvl}</span>}
+                                                {comp.metrics?.revenue && <span>• Rev: {comp.metrics.revenue}</span>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <ul className="space-y-2">
+                                    {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
+                                        <li key={i} className="flex gap-3 text-blue-200/80 text-xs">
+                                            <span className="text-blue-500">•</span>
+                                            <span>{signal}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
+                </div>
 
                 {/* CALIBRATION AUDIT - SCORE TRANSPARENCY */}
                 {result.calibrationNotes && result.calibrationNotes.length > 0 && (
@@ -272,18 +264,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                     </div>
                 )}
 
-                {/* VERDICT SUMMARY */}
-                <div className="border border-white/5 bg-slate-900 p-8 mb-6 rounded-2xl shadow-xl">
-                    <div className="flex items-center gap-2 mb-5 text-white border-b border-white/10 pb-3">
-                        <FileText size={18} className="text-blue-400" />
-                        <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px] text-blue-100">Executive Summary</h3>
-                    </div>
-                    <p className="text-white/90 text-base leading-relaxed border-l-4 border-blue-500/50 pl-6 py-1 italic">
-                        "{result.summary.mainVerdict}"
-                    </p>
-                </div>
-
-                {/* REASONING CHAIN */}
+                {/* REASONING CHAIN - MOVED DOWN BUT PRESERVED AS COLLAPSIBLE OR LESS PROMINENT IF NEEDED? keeping it for now but maybe less focus */}
                 {result.reasoningSteps && result.reasoningSteps.length > 0 && (
                     <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl font-mono text-xs break-inside-avoid shadow-xl">
                         <div className="flex items-center gap-2 mb-5 text-white/60 border-b border-white/5 pb-3">
@@ -300,89 +281,6 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                         </ul>
                     </div>
                 )}
-
-                {/* ANALYSIS BLOCKS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 print:grid-cols-1">
-                    {/* MARKET & COMPETITION (Used as Signals) */}
-                    <div className="border border-blue-500/20 bg-blue-500/5 p-6 rounded-2xl break-inside-avoid shadow-xl">
-                        <div className="flex items-center gap-2 mb-5 text-blue-400 border-b border-blue-500/10 pb-3">
-                            <Terminal size={18} />
-                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Market Signals</h3>
-                        </div>
-
-                        {/* Structured Competitors (New) */}
-                        {result.market?.competitors && result.market.competitors.length > 0 ? (
-                            <div className="space-y-4">
-                                {result.market.competitors.slice(0, 3).map((comp, i) => (
-                                    <div key={i} className="bg-black/20 p-3 rounded-lg border border-blue-500/10 group hover:border-blue-500/30 transition-colors">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-blue-500/50 font-mono text-[10px] font-black">{(i + 1).toString().padStart(2, '0')}</span>
-                                                <span className="text-blue-100 font-bold text-sm tracking-tight">{comp.name}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Metrics Grid */}
-                                        {comp.metrics && (
-                                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                                {comp.metrics.funding && comp.metrics.funding !== 'N/A' && (
-                                                    <div className="bg-blue-500/5 px-2 py-1 rounded">
-                                                        <span className="text-[9px] uppercase text-blue-400/60 font-black tracking-wider block">Raised</span>
-                                                        <span className="text-xs text-blue-100 font-mono">{comp.metrics.funding}</span>
-                                                    </div>
-                                                )}
-                                                {comp.metrics.tvl && comp.metrics.tvl !== 'N/A' && (
-                                                    <div className="bg-blue-500/5 px-2 py-1 rounded">
-                                                        <span className="text-[9px] uppercase text-blue-400/60 font-black tracking-wider block">TVL</span>
-                                                        <span className="text-xs text-blue-100 font-mono">{comp.metrics.tvl}</span>
-                                                    </div>
-                                                )}
-                                                {comp.metrics.revenue && comp.metrics.revenue !== 'N/A' && (
-                                                    <div className="bg-blue-500/5 px-2 py-1 rounded">
-                                                        <span className="text-[9px] uppercase text-blue-400/60 font-black tracking-wider block">Est. Rev</span>
-                                                        <span className="text-xs text-blue-100 font-mono">{comp.metrics.revenue}</span>
-                                                    </div>
-                                                )}
-                                                {comp.metrics.dailyUsers && comp.metrics.dailyUsers !== 'N/A' && (
-                                                    <div className="bg-blue-500/5 px-2 py-1 rounded">
-                                                        <span className="text-[9px] uppercase text-blue-400/60 font-black tracking-wider block">Users</span>
-                                                        <span className="text-xs text-blue-100 font-mono">{comp.metrics.dailyUsers}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            /* Fallback to legacy string list */
-                            <ul className="space-y-3">
-                                {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
-                                    <li key={i} className="flex gap-4 text-blue-200/90 text-sm leading-relaxed">
-                                        <span className="text-blue-400 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
-                                        <span>{signal}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-
-                    {/* RISK FACTORS */}
-                    <div className="border border-slate-700/50 bg-slate-900/60 p-6 rounded-2xl break-inside-avoid shadow-xl">
-                        <div className="flex items-center gap-2 mb-5 text-slate-400 border-b border-white/5 pb-3">
-                            <AlertTriangle size={18} />
-                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Critical Risks</h3>
-                        </div>
-                        <ul className="space-y-3">
-                            {[...(result.technical?.keyRisks ?? []), ...(result.market?.goToMarketRisks ?? [])].slice(0, 5).map((con, i) => (
-                                <li key={i} className="flex gap-4 text-slate-300 text-sm leading-relaxed">
-                                    <span className="text-blue-500/50 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
-                                    <span>{con}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
 
                 {/* SECURITY & HEALTH CHECK */}
                 {/* SECURITY & HEALTH CHECK */}
@@ -564,7 +462,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                         </button>
                     )}
                 </div>
+
             </div>
         </div>
+
     );
 }

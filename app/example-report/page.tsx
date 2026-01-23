@@ -10,14 +10,14 @@ import Link from 'next/link';
 // MOCK DATA: "Golden Standard" Example
 // ------------------------------------------------------------------
 const EXAMPLE_RESULT: IdeaEvaluationResult = {
-    overallScore: 88,
+    overallScore: 92,
     projectType: 'ai',
     confidenceLevel: 'high',
 
     summary: {
         title: "NeuroSol: Autonomous Trading Agent",
         oneLiner: "LLM-powered liquidity aggregator that executes complex DeFi strategies via natural language on Solana.",
-        mainVerdict: "Buy - Institutional grade infrastructure with clear moat and strong execution team."
+        mainVerdict: "Buy - Institutional grade infrastructure with market-leading execution capability."
     },
 
     reasoningSteps: [
@@ -25,65 +25,83 @@ const EXAMPLE_RESULT: IdeaEvaluationResult = {
         "Verifying Solana program composability...",
         "Checking rigorous backtesting results...",
         "Evaluating competitive landscape vs Jupiter...",
-        "Assessing token utility (governance + fee burn)...",
-        "Verifying multi-sig security integration...",
         "Synthesizing final investment thesis..."
     ],
 
+    fatalFlaw: {
+        identified: false,
+        flawTitle: "",
+        flawDescription: "",
+        evidence: ""
+    },
+
     technical: {
-        feasibilityScore: 92,
+        feasibilityScore: 94,
         keyRisks: [
-            "LLM Hallucination risk in trade execution path",
-            "RPC congestion dependencies during high volatility"
+            "LLM Hallucination risk in execution path",
+            "RPC congestion dependencies"
         ],
         requiredComponents: [
             "Fine-tuned Llama-3 inference node",
             "Solana program anchor interface",
             "Real-time market data indexer"
         ],
-        comments: "Technically ambitious but feasible. The separation of 'Planner' (LLM) and 'Executor' (Deterministic Code) contributes to a high safety score."
+        comments: "Technically ambitious but feasible."
+    },
+
+    aiStrategy: {
+        modelQualityScore: 95,
+        dataMoatScore: 88,
+        userAcquisitionScore: 90,
+        notes: [
+            "Proprietary fine-tuning on 10TB of Solana Tx data",
+            "Latency < 50ms for inference execution",
+            "Viral 'Chat-to-Trade' user experience"
+        ]
     },
 
     tokenomics: {
         tokenNeeded: true,
         designScore: 85,
-        mainIssues: [
-            "Initial float might be too low (< 15%)",
-            "Vesting schedule for team could be longer (current: 12m)"
-        ],
-        suggestions: [
-            "Increase team vesting to 24 months to align with roadmap",
-            "Implement dynamic fee burn based on agent usage volume"
-        ]
+        mainIssues: [],
+        suggestions: []
     },
 
     market: {
         marketFitScore: 90,
-        targetAudience: [
-            "DeFi Power Users",
-            "DAO Treasuries",
-            "Arbitrage Bot Operators"
-        ],
-        competitorSignals: [
-            "Jupiter (Aggregator leader, no AI intent)",
-            "Drift (Perps, limited automation)",
-            "Unibot (Telegram based, security issues)"
+        targetAudience: ["DeFi Power Users", "DAO Treasuries"],
+        competitorSignals: [], // Deprecated in favor of competitors array
+        competitors: [
+            {
+                name: "Jupiter",
+                metrics: {
+                    funding: "$5M+",
+                    tvl: "$500M+",
+                    revenue: "$10M/yr",
+                    dailyUsers: "50k+"
+                }
+            },
+            {
+                name: "Unibot",
+                metrics: {
+                    funding: "Fair Launch",
+                    tvl: "N/A",
+                    revenue: "$30M/yr",
+                    dailyUsers: "5k+"
+                }
+            }
         ],
         goToMarketRisks: [
-            "User trust in AI handling funds",
-            "Crowded 'AI Agent' narrative space"
+            "Crowded 'AI Agent' narrative space",
+            "User trust in AI handling funds"
         ]
     },
 
     execution: {
         complexityLevel: 'high',
-        founderReadinessFlags: [
-            "Ex-HFT Engineer Lead",
-            "Solana Hackathon Winner '23",
-            "Published AI Research"
-        ],
-        estimatedTimeline: "4-6 Months to Mainnet",
-        executionRiskScore: 30, // Low risk
+        founderReadinessFlags: [],
+        estimatedTimeline: "4-6 Months",
+        executionRiskScore: 20,
         executionRiskLabel: 'low',
         executionSignals: [
             "GitHub repo activity is consistent",
@@ -97,34 +115,25 @@ const EXAMPLE_RESULT: IdeaEvaluationResult = {
             "Implement circuit breakers for large slippage",
             "Secure API keys implementation for inference nodes"
         ],
-        recommendedPivots: [], // None
-        niceToHaveLater: [
-            "Mobile app interface",
-            "Social copy-trading features"
-        ],
+        recommendedPivots: [],
+        niceToHaveLater: []
     },
 
     cryptoNativeChecks: {
         rugPullRisk: 'low',
         auditStatus: 'planned',
         liquidityStatus: 'locked',
-        liquidityDetail: "Locked for 1 year (Streamflow)",
+        liquidityDetail: "Locked for 1 year",
         liquidityGrade: 'strong',
         isAnonTeam: false
     },
 
     launchReadinessScore: 85,
     launchReadinessLabel: 'high',
-    launchReadinessSignals: [
-        "Whitepaper complete",
-        "Community discord active (2k+ members)",
-        "Tokenomics explicitly defined"
-    ],
-
+    launchReadinessSignals: [],
     calibrationNotes: [
-        "AI: plus points for a clear pain point and realistic data/infra story.",
-        "Execution: plus points for strong technical/ML background.",
-        "Launch: plus points for realistic MVP scope and data plan."
+        "AI: plus points for realistic data/infra story.",
+        "Execution: plus points for strong technical background."
     ]
 };
 
