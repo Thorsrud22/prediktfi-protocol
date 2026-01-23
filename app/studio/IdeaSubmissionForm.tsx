@@ -70,34 +70,17 @@ function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: stri
             // Real streaming mode - use actual steps from API
             setLogs(streamingSteps);
         } else {
-            // Fallback animation mode (for backwards compatibility)
+            // Fallback animation mode (network latency or legacy)
             const baseSteps = [
-                "Initializing PrediktFi Evaluator v2.1...",
-                "Secure handshake with evaluation node...",
-                "Parsing submission metadata...",
+                "Initializing PrediktFi Evaluator...",
+                "Fetching market context...",
+                "AI analyzing submission..."
             ];
 
-            const specificSteps = projectType === 'memecoin' ? [
-                "Scanning Solana chain for similar tickers...",
-                "Analyzing viral coefficients...",
-                "Checking liquidity lock patterns...",
-                "Simulating community raid potential...",
-            ] : projectType === 'defi' ? [
-                "Verifying yield sustainability...",
-                "Checking contract audit registries...",
-                "Analyzing impermanent loss risks...",
-                "Stress-testing economic model...",
-            ] : [
-                "Analyzing technical architecture...",
-                "Evaluating moat sustainability...",
-                "Cross-referencing GitHub activity...",
-                "Projecting training compute costs...",
-            ];
+            const specificSteps: string[] = [];
 
             const finalSteps = [
-                "Synthesizing market signals...",
-                "Generating risk matrix...",
-                "Finalizing institutional report...",
+                "Generating report..."
             ];
 
             const allSteps = [...baseSteps, ...specificSteps, ...finalSteps];
@@ -157,7 +140,7 @@ function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: stri
 
             <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center text-white/30 text-[10px] uppercase tracking-widest">
                 <span>STEPS: {logs.length}</span>
-                <span>STATUS: {streamingSteps && streamingSteps.length > 0 ? 'STREAMING' : 'SIMULATED'}</span>
+                <span>STATUS: {streamingSteps && streamingSteps.length > 0 ? 'STREAMING' : 'CONNECTING...'}</span>
                 <span>NET: ENCRYPTED</span>
             </div>
         </div>
