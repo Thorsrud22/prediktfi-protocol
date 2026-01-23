@@ -119,7 +119,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                         <div className="text-right hidden md:block print:block">
                             <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-1 print:text-gray-500">TIMESTAMP</div>
                             <div className="text-white text-xs font-mono print:text-black">{new Date().toISOString().split('T')[0]}</div>
-                            <div className="text-xs text-white/20 mt-1 font-mono print:text-gray-400">ID: {Math.random().toString(36).substring(7).toUpperCase()}</div>
+                            <div className="text-xs text-white/20 mt-1 font-mono print:text-gray-400">ID: {(result.summary.title.length * result.overallScore).toString(16).toUpperCase().padStart(6, '0')}</div>
                         </div>
 
                         {/* Download Button (Hidden in Print) */}

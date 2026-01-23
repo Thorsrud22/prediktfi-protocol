@@ -117,7 +117,7 @@ describe('AI Idea Evaluator Studio', () => {
         render(<StudioPage />);
 
         // Try to go to next step without filling anything
-        fireEvent.click(screen.getByRole('button', { name: /Next Step/i }));
+        fireEvent.click(screen.getByText('Add Context'));
 
         // Wait for state update and check for any validation error
         await waitFor(() => {
@@ -214,7 +214,7 @@ describe('AI Idea Evaluator Studio', () => {
         const descriptionInput = screen.getByPlaceholderText(/Describe your project.../i);
         fireEvent.change(descriptionInput, { target: { value: 'A decentralized exchange for memecoins on Solana' } });
 
-        fireEvent.click(screen.getByRole('button', { name: /Next Step/i }));
+        fireEvent.click(screen.getByText('Add Context'));
 
         // --- STEP 2: EXECUTION ---
         await waitFor(() => expect(screen.getByText('Team Composition')).toBeInTheDocument());
@@ -296,7 +296,7 @@ describe('AI Idea Evaluator Studio', () => {
         fireEvent.change(screen.getByPlaceholderText(/Describe your project.../i), { target: { value: 'A memecoin about coding.' } });
 
         // Next to Execution
-        fireEvent.click(screen.getByText('Next Step'));
+        fireEvent.click(screen.getByText('Add Context'));
         await waitFor(() => screen.getByText('Team Composition'));
 
         // Check Memecoin Checklist

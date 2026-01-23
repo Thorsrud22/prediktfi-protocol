@@ -169,15 +169,15 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
         projectType: 'ai',
-        teamSize: 'solo',
+        teamSize: 'solo', // Defaulted
         resources: [],
-        successDefinition: '',
+        successDefinition: 'Launch and learn', // Defaulted
         attachments: '',
-        responseStyle: 'short',
+        responseStyle: 'short', // Defaulted
         focusHints: [],
-        mvpScope: '',
-        goToMarketPlan: '',
-        launchLiquidityPlan: '',
+        mvpScope: 'Standard MVP', // Defaulted
+        goToMarketPlan: 'Organic Growth', // Defaulted
+        launchLiquidityPlan: 'Not yet decided', // Defaulted
         tokenAddress: '',
 
         // Phase 2 State
@@ -906,14 +906,36 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                 </div>
 
                 <div>
+                    {/* QUICK SCAN BUTTON (Visible only on Step 1) */}
+                    {currentStep === 0 && (
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    // Manually trigger submit if step 1 is valid
+                                    if (validateStep(0)) {
+                                        handleSubmit(e as any);
+                                    }
+                                }}
+                                className="hidden md:flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40 transition-all pointer-events-auto"
+                            >
+                                <Sparkles size={14} /> Quick Scan
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex gap-4">
                     {currentStep < STEPS.length - 1 ? (
-                        <button
-                            type="button"
-                            onClick={handleNext}
-                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] italic transition-all rounded-2xl border border-white/10"
-                        >
-                            Next Step <ArrowRight size={14} />
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={handleNext}
+                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] italic transition-all rounded-2xl border border-white/10"
+                            >
+                                {currentStep === 0 ? 'Add Context' : 'Next Step'} <ArrowRight size={14} />
+                            </button>
+                        </div>
                     ) : (
                         <div className="flex items-center gap-6">
                             {quota && (
