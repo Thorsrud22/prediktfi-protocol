@@ -33,8 +33,11 @@ export type IdeaEvaluationResult = {
 
   aiStrategy?: {
     modelQualityScore: number;
+    modelQualityComment?: string;
     dataMoatScore: number;
+    dataMoatComment?: string;
     userAcquisitionScore: number;
+    userAcquisitionComment?: string;
     notes: string[];
   };
 
@@ -78,6 +81,11 @@ export type IdeaEvaluationResult = {
     liquidityDetail?: string; // e.g. "Locked for 1 year"
     liquidityGrade?: 'weak' | 'medium' | 'strong';
     isAnonTeam: boolean;
+    // Enhanced Birdeye Metrics
+    isLiquidityLocked?: boolean;
+    top10HolderPercentage?: number;
+    totalLiquidity?: number;
+    creatorPercentage?: number;
   };
 
   calibrationNotes?: string[];

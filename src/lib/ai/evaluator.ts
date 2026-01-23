@@ -111,8 +111,13 @@ ON-CHAIN VERIFICATION (Real-Time Data):
 - Mint Authority: ${check.mintAuthority ? "ACTIVE (High Risk)" : "REVOKED (Safe)"}
 - Freeze Authority: ${check.freezeAuthority ? "ACTIVE (High Risk)" : "REVOKED (Safe)"}
 - Is Pump.fun: ${check.isPumpFun}
+${check.isLiquidityLocked !== undefined ? `- Liquidity Locked: ${check.isLiquidityLocked ? "YES (Safe)" : "NO (Risk)"}` : ""}
+${check.top10HolderPercentage !== undefined ? `- Top 10 Holder Concentration: ${check.top10HolderPercentage.toFixed(2)}%` : ""}
+${check.creatorPercentage !== undefined ? `- Creator Holding: ${check.creatorPercentage.toFixed(2)}%` : ""}
+${check.ownerPercentage !== undefined ? `- Owner Holding: ${check.ownerPercentage.toFixed(2)}%` : ""}
+${check.totalLiquidity !== undefined ? `- Total Liquidity (USD): $${check.totalLiquidity.toLocaleString()}` : ""}
 
-INSTRUCTION: Flag "High Rug Risk" if Mint Authority is ACTIVE.
+INSTRUCTION: Flag "High Rug Risk" if Mint Authority is ACTIVE or if Holder Concentration is extremely high (>80%) without clear explanation.
 `;
     } catch {
       verificationContext = `

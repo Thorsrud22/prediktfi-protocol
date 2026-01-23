@@ -103,7 +103,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         resources: [],
         successDefinition: 'Launch and learn',
         attachments: '',
-        responseStyle: 'short',
+        responseStyle: 'balanced',
         focusHints: [],
         mvpScope: 'Standard MVP',
         goToMarketPlan: 'Organic Growth',
@@ -231,7 +231,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                 {/* Header */}
                 <div className="mb-8">
-                    <h2 className="text-2xl font-bold text-white tracking-tight mb-2">New Analysis</h2>
+                    <h2 className="text-2xl font-bold text-white tracking-tight mb-2">What are you building?</h2>
                     <p className="text-white/40 text-sm">Describe your idea to get an investor-grade evaluation.</p>
                 </div>
 
@@ -321,7 +321,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         <textarea
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
-                            placeholder="Describe your project... What is the core innovation? Who is the user? What is the vibe? (Min 10 chars)"
+                            placeholder="e.g., A Solana memecoin that taxes sells to fund carbon credits. Target: eco-conscious degens. Vibe: Pepe meets Al Gore."
                             className="w-full flex-1 p-6 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-mono text-sm leading-relaxed rounded-2xl min-h-[300px]"
                         />
                         {errors.description && (

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import "../src/styles/design-tokens.css";
@@ -26,15 +26,7 @@ import { SITE } from "./config/site";
 import { getPlanFromRequest } from "./lib/plan";
 import { headers } from "next/headers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -219,7 +211,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased min-h-screen bg-transparent text-slate-100 relative`}>
+      <body className={`${inter.variable} antialiased min-h-screen bg-transparent text-slate-100 relative`}>
         <CSPostHogProvider>
           <PostHogPageView />
           <ProgressBarProvider>

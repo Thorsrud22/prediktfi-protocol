@@ -118,7 +118,7 @@ export default function RadarChart({ data, width = 300, height = 300, className 
                             y={y}
                             textAnchor={Math.abs(x - centerX) < 5 ? 'middle' : isLeft ? 'end' : 'start'}
                             dominantBaseline="middle"
-                            className="text-[10px] fill-slate-400 font-mono uppercase tracking-wider font-bold"
+                            className="text-[10px] fill-slate-400 font-sans uppercase tracking-wider font-bold"
                             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
                         >
                             {p.label}

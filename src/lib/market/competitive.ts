@@ -4,6 +4,7 @@ import { CompetitiveMemo, CompetitiveMemoResult } from "./competitiveTypes";
 import { searchCompetitors } from "@/lib/tavilyClient";
 import { generateDeFiCompetitiveSummary, getDeFiCompetitors, formatTVL } from "@/lib/defiLlamaClient";
 import { analyzeMemecoinNarrative, generateMemecoinCompetitiveSummary } from "@/lib/dexscreenerClient";
+import { BirdeyeMarketService } from "./birdeye";
 
 const COMPETITIVE_SYSTEM_PROMPT = `You are a Competitive Intelligence Scout for specialized crypto/tech sectors.
 Your goal is to produce a "Competitive Memo" that provides a reality check on an idea's landscape.
@@ -231,6 +232,28 @@ INSTRUCTION: Use this REAL on-chain data to assess narrative crowdedness and com
             }
         } catch (err) {
             console.warn("[Competitive] DexScreener fetch failed (non-blocking):", err);
+        }
+
+        // 4b. Fetch Birdeye data for Memecoin projects (Searching for similar tokens)
+        try {
+            const birdeye = new BirdeyeMarketService();
+            const narrative = idea.memecoinNarrative || extractNarrativeFromDescription(idea.description);
+            if (narrative) {
+                const searchResults = await birdeye.searchTokens(narrative);
+                if (searchResults.length > 0) {
+                    const birdeyeContext = `
+BIRDEYE SEARCH RESULTS (Real-time Solana Token Search):
+Found ${searchResults.length} tokens matching "${narrative}":
+${searchResults.slice(0, 5).map(t => `- ${t.name} (${t.symbol}): ${t.verified ? 'Verified' : 'Unverified'}, Network: ${t.network}`).join('\n')}
+
+INSTRUCTION: Reference these as potential competitors or similar projects in the landscape.
+`;
+                    dexScreenerContext += birdeyeContext;
+                    console.log(`[Competitive] Found ${searchResults.length} tokens via Birdeye search for "${narrative}"`);
+                }
+            }
+        } catch (err) {
+            console.warn("[Competitive] Birdeye search failed (non-blocking):", err);
         }
     }
 

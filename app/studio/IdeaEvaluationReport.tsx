@@ -44,9 +44,17 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
     }, [result]);
 
     const getScoreColor = (score: number) => {
-        if (score >= 75) return 'text-cyan-400';
-        if (score >= 50) return 'text-blue-400';
-        return 'text-slate-400';
+        if (score >= 60) return 'text-emerald-400';
+        if (score >= 30) return 'text-amber-400';
+        return 'text-red-400';
+    };
+
+    const getScoreLabelText = (score: number) => {
+        if (score >= 90) return 'Exceptional';
+        if (score >= 75) return 'Strong';
+        if (score >= 60) return 'Average';
+        if (score >= 30) return 'Below Average';
+        return 'Weak';
     };
 
     const getScoreLabel = (score: number) => {
@@ -83,11 +91,11 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 {/* HEADER */}
                 <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6 relative z-10 print:border-black/20">
                     <div>
-                        <div className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] italic mb-3 flex items-center gap-2 print:text-blue-700">
+                        <div className="text-[10px] text-blue-400 font-bold uppercase tracking-[0.2em] mb-3 flex items-center gap-2 print:text-blue-700">
                             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse noprint shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
                             Analysis Complete
                         </div>
-                        <h1 className="text-4xl font-black text-white tracking-tighter mb-2 print:text-black uppercase italic">{result.summary.title} <span className="text-blue-500">.</span></h1>
+                        <h1 className="text-4xl font-bold text-white tracking-tighter mb-2 print:text-black uppercase">{result.summary.title} <span className="text-blue-500">.</span></h1>
                         <p className="text-white/60 text-sm mt-1 max-w-lg leading-relaxed print:text-gray-600">
                             {result.summary.oneLiner}
                         </p>
@@ -114,7 +122,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     <div className="lg:col-span-2 border border-blue-500/30 bg-blue-500/10 p-6 rounded-2xl shadow-lg relative overflow-hidden">
                         <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-3 relative z-10">
                             <CheckCircle2 size={18} className="text-blue-400" />
-                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px] text-blue-100">Immediate Action Plan</h3>
+                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px] text-blue-100">Immediate Action Plan</h3>
                         </div>
 
                         {(result.recommendations?.mustFixBeforeBuild ?? []).length > 0 ? (
@@ -122,14 +130,14 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                                 {(result.recommendations?.mustFixBeforeBuild ?? []).map((fix, i) => (
                                     <div key={i} className="flex gap-4 items-start group">
                                         <div className="mt-0.5 w-5 h-5 rounded-full border-2 border-blue-500/40 flex items-center justify-center bg-black/20 group-hover:border-blue-400 transition-colors">
-                                            <span className="text-[10px] font-black text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">✓</span>
+                                            <span className="text-[10px] font-bold text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">✓</span>
                                         </div>
                                         <p className="text-white/90 text-sm leading-relaxed font-medium">{fix}</p>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-white/60 italic text-sm">No critical blockers identified. Proceed to execution.</p>
+                            <p className="text-white/60 text-sm">No critical blockers identified. Proceed to execution.</p>
                         )}
 
                         {/* Decorative background element */}
@@ -142,12 +150,12 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     <div className="border border-slate-700/50 bg-slate-900/60 p-6 rounded-2xl shadow-lg flex flex-col">
                         <div className="flex items-center gap-2 mb-4 text-slate-400 border-b border-white/5 pb-3">
                             <AlertTriangle size={18} />
-                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Threat Detection</h3>
+                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Threat Detection</h3>
                         </div>
                         <ul className="space-y-3 flex-1">
                             {[...(result.technical?.keyRisks ?? []), ...(result.market?.goToMarketRisks ?? [])].slice(0, 5).map((con, i) => (
                                 <li key={i} className="flex gap-3 text-slate-300 text-xs leading-relaxed">
-                                    <span className="text-red-500/50 font-mono font-black">•</span>
+                                    <span className="text-red-500/50 font-mono font-bold">•</span>
                                     <span>{con}</span>
                                 </li>
                             ))}
@@ -169,7 +177,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         <div className="border border-blue-500/20 bg-blue-500/5 p-6 rounded-2xl break-inside-avoid shadow-xl h-full">
                             <div className="flex items-center gap-2 mb-5 text-blue-400 border-b border-blue-500/10 pb-3">
                                 <Terminal size={18} />
-                                <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Market Intelligence</h3>
+                                <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Market Intelligence</h3>
                             </div>
                             {/* Structured Competitors */}
                             {result.market?.competitors && result.market.competitors.length > 0 ? (
@@ -209,7 +217,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 opacity-50"></div>
                         <div className="flex items-center gap-2 mb-4 text-white/90 border-b border-white/5 pb-3">
                             <Activity size={18} className="text-purple-400" />
-                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Score Calibration Audit</h3>
+                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Score Calibration Audit</h3>
                         </div>
                         <div className="space-y-3">
                             {result.calibrationNotes.map((note, i) => {
@@ -218,7 +226,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
                                 return (
                                     <div key={i} className="flex gap-4 items-start text-sm">
-                                        <div className={`mt-0.5 min-w-[20px] h-5 rounded flex items-center justify-center text-[10px] font-black uppercase ${isNegative ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                        <div className={`mt-0.5 min-w-[20px] h-5 rounded flex items-center justify-center text-[10px] font-bold uppercase ${isNegative ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
                                             isPositive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
                                                 'bg-slate-700 text-slate-400'
                                             }`}>
@@ -245,7 +253,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl font-mono text-xs break-inside-avoid shadow-xl">
                         <div className="flex items-center gap-2 mb-5 text-white/60 border-b border-white/5 pb-3">
                             <Terminal size={14} className="text-blue-400" />
-                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">AI Reasoning Chain</h3>
+                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">AI Reasoning Chain</h3>
                         </div>
                         <ul className="space-y-2 text-white/70">
                             {(result.reasoningSteps ?? []).map((step, i) => (
@@ -265,34 +273,42 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         <div className="flex items-center justify-between mb-5 border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-blue-400">
                                 <Shield size={18} />
-                                <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Security Check</h3>
+                                <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Security Check</h3>
                             </div>
-                            <div className="text-[10px] text-white/20 font-mono font-black italic">v1.0.4</div>
+                            <div className="text-[10px] text-white/20 font-mono font-bold">v1.0.4</div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
                             <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl">
-                                <span className="text-white/40 text-[10px] uppercase font-black tracking-widest italic">Rug Pull Risk</span>
-                                <span className={`text-[10px] font-black uppercase italic ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-cyan-400' :
+                                <span className="text-white/40 text-[10px] uppercase font-bold tracking-widest">Rug Pull Risk</span>
+                                <span className={`text-[10px] font-bold uppercase ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-cyan-400' :
                                     result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-blue-400' : 'text-slate-400'
                                     }`}>
                                     {result.cryptoNativeChecks.rugPullRisk}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl">
-                                <span className="text-white/40 text-[10px] uppercase font-black tracking-widest italic">Audit Status</span>
-                                <span className={`text-[10px] font-black uppercase italic ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-cyan-400' : 'text-blue-400'
+                                <span className="text-white/40 text-[10px] uppercase font-bold tracking-widest">Audit Status</span>
+                                <span className={`text-[10px] font-bold uppercase ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-cyan-400' : 'text-blue-400'
                                     }`}>
                                     {result.cryptoNativeChecks.auditStatus}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl">
-                                <span className="text-white/40 text-[10px] uppercase font-black tracking-widest italic">Liquidity</span>
-                                <span className={`text-[10px] font-black uppercase italic ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'text-cyan-400' : 'text-slate-400'
+                                <span className="text-white/40 text-[10px] uppercase font-bold tracking-widest">Liquidity</span>
+                                <span className={`text-[10px] font-bold uppercase ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' || result.cryptoNativeChecks.isLiquidityLocked ? 'text-cyan-400' : 'text-slate-400'
                                     }`}>
-                                    {result.cryptoNativeChecks.liquidityStatus}
+                                    {result.cryptoNativeChecks.isLiquidityLocked ? 'Locked (Birdeye)' : result.cryptoNativeChecks.liquidityStatus}
                                 </span>
                             </div>
+                            {result.cryptoNativeChecks.top10HolderPercentage != null && (
+                                <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl col-span-1 md:col-span-2">
+                                    <span className="text-white/40 text-[10px] uppercase font-bold tracking-widest">Top 10 Holder Concentration</span>
+                                    <span className={`text-[10px] font-bold uppercase ${result.cryptoNativeChecks.top10HolderPercentage > 50 ? 'text-blue-400' : 'text-cyan-400'}`}>
+                                        {result.cryptoNativeChecks.top10HolderPercentage.toFixed(2)}%
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -303,40 +319,58 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         <div className="flex items-center justify-between mb-5 border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-cyan-400">
                                 <Sparkles size={18} />
-                                <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">AI Strategy Core</h3>
+                                <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">AI Strategy Core</h3>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                            <div>
-                                <div className="text-[10px] text-white/40 font-black uppercase tracking-widest italic mb-1">Model Quality</div>
-                                <div className={`text-2xl font-black italic ${getScoreColor(result.aiStrategy.modelQualityScore)}`}>
-                                    {result.aiStrategy.modelQualityScore}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            {[
+                                {
+                                    label: 'Model Quality',
+                                    score: result.aiStrategy.modelQualityScore,
+                                    comment: result.aiStrategy.modelQualityComment
+                                },
+                                {
+                                    label: 'Data Moat',
+                                    score: result.aiStrategy.dataMoatScore,
+                                    comment: result.aiStrategy.dataMoatComment
+                                },
+                                {
+                                    label: 'Acquisition',
+                                    score: result.aiStrategy.userAcquisitionScore,
+                                    comment: result.aiStrategy.userAcquisitionComment
+                                },
+                            ].map((item, idx) => (
+                                <div key={idx} className="flex flex-col">
+                                    <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">{item.label}</div>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <div className={`text-2xl font-bold ${getScoreColor(item.score)}`}>
+                                            {item.score}/100
+                                        </div>
+                                        <div className={`text-[10px] font-bold uppercase opacity-60 ${getScoreColor(item.score)}`}>
+                                            ({getScoreLabelText(item.score)})
+                                        </div>
+                                    </div>
+                                    {item.comment && (
+                                        <p className="text-xs text-white/60 leading-relaxed italic pr-2">
+                                            "{item.comment}"
+                                        </p>
+                                    )}
                                 </div>
-                            </div>
-                            <div>
-                                <div className="text-[10px] text-white/40 font-black uppercase tracking-widest italic mb-1">Data Moat</div>
-                                <div className={`text-2xl font-black italic ${getScoreColor(result.aiStrategy.dataMoatScore)}`}>
-                                    {result.aiStrategy.dataMoatScore}
-                                </div>
-                            </div>
-                            <div>
-                                <div className="text-[10px] text-white/40 font-black uppercase tracking-widest italic mb-1">Acquisition</div>
-                                <div className={`text-2xl font-black italic ${getScoreColor(result.aiStrategy.userAcquisitionScore)}`}>
-                                    {result.aiStrategy.userAcquisitionScore}
-                                </div>
-                            </div>
+                            ))}
                         </div>
 
                         {(result.aiStrategy.notes?.length > 0) && (
-                            <ul className="space-y-2">
-                                {result.aiStrategy.notes.map((note, i) => (
-                                    <li key={i} className="flex gap-3 text-sm text-white/70">
-                                        <span className="text-cyan-500/50">•</span>
-                                        <span>{note}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                            <div className="mt-4 pt-4 border-t border-white/5">
+                                <ul className="space-y-2">
+                                    {result.aiStrategy.notes.map((note, i) => (
+                                        <li key={i} className="flex gap-3 text-sm text-white/70">
+                                            <span className="text-cyan-500/50">•</span>
+                                            <span>{note}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         )}
                     </div>
                 )}
@@ -346,15 +380,15 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     <div className="border border-white/5 bg-slate-900 p-6 mb-8 rounded-2xl break-inside-avoid shadow-xl">
                         <div className="flex items-center gap-2 mb-5 text-white border-b border-white/10 pb-3">
                             <CheckCircle2 size={18} className="text-blue-400" />
-                            <h3 className="font-black uppercase tracking-[0.2em] italic text-[10px]">Execution Analysis</h3>
+                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Execution Analysis</h3>
                         </div>
                         <div className="space-y-6">
                             {/* EXECUTION SIGNALS */}
                             <div className="space-y-3">
-                                <div className="text-[10px] text-white/20 font-black uppercase tracking-widest italic mb-3">Signals</div>
+                                <div className="text-[10px] text-white/20 font-bold uppercase tracking-widest mb-3">Signals</div>
                                 {result.execution?.executionSignals?.slice(0, 3)?.map((signal, i) => (
                                     <div key={i} className="flex gap-4 items-start opacity-70">
-                                        <span className="text-blue-400 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
+                                        <span className="text-blue-400 font-mono text-xs font-bold">{(i + 1).toString().padStart(2, '0')}</span>
                                         <p className="text-white/80 text-sm leading-relaxed">{signal}</p>
                                     </div>
                                 ))}
@@ -363,10 +397,10 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                             {/* MUST FIX */}
                             {(result.recommendations?.mustFixBeforeBuild ?? []).length > 0 && (
                                 <div className="space-y-3 mt-4">
-                                    <div className="text-[10px] text-blue-400/30 font-black uppercase tracking-widest italic mb-3 pt-4 border-t border-white/5">Strategic Improvements</div>
+                                    <div className="text-[10px] text-blue-400/30 font-bold uppercase tracking-widest mb-3 pt-4 border-t border-white/5">Strategic Improvements</div>
                                     {(result.recommendations?.mustFixBeforeBuild ?? []).map((fix, i) => (
                                         <div key={i} className="flex gap-4 items-start">
-                                            <span className="text-blue-400 font-mono text-xs font-black">{(i + 1).toString().padStart(2, '0')}</span>
+                                            <span className="text-blue-400 font-mono text-xs font-bold">{(i + 1).toString().padStart(2, '0')}</span>
                                             <p className="text-blue-200/80 text-sm leading-relaxed">{fix}</p>
                                         </div>
                                     ))}
@@ -383,7 +417,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     {onEdit && (
                         <button
                             onClick={onEdit}
-                            className="flex-1 bg-white/5 border border-white/10 text-white p-5 hover:bg-white/10 text-[10px] font-black uppercase tracking-[0.2em] italic transition-all rounded-2xl flex items-center justify-center gap-3 active:scale-95"
+                            className="flex-1 bg-white/5 border border-white/10 text-white p-5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl flex items-center justify-center gap-3 active:scale-95"
                         >
                             <ArrowLeft size={16} /> Refine Input
                         </button>
@@ -391,7 +425,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     {onStartNew && (
                         <button
                             onClick={onStartNew}
-                            className="flex-1 bg-blue-600 text-white border border-transparent p-5 hover:bg-blue-500 text-[10px] font-black uppercase tracking-[0.2em] italic transition-all rounded-2xl shadow-lg shadow-blue-900/40 flex items-center justify-center gap-3 active:scale-95"
+                            className="flex-1 bg-blue-600 text-white border border-transparent p-5 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl shadow-lg shadow-blue-900/40 flex items-center justify-center gap-3 active:scale-95"
                         >
                             New Evaluation <Sparkles size={16} />
                         </button>

@@ -13,7 +13,7 @@ export const ideaSubmissionSchema = z.object({
     successDefinition: z.string().optional().default('Launch and learn'),
     attachments: z.string().optional(),
 
-    responseStyle: z.string().optional().default('short'),
+    responseStyle: z.string().optional().default('balanced'),
 
     focusHints: z.array(z.string()).optional().default([]),
     mvpScope: z.string().optional().default('Standard MVP'),

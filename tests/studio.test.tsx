@@ -96,7 +96,7 @@ describe('AI Idea Evaluator Studio', () => {
         render(<StudioPage />);
 
         // Check for main headers
-        expect(screen.getByText(/New Analysis/i)).toBeInTheDocument();
+        expect(screen.getByText(/What are you building?/i)).toBeInTheDocument();
         expect(screen.getByText(/The Pitch/i)).toBeInTheDocument();
 
         // Check for project types
@@ -169,7 +169,7 @@ describe('AI Idea Evaluator Studio', () => {
         fireEvent.click(screen.getByText('Memecoin'));
 
         // 2. Fill Description
-        const descriptionInput = screen.getByPlaceholderText(/Describe your project.../i);
+        const descriptionInput = screen.getByPlaceholderText(/A Solana memecoin/i);
         fireEvent.change(descriptionInput, { target: { value: 'This is a test memecoin description that is long enough.' } });
 
         // 3. Open Advanced Options
