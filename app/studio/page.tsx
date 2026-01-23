@@ -220,12 +220,10 @@ export default function StudioPage() {
 
 
   return (
-    <div className="relative min-h-screen text-white font-sans selection:bg-blue-500/30 selection:text-blue-200">
+    <>
       <PerformanceMonitor />
 
-      {/* Aurora Background is handled by layout, we just need to be transparent */}
-
-      <main className="relative pt-32 pb-20 px-4 md:px-8 max-w-7xl mx-auto">
+      <div className="relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6">
           <div>
             <h1 className="text-5xl sm:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent uppercase italic">
@@ -272,7 +270,7 @@ export default function StudioPage() {
           )}
 
           {currentStep === 'analysis' && evaluationResult && (
-            <div className="space-y-8">
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
               <IdeaEvaluationReport
                 result={evaluationResult}
                 onEdit={handleEdit}
@@ -332,7 +330,7 @@ export default function StudioPage() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ideaSubmissionSchema, IdeaSubmission } from '@/lib/ideaSchema';
 import { z } from 'zod';
-import { ArrowLeft, ArrowRight, CheckCircle2, Rocket, Target, Users, Settings2, Sparkles, Lightbulb, X } from 'lucide-react';
+import { Rocket, Target, Users, Settings2, Lightbulb, X, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface IdeaSubmissionFormProps {
     onSubmit: (data: IdeaSubmission) => void;
@@ -15,41 +15,8 @@ interface IdeaSubmissionFormProps {
     onConnect?: () => void;
 }
 
-const STEPS = [
-    {
-        id: 'vision',
-        title: 'The Vision',
-        subtitle: 'What are you building?',
-        icon: Rocket,
-        fields: ['projectType', 'description']
-    },
-    {
-        id: 'execution',
-        title: 'Execution',
-        subtitle: 'Can you build it?',
-        icon: Users,
-        fields: ['teamSize', 'resources', 'tokenAddress']
-    },
-    {
-        id: 'strategy',
-        title: 'Strategy',
-        subtitle: 'How will you grow?',
-        icon: Target,
-        fields: ['mvpScope', 'goToMarketPlan', 'launchLiquidityPlan']
-    },
-    {
-        id: 'goals',
-        title: 'Goals',
-        subtitle: 'Define success',
-        icon: Settings2,
-        fields: ['successDefinition', 'responseStyle', 'attachments', 'focusHints']
-    }
-];
-
-// ... imports
-
 // ------------------------------------------------------------------
-// REASONING TERMINAL COMPONENT - Now with real streaming support
+// REASONING TERMINAL COMPONENT
 // ------------------------------------------------------------------
 function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: string; streamingSteps?: string[] }) {
     const [logs, setLogs] = useState<string[]>([]);
@@ -64,40 +31,18 @@ function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: stri
         return () => clearInterval(interval);
     }, [startTime]);
 
-    // Use streaming steps if provided, otherwise fall back to animation
+    // Streaming Logic
     useEffect(() => {
         if (streamingSteps && streamingSteps.length > 0) {
-            // Real streaming mode - use actual steps from API
             setLogs(streamingSteps);
         } else {
-            // Fallback animation mode (network latency or legacy)
-            const baseSteps = [
-                "Initializing PrediktFi Evaluator...",
-                "Fetching market context...",
-                "AI analyzing submission..."
-            ];
-
-            const specificSteps: string[] = [];
-
-            const finalSteps = [
-                "Generating report..."
-            ];
-
-            const allSteps = [...baseSteps, ...specificSteps, ...finalSteps];
-            let stepIndex = 0;
-
-            const interval = setInterval(() => {
-                if (stepIndex < allSteps.length) {
-                    setLogs(prev => [...prev, allSteps[stepIndex]]);
-                    stepIndex++;
-                }
-            }, 800);
-
-            return () => clearInterval(interval);
+            // Fallback honest animation if stream is delayed
+            // Just show initializing to prevent empty screen
+            setLogs(["Initializing PrediktFi Evaluator..."]);
         }
     }, [projectType, streamingSteps]);
 
-    // Auto-scroll to bottom
+    // Auto-scroll
     const bottomRef = React.useRef<HTMLDivElement>(null);
     useEffect(() => {
         if (bottomRef.current?.scrollIntoView) {
@@ -148,22 +93,23 @@ function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: stri
 }
 
 export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, isConnected, onConnect }: IdeaSubmissionFormProps) {
-    const [currentStep, setCurrentStep] = useState(0);
+    // Consolidated State
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
         projectType: 'ai',
-        teamSize: 'solo', // Defaulted
+
+        // Advanced / Optional Defaults
+        teamSize: 'solo',
         resources: [],
-        successDefinition: 'Launch and learn', // Defaulted
+        successDefinition: 'Launch and learn',
         attachments: '',
-        responseStyle: 'short', // Defaulted
+        responseStyle: 'short',
         focusHints: [],
-        mvpScope: 'Standard MVP', // Defaulted
-        goToMarketPlan: 'Organic Growth', // Defaulted
-        launchLiquidityPlan: 'Not yet decided', // Defaulted
+        mvpScope: 'Standard MVP',
+        goToMarketPlan: 'Organic Growth',
+        launchLiquidityPlan: 'Not yet decided',
         tokenAddress: '',
 
-        // Phase 2 State
         defiSecurityMarks: [],
         memecoinLaunchPreparation: [],
         aiInfraReadiness: [],
@@ -173,22 +119,19 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [animating, setAnimating] = useState(false);
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
-    // Stable session ID that doesn't change on re-renders
+    // Coach Tip Logic
     const [coachTip, setCoachTip] = useState<string | null>(null);
     const [isCoaching, setIsCoaching] = useState(false);
 
-    // Live Coach Logic
     useEffect(() => {
-        // Only run on step 0 (Vision) and if description is long enough
-        if (currentStep !== 0 || !formData.description || formData.description.length < 20) {
+        if (!formData.description || formData.description.length < 20) {
             setCoachTip(null);
             return;
         }
 
         const timer = setTimeout(async () => {
-            // Skip coach tip if not connected (no wallet prompt)
             if (!isConnected) {
                 setCoachTip(null);
                 return;
@@ -217,14 +160,12 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
             } finally {
                 setIsCoaching(false);
             }
-        }, 3000); // 3s debounce
+        }, 3000);
 
         return () => clearTimeout(timer);
-    }, [formData.description, currentStep, isConnected]);
+    }, [formData.description, isConnected, formData.projectType]);
 
-    // ----------------------------------------------------------------
-    // HANDLERS
-    // ----------------------------------------------------------------
+    // Handlers
     const handleChange = (field: keyof IdeaSubmission, value: any) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (errors[field]) {
@@ -237,89 +178,43 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     };
 
     const toggleArrayItem = (field: keyof IdeaSubmission, item: string) => {
-        const currentItems = (formData[field] as string[]) || []; // Type assertion needed as partial formData values can be varying types
+        const currentItems = (formData[field] as string[]) || [];
         const newItems = currentItems.includes(item)
             ? currentItems.filter((i) => i !== item)
             : [...currentItems, item];
         handleChange(field, newItems);
     };
 
-    const validateStep = (stepIndex: number): boolean => {
-        const step = STEPS[stepIndex];
-        const newErrors: Record<string, string> = {};
-
-        // Manual validation for required fields in the current step
-        // We use the zod schema partially if possible, but simple checks are faster here for UX
-
-        if (step.id === 'vision') {
-            if (!formData.projectType) newErrors.projectType = "Please select a project type.";
-            if (!formData.description || formData.description.length < 10) newErrors.description = "Description is too short.";
-        }
-
-        if (step.id === 'execution') {
-            if (!formData.teamSize) newErrors.teamSize = "Please select your team size.";
-            // Resources generally optional or assumed empty ok, but good to check
-        }
-
-        if (step.id === 'strategy') {
-            // MVP and GTM can be optional depending on strictness, but let's encourage them
-            // Assuming strictness based on schema? Schema says optional string or required?
-            // Checking safeParse on full schema later tells us truth.
-            // For now, let's just warn if empty but allow proceed if schema allows.
-            // Looking at previous code, they were just text inputs.
-        }
-
-        if (step.id === 'goals') {
-            if (!formData.successDefinition || formData.successDefinition.length < 5) {
-                newErrors.successDefinition = "Success definition must be at least 5 chars.";
-            }
-            if (!formData.responseStyle) newErrors.responseStyle = "Choose a response style.";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleNext = () => {
-        if (validateStep(currentStep)) {
-            setAnimating(true);
-            setTimeout(() => {
-                setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
-                setAnimating(false);
-            }, 300); // Wait for exit animation
-        }
-    };
-
-    const handleBack = () => {
-        setAnimating(true);
-        setTimeout(() => {
-            setCurrentStep(prev => Math.max(prev - 1, 0));
-            setAnimating(false);
-        }, 300);
-    };
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (validateStep(currentStep)) { // Validate last step
-            try {
-                const validatedData = ideaSubmissionSchema.parse(formData);
-                onSubmit(validatedData);
-            } catch (error) {
-                if (error instanceof z.ZodError) {
-                    // Normally shouldn't happen if step validation is good, 
-                    // but acts as final safety net
-                    console.error("Final validation failed", error);
-                    alert("Please fix errors before submitting.");
-                }
+
+        // Simple Validation
+        if (!formData.description || formData.description.length < 10) {
+            setErrors({ description: "Please provide a more detailed description (min 10 chars)." });
+            return;
+        }
+
+        if (!formData.projectType) {
+            setErrors({ projectType: "Please select a project sector." });
+            return;
+        }
+
+        // Use Zod for final cleanup/defaults, but don't block on optional fields
+        try {
+            const validatedData = ideaSubmissionSchema.parse(formData);
+            onSubmit(validatedData);
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                console.error("Submission Schema Error", error);
+                // Fallback: Just submit what we have if strict schema check fails on something trivial
+                // (Though schema should handle defaults). 
+                // Just in case, block only if critical:
+                onSubmit(formData as IdeaSubmission);
             }
         }
     };
 
-    // ----------------------------------------------------------------
-    // RENDER (TERMINAL UI)
-    // ----------------------------------------------------------------
-
-    // INTERCEPT: If submitting, show Reasoning Terminal
+    // Render Logic
     if (isSubmitting) {
         return (
             <div className="w-full max-w-4xl mx-auto bg-slate-900/95 border border-white/10 shadow-xl rounded-xl relative overflow-hidden font-sans animate-in fade-in duration-500">
@@ -328,638 +223,244 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         );
     }
 
-    const progress = ((currentStep + 1) / STEPS.length) * 100;
-    const currentStepConfig = STEPS[currentStep];
-
     return (
-        <div className="w-full max-w-4xl mx-auto bg-slate-900/40 backdrop-blur-md border border-white/5 shadow-2xl rounded-[32px] relative overflow-hidden font-sans">
+        <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
+            {/* MAIN CARD */}
+            <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 shadow-2xl rounded-[32px] overflow-hidden p-8 relative">
 
-            {/* Terminal Header */}
-            <div className="px-8 pt-8 pb-6 border-b border-white/10">
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg">
-                        {React.createElement(currentStepConfig.icon, { size: 20 })}
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-white tracking-tight leading-none mb-1">
-                            {currentStepConfig.title}
-                        </h2>
-                        <p className="text-white/60 text-sm">
-                            {currentStepConfig.subtitle}
-                        </p>
-                    </div>
+                {/* Header */}
+                <div className="mb-8">
+                    <h2 className="text-2xl font-bold text-white tracking-tight mb-2">New Analysis</h2>
+                    <p className="text-white/40 text-sm">Describe your idea to get an investor-grade evaluation.</p>
                 </div>
 
-                {/* Segmented Progress Wizard */}
-                <div className="flex items-center gap-1 w-full relative">
-                    {STEPS.map((step, idx) => (
-                        <div key={step.id} className="flex-1 flex flex-col gap-2 group">
-                            <div className={`h-2 w-full rounded-full transition-all duration-300 ${idx <= currentStep
-                                ? 'bg-gradient-to-r from-blue-600 to-indigo-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
-                                : 'bg-white/5'
-                                }`} />
-                            <div className={`text-[10px] uppercase font-black tracking-[0.2em] transition-colors hidden md:block text-center ${idx <= currentStep ? 'text-blue-400' : 'text-white/20'
-                                }`}>
-                                {['Vision', 'Execution', 'Strategy', 'Goals'][idx]}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                    {/* LEFT COLUMN: TYPE */}
+                    <div className="lg:col-span-4 space-y-6">
+                        <div>
+                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                Sector <span className="text-blue-400 ml-1">*</span>
+                            </label>
+                            <div className="space-y-3">
+                                {[
+                                    { id: 'memecoin', label: 'Memecoin', desc: 'Viral / Hype' },
+                                    { id: 'ai', label: 'AI Agent', desc: 'LLM / Infra' },
+                                    { id: 'defi', label: 'DeFi', desc: 'Yield / Tech' }
+                                ].map((type) => (
+                                    <button
+                                        key={type.id}
+                                        type="button"
+                                        onClick={() => handleChange('projectType', type.id)}
+                                        className={`w-full p-4 text-left transition-all relative group rounded-xl border ${formData.projectType === type.id
+                                            ? 'bg-blue-500/10 border-blue-500/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
+                                            : 'border-white/10 text-white/40 hover:text-white/80 hover:border-white/20 bg-white/5'
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <span className="block text-sm font-bold tracking-wide">{type.label}</span>
+                                                <span className="block text-[10px] uppercase opacity-50 mt-1 tracking-wider">{type.desc}</span>
+                                            </div>
+                                            {formData.projectType === type.id && <CheckCircle2 size={16} className="text-blue-400" />}
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
                         </div>
-                    ))}
+
+                        {/* Coach Tip */}
+                        {(coachTip || isCoaching) && (
+                            <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+                                <div className="bg-blue-600/5 border border-blue-500/10 rounded-2xl p-4 relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -skew-x-12 animate-shimmer" />
+                                    <div className="relative z-10 flex gap-3">
+                                        <div className="mt-1">
+                                            {isCoaching ? (
+                                                <div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                                            ) : (
+                                                <Lightbulb size={16} className="text-blue-400" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start">
+                                                <h4 className="text-[10px] font-bold text-blue-300 uppercase tracking-wider mb-1">
+                                                    {isCoaching ? 'Analyzing Pitch...' : 'Copilot Tip'}
+                                                </h4>
+                                                {!isCoaching && coachTip !== 'LOCKED' && (
+                                                    <button onClick={() => setCoachTip(null)} className="text-white/20 hover:text-white">
+                                                        <X size={12} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {coachTip === 'LOCKED' && !isConnected ? (
+                                                <div onClick={() => onConnect?.()} className="cursor-pointer group">
+                                                    <p className="text-xs text-blue-100/40 blur-sm select-none">Hidden tip regarding your narrative.</p>
+                                                    <div className="mt-2 text-blue-400 text-[10px] font-bold uppercase flex items-center gap-1 group-hover:text-blue-300">
+                                                        <AlertCircle size={10} /> Connect Wallet to view
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-blue-100/80 leading-relaxed font-medium">
+                                                    {isCoaching ? "Scanning..." : coachTip}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* RIGHT COLUMN: DESCRIPTION */}
+                    <div className="lg:col-span-8 flex flex-col h-full">
+                        <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                            The Pitch <span className="text-blue-400 ml-1">*</span>
+                        </label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => handleChange('description', e.target.value)}
+                            placeholder="Describe your project... What is the core innovation? Who is the user? What is the vibe? (Min 10 chars)"
+                            className="w-full flex-1 p-6 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-mono text-sm leading-relaxed rounded-2xl min-h-[300px]"
+                        />
+                        {errors.description && (
+                            <p className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
+                                <AlertCircle size={12} /> {errors.description}
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Main Content Area */}
-            <div className="p-8 min-h-[400px] relative">
-                <div className={`transition-all duration-200 ${animating ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'}`}>
-
-                    {/* STEP 1: VISION */}
-                    {currentStep === 0 && (
-                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
-                                {/* Left Column: Type & Context */}
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                            Target Sector <span className="text-blue-400 ml-1">*</span>
-                                        </label>
-                                        <div className="grid grid-cols-1 gap-3">
-                                            {[
-                                                { id: 'memecoin', label: 'Memecoin', desc: 'VIRAL / HYPE' },
-                                                { id: 'ai', label: 'AI', desc: 'LLM / INFRA' },
-                                                { id: 'defi', label: 'DeFi', desc: 'YIELD / PROTOCOL' }
-                                            ].map((type) => (
-                                                <button
-                                                    key={type.id}
-                                                    type="button"
-                                                    onClick={() => handleChange('projectType', type.id)}
-                                                    className={`p-4 text-left transition-all hover:bg-white/5 relative group rounded-xl border ${formData.projectType === type.id
-                                                        ? 'bg-blue-500/10 border-blue-500/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
-                                                        : 'border-white/10 text-white/40 hover:text-white/80 hover:border-white/20 bg-white/5'
-                                                        }`}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm font-bold tracking-wide">{type.label}</span>
-                                                        {formData.projectType === type.id && <CheckCircle2 size={16} className="text-blue-400" />}
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                        {errors.projectType && (
-                                            <p className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2">
-                                                <span className="text-red-500">:: ERROR ::</span> {errors.projectType}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* LIVE COACH TIP UI - MOVED TO LEFT COLUMN */}
-                                    {(coachTip || isCoaching) && (
-                                        <div className="animate-in fade-in slide-in-from-top-2 duration-500">
-                                            <div className={`bg-blue-600/5 border border-blue-500/10 rounded-2xl p-5 flex gap-4 relative overflow-hidden ${!isConnected ? 'cursor-pointer group' : ''}`}>
-                                                {/* Shimmer effect */}
-                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -skew-x-12 animate-shimmer" />
-
-                                                <div className="flex-shrink-0 mt-0.5">
-                                                    {isCoaching ? (
-                                                        <div className="w-5 h-5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-                                                    ) : (
-                                                        <div className="bg-blue-500/20 p-1.5 rounded-full text-blue-400">
-                                                            <Lightbulb size={16} />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="flex-1 relative z-10">
-                                                    <div className="flex justify-between items-start">
-                                                        <h4 className="text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">
-                                                            {isCoaching ? 'AI Advisor analyzing...' : 'Co-Founder Tip'}
-                                                        </h4>
-                                                        {!isCoaching && coachTip !== 'LOCKED' && (
-                                                            <button
-                                                                onClick={() => setCoachTip(null)}
-                                                                className="text-white/20 hover:text-white transition-colors"
-                                                            >
-                                                                <X size={14} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-
-                                                    {coachTip === 'LOCKED' && !isConnected ? (
-                                                        <div className="relative">
-                                                            <p className="text-sm text-blue-100/40 leading-relaxed font-medium blur-sm select-none">
-                                                                Considering the competitive landscape of your memecoin, have you thought about how to differentiate the narrative?
-                                                            </p>
-                                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => onConnect?.()}
-                                                                    className="bg-blue-600/90 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg transform transition-transform group-hover:scale-105 flex items-center gap-2 cursor-pointer"
-                                                                >
-                                                                    <Rocket size={12} /> Connect Wallet to Unlock
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-sm text-blue-100/90 leading-relaxed font-medium">
-                                                            {isCoaching ? "Scanning your pitch for optimization opportunities..." : coachTip}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* SECTOR SPECIFIC (LEFT COLUMN) */}
-                                    {formData.projectType === 'memecoin' && (
-                                        <div className="animate-in fade-in slide-in-from-top-2">
-                                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                                Community Vibe
-                                            </label>
-                                            <select
-                                                value={formData.memecoinVibe || ''}
-                                                onChange={(e) => handleChange('memecoinVibe', e.target.value)}
-                                                className="w-full p-4 bg-slate-900/60 border border-white/5 text-white focus:outline-none focus:border-blue-500/50 text-sm font-mono appearance-none rounded-xl"
-                                            >
-                                                <option value="" disabled className="bg-slate-900"> SELECT VIBE</option>
-                                                <option value="cult" className="bg-slate-900">Cult / Conviction</option>
-                                                <option value="chill" className="bg-slate-900">Chill / Low Stress</option>
-                                                <option value="raiding" className="bg-slate-900">Aggressive / Raiding</option>
-                                                <option value="utility" className="bg-slate-900">Utility (Hidden)</option>
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    {formData.projectType === 'defi' && (
-                                        <div className="animate-in fade-in slide-in-from-top-2">
-                                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                                Mechanism Design
-                                            </label>
-                                            <select
-                                                value={formData.defiMechanism || ''}
-                                                onChange={(e) => handleChange('defiMechanism', e.target.value)}
-                                                className="w-full p-4 bg-slate-900/60 border border-white/5 text-white focus:outline-none focus:border-blue-500/50 text-sm font-mono appearance-none rounded-xl"
-                                            >
-                                                <option value="" disabled className="bg-slate-900"> Select Mechanism</option>
-                                                <option value="staking" className="bg-slate-900">Staking / Yield</option>
-                                                <option value="lending" className="bg-slate-900">Lending / Borrowing</option>
-                                                <option value="amm" className="bg-slate-900">DEX / AMM</option>
-                                                <option value="derivatives" className="bg-slate-900">Perps / Options</option>
-                                                <option value="aggregator" className="bg-slate-900">Aggregator</option>
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    {formData.projectType === 'ai' && (
-                                        <div className="animate-in fade-in slide-in-from-top-2">
-                                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                                Model Strategy
-                                            </label>
-                                            <select
-                                                value={formData.aiModelType || ''}
-                                                onChange={(e) => handleChange('aiModelType', e.target.value)}
-                                                className="w-full p-4 bg-slate-900/60 border border-white/5 text-white focus:outline-none focus:border-blue-500/50 text-sm font-mono appearance-none rounded-xl"
-                                            >
-                                                <option value="" disabled className="bg-slate-900"> Select Strategy</option>
-                                                <option value="wrapper" className="bg-slate-900">Wrapper API</option>
-                                                <option value="finetuned" className="bg-slate-900">Fine-tuned Model</option>
-                                                <option value="agents" className="bg-slate-900">Autonomous Agents</option>
-                                                <option value="training" className="bg-slate-900">Training Infra</option>
-                                            </select>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Right Column: Description */}
-                                <div className="space-y-6">
-                                    <div className="flex flex-col">
-                                        <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                            Data Input: Abstract <span className="text-blue-400 ml-1">*</span>
-                                        </label>
-                                        <textarea
-                                            value={formData.description}
-                                            onChange={(e) => handleChange('description', e.target.value)}
-                                            placeholder="Describe your project... What problem does it solve? (Minimum 10 characters)"
-                                            className="w-full p-6 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-mono text-sm leading-relaxed rounded-2xl min-h-[220px]"
-                                        />
-                                        {errors.description && <p className="text-red-500 text-xs mt-2 font-mono">:: ERROR :: {errors.description}</p>}
-                                    </div>
-
-                                    {/* SECTOR SPECIFIC (RIGHT COLUMN) */}
-                                    {formData.projectType === 'memecoin' && (
-                                        <div className="animate-in fade-in slide-in-from-top-2">
-                                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                                Narrative Vector
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.memecoinNarrative || ''}
-                                                onChange={(e) => handleChange('memecoinNarrative', e.target.value)}
-                                                placeholder="e.g. PolitiFi, Cats..."
-                                                className="w-full p-4 bg-slate-900/60 border border-white/5 text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-xl"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {formData.projectType === 'defi' && (
-                                        <div className="animate-in fade-in slide-in-from-top-2">
-                                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                                Revenue Model
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.defiRevenue || ''}
-                                                onChange={(e) => handleChange('defiRevenue', e.target.value)}
-                                                placeholder="e.g. 0.3% Swap Fees..."
-                                                className="w-full p-4 bg-slate-900/60 border border-white/5 text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-xl"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {formData.projectType === 'ai' && (
-                                        <div className="animate-in fade-in slide-in-from-top-2">
-                                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                                Data Moat
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.aiDataMoat || ''}
-                                                onChange={(e) => handleChange('aiDataMoat', e.target.value)}
-                                                placeholder="e.g. Proprietary Dataset..."
-                                                className="w-full p-4 bg-slate-900/60 border border-white/5 text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-xl"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-
+            {/* COLLAPSIBLE ADVANCED SECTION */}
+            <div className="border border-white/5 rounded-[24px] overflow-hidden bg-slate-900/20 backdrop-blur-sm transition-all duration-300">
+                <button
+                    type="button"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="w-full flex items-center justify-between p-6 hover:bg-white/5 transition-colors group"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg transition-colors ${showAdvanced ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-white/40 group-hover:text-white/60'}`}>
+                            <Settings2 size={18} />
                         </div>
-                    )}
-
-
-
-                    {/* STEP 2: EXECUTION */}
-                    {currentStep === 1 && (
-                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* Left Column: Team & Contract */}
-                                <div className="space-y-8">
-                                    <div>
-                                        <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                            Team Composition <span className="text-blue-400 ml-1">*</span>
-                                        </label>
-                                        <div className="flex flex-col gap-3">
-                                            {['solo', 'team_2_5', 'team_6_plus'].map((size) => (
-                                                <label key={size} className={`flex-1 cursor-pointer p-4 border transition-all relative rounded-xl ${formData.teamSize === size
-                                                    ? 'bg-blue-500/10 border-blue-500/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.1)]'
-                                                    : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:border-white/20'}`}>
-                                                    <div className="flex items-center gap-3">
-                                                        <input
-                                                            type="radio"
-                                                            name="teamSize"
-                                                            value={size}
-                                                            checked={formData.teamSize === size}
-                                                            onChange={() => handleChange('teamSize', size)}
-                                                            className="appearance-none w-4 h-4 border border-white/30 rounded-full checked:bg-blue-500 checked:border-blue-500 text-blue-500 focus:ring-0 transition-all"
-                                                        />
-                                                        <span className="text-xs font-bold uppercase tracking-wider">
-                                                            {size === 'solo' ? 'Solo' : size === 'team_2_5' ? '2-5 Devs' : '6+ Corp'}
-                                                        </span>
-                                                    </div>
-                                                </label>
-                                            ))}
-                                        </div>
-                                        {errors.teamSize && <p className="text-red-500 text-xs mt-2 font-mono">:: ERROR :: {errors.teamSize}</p>}
-                                    </div>
-
-                                    {(formData.projectType === 'memecoin' || formData.projectType === 'defi') && (
-                                        <div>
-                                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                                Existing Token Contract
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.tokenAddress || ''}
-                                                onChange={(e) => handleChange('tokenAddress', e.target.value)}
-                                                placeholder="Solana CA (7xW...)"
-                                                className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-2xl"
-                                            />
-                                            <p className="text-[10px] text-blue-400/60 mt-3 font-mono uppercase tracking-wider">
-                                                For live tokens only. We'll scan for rug pull risks and liquidity locks.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Right Column: Assets */}
-                                <div>
-                                    <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                        Project Assets & Readiness
-                                    </label>
-
-                                    {/* GENERAL RESOURCES */}
-                                    {!formData.projectType && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            {['time', 'budget', 'skills', 'network'].map((resource) => (
-                                                <button
-                                                    key={resource}
-                                                    type="button"
-                                                    onClick={() => toggleArrayItem('resources', resource)}
-                                                    className={`px-4 py-3 border transition-all flex items-center justify-between group rounded-lg ${formData.resources?.includes(resource)
-                                                        ? 'bg-blue-500/10 text-blue-200 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.1)]'
-                                                        : 'bg-white/5 text-white/40 border-white/10 hover:border-white/20 hover:bg-white/10'
-                                                        }`}
-                                                >
-                                                    <span className="uppercase text-xs font-bold tracking-wider">{resource}</span>
-                                                    {formData.resources?.includes(resource) && <span className="text-[10px]">Verified</span>}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* MEMECOIN RESOURCES */}
-                                    {formData.projectType === 'memecoin' && (
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {[
-                                                { id: 'art_ready', label: 'Art & Metadata Ready' },
-                                                { id: 'kols_lined_up', label: 'KOLs & Warband Ready' },
-                                                { id: 'community_manager', label: 'Community Mod' },
-                                                { id: 'marketing_budget', label: 'Budget > $5k' }
-                                            ].map((item) => (
-                                                <button
-                                                    key={item.id}
-                                                    type="button"
-                                                    onClick={() => toggleArrayItem('memecoinLaunchPreparation', item.id)}
-                                                    className={`px-4 py-3 border transition-all flex items-center justify-between text-left rounded-xl ${formData.memecoinLaunchPreparation?.includes(item.id)
-                                                        ? 'bg-blue-500/10 text-blue-200 border-blue-500/50'
-                                                        : 'bg-black/40 text-white/40 border-white/10 hover:border-white/20'
-                                                        }`}
-                                                >
-                                                    <span className="text-xs font-bold tracking-wider">{item.label}</span>
-                                                    {formData.memecoinLaunchPreparation?.includes(item.id) ? (
-                                                        <span className="text-[10px] bg-blue-500/20 px-1 rounded">Confirmed</span>
-                                                    ) : <span className="text-[10px] opacity-20">Unverified</span>}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* DEFI RESOURCES */}
-                                    {formData.projectType === 'defi' && (
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {[
-                                                { id: 'audit_planned', label: 'Security Audit' },
-                                                { id: 'multisig_setup', label: 'Multisig / DAO' },
-                                                { id: 'timelock', label: 'Timelock Contracts' },
-                                                { id: 'testnet_live', label: 'Testnet Deployed' }
-                                            ].map((item) => (
-                                                <button
-                                                    key={item.id}
-                                                    type="button"
-                                                    onClick={() => toggleArrayItem('defiSecurityMarks', item.id)}
-                                                    className={`px-4 py-3 border transition-all flex items-center justify-between text-left rounded-xl ${formData.defiSecurityMarks?.includes(item.id)
-                                                        ? 'bg-blue-500/10 text-blue-200 border-blue-500/50'
-                                                        : 'bg-black/40 text-white/40 border-white/10 hover:border-white/20'
-                                                        }`}
-                                                >
-                                                    <span className="text-xs font-bold tracking-wider">{item.label}</span>
-                                                    {formData.defiSecurityMarks?.includes(item.id) ? (
-                                                        <span className="text-[10px] bg-blue-500/20 px-1 rounded">Secured</span>
-                                                    ) : <span className="text-[10px] opacity-20">Missing</span>}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* AI RESOURCES */}
-                                    {formData.projectType === 'ai' && (
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {[
-                                                { id: 'gpu_access', label: 'GPU Compute' },
-                                                { id: 'proprietary_data', label: 'Clean Dataset' },
-                                                { id: 'ml_engineer', label: 'ML Engineer Lead' },
-                                                { id: 'prototype_working', label: 'Prototype Online' }
-                                            ].map((item) => (
-                                                <button
-                                                    key={item.id}
-                                                    type="button"
-                                                    onClick={() => toggleArrayItem('aiInfraReadiness', item.id)}
-                                                    className={`px-4 py-3 border transition-all flex items-center justify-between text-left rounded-xl ${formData.aiInfraReadiness?.includes(item.id)
-                                                        ? 'bg-blue-500/10 text-blue-200 border-blue-500/50'
-                                                        : 'bg-black/40 text-white/40 border-white/10 hover:border-white/20'
-                                                        }`}
-                                                >
-                                                    <span className="text-xs font-bold tracking-wider">{item.label}</span>
-                                                    {formData.aiInfraReadiness?.includes(item.id) ? (
-                                                        <span className="text-[10px] bg-blue-500/20 px-1 rounded">Ready</span>
-                                                    ) : <span className="text-[10px] opacity-20">Not Ready</span>}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <div className="text-left">
+                            <h3 className={`text-sm font-bold tracking-wide transition-colors ${showAdvanced ? 'text-blue-100' : 'text-white/60 group-hover:text-white'}`}>Advanced Configuration</h3>
+                            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Team, Metrics, Resources</p>
                         </div>
-                    )}
+                    </div>
+                    <div className={`transition-transform duration-300 ${showAdvanced ? 'rotate-180 text-blue-400' : 'text-white/20'}`}>
+                        <ChevronDown size={20} />
+                    </div>
+                </button>
 
+                {showAdvanced && (
+                    <div className="p-8 pt-0 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4 duration-300">
+                        {/* Sub-Section: Execution */}
+                        <div className="space-y-6 mt-6">
+                            <h4 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Execution Readiness</h4>
 
-                    {/* STEP 3: STRATEGY */}
-                    {currentStep === 2 && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                        MVP Scope (6-12m)
-                                    </label>
-                                    <textarea
-                                        value={formData.mvpScope}
-                                        onChange={(e) => handleChange('mvpScope', e.target.value)}
-                                        placeholder="Define deliverables..."
-                                        className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 resize-none min-h-[120px] font-mono text-sm rounded-2xl"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                        Distribution Vector
-                                    </label>
-                                    <textarea
-                                        value={formData.goToMarketPlan}
-                                        onChange={(e) => handleChange('goToMarketPlan', e.target.value)}
-                                        placeholder="Define target users..."
-                                        className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 resize-none min-h-[120px] font-mono text-sm rounded-2xl"
-                                    />
-                                </div>
-                            </div>
-
-                            {(formData.projectType === 'memecoin' || formData.projectType === 'defi') && (
-                                <div>
-                                    <label className="block text-white/60 mb-3 text-xs uppercase tracking-widest border-l-2 border-green-500 pl-2">
-                                        Liquidity Plan
-                                    </label>
-                                    <textarea
-                                        value={formData.launchLiquidityPlan}
-                                        onChange={(e) => handleChange('launchLiquidityPlan', e.target.value)}
-                                        placeholder="Define liquidity setup..."
-                                        className="w-full p-4 bg-black/40 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-green-500 resize-none min-h-[120px] font-mono text-sm rounded-xl"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-
-                    {/* STEP 4: GOALS */}
-                    {currentStep === 3 && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                            {/* Team Size */}
                             <div>
-                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                    Success Metric <span className="text-blue-400 ml-1">*</span>
-                                </label>
-
-                                {formData.projectType === 'memecoin' ? (
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div>
-                                            <input
-                                                type="text"
-                                                value={formData.targetMarketCap || ''}
-                                                onChange={(e) => {
-                                                    handleChange('targetMarketCap', e.target.value);
-                                                    handleChange('successDefinition', `Target MC: ${e.target.value}`);
-                                                }}
-                                                placeholder="Target Market Cap (e.g. $10M)"
-                                                className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-2xl"
-                                            />
-                                        </div>
-                                    </div>
-                                ) : formData.projectType === 'defi' ? (
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div>
-                                            <input
-                                                type="text"
-                                                value={formData.targetTVL || ''}
-                                                onChange={(e) => {
-                                                    handleChange('targetTVL', e.target.value);
-                                                    handleChange('successDefinition', `Target TVL: ${e.target.value}`);
-                                                }}
-                                                placeholder="Target TVL (e.g. $1M)"
-                                                className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-2xl"
-                                            />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <input
-                                        type="text"
-                                        value={formData.successDefinition}
-                                        onChange={(e) => handleChange('successDefinition', e.target.value)}
-                                        placeholder="Define success..."
-                                        className="w-full p-5 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 text-sm font-mono rounded-2xl"
-                                    />
-                                )}
-                                {errors.successDefinition && <p className="text-rose-500 text-[10px] mt-3 font-black uppercase tracking-widest pl-3 border-l border-rose-500/50">ERROR: {errors.successDefinition}</p>}
-                            </div>
-
-                            <div>
-                                <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                    Output Format <span className="text-blue-400 ml-1">*</span>
-                                </label>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {[
-                                        { id: 'short', label: 'Short Verdict', desc: 'Direct & Brutal' },
-                                        { id: 'full', label: 'Full Report', desc: 'Deep Analysis' },
-                                        { id: 'next_steps', label: 'Action Plan', desc: 'Task List' },
-                                    ].map((style) => (
+                                <label className="text-white/40 text-xs mb-2 block">Team Size</label>
+                                <div className="flex gap-2">
+                                    {['solo', 'team_2_5', 'team_6_plus'].map((size) => (
                                         <button
-                                            key={style.id}
+                                            key={size}
                                             type="button"
-                                            onClick={() => handleChange('responseStyle', style.id)}
-                                            className={`p-5 text-left transition-all relative border rounded-2xl ${formData.responseStyle === style.id
-                                                ? 'bg-blue-500/10 border-blue-500/50 text-white'
-                                                : 'bg-white/5 border-white/5 text-white/40 hover:text-white/80 hover:border-white/10'
-                                                }`}
+                                            onClick={() => handleChange('teamSize', size)}
+                                            className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all ${formData.teamSize === size
+                                                ? 'bg-blue-500/20 border-blue-500/50 text-blue-200'
+                                                : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
                                         >
-                                            {formData.responseStyle === style.id && <span className="absolute top-3 right-3 text-blue-400 text-[10px] font-black uppercase tracking-tighter italic">Active</span>}
-                                            <div className="font-black mb-1 text-sm tracking-tight uppercase italic">{style.label}</div>
-                                            <div className="text-[10px] opacity-40 font-mono uppercase tracking-widest">{style.desc}</div>
+                                            {size === 'solo' ? 'Solo' : size === 'team_2_5' ? '2-5' : '6+'}
                                         </button>
                                     ))}
                                 </div>
-                                {errors.responseStyle && <p className="text-rose-500 text-[10px] mt-3 font-black uppercase tracking-widest pl-3 border-l border-rose-500/50">ERROR: {errors.responseStyle}</p>}
                             </div>
-                        </div>
-                    )}
-                </div>
-            </div>
 
-            {/* Terminal Footer */}
-            <div className="px-8 py-6 border-t border-white/5 bg-slate-900/40 backdrop-blur-md flex items-center justify-between">
-                <div>
-                    {currentStep > 0 && (
-                        <button
-                            type="button"
-                            onClick={handleBack}
-                            className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-[10px] uppercase tracking-[0.2em] font-black italic"
-                        >
-                            <ArrowLeft size={14} /> Back
-                        </button>
-                    )}
-                </div>
+                            {/* Token Address */}
+                            <div>
+                                <label className="text-white/40 text-xs mb-2 block">Token Address (Optional)</label>
+                                <input
+                                    type="text"
+                                    value={formData.tokenAddress}
+                                    onChange={(e) => handleChange('tokenAddress', e.target.value)}
+                                    placeholder="Solana CA..."
+                                    className="w-full p-3 bg-slate-900/60 border border-white/5 rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none"
+                                />
+                            </div>
 
-                <div>
-                    {/* QUICK SCAN BUTTON (Visible only on Step 1) */}
-                    {currentStep === 0 && (
-                        <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    // Manually trigger submit if step 1 is valid
-                                    if (validateStep(0)) {
-                                        handleSubmit(e as any);
-                                    }
-                                }}
-                                className="hidden md:flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40 transition-all pointer-events-auto"
-                            >
-                                <Sparkles size={14} /> Quick Scan
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex gap-4">
-                    {currentStep < STEPS.length - 1 ? (
-                        <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={handleNext}
-                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] italic transition-all rounded-2xl border border-white/10"
-                            >
-                                {currentStep === 0 ? 'Add Context' : 'Next Step'} <ArrowRight size={14} />
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-6">
-                            {quota && (
-                                <div className={`text-[10px] font-black uppercase tracking-widest border px-4 py-2 rounded-full ${quota.remaining === 0
-                                    ? 'border-amber-500/50 text-amber-500 bg-amber-500/10'
-                                    : 'border-blue-500/50 text-blue-400 bg-blue-500/10'
-                                    }`}>
-                                    {quota.remaining === -1 ? '∞ UNLIMITED' : `${quota.remaining} REMAINING`}
+                            {/* SECTOR SPECIFIC EXTRA FIELDS */}
+                            {formData.projectType === 'memecoin' && (
+                                <div>
+                                    <label className="text-white/40 text-xs mb-2 block">Community Vibe</label>
+                                    <select
+                                        value={formData.memecoinVibe || ''}
+                                        onChange={(e) => handleChange('memecoinVibe', e.target.value)}
+                                        className="w-full p-3 bg-slate-900/60 border border-white/5 rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none appearance-none cursor-pointer"
+                                    >
+                                        <option value="" className="bg-slate-900">Select...</option>
+                                        <option value="cult" className="bg-slate-900">Cult / Conviction</option>
+                                        <option value="chill" className="bg-slate-900">Chill</option>
+                                        <option value="raiding" className="bg-slate-900">Raiding</option>
+                                    </select>
                                 </div>
                             )}
-                            <button
-                                type="button"
-                                onClick={handleSubmit}
-                                disabled={isSubmitting || (quota?.remaining === 0)}
-                                className="flex items-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 font-black uppercase tracking-[0.2em] italic transition-all shadow-lg shadow-blue-900/40 hover:shadow-blue-500/40 disabled:opacity-50 disabled:grayscale rounded-2xl active:scale-95"
-                            >
-                                {isSubmitting ? 'Analyzing...' : 'Analyze Idea'} <Sparkles size={16} />
-                            </button>
                         </div>
-                    )}
-                </div>
+
+                        {/* Sub-Section: Strategy */}
+                        <div className="space-y-6 mt-6">
+                            <h4 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Strategy & Goals</h4>
+
+                            {/* Success Def */}
+                            <div>
+                                <label className="text-white/40 text-xs mb-2 block">Success Definition</label>
+                                <input
+                                    type="text"
+                                    value={formData.successDefinition}
+                                    onChange={(e) => handleChange('successDefinition', e.target.value)}
+                                    className="w-full p-3 bg-slate-900/60 border border-white/5 rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none"
+                                />
+                            </div>
+
+                            {/* Response Style */}
+                            <div>
+                                <label className="text-white/40 text-xs mb-2 block">Report Style</label>
+                                <div className="flex gap-2">
+                                    {['roast', 'balanced', 'analytical'].map((style) => (
+                                        <button
+                                            key={style}
+                                            type="button"
+                                            onClick={() => handleChange('responseStyle', style)}
+                                            className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all uppercase ${formData.responseStyle === style
+                                                ? 'bg-purple-500/20 border-purple-500/50 text-purple-200'
+                                                : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
+                                        >
+                                            {style}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
-        </div>
+
+            {/* ACTION BAR */}
+            <div className="flex justify-end pt-4">
+                <button
+                    type="submit"
+                    className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl font-bold text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] transition-all overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                    <div className="relative flex items-center gap-3">
+                        <Rocket size={20} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                        <span>RUN ANALYSIS</span>
+                    </div>
+                </button>
+            </div>
+
+        </form>
     );
 }
-
-
-
