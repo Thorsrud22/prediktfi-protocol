@@ -101,7 +101,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                 }
             `}</style>
             {/* AUDIT LOG HEADER */}
-            <div id="printable-report" className="bg-slate-900 border border-white/5 p-8 mb-6 relative overflow-visible group rounded-3xl shadow-2xl text-white">
+            <div id="printable-report" className="bg-slate-900 border border-white/5 p-8 mb-6 relative overflow-visible group rounded-3xl shadow-2xl text-white flex flex-col">
                 {/* Removed decorative Activity icon - was distracting on hover */}
 
                 {/* HEADER */}
