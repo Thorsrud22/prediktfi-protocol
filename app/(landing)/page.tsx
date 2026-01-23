@@ -26,7 +26,7 @@ export default async function Home() {
 
           {/* Subheading */}
           <p className="text-sm md:text-2xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
-            Predikt is an AI-native evaluator built to stress-test AI, DeFi and emerging digital assets instead of giving you generic AI replies.
+            Get brutally honest feedback on your project idea with live market data and expert-level analysis.
           </p>
 
           {/* CTA Buttons */}
