@@ -162,6 +162,27 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                     </div>
                 </div>
 
+                {/* FATAL FLAW ALERT (RED TEAM) */}
+                {result.fatalFlaw?.identified && (
+                    <div className="mt-8 border border-red-500/50 bg-red-500/10 p-5 rounded-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
+                            <AlertTriangle size={64} className="text-red-500" />
+                        </div>
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-2 text-red-400 mb-2">
+                                <AlertTriangle size={20} />
+                                <h3 className="font-black uppercase tracking-[0.2em] italic text-xs">Red Team Alert: Fatal Flaw Detected</h3>
+                            </div>
+                            <h4 className="text-xl font-bold text-red-200 mb-1">{result.fatalFlaw.flawTitle}</h4>
+                            <p className="text-red-100/80 mb-3">{result.fatalFlaw.flawDescription}</p>
+                            <div className="bg-red-950/50 p-3 rounded-lg border border-red-500/20 inline-block">
+                                <span className="text-[10px] uppercase font-black text-red-400 block mb-1">Evidence</span>
+                                <span className="text-sm font-mono text-red-200">{result.fatalFlaw.evidence}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* CALIBRATION AUDIT - SCORE TRANSPARENCY */}
                 {result.calibrationNotes && result.calibrationNotes.length > 0 && (
                     <div className="border border-white/5 bg-slate-900/80 p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl relative overflow-hidden">

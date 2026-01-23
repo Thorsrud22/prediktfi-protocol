@@ -4,6 +4,13 @@ export type IdeaEvaluationResult = {
   // Phase 2: Proof of Reasoning
   reasoningSteps?: string[];
 
+  fatalFlaw?: {
+    identified: boolean;
+    flawTitle: string;
+    flawDescription: string;
+    evidence: string;
+  };
+
   summary: {
     title: string;
     oneLiner: string;

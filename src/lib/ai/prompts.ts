@@ -73,6 +73,11 @@ TONE INSTRUCTIONS (Context-Aware):
     - 'notes': specific comments on these factors.
   - IGNORE 'tokenomics' block for AI projects (fill with nulls or empty arrays if needed, but 'aiStrategy' is priority).
 
+  - ACT AS A RED TEAM: Try to find ONE single "Fatal Flaw" (show-stopper) that makes this uninvestable.
+    - Examples: "Trust Issues (Matching Strangers)", "Regulatory Kill Switch", "Unit Economics Impossible".
+    - If found, set 'fatalFlaw.identified' = true and explain with evidence.
+    - If no FATAL flaw exists (just regular risks), set 'fatalFlaw.identified' = false.
+
 CRITICAL:
 - Your "mainVerdict" MUST be a direct thesis statement (e.g., "Pass - Liquidity risk too high" or "Watchlist - Strong tech but early").
 - Frame risks as "Investor Worries" (Deal Killers).
@@ -121,6 +126,12 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
 {
   "overallScore": <number 0-100>,
   "reasoningSteps": ["<step1>", "<step2>", "<step3>"],
+  "fatalFlaw": {
+    "identified": <boolean>,
+    "flawTitle": "<short title>",
+    "flawDescription": "<description>",
+    "evidence": "<evidence/reasoning>"
+  },
   "summary": {
     "title": "<short catchy title>",
     "oneLiner": "<one sentence summary>",
