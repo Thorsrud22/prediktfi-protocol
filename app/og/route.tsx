@@ -7,6 +7,11 @@ export async function GET(request: Request) {
 	const title = searchParams.get('title') || 'Predikt';
 	const score = searchParams.get('score');
 
+	// Load logo
+	const logoData = await fetch(new URL('../../public/logo_white.png', import.meta.url)).then(
+		(res) => res.arrayBuffer()
+	);
+
 	return new ImageResponse(
 		(
 			<div
@@ -36,7 +41,7 @@ export async function GET(request: Request) {
 				/>
 
 				<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', zIndex: 10, padding: '40px', textAlign: 'center' }}>
-					{/* Badge */}
+					{/* Logo Badge */}
 					<div
 						style={{
 							display: 'flex',
@@ -44,11 +49,12 @@ export async function GET(request: Request) {
 							gap: '12px',
 							background: 'rgba(59, 130, 246, 0.15)',
 							border: '1px solid rgba(147, 197, 253, 0.3)',
-							borderRadius: 'full',
-							padding: '10px 24px',
+							borderRadius: '999px',
+							padding: '12px 32px',
 						}}
 					>
-						<div style={{ fontSize: '24px' }}>🔮</div>
+						{/* Use real logo image */}
+						<img width="32" height="32" src={logoData as any} />
 						<div style={{ fontSize: '20px', color: '#93C5FD', fontWeight: 600, letterSpacing: '1px' }}>PREDIKT VERIFIED</div>
 					</div>
 

@@ -101,6 +101,10 @@ Use this context to judge timing and market fit.
 
   // 2. On-Chain Verification (Anti-Rug)
   let verificationContext = "";
+
+  // Helper to detect if project claims to be launched
+  const isLaunched = detectLaunchedStatus(input);
+
   if (input.tokenAddress) {
     try {
       const check = await verifyTokenSecurity(input.tokenAddress);
@@ -108,16 +112,19 @@ Use this context to judge timing and market fit.
 ON-CHAIN VERIFICATION (Real-Time Data):
 - Token Address: ${input.tokenAddress}
 - Supply: ${check.supply}
-- Mint Authority: ${check.mintAuthority ? "ACTIVE (High Risk)" : "REVOKED (Safe)"}
-- Freeze Authority: ${check.freezeAuthority ? "ACTIVE (High Risk)" : "REVOKED (Safe)"}
+- Mint Authority: ${check.mintAuthority ? "ACTIVE (High Risk - Dev can print tokens)" : "REVOKED (Safe)"}
+- Freeze Authority: ${check.freezeAuthority ? "ACTIVE (High Risk - Dev can freeze wallets)" : "REVOKED (Safe)"}
 - Is Pump.fun: ${check.isPumpFun}
-${check.isLiquidityLocked !== undefined ? `- Liquidity Locked: ${check.isLiquidityLocked ? "YES (Safe)" : "NO (Risk)"}` : ""}
+${check.isLiquidityLocked !== undefined ? `- Liquidity Locked: ${check.isLiquidityLocked ? "YES (Safe)" : "NO (Risk - potentially ruggable)"}` : ""}
 ${check.top10HolderPercentage !== undefined ? `- Top 10 Holder Concentration: ${check.top10HolderPercentage.toFixed(2)}%` : ""}
 ${check.creatorPercentage !== undefined ? `- Creator Holding: ${check.creatorPercentage.toFixed(2)}%` : ""}
 ${check.ownerPercentage !== undefined ? `- Owner Holding: ${check.ownerPercentage.toFixed(2)}%` : ""}
 ${check.totalLiquidity !== undefined ? `- Total Liquidity (USD): $${check.totalLiquidity.toLocaleString()}` : ""}
 
-INSTRUCTION: Flag "High Rug Risk" if Mint Authority is ACTIVE or if Holder Concentration is extremely high (>80%) without clear explanation.
+INSTRUCTION: 
+1. Analyze the 'Holder Concentration'. If > 50%, flag as "Centralized Supply".
+2. Analyze 'Liquidity Locked'. If NO, flag as "Rug Hazard".
+3. Analyze 'Mint Authority'. If ACTIVE, flag as "Infinite Mint Risk".
 `;
     } catch {
       verificationContext = `
@@ -125,7 +132,23 @@ ON-CHAIN VERIFICATION FAILED:
 Could not verify token address: ${input.tokenAddress}. Assume "Unverified" status.
 `;
     }
+  } else if (isLaunched) {
+    // INTENTIONAL GAP: User claims launched but gave no CA
+    verificationContext = `
+INTELLIGENCE GAP ALERT:
+- User claims project is "Launched" or "Live" but provided NO Contract Address (CA).
+- CRITICAL: You MUST flag this in the report as a "Critical Intelligence Gap".
+- STATE: "Project claims to be live but no contract address provided. Cannot verify on-chain data."
+- PENALTY: Apply heavily penalty to 'Trust' and 'Launch Readiness' scores.
+`;
+  } else {
+    verificationContext = `
+ON-CHAIN STATUS:
+- Not yet launched (or no CA provided).
+- Assume 'Pre-Launch' phase.
+`;
   }
+
 
   // 3. Competitive Memo (Micro / Landscape)
   let competitiveContext = "";
@@ -256,6 +279,13 @@ ${JSON_OUTPUT_SCHEMA}`;
     // Explicitly set project type for frontend logic
     result.projectType = input.projectType;
 
+    // CRITICAL FIX: Override estimatedTimeline if project is detected as launched
+    if (detectLaunchedStatus(input)) {
+      result.execution.estimatedTimeline = "Live / Deployed";
+      if (!result.calibrationNotes) result.calibrationNotes = [];
+      result.calibrationNotes.push("Timeline: Overridden to 'Live' loop due to detected launch status.");
+    }
+
     // Merge real competitor data from competitive memo into result
     // This ensures Market Intelligence displays actual competitors with metrics
     if (referenceProjectsFromMemo.length > 0) {
@@ -287,4 +317,19 @@ ${JSON_OUTPUT_SCHEMA}`;
       `Failed to evaluate idea: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
+}
+
+/**
+ * scanned text for launched status
+ */
+export function detectLaunchedStatus(idea: IdeaSubmission): boolean {
+  const combinedText = (idea.description + " " + (idea.launchLiquidityPlan || "")).toLowerCase();
+  const launchedKeywords = [
+    "launched", "live on", "deployed", "contract address", "ca:", "token is live", "trading on"
+  ];
+  // Exclude future tense if possible (simple check)
+  if (combinedText.includes("will launch") || combinedText.includes("planning to launch")) {
+    return false;
+  }
+  return launchedKeywords.some(k => combinedText.includes(k));
 }

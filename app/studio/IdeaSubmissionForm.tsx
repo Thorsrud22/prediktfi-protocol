@@ -243,30 +243,61 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                                 Sector <span className="text-blue-400 ml-1">*</span>
                             </label>
-                            <div className="space-y-3">
-                                {[
-                                    { id: 'memecoin', label: 'Memecoin', desc: 'Viral / Hype' },
-                                    { id: 'ai', label: 'AI Agent', desc: 'LLM / Infra' },
-                                    { id: 'defi', label: 'DeFi', desc: 'Yield / Tech' }
-                                ].map((type) => (
+                            <div className="space-y-4">
+                                {/* Hierarchical Selection */}
+                                <div className="grid grid-cols-2 gap-3">
                                     <button
-                                        key={type.id}
                                         type="button"
-                                        onClick={() => handleChange('projectType', type.id)}
-                                        className={`w-full p-4 text-left transition-all relative group rounded-xl border ${formData.projectType === type.id
-                                            ? 'bg-blue-500/10 border-blue-500/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'
-                                            : 'border-white/10 text-white/40 hover:text-white/80 hover:border-white/20 bg-white/5'
-                                            }`}
+                                        onClick={() => handleChange('projectType', 'memecoin')} // Default to memecoin when switching to Crypto group, or keep existing if matched
+                                        className={`p-3 text-left rounded-xl border transition-all ${['memecoin', 'defi'].includes(formData.projectType || '')
+                                            ? 'bg-blue-500/10 border-blue-500/50 text-white ring-1 ring-blue-500/20'
+                                            : 'border-white/10 text-white/40 hover:bg-white/5'}`}
                                     >
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <span className="block text-sm font-bold tracking-wide">{type.label}</span>
-                                                <span className="block text-[10px] uppercase opacity-50 mt-1 tracking-wider">{type.desc}</span>
-                                            </div>
-                                            {formData.projectType === type.id && <CheckCircle2 size={16} className="text-blue-400" />}
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-bold text-sm">Crypto & Web3</span>
                                         </div>
+                                        <span className="text-[10px] opacity-50 uppercase tracking-widest">Memes, DeFi</span>
                                     </button>
-                                ))}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleChange('projectType', 'ai')}
+                                        className={`p-3 text-left rounded-xl border transition-all ${formData.projectType === 'ai'
+                                            ? 'bg-blue-500/10 border-blue-500/50 text-white ring-1 ring-blue-500/20'
+                                            : 'border-white/10 text-white/40 hover:bg-white/5'}`}
+                                    >
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-bold text-sm">AI Agent</span>
+                                        </div>
+                                        <span className="text-[10px] opacity-50 uppercase tracking-widest">LLM, Infra</span>
+                                    </button>
+                                </div>
+
+                                {/* Sub-Selection for Crypto */}
+                                {['memecoin', 'defi'].includes(formData.projectType || '') && (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                                        <label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Specific Sector</label>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {[
+                                                { id: 'memecoin', label: 'Memecoin', desc: 'Viral / Hype' },
+                                                { id: 'defi', label: 'DeFi / Protocol', desc: 'Yield / Tech' }
+                                            ].map((sub) => (
+                                                <button
+                                                    key={sub.id}
+                                                    type="button"
+                                                    onClick={() => handleChange('projectType', sub.id)}
+                                                    className={`w-full p-3 flex items-center justify-between rounded-lg border transition-all ${formData.projectType === sub.id
+                                                        ? 'bg-blue-600/20 border-blue-500/60 text-white'
+                                                        : 'bg-white/5 border-transparent text-white/60 hover:bg-white/10'}`}
+                                                >
+                                                    <span className="text-xs font-bold">{sub.label}</span>
+                                                    {formData.projectType === sub.id && <CheckCircle2 size={14} className="text-blue-400" />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                             </div>
                         </div>
 

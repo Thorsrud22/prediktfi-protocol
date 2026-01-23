@@ -100,9 +100,9 @@ describe('AI Idea Evaluator Studio', () => {
         expect(screen.getByText(/The Pitch/i)).toBeInTheDocument();
 
         // Check for project types
-        expect(screen.getByText('Memecoin')).toBeInTheDocument();
+        expect(screen.getByText('Crypto & Web3')).toBeInTheDocument();
         expect(screen.getByText('AI Agent')).toBeInTheDocument();
-        expect(screen.getByText('DeFi')).toBeInTheDocument();
+        // Memecoin/DeFi are nested now, so not immediately visible or just as sub-labels
 
         // Check for submit button
         expect(screen.getByText('RUN ANALYSIS')).toBeInTheDocument();
@@ -165,8 +165,11 @@ describe('AI Idea Evaluator Studio', () => {
 
         render(<StudioPage />);
 
-        // 1. Select Project Type (Memecoin)
-        fireEvent.click(screen.getByText('Memecoin'));
+        // 1. Select Project Type (Crypto -> Memecoin)
+        fireEvent.click(screen.getByText('Crypto & Web3'));
+        // Clicking Crypto defaults to memecoin, so now 'Memecoin' sub-button should be visible if we want to be specific,
+        // but it's already selected in state. We can click it again to be safe/verify.
+        await waitFor(() => screen.getByText('Memecoin'));
 
         // 2. Fill Description
         const descriptionInput = screen.getByPlaceholderText(/A Solana memecoin/i);

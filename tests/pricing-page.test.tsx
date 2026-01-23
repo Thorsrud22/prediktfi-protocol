@@ -12,9 +12,9 @@ describe('PricingPage', () => {
 
     it('displays the three pricing tiers', () => {
         render(<PricingPage />);
-        expect(screen.getByText('Memecoin Degen')).toBeDefined();
+        expect(screen.getByText('Market Scout')).toBeDefined();
         expect(screen.getByText('Founder Pro')).toBeDefined();
-        expect(screen.getByText('VC / Enterprise')).toBeDefined();
+        expect(screen.getByText('Institutional')).toBeDefined();
     });
 
     it('shows the correct pricing for each tier', () => {
@@ -26,7 +26,7 @@ describe('PricingPage', () => {
 
     it('contains a link to start free', () => {
         render(<PricingPage />);
-        const link = screen.getByRole('link', { name: /start free/i });
+        const link = screen.getByRole('link', { name: /start scouting/i });
         expect(link).toBeDefined();
         expect(link.getAttribute('href')).toBe('/studio');
     });

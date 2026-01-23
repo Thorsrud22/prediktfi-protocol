@@ -106,11 +106,8 @@ export default function AppPillNav() {
       const items = [
         { href: '/studio', label: 'Evaluate' },
         { href: '/pricing', label: 'Pricing' },
+        { href: '/account', label: 'Account' },
       ];
-
-      if (publicKey) {
-        items.push({ href: '/account', label: 'Account' });
-      }
 
       return items;
     },
@@ -189,22 +186,21 @@ export default function AppPillNav() {
       {/* Wallet & Upgrade Actions - Positioned absolutely on the right */}
       <div className="fixed top-3 right-4 sm:right-6 z-[100] flex items-center gap-2">
         {/* User Account Button - Only show if connected */}
-        {publicKey && (
-          <div className="relative">
-            <InstantLink
-              href="/account"
-              className={`h-10 sm:h-12 w-10 sm:w-12 flex items-center justify-center rounded-full transition-all ${publicKey
-                ? 'bg-white/5 text-slate-200 hover:bg-white/10 ring-1 ring-inset ring-white/10'
-                : 'bg-white/5 text-slate-400 hover:bg-white/10 ring-1 ring-inset ring-white/5'
-                }`}
-              aria-label="Account Dashboard"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </InstantLink>
-          </div>
-        )}
+        {/* User Account Button - Always show */}
+        <div className="relative">
+          <InstantLink
+            href="/account"
+            className={`h-10 sm:h-12 w-10 sm:w-12 flex items-center justify-center rounded-full transition-all ${publicKey
+              ? 'bg-white/5 text-slate-200 hover:bg-white/10 ring-1 ring-inset ring-white/10'
+              : 'bg-white/5 text-slate-400 hover:bg-white/10 ring-1 ring-inset ring-white/5'
+              }`}
+            aria-label="Account Dashboard"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </InstantLink>
+        </div>
 
         {/* Upgrade button removed - Pro waitlist available at /request-access */}
       </div>
