@@ -157,6 +157,58 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, hideB
                                         Confidence: High
                                     </div>
                                 </div>
+
+                                {/* Score Breakdown */}
+                                <div className="mt-4 pt-4 border-t border-blue-500/10 w-full">
+                                    <div className="flex justify-between text-[10px] uppercase font-black tracking-widest text-slate-500 mb-2">
+                                        <span>Contribution</span>
+                                        <span>Points</span>
+                                    </div>
+                                    <div className="space-y-1.5 font-mono text-xs">
+                                        <div className="flex justify-between items-center text-slate-400">
+                                            <span>Market (30%)</span>
+                                            <span className="text-white">{Math.round(result.market.marketFitScore * 0.3)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-slate-400">
+                                            <span>Tech (25%)</span>
+                                            <span className="text-white">{Math.round(result.technical.feasibilityScore * 0.25)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-slate-400">
+                                            <span>Execution (25%)</span>
+                                            <span className="text-white">{Math.round((100 - (result.execution?.executionRiskScore || 50)) * 0.25)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-slate-400">
+                                            <span>Strategy (20%)</span>
+                                            <span className="text-white">
+                                                {result.projectType === 'ai'
+                                                    ? Math.round(((result.aiStrategy?.modelQualityScore || 50) + (result.aiStrategy?.dataMoatScore || 50) + (result.aiStrategy?.userAcquisitionScore || 50)) / 3 * 0.2)
+                                                    : Math.round(result.tokenomics.designScore * 0.20)
+                                                }
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-blue-400 pt-1 border-t border-white/5 font-bold">
+                                            <span>Modifiers</span>
+                                            <span>
+                                                {result.overallScore - (
+                                                    Math.round(result.market.marketFitScore * 0.3) +
+                                                    Math.round(result.technical.feasibilityScore * 0.25) +
+                                                    Math.round((100 - (result.execution?.executionRiskScore || 50)) * 0.25) +
+                                                    (result.projectType === 'ai'
+                                                        ? Math.round(((result.aiStrategy?.modelQualityScore || 50) + (result.aiStrategy?.dataMoatScore || 50) + (result.aiStrategy?.userAcquisitionScore || 50)) / 3 * 0.2)
+                                                        : Math.round(result.tokenomics.designScore * 0.20))
+                                                ) > 0 ? '+' : ''}
+                                                {result.overallScore - (
+                                                    Math.round(result.market.marketFitScore * 0.3) +
+                                                    Math.round(result.technical.feasibilityScore * 0.25) +
+                                                    Math.round((100 - (result.execution?.executionRiskScore || 50)) * 0.25) +
+                                                    (result.projectType === 'ai'
+                                                        ? Math.round(((result.aiStrategy?.modelQualityScore || 50) + (result.aiStrategy?.dataMoatScore || 50) + (result.aiStrategy?.userAcquisitionScore || 50)) / 3 * 0.2)
+                                                        : Math.round(result.tokenomics.designScore * 0.20))
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
