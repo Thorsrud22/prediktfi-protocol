@@ -79,6 +79,11 @@ const rateLimiters = redis ? {
     limiter: Ratelimit.slidingWindow(10, '1 m'), // 10 attempts per minute
     analytics: true,
   }),
+  image_gen: new Ratelimit({
+    redis: redis,
+    limiter: Ratelimit.slidingWindow(3, '10 m'), // 3 images per 10 minutes (prevents spam)
+    analytics: true,
+  }),
   admin: new Ratelimit({
     redis: redis,
     limiter: Ratelimit.slidingWindow(60, '1 h'), // 60 requests per hour
@@ -86,13 +91,20 @@ const rateLimiters = redis ? {
   }),
 } : null;
 
-export type RateLimitPlan = 'free' | 'pro' | 'global' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim' | 'copilot' | 'auth' | 'admin';
+export type RateLimitPlan = 'free' | 'pro' | 'global' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim' | 'copilot' | 'auth' | 'admin' | 'image_gen';
 
 export interface RateLimitOptions {
   identifier?: string; // Custom identifier (defaults to IP)
   plan?: RateLimitPlan; // User plan or specific limiter
   skipForDevelopment?: boolean; // Skip rate limiting in development
 }
+
+/**
+ * Apply rate limiting to a request
+ * Returns null if request is allowed, NextResponse with 429 if rate limited
+ */
+// In-memory store for fallback (when Redis is missing)
+const memoryStore = new Map<string, { count: number; reset: number }>();
 
 /**
  * Apply rate limiting to a request
@@ -107,69 +119,97 @@ export async function checkRateLimit(
     return null;
   }
 
-  // Skip rate limiting if Redis is not available
-  if (!rateLimiters) {
-    return null;
-  }
+  const identifier = options.identifier ||
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
 
-  try {
-    // Determine identifier (IP address or custom)
-    const identifier = options.identifier ||
-      request.headers.get('x-forwarded-for') ||
-      request.headers.get('x-real-ip') ||
-      'unknown';
+  const plan = options.plan || 'free';
 
-    // Select appropriate rate limiter
-    const plan = options.plan || 'free';
-    const ratelimiter = rateLimiters[plan];
+  // --- REDIS PATH ---
+  if (rateLimiters && rateLimiters[plan]) {
+    try {
+      const ratelimiter = rateLimiters[plan];
+      const { success, limit, remaining, reset } = await ratelimiter.limit(identifier);
 
-    // Check rate limit
-    const { success, limit, remaining, reset } = await ratelimiter.limit(identifier);
-
-    // --- BONUS QUOTA LOGIC ---
-    // If the standard limiter failed, check for a bonus credit in Redis
-    if (!success && redis) {
-      const bonusKey = `bonus_quota:${identifier}`;
-      const bonusCount = (await redis.get<number>(bonusKey)) || 0;
-
-      if (bonusCount > 0) {
-        // Consume one bonus credit
-        await redis.decr(bonusKey);
-
-        console.log(`[RateLimit] Allowing request via BONUS quota for ${identifier}. Remaining bonus: ${bonusCount - 1}`);
-
-        // Return null to ALLOW the request
-        return null;
-      }
-    }
-
-    // Add rate limit headers to response
-    const headers = {
-      'X-RateLimit-Limit': limit.toString(),
-      'X-RateLimit-Remaining': remaining.toString(),
-      'X-RateLimit-Reset': reset.toString(),
-    };
-
-    if (!success) {
-      return NextResponse.json(
-        {
-          error: 'Rate limit exceeded',
-          message: `Too many requests. Daily limit: ${limit}. Share on X to get +1 extra evaluation!`,
-          retryAfter: Math.round((reset - Date.now()) / 1000)
-        },
-        {
-          status: 429,
-          headers
+      // Bonus Check logic (only for Redis path for now)
+      if (!success && redis) {
+        const bonusKey = `bonus_quota:${identifier}`;
+        const bonusCount = (await redis.get<number>(bonusKey)) || 0;
+        if (bonusCount > 0) {
+          await redis.decr(bonusKey);
+          return null;
         }
-      );
-    }
+      }
 
-    // Request allowed
-    return null;
-  } catch (error) {
-    console.error('Rate limiting check failed:', error);
-    return null;
+      const headers = {
+        'X-RateLimit-Limit': limit.toString(),
+        'X-RateLimit-Remaining': remaining.toString(),
+        'X-RateLimit-Reset': reset.toString(),
+      };
+
+      if (!success) {
+        return NextResponse.json(
+          {
+            error: 'Rate limit exceeded',
+            message: `Too many requests. Daily limit: ${limit}.`,
+            retryAfter: Math.round((reset - Date.now()) / 1000)
+          },
+          { status: 429, headers }
+        );
+      }
+      return null;
+    } catch (error) {
+      console.error('Redis Rate limiting failed, falling back to memory:', error);
+      // Fall through to memory
+    }
   }
+
+  // --- MEMORY FALLBACK PATH (No Redis) ---
+  // Get limits
+  const { limit, reset: defaultReset } = await getRateLimitInfo(identifier, plan);
+  // Default reset returned by getRateLimitInfo is just Date.now() + 60s, which isn't useful for tracking state.
+  // We need distinct windows per plan.
+
+  // Define windows in ms
+  const windows: Record<string, number> = {
+    image_gen: 10 * 60 * 1000, // 10m
+    idea_eval_ip: 24 * 60 * 60 * 1000,
+    idea_eval_wallet: 24 * 60 * 60 * 1000,
+    default: 60 * 1000 // 1m
+  };
+  const windowMs = windows[plan] || windows.default;
+
+  const key = `${plan}:${identifier}`;
+  const now = Date.now();
+
+  let record = memoryStore.get(key);
+
+  // Initialize or Reset if expired
+  if (!record || now > record.reset) {
+    record = { count: 0, reset: now + windowMs };
+  }
+
+  // Check limit
+  if (record.count >= limit) {
+    return NextResponse.json(
+      {
+        error: 'Rate limit exceeded',
+        message: `Too many requests. Limit: ${limit}.`,
+        retryAfter: Math.round((record.reset - now) / 1000)
+      },
+      { status: 429 }
+    );
+  }
+
+  // Increment
+  record.count += 1;
+  memoryStore.set(key, record);
+
+  // Cleanup old keys occasionally (simple optimization)
+  if (memoryStore.size > 10000) memoryStore.clear();
+
+  return null;
 }
 
 /**
@@ -214,13 +254,24 @@ export async function getRateLimitInfo(
       idea_eval_ip: 3,
       idea_eval_wallet: 5,
       bonus_claim: 2,
-      copilot: 40
+      copilot: 40,
+      image_gen: 3
     };
     const limit = defaultLimits[plan] || 20;
+
+    // Add correct window info for display
+    const windows: Record<string, number> = {
+      image_gen: 10 * 60 * 1000,
+      idea_eval_ip: 24 * 60 * 60 * 1000,
+      idea_eval_wallet: 24 * 60 * 60 * 1000,
+      default: 60 * 1000
+    };
+    const windowMs = windows[plan] || windows.default;
+
     return {
       limit,
-      remaining: limit,
-      reset: Date.now() + 60000
+      remaining: limit, // In local mode without state tracking, we can't easily know remaining for the UI call unless we peek memoryStore, but this is acceptable for now.
+      reset: Date.now() + windowMs
     };
   }
 

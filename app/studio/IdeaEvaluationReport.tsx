@@ -3,9 +3,20 @@
 import React, { useState } from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
 import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, Download, Flag, Image as ImageIcon, Loader2, X, Maximize2 } from 'lucide-react';
-import RadarChart from '../components/charts/RadarChart';
-import RiskGauge from '../components/charts/RiskGauge';
-import KeyStatsBar from '../components/charts/KeyStatsBar';
+import dynamic from 'next/dynamic';
+
+const RadarChart = dynamic(() => import('../components/charts/RadarChart'), {
+    loading: () => <div className="w-full h-64 bg-white/5 animate-pulse rounded-xl" />,
+    ssr: false
+});
+const RiskGauge = dynamic(() => import('../components/charts/RiskGauge'), {
+    loading: () => <div className="w-full h-32 bg-white/5 animate-pulse rounded-xl" />,
+    ssr: false
+});
+const KeyStatsBar = dynamic(() => import('../components/charts/KeyStatsBar'), {
+    loading: () => <div className="w-full h-12 bg-white/5 animate-pulse rounded-lg" />,
+    ssr: false
+});
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 import { printElement } from '../utils/print';
 
@@ -15,11 +26,31 @@ interface IdeaEvaluationReportProps {
     result: IdeaEvaluationResult;
     onEdit?: () => void;
     onStartNew?: () => void;
+    ownerAddress?: string;
+    isExample?: boolean;
 }
 
-export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: IdeaEvaluationReportProps) {
+export default function IdeaEvaluationReport({ result, onEdit, onStartNew, ownerAddress, isExample }: IdeaEvaluationReportProps) {
     const { publicKey } = useSimplifiedWallet();
-    const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+
+    // Check ownership
+    const isOwner = React.useMemo(() => {
+        if (isExample) return false; // Examples are never owned by viewer in the sense of editing/generating
+        if (!ownerAddress) return true; // Legacy/Local reports might not have owner, assume allowed or handle elsewhere?
+        // Actually, if it's public link, best to default false if not verified.
+        // But for "Studio" use (parent passes no ownerAddress?), we assume owner.
+        // Let's assume if ownerAddress is provided, we MUST match.
+        if (publicKey === ownerAddress) return true;
+        return false;
+    }, [publicKey, ownerAddress, isExample]);
+
+
+    const [generatedImage, setGeneratedImage] = useState<string | null>(() => {
+        if (isExample || result.summary.title.includes("Demo") || result.summary.mainVerdict.includes("Demo")) {
+            return "https://bafybeigq5t2k33v4b5g3g7n4i4f6f7r7u7x7y7z.ipfs.w3s.link/demo-visual.png";
+        }
+        return null;
+    });
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const [generationError, setGenerationError] = useState<string | null>(null);
 
@@ -29,6 +60,14 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
         setGenerationError(null);
 
         try {
+            // BLOCK EXPLOIT: Don't generate real images for Demo/Example reports
+            if (result.summary.title.includes("Demo") || result.summary.title.includes("Example") || result.summary.mainVerdict.includes("Demo")) {
+                console.log("Demo report detected - using mock image");
+                await new Promise(r => setTimeout(r, 1500)); // Fake delay
+                setGeneratedImage("https://bafybeigq5t2k33v4b5g3g7n4i4f6f7r7u7x7y7z.ipfs.w3s.link/demo-visual.png"); // Or any static placeholder
+                return;
+            }
+
             console.log("Requesting image generation...");
             const res = await fetch('/api/generate-image', {
                 method: 'POST',
@@ -49,7 +88,19 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                 } catch { }
             } else if (data.error) {
                 console.error("Image generation API reported error:", data.error);
-                setGenerationError(data.error);
+
+                let msg = data.error;
+                if (typeof data.error === 'object') {
+                    msg = data.error.message || JSON.stringify(data.error);
+                }
+
+                if (msg.includes('overloaded') || msg.includes('503')) {
+                    setGenerationError("AI Model is currently overloaded (High Traffic). Please try again in 1 minute.");
+                } else if (msg.includes('Rate limit')) {
+                    setGenerationError("Rate limit exceeded. Please wait a moment.");
+                } else {
+                    setGenerationError(typeof msg === 'string' ? msg : "Failed to generate image.");
+                }
             }
         } catch (e) {
             console.error("Image generation fetch error:", e);
@@ -254,36 +305,38 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         </p>
 
                         {/* VISUAL GENERATION BUTTON */}
-                        <div className="mb-4">
-                            {!generatedImage ? (
-                                <div className="flex flex-col gap-2">
-                                    <button
-                                        onClick={handleGenerateImage}
-                                        disabled={isGeneratingImage}
-                                        className="self-start flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
-                                    >
-                                        {isGeneratingImage ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
-                                        {isGeneratingImage ? 'Generating Value...' : 'Generate Nano Banana Pro'}
-                                    </button>
-                                    {generationError && (
-                                        <div className="flex items-center gap-2 text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
-                                            <AlertTriangle size={12} />
-                                            <span className="text-[10px] font-medium">{generationError}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <div
-                                    className="relative group w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-lg cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all"
-                                    onClick={() => setIsImageModalOpen(true)}
-                                >
-                                    <img src={generatedImage} alt="Generated Concept" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                        <span className="text-white/80"><Maximize2 size={20} /></span>
+                        {!isExample && (isOwner || !ownerAddress) && (
+                            <div className="mb-4">
+                                {!generatedImage ? (
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            onClick={handleGenerateImage}
+                                            disabled={isGeneratingImage}
+                                            className="self-start flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
+                                        >
+                                            {isGeneratingImage ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
+                                            {isGeneratingImage ? 'Generating Value...' : 'Generate Nano Banana Pro'}
+                                        </button>
+                                        {generationError && (
+                                            <div className="flex items-center gap-2 text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <AlertTriangle size={12} />
+                                                <span className="text-[10px] font-medium">{generationError}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                ) : (
+                                    <div
+                                        className="relative group w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-lg cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all"
+                                        onClick={() => setIsImageModalOpen(true)}
+                                    >
+                                        <img src={generatedImage} alt="Generated Concept" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                            <span className="text-white/80"><Maximize2 size={20} /></span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* MASSIVE SCORE - span wrapper fix for clipping */}
                         <div className="flex items-baseline overflow-visible">

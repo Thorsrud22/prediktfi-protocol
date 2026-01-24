@@ -5,7 +5,12 @@ import { useSimplifiedWallet } from '@/app/components/wallet/SimplifiedWalletPro
 import { usePerformanceTracking, trackPageLoad } from '@/app/utils/performance';
 import PerformanceMonitor from '../components/PerformanceMonitor';
 import IdeaSubmissionForm from './IdeaSubmissionForm';
-import IdeaEvaluationReport from './IdeaEvaluationReport';
+import dynamic from 'next/dynamic';
+
+const IdeaEvaluationReport = dynamic(() => import('./IdeaEvaluationReport'), {
+  loading: () => <div className="min-h-[600px] w-full bg-slate-900/40 animate-pulse rounded-3xl" />,
+  ssr: false
+});
 import { IdeaSubmission } from '@/lib/ideaSchema';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
 import { CheckCircle } from 'lucide-react';
@@ -81,6 +86,7 @@ export default function StudioPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(publicKey ? { 'x-wallet-id': publicKey } : {})
         },
         body: JSON.stringify(payload),
       });

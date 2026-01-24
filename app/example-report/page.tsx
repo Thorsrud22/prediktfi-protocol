@@ -181,6 +181,7 @@ export default function ExampleReportPage() {
 
                         <IdeaEvaluationReport
                             result={EXAMPLE_RESULT}
+                            isExample={true}
                         // Hide edit/new buttons in example mode to keep it clean,
                         // so we simply don't pass onStartNew or onEdit
                         />

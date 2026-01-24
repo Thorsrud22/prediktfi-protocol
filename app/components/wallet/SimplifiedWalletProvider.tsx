@@ -1,13 +1,10 @@
 'use client';
 
+// Lightweight Wallet Provider
+// Explicitly avoids loading @solana/wallet-adapter-* to save ~500KB bundle size
+// Uses direct window.phantom injection for max performance on mobile
+
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import {
-  ConnectionProvider,
-  WalletProvider as SolanaWalletProvider,
-} from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
-import { clusterApiUrl } from '@solana/web3.js';
 
 interface WalletContextType {
   isConnected: boolean;
@@ -71,14 +68,19 @@ function WalletManager({ children }: { children: React.ReactNode }) {
     try {
       setIsConnecting(true);
 
-      // Check if Phantom is available
-      if (!window.phantom?.solana?.isPhantom) {
+      // Fallback: Use window.solana if phantom specific path fails or is weird
+      // Type assertion to any to avoid "Expected 0 arguments" error since we know it accepts options
+      const solana = (window as any).solana;
+      const phantomSolana = (window as any).phantom?.solana;
+
+      const targetProvider = phantomSolana?.isPhantom ? phantomSolana : (solana?.isPhantom ? solana : null);
+
+      if (!targetProvider) {
         window.open('https://phantom.app/', '_blank');
         return;
       }
 
-      // Connect to Phantom
-      const response = await window.phantom.solana.connect?.();
+      const response = await targetProvider.connect({ onlyIfTrusted: false });
 
       if (response?.publicKey) {
         const pubkey = response.publicKey.toString();
@@ -89,8 +91,17 @@ function WalletManager({ children }: { children: React.ReactNode }) {
         localStorage.setItem('predikt:wallet:name', 'Phantom');
         localStorage.setItem('predikt:wallet:pubkey', pubkey);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Wallet connection failed:', error);
+
+      // Handle User Rejection (4001)
+      if (error?.code === 4001) {
+        // User rejected the request
+        return;
+      }
+
+      // Generic fallback
+      console.warn("Phantom connection error details:", JSON.stringify(error, null, 2));
       throw error;
     } finally {
       setIsConnecting(false);
@@ -177,16 +188,24 @@ function WalletManager({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signMessage = async (message: Uint8Array) => {
-    if (!window.phantom?.solana?.isPhantom || !isConnected) {
-      throw new Error('Phantom wallet not connected');
+    // Resolve the provider again (same logic as connect)
+    const solana = (window as any).solana;
+    const phantomSolana = (window as any).phantom?.solana;
+    const provider = phantomSolana?.isPhantom ? phantomSolana : (solana?.isPhantom ? solana : null);
+
+    if (!provider || !isConnected) {
+      throw new Error('Wallet not connected');
     }
 
     try {
-      // Type assertion for signMessage which exists but isn't in the type definition
-      const phantomSolana = window.phantom.solana as any;
-      const response = await phantomSolana.signMessage(message);
+      // Type assertion for signMessage
+      const response = await provider.signMessage(message);
       return response.signature;
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === 4001) {
+        console.log("User rejected signature request");
+        return null;
+      }
       console.error('Message signing failed:', error);
       throw error;
     }
@@ -208,16 +227,6 @@ function WalletManager({ children }: { children: React.ReactNode }) {
 }
 
 export default function SimplifiedWalletProvider({ children }: { children: React.ReactNode }) {
-  const endpoint = clusterApiUrl((process.env.NEXT_PUBLIC_SOLANA_CLUSTER as any) || 'devnet');
-  const wallets = useMemo(() => [new PhantomWalletAdapter()], []);
-
-  return (
-    <ConnectionProvider endpoint={endpoint}>
-      <SolanaWalletProvider wallets={wallets} autoConnect={true}>
-        <WalletModalProvider>
-          <WalletManager>{children}</WalletManager>
-        </WalletModalProvider>
-      </SolanaWalletProvider>
-    </ConnectionProvider>
-  );
+  // Lightweight provider without heavy adapter dependencies
+  return <WalletManager>{children}</WalletManager>;
 }

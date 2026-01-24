@@ -58,6 +58,7 @@ export default async function IdeaPage({ params }: Props) {
     const { id } = await params;
     const idea = await prisma.ideaEvaluation.findUnique({
         where: { id },
+        include: { wallet: true }
     });
 
     if (!idea) {
@@ -108,6 +109,7 @@ export default async function IdeaPage({ params }: Props) {
                 <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <IdeaEvaluationReport
                         result={result}
+                        ownerAddress={idea.wallet?.address}
                     />
                 </div>
 

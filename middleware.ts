@@ -20,24 +20,34 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Create response (moved down, but we need next() to be called later or initialized?) 
+  // Rate checking doesn't need response object, just request.
+
+  // Extract wallet ID early for rate limiting
+  const walletId = request.headers.get('x-wallet-id') ||
+    request.cookies.get('wallet_id')?.value ||
+    request.nextUrl.searchParams.get('wallet');
+
   // --- RATE LIMITING ---
   // Only apply to API routes
   if (pathname.startsWith('/api/')) {
-    let plan: 'free' | 'pro' | 'admin' | 'auth' | 'idea_eval_ip' = 'free'; // default to strict 'free' or 'global' logic? Ratelimit.ts defaults to 'free' (20/m)
+    let plan: 'free' | 'pro' | 'admin' | 'auth' | 'idea_eval_ip' | 'idea_eval_wallet' | 'image_gen' = 'free';
 
     if (pathname.includes('/idea-evaluator/evaluate')) {
-      plan = 'idea_eval_ip';
+      plan = walletId ? 'idea_eval_wallet' : 'idea_eval_ip';
+    } else if (pathname.includes('/generate-image')) {
+      plan = 'image_gen'; // Strict limit for images
     } else if (pathname.startsWith('/api/admin')) {
       plan = 'admin';
     } else if (pathname.includes('/auth') || pathname.includes('/login')) {
       plan = 'auth';
     }
 
-    // specific check for signals to be looser? 
-    // Signals is excluded in config below ('/((?!api/public/signals...))')
-    // So this middleware WON'T run for signals. That is handled in the route handler itself.
+    const rateLimitResponse = await checkRateLimit(request, {
+      plan,
+      identifier: walletId || undefined // Use wallet as identifier if available
+    });
 
-    const rateLimitResponse = await checkRateLimit(request, { plan });
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
@@ -60,9 +70,6 @@ export async function middleware(request: NextRequest) {
   response.headers.set('x-plan', plan);
 
   // Add wallet identification header
-  const walletId = request.headers.get('x-wallet-id') ||
-    request.cookies.get('wallet_id')?.value ||
-    request.nextUrl.searchParams.get('wallet');
   if (walletId) {
     response.headers.set('x-wallet-id', walletId);
   }

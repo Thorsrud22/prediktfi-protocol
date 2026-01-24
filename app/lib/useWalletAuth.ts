@@ -2,17 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 import { toast } from 'react-hot-toast';
-
-// Import simplified wallet to sync state
-let useSimplifiedWallet: any = null;
-try {
-  const simplifiedModule = require('../components/wallet/SimplifiedWalletProvider');
-  useSimplifiedWallet = simplifiedModule.useSimplifiedWallet;
-} catch (error) {
-  // Simplified wallet not available
-}
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -21,23 +12,10 @@ interface AuthState {
 }
 
 export function useWalletAuth() {
-  const { wallet, publicKey, connected, connect, disconnect, signMessage } = useWallet();
+  // Replace legacy adapter hook with our simplified hook
+  const { isConnected: connected, publicKey, signMessage, disconnect, connect } = useSimplifiedWallet();
+  const wallet = null; // Legacy adapter object not available/needed in simplified mode
 
-  // Also get simplified wallet state if available
-  let simplifiedWalletState = null;
-  try {
-    if (useSimplifiedWallet) {
-      simplifiedWalletState = useSimplifiedWallet();
-    }
-  } catch (error) {
-    // Simplified wallet not available in this context
-  }
-
-  // Use simplified wallet state if available, otherwise fall back to wallet adapter
-  const effectivePublicKey = simplifiedWalletState?.publicKey
-    ? { toString: () => simplifiedWalletState.publicKey }
-    : publicKey;
-  const effectiveConnected = simplifiedWalletState?.isConnected ?? connected;
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     wallet: null,
@@ -54,7 +32,7 @@ export function useWalletAuth() {
 
   // Reset authentication state when wallet disconnects
   useEffect(() => {
-    if (!effectiveConnected) {
+    if (!connected) {
       setAuthState({
         isAuthenticated: false,
         wallet: null,
@@ -62,37 +40,9 @@ export function useWalletAuth() {
       });
       setIsAuthenticating(false);
     }
-  }, [effectiveConnected]);
+  }, [connected]);
 
-  // Listen to wallet adapter events for connect/disconnect
-  useEffect(() => {
-    const adapter = wallet?.adapter;
-    if (!adapter) return;
-
-    const handleConnect = () => {
-      console.log('[WalletAuth] Wallet connected via adapter event');
-      // The connected state will be updated by useWallet hook
-    };
-
-    const handleDisconnect = () => {
-      console.log('[WalletAuth] Wallet disconnected via adapter event');
-      setAuthState({
-        isAuthenticated: false,
-        wallet: null,
-        isLoading: false,
-      });
-      setIsAuthenticating(false);
-    };
-
-    // Listen on adapter events
-    adapter.on('connect', handleConnect);
-    adapter.on('disconnect', handleDisconnect);
-
-    return () => {
-      adapter.off('connect', handleConnect);
-      adapter.off('disconnect', handleDisconnect);
-    };
-  }, [wallet]);
+  // Legacy adapter event listeners removed - SimplifiedWalletProvider handles this source of truth
 
   // Auto-verification removed - now handled manually in HeaderConnectButton
 
@@ -120,7 +70,7 @@ export function useWalletAuth() {
   };
 
   const authenticate = async () => {
-    if (!effectivePublicKey) {
+    if (!publicKey) {
       toast.error('Please connect your wallet first');
       return;
     }
@@ -147,7 +97,7 @@ export function useWalletAuth() {
           console.log('Using cached authentication');
           setAuthState({
             isAuthenticated: true,
-            wallet: effectivePublicKey.toString(),
+            wallet: publicKey,
             isLoading: false,
           });
           return;
@@ -161,18 +111,18 @@ export function useWalletAuth() {
       localStorage.removeItem(cacheKey);
     }
 
-    console.log('Starting authentication process for wallet:', effectivePublicKey.toString());
+    console.log('Starting authentication process for wallet:', publicKey);
     verifyingRef.current = true;
     setIsAuthenticating(true);
     setAuthState(prev => ({ ...prev, isLoading: true }));
 
     try {
       // Step 1: Get nonce
-      console.log('Step 1: Requesting nonce for wallet:', effectivePublicKey.toString());
+      console.log('Step 1: Requesting nonce for wallet:', publicKey);
       const nonceResponse = await fetch('/api/auth/nonce', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet: effectivePublicKey.toString() }),
+        body: JSON.stringify({ wallet: publicKey }),
       });
 
       if (!nonceResponse.ok) {
@@ -192,13 +142,8 @@ export function useWalletAuth() {
       const message = `Sign this message to authenticate with Predikt: ${nonce}`;
       const encodedMessage = new TextEncoder().encode(message);
 
-      // Use simplified wallet's signMessage if available, otherwise use wallet adapter
-      let signature;
-      if (simplifiedWalletState?.signMessage) {
-        signature = await simplifiedWalletState.signMessage(encodedMessage);
-      } else {
-        signature = await signMessage?.(encodedMessage);
-      }
+      // Use simplified wallet's signMessage
+      const signature = await signMessage(encodedMessage);
 
       if (!signature) {
         throw new Error('Failed to sign message - user may have cancelled');
@@ -211,7 +156,7 @@ export function useWalletAuth() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          wallet: effectivePublicKey.toString(),
+          wallet: publicKey,
           signature: Array.from(signature), // Send as array of numbers
           message,
         }),
@@ -294,7 +239,7 @@ export function useWalletAuth() {
       await signOut?.();
     } catch { }
     try {
-      await wallet?.adapter?.disconnect?.();
+      await disconnect();
     } catch { }
   };
 
@@ -328,11 +273,11 @@ export function useWalletAuth() {
 const TTL_MS = 12 * 60 * 60 * 1000; // 12 timer
 
 export function useSiwsGuard() {
-  const { publicKey, signMessage } = useWallet();
+  const { publicKey, signMessage } = useSimplifiedWallet();
   const [authed, setAuthed] = useState(false);
   const inflight = useRef(false);
 
-  const key = publicKey ? `siws:${publicKey.toBase58()}` : '';
+  const key = publicKey ? `siws:${publicKey}` : '';
 
   // Read cache when wallet changes
   useEffect(() => {
