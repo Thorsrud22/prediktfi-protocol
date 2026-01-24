@@ -57,7 +57,7 @@ export default function LandingHero() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
                     </span>
-                    Live: User analyzed <span className="text-white">$DOGE</span> in 4.2s
+                    Example: User analyzed <span className="text-white">$DOGE</span> in 4.2s
                 </div>
             </motion.div>
 

@@ -6,9 +6,7 @@ import IdeaHistory from '../components/IdeaHistory';
 import SimplifiedConnectButton from '../components/wallet/SimplifiedConnectButton';
 import Link from 'next/link';
 
-function shortAddress(address: string) {
-  return `${address.slice(0, 4)}…${address.slice(-4)}`;
-}
+
 
 interface EvaluationStats {
   totalEvaluations: number;
@@ -223,7 +221,7 @@ export default function AccountClient() {
   const { isConnected, publicKey, disconnect } = useSimplifiedWallet();
   const { isAuthenticated: siwsOk, wallet: authWallet, verify, verifying, isLoading: isAuthLoading } = useWalletAuth();
   const [mounted, setMounted] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+
 
   // New Stats State
   const [stats, setStats] = useState<EvaluationStats | null>(null);
@@ -249,7 +247,6 @@ export default function AccountClient() {
 
   // Memoize verify handler to prevent unnecessary re-renders of child components
   const handleVerify = useCallback(() => {
-    setRetryCount(prev => prev + 1);
     verify();
   }, [verify]);
 
@@ -266,7 +263,7 @@ export default function AccountClient() {
       !isAuthLoading && // IMPORTANT: Wait for initial status check
       !hasTriedAuthRef.current
     ) {
-      console.log('Wallet connected but not authenticated, attempting authentication...');
+      // console.log('Wallet connected but not authenticated, attempting authentication...');
       hasTriedAuthRef.current = true;
       handleVerify();
     }
@@ -282,7 +279,6 @@ export default function AccountClient() {
   useEffect(() => {
     if (computedStates.isSiwsOk || !computedStates.isWalletConnected) {
       hasTriedAuthRef.current = false;
-      setRetryCount(0);
     }
   }, [computedStates.isSiwsOk, computedStates.isWalletConnected]);
 

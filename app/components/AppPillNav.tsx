@@ -170,7 +170,7 @@ export default function AppPillNav() {
                   <li key={item.href}>
                     <InstantLink
                       href={item.href}
-                      className={`relative inline-flex h-10 md:h-11 items-center justify-center rounded-full px-4 text-sm font-semibold leading-none focusing-outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide ${active ? 'text-white' : 'text-white/80 hover:text-white'}`}
+                      className={`relative inline-flex h-10 md:h-11 items-center justify-center rounded-full px-4 text-sm font-semibold focusing-outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide ${active ? 'text-white' : 'text-white/80 hover:text-white'}`}
                       aria-current={active ? 'page' : undefined}
                     >
                       <span className="relative z-10 translate-y-[0.5px]">{item.label}</span>
@@ -214,7 +214,7 @@ export default function AppPillNav() {
               <InstantLink
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1.5 px-4 py-2 transition-all ${active ? 'text-sky-400 opacity-100' : 'text-slate-300 opacity-60 hover:opacity-100'}`}
+                className={`flex flex-col items-center justify-center gap-1.5 px-4 py-3 transition-all ${active ? 'text-sky-400 opacity-100' : 'text-slate-300 opacity-60 hover:opacity-100'}`}
                 aria-current={active ? 'page' : undefined}
               >
                 {item.href === '/studio' && (

@@ -19,4 +19,4 @@ export { default as EnhancedNavbar } from "./EnhancedNavbar";
 export { ThemeProvider, useTheme } from "./providers/ThemeProvider";
 
 // Page Components
-export { default as EnhancedHome } from "./pages/EnhancedHome";
+

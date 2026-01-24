@@ -325,6 +325,18 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', throttledScroll);
   }, []);
 
+  // [BUG FIX] Close mobile menu on resize to prevent scroll lock
+  useEffect(() => {
+    const handleResize = () => {
+      if (open && window.innerWidth >= 640) {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [open]);
+
   // Enhanced focus management and keyboard navigation
   useEffect(() => {
     if (!open) return;

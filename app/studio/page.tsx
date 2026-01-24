@@ -38,7 +38,7 @@ export default function StudioPage() {
   useEffect(() => {
     async function fetchQuota() {
       try {
-        console.log('[Studio] Fetching quota. PublicKey:', publicKey);
+        // console.log('[Studio] Fetching quota. PublicKey:', publicKey);
         const addressParam = publicKey ? `?walletAddress=${publicKey}` : '';
         const res = await fetch(`/api/idea-evaluator/quota${addressParam}`, {
           cache: 'no-store',
@@ -49,7 +49,7 @@ export default function StudioPage() {
         });
         if (res.ok) {
           const data = await res.json();
-          console.log('[Studio] Quota received:', data, 'for key:', publicKey);
+          // console.log('[Studio] Quota received:', data, 'for key:', publicKey);
           setQuota(data);
         }
       } catch (e) {
@@ -60,7 +60,7 @@ export default function StudioPage() {
   }, [publicKey, evaluationResult]);
 
   // Stream reasoning steps for the UI
-  // Stream reasoning steps for the UI
+
   const [streamingSteps, setStreamingSteps] = useState<string[]>([]);
   const [streamingThoughts, setStreamingThoughts] = useState<string>(""); // Buffer as single string
 
@@ -177,7 +177,10 @@ export default function StudioPage() {
                 throw new Error(event.error);
               }
             } catch (e) {
-              // Ignore parse errors for incomplete chunks
+              // Ignore parse errors for incomplete chunks, but log critical failures in dev
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('SSE Chunk Parse Error (likely split chunk):', e);
+              }
             }
           }
         }
@@ -255,7 +258,7 @@ export default function StudioPage() {
 
           {/* FAIR USE LIMIT DISPLAY */}
           {quota && (
-            <div className="text-right hidden md:block">
+            <div className="text-right block">
               <div className="text-[10px] uppercase text-blue-300/60 mb-1 tracking-widest font-mono">DAILY LIMIT</div>
               <div className={`font-bold text-2xl font-mono ${quota.remaining === 0 ? 'text-amber-400' : 'text-blue-400'}`}>
                 {quota.remaining === -1 ? 'UNLIMITED' : `${quota.remaining}/${quota.limit}`}

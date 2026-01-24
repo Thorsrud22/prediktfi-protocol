@@ -86,7 +86,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function () {
-                console.log('[BOOT] Starting comprehensive localStorage cleanup...');
+                // console.log('[BOOT] Starting comprehensive localStorage cleanup...');
                 
                 // Override JSON.parse temporarily to catch and log errors
                 const originalJSONParse = JSON.parse;
@@ -95,8 +95,8 @@ export default async function RootLayout({
                     return originalJSONParse.call(this, text, reviver);
                   } catch (e) {
                     console.warn('[BOOT] JSON.parse error intercepted (suppressed):', {
-                      error: e.message,
-                      text: typeof text === 'string' ? text.substring(0, 100) : text
+                      // error: e.message,
+                      // text: typeof text === 'string' ? text.substring(0, 100) : text
                     });
                     // Return null instead of throwing to prevent crashes
                     return null;
@@ -105,7 +105,7 @@ export default async function RootLayout({
                 
                 try {
                   // Clear localStorage but preserve wallet+intents data
-                  console.log('[BOOT] Clearing localStorage while preserving wallet+intents data...');
+                  // console.log('[BOOT] Clearing localStorage while preserving wallet+intents data...');
                   
                   function clearLocalStorageButKeep(prefixesToKeep = [
                     'predikt:intents',      // behold alle intents
@@ -125,7 +125,7 @@ export default async function RootLayout({
                       }
                       localStorage.clear()
                       for (const k in keep) localStorage.setItem(k, keep[k])
-                      console.log('[BOOT] localStorage cleared, preserved:', Object.keys(keep))
+                      // console.log('[BOOT] localStorage cleared, preserved:', Object.keys(keep))
                     } catch (e) {
                       console.warn('[BOOT] selective clear failed, skipping:', e)
                     }
@@ -154,7 +154,7 @@ export default async function RootLayout({
                   // Restore original JSON.parse after a delay
                   setTimeout(function() {
                     JSON.parse = originalJSONParse;
-                    console.log('[BOOT] JSON.parse monitoring restored');
+                    // console.log('[BOOT] JSON.parse monitoring restored');
                   }, 5000);
                   
                 } catch (e) {

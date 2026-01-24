@@ -11,7 +11,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = "default", padding = "md", children, ...props }, ref) => {
     const baseClasses = "rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface)]";
-    
+
     const variants = {
       default: "",
       elevated: "shadow-lg",
@@ -61,7 +61,7 @@ const CardTitle = forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("font-semibold leading-none tracking-tight text-[color:var(--text)]", className)}
+    className={cn("font-semibold tracking-tight text-[color:var(--text)]", className)}
     {...props}
   />
 ));
