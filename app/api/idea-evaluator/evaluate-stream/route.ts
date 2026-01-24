@@ -62,17 +62,23 @@ export async function POST(request: NextRequest) {
                 }
 
                 // 1. Fetch Market Data
-                await sendEvent("step", { step: "Fetching real-time market market data (CoinGecko)...", index: 0, total: 3 });
+                await sendEvent("step", { step: "Connecting to market data feeds..." });
                 const marketSnapshot = await getMarketSnapshot();
+                await sendEvent("step", { step: `Market snapshot: SOL $${marketSnapshot.solPriceUsd?.toLocaleString() || 'N/A'}` });
 
-                // 2. AI Inference
-                await sendEvent("step", { step: "AI analyzing submission against market context...", index: 1, total: 3 });
-                const res = await evaluateIdea(parsed.data, { market: marketSnapshot });
+                // 2. AI Inference with real-time progress
+                const res = await evaluateIdea(parsed.data, {
+                    market: marketSnapshot,
+                    onProgress: async (step) => {
+                        await sendEvent("step", { step });
+                    },
+                    onThought: async (thought) => {
+                        await sendEvent("thought", { thought });
+                    }
+                });
 
-                // 3. Finalizing
-                await sendEvent("step", { step: "Generating final report...", index: 2, total: 3 });
-
-                // Send final result
+                // 3. Complete
+                await sendEvent("step", { step: "Evaluation complete" });
                 await sendEvent("complete", { result: res });
                 await writer.close();
 

@@ -18,7 +18,7 @@ const STEPS = [
         title: 'Submit Concept',
         description: 'Initialize the protocol with your ticker or project abstract. Workspace prepares for deep analysis.',
         icon: Lightbulb,
-        color: 'from-blue-600 to-blue-400',
+        color: 'from-accent to-accent-light',
         delay: 0
     },
     {
@@ -26,7 +26,7 @@ const STEPS = [
         title: 'Core Extraction',
         description: 'Advanced analysis deconstructs the project—extracting tokenomics, technical debt, and team intent.',
         icon: BrainCircuit,
-        color: 'from-blue-400 to-cyan-400',
+        color: 'from-accent-secondary to-accent-secondary-light',
         delay: 0.2
     },
     {
@@ -34,7 +34,7 @@ const STEPS = [
         title: 'Market Resonance',
         description: 'Real-time cross-referencing against competitor signals, liquidity depth, and narrative trends.',
         icon: Scale,
-        color: 'from-cyan-400 to-indigo-500',
+        color: 'from-accent to-accent-secondary',
         delay: 0.4
     },
     {
@@ -42,7 +42,7 @@ const STEPS = [
         title: 'Final Verdict',
         description: 'Generate a 0-100 institutional score and a comprehensive risk report with actionable intelligence.',
         icon: FileText,
-        color: 'from-indigo-600 to-blue-700',
+        color: 'from-white/20 to-white/5',
         delay: 0.6
     }
 ];
@@ -121,7 +121,7 @@ export default function ProcessTimeline() {
                     {/* Central Line - Hidden on mobile for cleaner layout */}
                     <div className="timeline-line absolute hidden md:block left-1/2 top-0 bottom-0 w-1 -ml-0.5 bg-gradient-to-b from-blue-600/20 via-blue-500/50 to-indigo-600/20 rounded-full" />
 
-                    <div className="space-y-8 sm:space-y-24">
+                    <div className="space-y-8 md:space-y-16 lg:space-y-24">
                         {STEPS.map((step, index) => {
                             const isEven = index % 2 === 0;
                             return (
@@ -133,15 +133,15 @@ export default function ProcessTimeline() {
                                 >
                                     {/* Content Side */}
                                     <div className="flex-1 w-full md:w-1/2">
-                                        <div className="p-10 rounded-[32px] bg-slate-900/90 border border-white/5 hover:bg-slate-900 transition-all duration-500 group shadow-xl relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <div className="p-10 rounded-[32px] glass-card hover:bg-white/5 transition-all duration-500 group shadow-xl relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-accent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                             <div className="flex items-center gap-5 mb-5">
-                                                <div className={`p-4 rounded-2xl bg-gradient-to-br ${step.color} shadow-lg shadow-blue-900/20 group-hover:scale-110 transition-transform duration-500`}>
+                                                <div className={`p-4 rounded-2xl bg-gradient-to-br ${step.color} shadow-lg shadow-accent/20 group-hover:scale-110 transition-transform duration-500`}>
                                                     <step.icon className="w-6 h-6 text-white" />
                                                 </div>
                                                 <h4 className="text-2xl font-black text-white uppercase italic tracking-tight">{step.title}</h4>
                                             </div>
-                                            <p className="text-slate-400 leading-relaxed font-medium">
+                                            <p className="text-muted leading-relaxed font-medium">
                                                 {step.description}
                                             </p>
                                         </div>

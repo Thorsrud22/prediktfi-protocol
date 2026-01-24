@@ -11,36 +11,102 @@ interface IdeaSubmissionFormProps {
     initialData?: Partial<IdeaSubmission>;
     quota?: { limit: number; remaining: number } | null;
     streamingSteps?: string[];
+    streamingThoughts?: string; // CHANGED: Now a single string buffer
     isConnected?: boolean;
     onConnect?: () => void;
 }
 
+
 // ------------------------------------------------------------------
-// REASONING TERMINAL COMPONENT
+// REASONING TERMINAL COMPONENT - SCI-FI COMMAND CENTER
 // ------------------------------------------------------------------
-function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: string; streamingSteps?: string[] }) {
-    const [logs, setLogs] = useState<string[]>([]);
+// Now displays ONLY real logs from the backend (no fake noise)
+
+interface LogEntry {
+    text: string;
+    type: 'step' | 'thought';
+    timestamp: string;
+}
+
+function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts }: { projectType?: string; streamingSteps?: string[]; streamingThoughts?: string }) {
+    const [logs, setLogs] = useState<LogEntry[]>([]);
     const [startTime] = useState(() => Date.now());
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const [displayProgress, setDisplayProgress] = useState(0); // Animated progress state
+    const [spinnerIndex, setSpinnerIndex] = useState(0); // For spinning cursor
+    const processedStepsRef = React.useRef<number>(0);
+    const processedThoughtsRef = React.useRef<number>(0);
 
-    // Update elapsed time
+    // Spinner characters for active line
+    const SPINNER_CHARS = ['|', '/', '-', '\\'];
+
+    // Update elapsed time and spinner
     useEffect(() => {
         const interval = setInterval(() => {
             setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
-        }, 1000);
+            setSpinnerIndex(prev => (prev + 1) % 4);
+        }, 250); // Faster for spinner animation
         return () => clearInterval(interval);
     }, [startTime]);
 
-    // Streaming Logic
+    // Get current timestamp
+    const getTimestamp = () => new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    // Streaming Logic - displays Steps AND Thoughts
     useEffect(() => {
-        if (streamingSteps && streamingSteps.length > 0) {
-            setLogs(streamingSteps);
-        } else {
-            // Fallback honest animation if stream is delayed
-            // Just show initializing to prevent empty screen
-            setLogs(["Initializing PrediktFi Evaluator..."]);
+        const hasSteps = streamingSteps && streamingSteps.length > 0;
+        const hasThoughts = streamingThoughts && streamingThoughts.length > 0;
+
+        if (!hasSteps && !hasThoughts) {
+            if (logs.length === 0) setLogs([{ text: 'Initializing PrediktFi Evaluator...', type: 'step', timestamp: getTimestamp() }]);
+            return;
         }
-    }, [projectType, streamingSteps]);
+
+        const newEntries: LogEntry[] = [];
+
+        // Process new STEPS
+        if (streamingSteps) {
+            const newSteps = streamingSteps.slice(processedStepsRef.current);
+            newSteps.forEach(step => {
+                newEntries.push({ text: step, type: 'step', timestamp: getTimestamp() });
+            });
+            processedStepsRef.current = streamingSteps.length;
+        }
+
+        // Process new THOUGHTS (from string buffer)
+        if (streamingThoughts) {
+            // Split by newline to get lines
+            const allThoughtLines = streamingThoughts.split('\n');
+
+            // Only add NEW lines that haven't been processed yet
+            const newThoughts = allThoughtLines.slice(processedThoughtsRef.current);
+
+            if (newThoughts.length > 0) {
+                newThoughts.forEach((thought, idx) => {
+                    // If it's the very last line and it's not empty, we ignore it for now 
+                    // unless it's the ONLY line we have. 
+                    // Actually, we want to show the typing effect! 
+                    // But splitting by newline means the last element is the "current" line.
+
+                    // Optimization: Only push non-empty lines, or update the *last* log entry if it's incomplete?
+                    // For simplicity/stability: Just push everything that is non-empty.
+                    // The "vertical text" bug happened because we pushed char-by-char. 
+                    // Now we push line-by-line.
+
+                    if (thought.trim()) {
+                        newEntries.push({ text: thought, type: 'thought', timestamp: getTimestamp() });
+                    }
+                });
+                // We processed all lines provided in this batch
+                processedThoughtsRef.current = allThoughtLines.length;
+            }
+        }
+
+        if (newEntries.length > 0) {
+            setLogs(prev => [...prev, ...newEntries]);
+        }
+    }, [streamingSteps, streamingThoughts]);
+
 
     // Auto-scroll
     const bottomRef = React.useRef<HTMLDivElement>(null);
@@ -50,49 +116,205 @@ function ReasoningTerminal({ projectType, streamingSteps }: { projectType?: stri
         }
     }, [logs]);
 
+    // Keyword definitions for highlighting
+    const HIGHLIGHT_KEYWORDS: Array<{ words: string[]; className: string }> = [
+        { words: ['CoinGecko', 'Birdeye', 'DexScreener'], className: 'text-cyan-400 font-bold' },
+        { words: ['AI', 'GPT', 'LLM', 'Model'], className: 'text-emerald-400 font-bold' },
+        { words: ['Solana', 'SOL', 'ETH', 'Ethereum', 'BTC', 'Bitcoin'], className: 'text-purple-400 font-bold' },
+        { words: ['Risk', 'Warning', 'Critical', 'Error'], className: 'text-red-400 font-bold' },
+        { words: ['Score', 'Analysis', 'Evaluation'], className: 'text-blue-400' },
+        { words: ['OK', 'PASS', 'CLEAR', 'SUCCESS'], className: 'text-emerald-400' },
+    ];
+
+    // Parse text and return React elements with highlighted keywords
+    const parseTextWithHighlights = (text: string): React.ReactNode[] => {
+        // Build a single regex pattern for all keywords
+        const allKeywords = HIGHLIGHT_KEYWORDS.flatMap(k => k.words);
+        const pattern = new RegExp(`\\b(${allKeywords.join('|')})\\b`, 'gi');
+
+        const parts: React.ReactNode[] = [];
+        let lastIndex = 0;
+        let match;
+        let keyIndex = 0;
+
+        // Reset regex state
+        pattern.lastIndex = 0;
+
+        while ((match = pattern.exec(text)) !== null) {
+            // Add text before the match
+            if (match.index > lastIndex) {
+                parts.push(text.slice(lastIndex, match.index));
+            }
+
+            // Find the matching keyword group for styling
+            const matchedWord = match[1];
+            const keywordGroup = HIGHLIGHT_KEYWORDS.find(k =>
+                k.words.some(w => w.toLowerCase() === matchedWord.toLowerCase())
+            );
+
+            // Add the highlighted keyword as a React element
+            parts.push(
+                <span key={`kw-${keyIndex++}`} className={keywordGroup?.className || ''}>
+                    {matchedWord}
+                </span>
+            );
+
+            lastIndex = pattern.lastIndex;
+        }
+
+        // Add remaining text
+        if (lastIndex < text.length) {
+            parts.push(text.slice(lastIndex));
+        }
+
+        return parts.length > 0 ? parts : [text];
+    };
+
+    // Render a log entry with proper React components
+    const renderColoredLog = (text: string, isComplete: boolean) => {
+        return (
+            <span className="flex items-center gap-2">
+                <span>{parseTextWithHighlights(text)}</span>
+                {isComplete && (
+                    <span className="text-emerald-400 font-bold text-[10px] tracking-wider">[DONE]</span>
+                )}
+            </span>
+        );
+    };
+
+    // Progress calculation based on log count (steps count more)
+    const stepCount = logs.filter(l => l.type === 'step').length;
+    // Thoughts shouldn't jump progress too fast, but indicate activity
+    const estimatedTotalSteps = 8;
+    const targetProgress = Math.min((stepCount / estimatedTotalSteps) * 100, 95);
+
+    // Animate progress smoothly toward target
+    useEffect(() => {
+        if (displayProgress < targetProgress) {
+            const timer = setTimeout(() => {
+                // Ease-out animation: faster when far, slower when close
+                const diff = targetProgress - displayProgress;
+                const step = Math.max(1, diff * 0.15);
+                setDisplayProgress(prev => Math.min(prev + step, targetProgress));
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [displayProgress, targetProgress]);
+
+    // Format elapsed time as MM:SS
+    const formatElapsed = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
     return (
-        <div className="w-full h-[500px] flex flex-col p-8 font-mono text-xs md:text-sm bg-slate-900/40 backdrop-blur-md rounded-xl border border-white/5">
-            <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                    <span className="text-blue-400 font-bold tracking-[0.2em] uppercase italic">LIVE ANALYSIS RUNNING</span>
-                </div>
-                <div className="text-white/40 font-mono text-xs">
-                    {elapsedSeconds}s elapsed
-                </div>
+        <div className="w-full h-[500px] flex flex-col font-mono text-xs md:text-sm bg-slate-950/80 backdrop-blur-md rounded-xl border border-cyan-500/20 relative overflow-hidden">
+            {/* CRT Scanline Overlay */}
+            <div className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]" style={{
+                backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.03) 2px, rgba(0,255,255,0.03) 4px)',
+            }} />
+
+            {/* Progress Bar - Top */}
+            <div className="h-1 bg-slate-800 relative overflow-hidden">
+                <div
+                    className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-300 ease-out"
+                    style={{ width: `${displayProgress}%` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-white/20">
-                {logs.map((log, i) => (
-                    <div key={i} className="flex gap-3 text-white/70 animate-in fade-in slide-in-from-left-2 duration-300">
-                        <span className="text-white/20 select-none">
-                            {new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            <div className="p-6 flex-1 flex flex-col relative z-20 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4 border-b border-cyan-500/20 pb-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(6,182,212,0.8)]" />
+                        <span className="text-cyan-400 font-bold tracking-[0.2em] uppercase text-[11px]">COMMAND CENTER</span>
+                        <span className="text-cyan-500/50 text-[10px]">// LIVE</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <span className="text-emerald-400/60 font-mono text-[10px] uppercase tracking-widest">
+                            {displayProgress.toFixed(0)}% COMPLETE
                         </span>
-                        <span className="text-white">
-                            {'>'} {log}
+                        <span className="text-white/30 font-mono text-xs">
+                            T+{formatElapsed(elapsedSeconds)}
                         </span>
                     </div>
-                ))}
-
-                <div className="flex gap-3 text-blue-400 animate-pulse">
-                    <span className="text-white/20 select-none">
-                        {new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                    </span>
-                    <span>_</span>
                 </div>
-                <div ref={bottomRef} />
+
+                {/* Log Output - Shows ALL history with auto-scroll */}
+                <div className="flex-1 overflow-y-auto space-y-1 pr-2 scrollbar-thin scrollbar-thumb-cyan-500/20">
+                    {logs.map((log, i) => {
+                        const isLast = i === logs.length - 1;
+                        const isComplete = !isLast && log.type === 'step';
+                        const isThought = log.type === 'thought';
+
+                        return (
+                            <div
+                                key={i}
+                                className={`flex gap-2 animate-in fade-in duration-75 ${isThought ? 'pl-4 border-l border-white/5 ml-1' : ''}`}
+                            >
+                                <span className={`select-none font-mono text-[9px] min-w-[52px] ${isThought ? 'text-white/20' : 'text-slate-700'}`}>
+                                    {log.timestamp}
+                                </span>
+                                <span className={`select-none ${isThought ? 'text-white/20' : 'text-cyan-500/50'}`}>
+                                    {'>'}
+                                </span>
+                                <span className={
+                                    isThought
+                                        ? 'text-white/40 italic font-mono tracking-tight' // Thoughts styling
+                                        : isComplete
+                                            ? 'text-white/70'
+                                            : 'text-white' // Step styling
+                                }>
+                                    {renderColoredLog(log.text, isComplete)}
+                                    {/* Spinning cursor on active (last) log */}
+                                    {isLast && (
+                                        <span className="text-cyan-400 ml-2 font-bold">
+                                            {SPINNER_CHARS[spinnerIndex]}
+                                        </span>
+                                    )}
+                                </span>
+                            </div>
+                        );
+                    })}
+
+                    {/* Aggressive Blinking Cursor */}
+                    <div className="flex gap-2 items-center">
+                        <span className="text-slate-700 select-none font-mono text-[9px] min-w-[52px]">
+                            {getTimestamp()}
+                        </span>
+                        <span className="text-cyan-500/50 select-none">{'>'}</span>
+                        <span className="text-cyan-400 animate-[blink_0.4s_infinite] font-bold text-lg">_</span>
+                    </div>
+                    <div ref={bottomRef} />
+                </div>
+
+                {/* Footer Status Bar */}
+                <div className="mt-4 pt-3 border-t border-cyan-500/10 flex justify-between items-center text-[9px] uppercase tracking-[0.15em]">
+                    <span className="text-cyan-500/40">LOGS: <span className="text-cyan-400">{logs.length}</span></span>
+                    <span className="text-cyan-500/40">
+                        STATUS: <span className={streamingSteps && streamingSteps.length > 0 ? 'text-emerald-400' : 'text-amber-400'}>
+                            {streamingSteps && streamingSteps.length > 0 ? 'STREAMING' : 'CONNECTING...'}
+                        </span>
+                    </span>
+                    <span className="text-cyan-500/40">NET: <span className="text-emerald-400">ENCRYPTED</span></span>
+                </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center text-white/30 text-[10px] uppercase tracking-widest">
-                <span>STEPS: {logs.length}</span>
-                <span>STATUS: {streamingSteps && streamingSteps.length > 0 ? 'STREAMING' : 'CONNECTING...'}</span>
-                <span>NET: ENCRYPTED</span>
-            </div>
+            {/* Keyframes for aggressive blink */}
+            <style jsx>{`
+                @keyframes blink {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0; }
+                }
+            `}</style>
         </div>
     );
 }
 
-export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, isConnected, onConnect }: IdeaSubmissionFormProps) {
+
+export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, streamingThoughts, isConnected, onConnect }: IdeaSubmissionFormProps) {
     // Consolidated State
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
@@ -218,7 +440,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     if (isSubmitting) {
         return (
             <div className="w-full max-w-4xl mx-auto bg-slate-900/95 border border-white/10 shadow-xl rounded-xl relative overflow-hidden font-sans animate-in fade-in duration-500">
-                <ReasoningTerminal projectType={formData.projectType} streamingSteps={streamingSteps} />
+                <ReasoningTerminal projectType={formData.projectType} streamingSteps={streamingSteps} streamingThoughts={streamingThoughts} />
             </div>
         );
     }

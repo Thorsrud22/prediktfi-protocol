@@ -12,41 +12,48 @@ const config: Config = {
         sans: ["var(--font-inter)", "sans-serif"],
       },
       colors: {
-        // New token keys
-        bg: "var(--bg)",
-        "bg-soft": "var(--bg-soft)",
-        surface: "var(--surface)",
-        "surface-2": "var(--surface-2)",
-        border: "var(--border)",
-        text: "var(--text)",
-        muted: "var(--muted)",
-        accent: "var(--accent)",
-        "accent-2": "var(--accent-2)",
-        danger: "var(--danger)",
-        // Legacy bridges
-        fg: "var(--color-fg)",
-        surfaceHover: "var(--color-surface-hover)",
-        borderStrong: "var(--color-border-strong)",
-        success: "var(--color-success)",
+        // Series-A FinTech Palette
+        bg: "#0A0F1E", // Deeper, more institutional blue
+        "bg-soft": "#141B2D",
+        surface: "rgba(30, 41, 59, 0.5)",
+        "surface-2": "rgba(51, 65, 85, 0.5)",
+        border: "rgba(255, 255, 255, 0.08)",
+        "border-strong": "rgba(255, 255, 255, 0.15)",
+        text: "#F8FAFC",
+        muted: "#94A3B8",
+        accent: {
+          DEFAULT: "#3B82F6",
+          light: "#60A5FA",
+          dark: "#2563EB",
+          glow: "rgba(59, 130, 246, 0.5)",
+        },
+        "accent-secondary": {
+          DEFAULT: "#8B5CF6", // Violet
+          light: "#A78BFA",
+          dark: "#7C3AED",
+          glow: "rgba(139, 92, 246, 0.5)",
+        },
+        danger: "#EF4444",
+        success: "#10B981",
       },
       borderRadius: {
         md: "var(--radius)",
       },
       boxShadow: {
-        token: "var(--shadow)",
+        'glass-sm': '0 8px 32px 0 rgba(0, 0, 0, 0.1)',
+        'glass-md': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+        'accent-glow': '0 0 20px rgba(59, 130, 246, 0.3)',
       },
-      spacing: {
-        1: "var(--space-1)",
-        2: "var(--space-2)",
-        3: "var(--space-3)",
-        4: "var(--space-4)",
-        6: "var(--space-6)",
+      animation: {
+        'subtle-pulse': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float': 'float 6s ease-in-out infinite',
       },
-      backgroundImage: {
-        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic":
-          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        }
+      }
     },
   },
   plugins: [],

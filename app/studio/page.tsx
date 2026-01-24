@@ -60,7 +60,9 @@ export default function StudioPage() {
   }, [publicKey, evaluationResult]);
 
   // Stream reasoning steps for the UI
+  // Stream reasoning steps for the UI
   const [streamingSteps, setStreamingSteps] = useState<string[]>([]);
+  const [streamingThoughts, setStreamingThoughts] = useState<string>(""); // Buffer as single string
 
   const handleEvaluate = async (data: IdeaSubmission) => {
     setSubmissionData(data);
@@ -98,7 +100,9 @@ export default function StudioPage() {
         throw new Error('No response stream');
       }
 
-      let buffer = '';
+      let thoughtAccumulator = ""; // Local accumulator for thoughts
+      let lastUpdate = Date.now();
+      let buffer = ""; // SSE buffer
 
       while (true) {
         const { done, value } = await reader.read();
@@ -120,7 +124,19 @@ export default function StudioPage() {
 
               if (event.step) {
                 setStreamingSteps(prev => [...prev, event.step]);
+              } else if (event.thought) {
+                // BUFFER STRATEGY: Accumulate text locally, throttle state updates
+                thoughtAccumulator += event.thought;
+
+                // Only update React state every 100ms to prevent render thrashing
+                const now = Date.now();
+                if (now - lastUpdate > 100) {
+                  setStreamingThoughts(thoughtAccumulator);
+                  lastUpdate = now;
+                }
               } else if (event.result) {
+                // Ensure final thought state is synced before showing result
+                setStreamingThoughts(thoughtAccumulator);
                 setEvaluationResult(event.result);
                 setCurrentStep('analysis');
 
@@ -167,13 +183,16 @@ export default function StudioPage() {
         }
       }
 
+      // Final flush of thought buffer
+      setStreamingThoughts(thoughtAccumulator);
+
     } catch (error: unknown) {
       console.error('Error evaluating idea:', error);
       const errorMessage = error instanceof Error ? error.message : 'Evaluation service is temporarily unavailable. Please try again.';
       setError(errorMessage);
     } finally {
       setIsAnalyzing(false);
-      setStreamingSteps([]);
+      // Don't clear streams here, user wants to see them
     }
   };
 
@@ -229,7 +248,7 @@ export default function StudioPage() {
             <h1 className="text-5xl sm:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent uppercase italic">
               Studio <span className="text-blue-500">.</span>
             </h1>
-            <p className="text-white/40 text-[10px] sm:text-lg max-w-xl font-medium tracking-[0.2em] uppercase">
+            <p className="text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase">
               Advanced AI Evaluation Protocol for Web3 Assets
             </p>
           </div>
@@ -263,6 +282,7 @@ export default function StudioPage() {
                 isSubmitting={isAnalyzing}
                 quota={quota}
                 streamingSteps={streamingSteps}
+                streamingThoughts={streamingThoughts}
                 isConnected={isConnected}
                 onConnect={connect}
               />

@@ -1,29 +1,36 @@
+'use client';
+
+import { motion } from 'framer-motion';
 import { InstantLink } from '../InstantLink';
 
 export default function HeroActions() {
-    // Static view - no client-side checks needed anymore
-    // This resolves hydration mismatches by ensuring server and client always render the same thing.
-
     return (
-        <div className="flex flex-col items-center justify-center gap-4 pt-8">
-            <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in zoom-in duration-300">
-                <InstantLink
-                    href="/studio"
-                    className="btn-shimmer px-10 py-5 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] italic shadow-lg shadow-blue-900/40 transition-all duration-300 hover:brightness-110 min-w-[220px] text-center"
+        <div className="flex flex-col items-center justify-center gap-6 pt-10">
+            <div className="flex flex-col sm:flex-row items-center gap-5">
+                <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                 >
-                    <span className="relative">
+                    <InstantLink
+                        href="/studio"
+                        className="btn-premium btn-premium-primary min-w-[240px] text-sm shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+                    >
                         Start Validation
-                    </span>
-                </InstantLink>
+                    </InstantLink>
+                </motion.div>
 
-                <InstantLink
-                    href="/example-report"
-                    className="px-10 py-5 rounded-2xl bg-white/5 border border-white/5 text-slate-300 font-black text-xs uppercase tracking-[0.2em] italic hover:bg-white/10 hover:border-white/10 transition-all duration-300 min-w-[220px] text-center"
+                <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                 >
-                    View Sample Report
-                </InstantLink>
+                    <InstantLink
+                        href="/example-report"
+                        className="btn-premium btn-premium-secondary min-w-[240px] text-sm"
+                    >
+                        View Sample Report
+                    </InstantLink>
+                </motion.div>
             </div>
-
         </div>
     );
 }

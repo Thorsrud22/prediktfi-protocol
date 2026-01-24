@@ -2,8 +2,10 @@
 
 import React from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, Download } from 'lucide-react';
+import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, Download, Flag } from 'lucide-react';
 import RadarChart from '../components/charts/RadarChart';
+import RiskGauge from '../components/charts/RiskGauge';
+import KeyStatsBar from '../components/charts/KeyStatsBar';
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 import { printElement } from '../utils/print';
 
@@ -19,7 +21,6 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
     const { publicKey } = useSimplifiedWallet();
 
     // Prepare Chart Data
-    // Prepare Chart Data
     const chartData = React.useMemo(() => {
         const baseData = [
             { label: 'Technical', value: result.technical.feasibilityScore, fullMark: 100 },
@@ -28,10 +29,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
         ];
 
         if (result.projectType === 'ai') {
-            // For AI, Use AI Strategy Score (Average of sub-scores)
             const aiScore = result.aiStrategy
                 ? Math.round((result.aiStrategy.modelQualityScore + result.aiStrategy.dataMoatScore + result.aiStrategy.userAcquisitionScore) / 3)
-                : 50; // Fallback
+                : 50;
 
             baseData.push({ label: 'AI Strategy', value: aiScore, fullMark: 100 });
         } else {
@@ -43,18 +43,74 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
         return baseData;
     }, [result]);
 
+    // Calculate composite risk score
+    const riskScore = React.useMemo(() => {
+        let score = result.execution?.executionRiskScore ?? 50;
+
+        // Add penalties from crypto checks
+        if (result.cryptoNativeChecks) {
+            if (result.cryptoNativeChecks.rugPullRisk === 'high') score += 20;
+            if (result.cryptoNativeChecks.rugPullRisk === 'medium') score += 10;
+            if (!result.cryptoNativeChecks.isLiquidityLocked && result.cryptoNativeChecks.liquidityStatus !== 'locked') score += 15;
+            if ((result.cryptoNativeChecks.top10HolderPercentage ?? 0) > 50) score += 10;
+        }
+
+        return Math.min(100, Math.max(0, score));
+    }, [result]);
+
+    // Collect red flags
+    const redFlags = React.useMemo(() => {
+        const flags: string[] = [];
+
+        if (result.cryptoNativeChecks) {
+            if (result.cryptoNativeChecks.rugPullRisk === 'high') {
+                flags.push('Rug Pull Risk: HIGH');
+            }
+            if (!result.cryptoNativeChecks.isLiquidityLocked && result.cryptoNativeChecks.liquidityStatus !== 'locked' && result.cryptoNativeChecks.liquidityStatus !== 'burned') {
+                flags.push('Liquidity Status: UNLOCKED');
+            }
+            if ((result.cryptoNativeChecks.top10HolderPercentage ?? 0) > 50) {
+                flags.push(`Top 10 Holders: ${result.cryptoNativeChecks.top10HolderPercentage?.toFixed(1)}% - CONCENTRATED`);
+            }
+        }
+
+        // Check calibration notes for penalties
+        if (result.calibrationNotes) {
+            result.calibrationNotes.forEach(note => {
+                if (note.toLowerCase().includes('penalty') || note.toLowerCase().includes('minus')) {
+                    // Extract a short version
+                    const shortNote = note.length > 60 ? note.slice(0, 57) + '...' : note;
+                    if (flags.length < 5) flags.push(shortNote);
+                }
+            });
+        }
+
+        return flags;
+    }, [result]);
+
+    // Key stats for the stats bar
+    const keyStats = React.useMemo(() => {
+        const stats = [
+            { label: 'Market Fit', value: result.market.marketFitScore },
+            { label: 'Technical', value: result.technical.feasibilityScore },
+        ];
+
+        if (result.projectType === 'ai' && result.aiStrategy) {
+            const aiAvg = Math.round((result.aiStrategy.modelQualityScore + result.aiStrategy.dataMoatScore + result.aiStrategy.userAcquisitionScore) / 3);
+            stats.push({ label: 'AI Strategy', value: aiAvg });
+        } else {
+            stats.push({ label: 'Tokenomics', value: result.tokenomics.designScore });
+        }
+
+        stats.push({ label: 'Execution', value: 100 - (result.execution?.executionRiskScore || 50) });
+
+        return stats;
+    }, [result]);
+
     const getScoreColor = (score: number) => {
         if (score >= 60) return 'text-emerald-400';
         if (score >= 30) return 'text-amber-400';
         return 'text-red-400';
-    };
-
-    const getScoreLabelText = (score: number) => {
-        if (score >= 90) return 'Exceptional';
-        if (score >= 75) return 'Strong';
-        if (score >= 60) return 'Average';
-        if (score >= 30) return 'Below Average';
-        return 'Weak';
     };
 
     const getScoreLabel = (score: number) => {
@@ -63,74 +119,131 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
         return 'High Risk / Pass';
     };
 
-
+    const getScoreBadgeClass = (score: number) => {
+        if (score >= 75) return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+        if (score >= 50) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+        return 'bg-red-500/20 text-red-400 border-red-500/30';
+    };
 
     const handleDownloadPDF = () => {
-        // Use the robust iframe print utility
         printElement('printable-report', `PrediktFi Evaluation - ${result.summary.title}`);
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto font-sans text-sm leading-relaxed">
-            {/* 
-                We no longer need the aggressive @media print hacks because we print via an isolated iframe.
-                However, we keep some basic utility classes in the markup (like noprint) which the iframe utility respects.
-            */}
+        <div className="w-full max-w-5xl mx-auto font-sans text-sm leading-relaxed">
             <style jsx global>{`
-                /* Simple utility to hide elements in the print view (iframe) */
                 @media print {
                     .noprint {
                         display: none !important;
                     }
                 }
+                @keyframes pulse-glow {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+                    50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+                }
+                .pulse-glow {
+                    animation: pulse-glow 2s ease-in-out infinite;
+                }
             `}</style>
-            {/* AUDIT LOG HEADER */}
-            <div id="printable-report" className="bg-slate-900 border border-white/5 p-8 mb-6 relative overflow-visible group rounded-3xl shadow-2xl text-white flex flex-col">
-                {/* Removed decorative Activity icon - was distracting on hover */}
 
-                {/* HEADER */}
-                <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6 relative z-10 print:border-black/20">
-                    <div>
-                        <div className="text-[10px] text-blue-400 font-bold uppercase tracking-[0.2em] mb-3 flex items-center gap-2 print:text-blue-700">
-                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse noprint shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
-                            Analysis Complete
-                        </div>
-                        <h1 className="text-4xl font-bold text-white tracking-tighter mb-2 print:text-black uppercase">{result.summary.title} <span className="text-blue-500">.</span></h1>
-                        <p className="text-white/60 text-sm mt-1 max-w-lg leading-relaxed print:text-gray-600">
-                            {result.summary.oneLiner}
-                        </p>
+            <div id="printable-report" className="bg-slate-900 border border-white/5 p-6 md:p-8 relative overflow-visible rounded-3xl shadow-2xl text-white flex flex-col">
+
+                {/* ========== STICKY HEADER BAR ========== */}
+                <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4 noprint">
+                    <div className="flex items-center gap-4">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        <span className="text-[10px] text-white/60 font-bold uppercase tracking-[0.2em]">Analysis Complete</span>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                        <div className="text-right hidden md:block print:block">
-                            <div className="text-[10px] text-white/40 font-mono uppercase tracking-widest mb-1 print:text-gray-500">TIMESTAMP</div>
-                            <div className="text-white text-xs font-mono print:text-black">{new Date().toISOString().split('T')[0]}</div>
-                            <div className="text-xs text-white/20 mt-1 font-mono print:text-gray-400">ID: {(result.summary.title.length * result.overallScore).toString(16).toUpperCase().padStart(6, '0')}</div>
-                        </div>
+                    <div className="flex items-center gap-4">
+                        <span className="text-xs text-white/50 font-mono hidden sm:block">{new Date().toISOString().split('T')[0]}</span>
                         <button
                             onClick={handleDownloadPDF}
-                            className="noprint flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-white/5"
+                            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-white/5 active:scale-95"
                             title="Download PDF Report"
                         >
-                            <Download size={14} /> PDF Report
+                            <Download size={14} /> PDF
                         </button>
                     </div>
                 </div>
 
-                {/* STRATEGIC ACTION PLAN & RISKS */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    {/* LEFT: ACTION PLAN (2/3) */}
-                    <div className="lg:col-span-2 border border-blue-500/30 bg-blue-500/10 p-6 rounded-2xl shadow-lg relative overflow-hidden">
-                        <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-3 relative z-10">
+                {/* ========== ABOVE THE FOLD: COMMAND CENTER ========== */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+                    {/* LEFT: VERDICT PANEL (2/3) */}
+                    <div className="lg:col-span-2 flex flex-col justify-center">
+                        {/* Title */}
+                        <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase mb-2">
+                            {result.summary.title} <span className="text-blue-500">.</span>
+                        </h1>
+                        <p className="text-white/50 text-sm mb-6 max-w-lg leading-relaxed">
+                            {result.summary.oneLiner}
+                        </p>
+
+                        {/* MASSIVE SCORE - span wrapper fix for clipping */}
+                        <div className="flex items-baseline overflow-visible">
+                            <span className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 pt-4 pb-2 leading-[1.15]">
+                                {result.overallScore}
+                            </span>
+                            <span className="text-sm text-gray-500 ml-2 font-medium">/ 100</span>
+                        </div>
+                        <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border mt-2 inline-block ${getScoreBadgeClass(result.overallScore)}`}>
+                            {getScoreLabel(result.overallScore)}
+                        </span>
+                    </div>
+
+                    {/* RIGHT: RISK RADAR (1/3) */}
+                    <div className="flex flex-col items-center justify-center">
+                        <RiskGauge score={riskScore} size={200} />
+                    </div>
+                </div>
+
+                {/* ========== RED FLAG BOX ========== */}
+                {redFlags.length > 0 && (
+                    <div className={`border-2 border-red-500/50 bg-red-950/30 p-4 rounded-xl mb-6 pulse-glow`}>
+                        <div className="flex items-center gap-2 mb-3 text-red-400">
+                            <Flag size={16} />
+                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Critical Warnings</h3>
+                        </div>
+                        <ul className="space-y-2">
+                            {redFlags.map((flag, i) => (
+                                <li key={i} className="flex gap-3 text-red-200/80 text-xs">
+                                    <span className="text-red-500">🚩</span>
+                                    <span className="font-medium">{flag}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* ========== KEY STATS BAR ========== */}
+                <KeyStatsBar stats={keyStats} className="mb-10" />
+
+                {/* ========== BELOW THE FOLD: DEEP DIVES ========== */}
+
+                {/* RADAR CHART + ACTION PLAN - Side by Side */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+                    {/* RADAR CHART - Own Card */}
+                    <div className="border border-white/10 bg-slate-900/60 p-6 rounded-2xl flex flex-col items-center justify-center min-h-[360px]">
+                        <div className="flex items-center gap-2 mb-4 text-white/60 border-b border-white/5 pb-3 w-full">
+                            <Activity size={16} className="text-blue-400" />
+                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Performance Radar</h3>
+                        </div>
+                        <RadarChart data={chartData} width={300} height={300} />
+                    </div>
+
+                    {/* IMMEDIATE ACTION PLAN */}
+                    <div className="border border-blue-500/30 bg-blue-500/10 p-6 rounded-2xl">
+                        <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-3">
                             <CheckCircle2 size={18} className="text-blue-400" />
                             <h3 className="font-bold uppercase tracking-[0.2em] text-[10px] text-blue-100">Immediate Action Plan</h3>
                         </div>
 
                         {(result.recommendations?.mustFixBeforeBuild ?? []).length > 0 ? (
-                            <div className="space-y-3 relative z-10">
+                            <div className="space-y-4">
                                 {(result.recommendations?.mustFixBeforeBuild ?? []).map((fix, i) => (
                                     <div key={i} className="flex gap-4 items-start group">
-                                        <div className="mt-0.5 w-5 h-5 rounded-full border-2 border-blue-500/40 flex items-center justify-center bg-black/20 group-hover:border-blue-400 transition-colors">
-                                            <span className="text-[10px] font-bold text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">✓</span>
+                                        <div className="mt-0.5 min-w-[24px] h-6 rounded-full border-2 border-blue-500/40 flex items-center justify-center bg-black/20 text-[10px] font-bold text-blue-400">
+                                            {i + 1}
                                         </div>
                                         <p className="text-white/90 text-sm leading-relaxed font-medium">{fix}</p>
                                     </div>
@@ -139,20 +252,72 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         ) : (
                             <p className="text-white/60 text-sm">No critical blockers identified. Proceed to execution.</p>
                         )}
-
-                        {/* Decorative background element */}
-                        <div className="absolute -right-10 -bottom-10 opacity-5">
-                            <CheckCircle2 size={200} />
-                        </div>
                     </div>
+                </div>
 
-                    {/* RIGHT: CRITICAL RISKS (1/3) */}
-                    <div className="border border-slate-700/50 bg-slate-900/60 p-6 rounded-2xl shadow-lg flex flex-col">
+                {/* MARKET INTELLIGENCE - TABLE VIEW */}
+                <div className="border border-blue-500/20 bg-blue-500/5 p-6 rounded-2xl mb-8">
+                    <div className="flex items-center gap-2 mb-5 text-blue-400 border-b border-blue-500/10 pb-3">
+                        <Terminal size={18} />
+                        <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Market Intelligence</h3>
+                    </div>
+                    {result.market?.competitors && result.market.competitors.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs">
+                                <thead>
+                                    <tr className="text-left text-white/40 uppercase tracking-widest text-[9px] border-b border-white/5">
+                                        <th className="pb-2 pr-4">Competitor</th>
+                                        <th className="pb-2 pr-4">MCap/TVL</th>
+                                        <th className="pb-2 pr-4">Users</th>
+                                        <th className="pb-2">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {result.market.competitors.slice(0, 4).map((comp, i) => {
+                                        const primaryMetric =
+                                            comp.metrics?.marketCap && comp.metrics.marketCap !== 'N/A' ? comp.metrics.marketCap :
+                                                comp.metrics?.tvl && comp.metrics.tvl !== 'N/A' ? comp.metrics.tvl :
+                                                    comp.metrics?.funding && comp.metrics.funding.includes('$') ? comp.metrics.funding : '-';
+
+                                        const users = comp.metrics?.dailyUsers && comp.metrics.dailyUsers !== 'N/A' ? comp.metrics.dailyUsers : '-';
+
+                                        return (
+                                            <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                                                <td className="py-2 pr-4 text-blue-100 font-bold">{comp.name}</td>
+                                                <td className="py-2 pr-4 text-white/60 font-mono">{primaryMetric}</td>
+                                                <td className="py-2 pr-4 text-white/60 font-mono">{users}</td>
+                                                <td className="py-2">
+                                                    <span className="text-[9px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded font-mono">
+                                                        Active
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <ul className="space-y-2">
+                            {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
+                                <li key={i} className="flex gap-3 text-blue-200/80 text-xs">
+                                    <span className="text-blue-500">•</span>
+                                    <span>{signal}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+
+                {/* THREAT DETECTION + CALIBRATION (2-col grid) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    {/* THREAT DETECTION */}
+                    <div className="border border-slate-700/50 bg-slate-900/60 p-6 rounded-2xl">
                         <div className="flex items-center gap-2 mb-4 text-slate-400 border-b border-white/5 pb-3">
                             <AlertTriangle size={18} />
                             <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Threat Detection</h3>
                         </div>
-                        <ul className="space-y-3 flex-1">
+                        <ul className="space-y-3">
                             {[...(result.technical?.keyRisks ?? []), ...(result.market?.goToMarketRisks ?? [])].slice(0, 5).map((con, i) => (
                                 <li key={i} className="flex gap-3 text-slate-300 text-xs leading-relaxed">
                                     <span className="text-red-500/50 font-mono font-bold">•</span>
@@ -161,278 +326,138 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                             ))}
                         </ul>
                     </div>
-                </div>
 
-                {/* DETAILED ANALYSIS GRID (Charts & Deep Dives) */}
-                <div className="flex flex-col md:flex-row gap-8 items-start relative z-10 mb-8 border-t border-white/5 pt-8">
-                    {/* RADAR CHART (Moved Down) */}
-                    <div className="w-full md:w-1/3 flex justify-center py-4">
-                        <div className="relative w-[240px] h-[240px]">
-                            <RadarChart data={chartData} width={240} height={240} className="w-full h-full" />
-                        </div>
-                    </div>
-
-                    {/* MARKET SIGNALS */}
-                    <div className="flex-1 w-full md:w-2/3">
-                        <div className="border border-blue-500/20 bg-blue-500/5 p-6 rounded-2xl break-inside-avoid shadow-xl h-full">
-                            <div className="flex items-center gap-2 mb-5 text-blue-400 border-b border-blue-500/10 pb-3">
-                                <Terminal size={18} />
-                                <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Market Intelligence</h3>
+                    {/* SCORE CALIBRATION AUDIT */}
+                    {result.calibrationNotes && result.calibrationNotes.length > 0 && (
+                        <div className="border border-white/5 bg-slate-900/80 p-6 rounded-2xl relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 opacity-50" />
+                            <div className="flex items-center gap-2 mb-4 text-white/90 border-b border-white/5 pb-3">
+                                <Activity size={18} className="text-purple-400" />
+                                <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Calibration Audit</h3>
                             </div>
-                            {/* Structured Competitors */}
-                            {result.market?.competitors && result.market.competitors.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {result.market.competitors.slice(0, 4).map((comp, i) => {
-                                        // Helper to get the best primary metric
-                                        const primaryMetric =
-                                            comp.metrics?.marketCap && comp.metrics.marketCap !== 'N/A' ? { label: 'MCap', value: comp.metrics.marketCap } :
-                                                comp.metrics?.tvl && comp.metrics.tvl !== 'N/A' ? { label: 'TVL', value: comp.metrics.tvl } :
-                                                    comp.metrics?.funding && comp.metrics.funding.includes('$') ? { label: 'Raised', value: comp.metrics.funding } : null;
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {result.calibrationNotes.slice(0, 6).map((note, i) => {
+                                    const isNegative = note.toLowerCase().includes("minus") || note.toLowerCase().includes("penalty");
+                                    const isPositive = note.toLowerCase().includes("plus") || note.toLowerCase().includes("bonus");
 
-                                        // Helper to get secondary metric
-                                        const secondaryMetric =
-                                            comp.metrics?.revenue && comp.metrics.revenue !== 'N/A' ? { label: 'Rev', value: comp.metrics.revenue } :
-                                                comp.metrics?.dailyUsers && comp.metrics.dailyUsers !== 'N/A' ? { label: 'Users', value: comp.metrics.dailyUsers } :
-                                                    (!primaryMetric && comp.metrics?.funding) ? { label: 'Funding', value: comp.metrics.funding } : null;
-
-                                        return (
-                                            <div key={i} className="bg-black/20 p-3 rounded-lg border border-blue-500/10">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-blue-100 font-bold text-xs tracking-tight truncate max-w-[100px]">{comp.name}</span>
-                                                    {primaryMetric && (
-                                                        <span className="text-[9px] bg-blue-500/10 text-blue-300 px-1.5 py-0.5 rounded font-mono whitespace-nowrap">
-                                                            {primaryMetric.label}: {primaryMetric.value}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex gap-2 text-[10px] text-white/40 font-mono">
-                                                    {secondaryMetric ? (
-                                                        <span>{secondaryMetric.label}: {secondaryMetric.value}</span>
-                                                    ) : (
-                                                        <span className="italic opacity-50">Data unavailable</span>
-                                                    )}
-                                                </div>
+                                    return (
+                                        <div key={i} className="flex gap-3 items-start text-xs">
+                                            <div className={`mt-0.5 min-w-[16px] h-4 rounded flex items-center justify-center text-[9px] font-bold uppercase ${isNegative ? 'bg-red-500/20 text-red-400' :
+                                                isPositive ? 'bg-emerald-500/20 text-emerald-400' :
+                                                    'bg-slate-700 text-slate-400'
+                                                }`}>
+                                                {isNegative ? '-' : isPositive ? '+' : 'i'}
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <ul className="space-y-2">
-                                    {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
-                                        <li key={i} className="flex gap-3 text-blue-200/80 text-xs">
-                                            <span className="text-blue-500">•</span>
-                                            <span>{signal}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                                            <p className={`${isNegative ? 'text-red-200/80' :
+                                                isPositive ? 'text-emerald-200/80' :
+                                                    'text-slate-300'
+                                                } leading-relaxed`}>
+                                                {note.length > 80 ? note.slice(0, 77) + '...' : note}
+                                            </p>
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
-                {/* CALIBRATION AUDIT - SCORE TRANSPARENCY */}
-                {result.calibrationNotes && result.calibrationNotes.length > 0 && (
-                    <div className="border border-white/5 bg-slate-900/80 p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 opacity-50"></div>
-                        <div className="flex items-center gap-2 mb-4 text-white/90 border-b border-white/5 pb-3">
-                            <Activity size={18} className="text-purple-400" />
-                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Score Calibration Audit</h3>
-                        </div>
-                        <div className="space-y-3">
-                            {result.calibrationNotes.map((note, i) => {
-                                const isNegative = note.toLowerCase().includes("minus") || note.toLowerCase().includes("penalty");
-                                const isPositive = note.toLowerCase().includes("plus") || note.toLowerCase().includes("bonus");
-
-                                return (
-                                    <div key={i} className="flex gap-4 items-start text-sm">
-                                        <div className={`mt-0.5 min-w-[20px] h-5 rounded flex items-center justify-center text-[10px] font-bold uppercase ${isNegative ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                            isPositive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                                                'bg-slate-700 text-slate-400'
-                                            }`}>
-                                            {isNegative ? '-' : isPositive ? '+' : 'i'}
-                                        </div>
-                                        <p className={`${isNegative ? 'text-red-200/80' :
-                                            isPositive ? 'text-emerald-200/80' :
-                                                'text-slate-300'
-                                            } leading-relaxed font-medium`}>
-                                            {note}
-                                        </p>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                        <div className="mt-4 pt-3 border-t border-white/5 text-[10px] text-white/30 uppercase tracking-widest font-mono">
-                            Deterministic Rules Applied v2.1
-                        </div>
-                    </div>
-                )}
-
-                {/* REASONING CHAIN - MOVED DOWN BUT PRESERVED AS COLLAPSIBLE OR LESS PROMINENT IF NEEDED? keeping it for now but maybe less focus */}
-                {result.reasoningSteps && result.reasoningSteps.length > 0 && (
-                    <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl font-mono text-xs break-inside-avoid shadow-xl">
-                        <div className="flex items-center gap-2 mb-5 text-white/60 border-b border-white/5 pb-3">
-                            <Terminal size={14} className="text-blue-400" />
-                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">AI Reasoning Chain</h3>
-                        </div>
-                        <ul className="space-y-2 text-white/70">
-                            {(result.reasoningSteps ?? []).map((step, i) => (
-                                <li key={i} className="flex gap-3">
-                                    <span className="text-blue-500/50">{(i + 1).toString().padStart(2, '0')}.</span>
-                                    <span>{step}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {/* SECURITY & HEALTH CHECK */}
-                {/* SECURITY & HEALTH CHECK */}
+                {/* SECURITY / CRYPTO-NATIVE CHECKS GRID */}
                 {result.cryptoNativeChecks && result.projectType !== 'ai' && (
-                    <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl">
+                    <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl">
                         <div className="flex items-center justify-between mb-5 border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-blue-400">
                                 <Shield size={18} />
                                 <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Security Check</h3>
                             </div>
-                            <div className="text-[10px] text-white/20 font-mono font-bold">v1.0.4</div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl">
-                                <span className="text-white/40 text-[10px] uppercase font-bold tracking-widest">Rug Pull Risk</span>
-                                <span className={`text-[10px] font-bold uppercase ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-cyan-400' :
-                                    result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-blue-400' : 'text-slate-400'
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-slate-800/50 p-3 rounded-lg text-center">
+                                <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Rug Risk</div>
+                                <div className={`text-sm font-bold uppercase ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-emerald-400' :
+                                    result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-amber-400' : 'text-red-400'
                                     }`}>
                                     {result.cryptoNativeChecks.rugPullRisk}
-                                </span>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl">
-                                <span className="text-white/40 text-[10px] uppercase font-bold tracking-widest">Audit Status</span>
-                                <span className={`text-[10px] font-bold uppercase ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-cyan-400' : 'text-blue-400'
+                            <div className="bg-slate-800/50 p-3 rounded-lg text-center">
+                                <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Audit</div>
+                                <div className={`text-sm font-bold uppercase ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-emerald-400' : 'text-amber-400'
                                     }`}>
                                     {result.cryptoNativeChecks.auditStatus}
-                                </span>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl">
-                                <span className="text-white/40 text-[10px] uppercase font-bold tracking-widest">Liquidity</span>
-                                <span className={`text-[10px] font-bold uppercase ${result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' || result.cryptoNativeChecks.isLiquidityLocked ? 'text-cyan-400' : 'text-slate-400'
+                            <div className="bg-slate-800/50 p-3 rounded-lg text-center">
+                                <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Liquidity</div>
+                                <div className={`text-sm font-bold uppercase ${result.cryptoNativeChecks.isLiquidityLocked || result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'text-emerald-400' : 'text-red-400'
                                     }`}>
-                                    {result.cryptoNativeChecks.isLiquidityLocked ? 'Locked (Birdeye)' : result.cryptoNativeChecks.liquidityStatus}
-                                </span>
+                                    {result.cryptoNativeChecks.isLiquidityLocked ? 'Locked' : result.cryptoNativeChecks.liquidityStatus}
+                                </div>
                             </div>
                             {result.cryptoNativeChecks.top10HolderPercentage != null && (
-                                <div className="flex justify-between items-center border-b border-white/5 py-3 hover:bg-white/5 px-4 transition-colors rounded-xl col-span-1 md:col-span-2">
-                                    <span className="text-white/40 text-[10px] uppercase font-bold tracking-widest">Top 10 Holder Concentration</span>
-                                    <span className={`text-[10px] font-bold uppercase ${result.cryptoNativeChecks.top10HolderPercentage > 50 ? 'text-blue-400' : 'text-cyan-400'}`}>
-                                        {result.cryptoNativeChecks.top10HolderPercentage.toFixed(2)}%
-                                    </span>
+                                <div className="bg-slate-800/50 p-3 rounded-lg text-center">
+                                    <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Top 10</div>
+                                    <div className={`text-sm font-bold ${result.cryptoNativeChecks.top10HolderPercentage > 50 ? 'text-red-400' : 'text-emerald-400'}`}>
+                                        {result.cryptoNativeChecks.top10HolderPercentage.toFixed(1)}%
+                                    </div>
                                 </div>
                             )}
                         </div>
                     </div>
                 )}
 
-                {/* AI STRATEGY DEEP DIVE */}
+                {/* AI STRATEGY (for AI projects) - collapsed */}
                 {result.projectType === 'ai' && result.aiStrategy && (
-                    <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl break-inside-avoid shadow-xl">
-                        <div className="flex items-center justify-between mb-5 border-b border-white/10 pb-3">
-                            <div className="flex items-center gap-2 text-cyan-400">
-                                <Sparkles size={18} />
-                                <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">AI Strategy Core</h3>
-                            </div>
+                    <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl">
+                        <div className="flex items-center gap-2 text-cyan-400 mb-5 border-b border-white/10 pb-3">
+                            <Sparkles size={18} />
+                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">AI Strategy Core</h3>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {[
-                                {
-                                    label: 'Model Quality',
-                                    score: result.aiStrategy.modelQualityScore,
-                                    comment: result.aiStrategy.modelQualityComment
-                                },
-                                {
-                                    label: 'Data Moat',
-                                    score: result.aiStrategy.dataMoatScore,
-                                    comment: result.aiStrategy.dataMoatComment
-                                },
-                                {
-                                    label: 'Acquisition',
-                                    score: result.aiStrategy.userAcquisitionScore,
-                                    comment: result.aiStrategy.userAcquisitionComment
-                                },
+                                { label: 'Model Quality', score: result.aiStrategy.modelQualityScore, comment: result.aiStrategy.modelQualityComment },
+                                { label: 'Data Moat', score: result.aiStrategy.dataMoatScore, comment: result.aiStrategy.dataMoatComment },
+                                { label: 'Acquisition', score: result.aiStrategy.userAcquisitionScore, comment: result.aiStrategy.userAcquisitionComment },
                             ].map((item, idx) => (
                                 <div key={idx} className="flex flex-col">
                                     <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">{item.label}</div>
-                                    <div className="flex items-baseline gap-2 mb-2">
-                                        <div className={`text-2xl font-bold ${getScoreColor(item.score)}`}>
-                                            {item.score}/100
-                                        </div>
-                                        <div className={`text-[10px] font-bold uppercase opacity-60 ${getScoreColor(item.score)}`}>
-                                            ({getScoreLabelText(item.score)})
-                                        </div>
+                                    <div className={`text-2xl font-bold mb-2 ${getScoreColor(item.score)}`}>
+                                        {item.score}<span className="text-sm text-white/20">/100</span>
                                     </div>
                                     {item.comment && (
-                                        <p className="text-xs text-white/60 leading-relaxed italic pr-2">
-                                            "{item.comment}"
-                                        </p>
+                                        <p className="text-xs text-white/50 leading-relaxed italic">"{item.comment}"</p>
                                     )}
                                 </div>
                             ))}
                         </div>
-
-                        {(result.aiStrategy.notes?.length > 0) && (
-                            <div className="mt-4 pt-4 border-t border-white/5">
-                                <ul className="space-y-2">
-                                    {result.aiStrategy.notes.map((note, i) => (
-                                        <li key={i} className="flex gap-3 text-sm text-white/70">
-                                            <span className="text-cyan-500/50">•</span>
-                                            <span>{note}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
                     </div>
                 )}
 
-                {/* EXECUTION SIGNALS */}
-                {result.execution && (
-                    <div className="border border-white/5 bg-slate-900 p-6 mb-8 rounded-2xl break-inside-avoid shadow-xl">
-                        <div className="flex items-center gap-2 mb-5 text-white border-b border-white/10 pb-3">
-                            <CheckCircle2 size={18} className="text-blue-400" />
-                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Execution Analysis</h3>
-                        </div>
-                        <div className="space-y-6">
-                            {/* EXECUTION SIGNALS */}
-                            <div className="space-y-3">
-                                <div className="text-[10px] text-white/20 font-bold uppercase tracking-widest mb-3">Signals</div>
-                                {result.execution?.executionSignals?.slice(0, 3)?.map((signal, i) => (
-                                    <div key={i} className="flex gap-4 items-start opacity-70">
-                                        <span className="text-blue-400 font-mono text-xs font-bold">{(i + 1).toString().padStart(2, '0')}</span>
-                                        <p className="text-white/80 text-sm leading-relaxed">{signal}</p>
-                                    </div>
+                {/* AI REASONING CHAIN - collapsible */}
+                {result.reasoningSteps && result.reasoningSteps.length > 0 && (
+                    <details className="border border-white/5 bg-slate-900 rounded-2xl mb-6 group">
+                        <summary className="p-6 cursor-pointer flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+                            <Terminal size={14} className="text-blue-400" />
+                            <span className="font-bold uppercase tracking-[0.2em] text-[10px]">AI Reasoning Chain</span>
+                            <span className="text-[9px] text-white/30 ml-auto">Click to expand</span>
+                        </summary>
+                        <div className="px-6 pb-6">
+                            <ul className="space-y-2 text-white/70 font-mono text-xs">
+                                {(result.reasoningSteps ?? []).map((step, i) => (
+                                    <li key={i} className="flex gap-3">
+                                        <span className="text-blue-500/50">{(i + 1).toString().padStart(2, '0')}.</span>
+                                        <span>{step}</span>
+                                    </li>
                                 ))}
-                            </div>
-
-                            {/* MUST FIX */}
-                            {(result.recommendations?.mustFixBeforeBuild ?? []).length > 0 && (
-                                <div className="space-y-3 mt-4">
-                                    <div className="text-[10px] text-blue-400/30 font-bold uppercase tracking-widest mb-3 pt-4 border-t border-white/5">Strategic Improvements</div>
-                                    {(result.recommendations?.mustFixBeforeBuild ?? []).map((fix, i) => (
-                                        <div key={i} className="flex gap-4 items-start">
-                                            <span className="text-blue-400 font-mono text-xs font-bold">{(i + 1).toString().padStart(2, '0')}</span>
-                                            <p className="text-blue-200/80 text-sm leading-relaxed">{fix}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            </ul>
                         </div>
-                    </div>
+                    </details>
                 )}
-
-
 
                 {/* ACTION BUTTONS */}
-                <div className="flex flex-col md:flex-row gap-4 border-t border-white/5 pt-8 noprint">
+                <div className="flex flex-col md:flex-row gap-4 border-t border-white/5 pt-8 noprint items-stretch md:items-center">
                     {onEdit && (
                         <button
                             onClick={onEdit}
@@ -453,6 +478,5 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
 
             </div>
         </div>
-
     );
 }

@@ -186,9 +186,9 @@ describe('AI Idea Evaluator Studio', () => {
         // 5. Submit
         fireEvent.click(screen.getByText('RUN ANALYSIS'));
 
-        // 6. Verify Terminal appears
+        // 6. Verify Terminal appears (now named "COMMAND CENTER")
         await waitFor(() => {
-            expect(screen.getByText(/LIVE ANALYSIS RUNNING/i)).toBeInTheDocument();
+            expect(screen.getByText(/COMMAND CENTER/i)).toBeInTheDocument();
         });
     });
 

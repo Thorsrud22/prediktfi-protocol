@@ -19,7 +19,7 @@ import { fetchCompetitiveMemo } from "@/lib/market/competitive";
 import { verifyTokenSecurity } from "@/lib/solana/token-check";
 
 // Modular imports
-import { VALIDATOR_SYSTEM_PROMPT, JSON_OUTPUT_SCHEMA } from "./prompts";
+import { VALIDATOR_SYSTEM_PROMPT, JSON_OUTPUT_SCHEMA, ANALYSIS_STREAM_PROMPT } from "./prompts";
 import { calibrateScore, ScoreCalibrationContext } from "./calibration";
 import { parseEvaluationResponse } from "./parser";
 
@@ -64,28 +64,45 @@ function getEnvModelConfig() {
   const modelEnv = process.env.EVAL_MODEL || "prediktfi-engine-v1";
 
   // Map internal aliases to real OpenAI models
+  // GPT-5.2 is now available as a real model (Jan 2026)
   let model = modelEnv;
   if (modelEnv === "prediktfi-engine-v1" || modelEnv === "gpt-5.2") {
-    model = "gpt-4o";
+    model = "gpt-5.2"; // REAL GPT-5.2 - flagship model
   }
 
   return {
     model,
-    // For o1 models we might use reasoning_effort in future, currently undefined for gpt-4o
-    reasoningEffort: process.env.EVAL_REASONING_FULL || "medium"
+    displayName: "ChatGPT-5.2 (Deep Reasoning)", // Branded name for UI
+    // GPT-5.2 supports: none (default), low, medium, high, xhigh
+    // Using 'medium' for balanced reasoning depth on financial analysis
+    reasoningEffort: (process.env.EVAL_REASONING_EFFORT || "medium") as "none" | "low" | "medium" | "high" | "xhigh"
   };
 }
 
 /**
- * Evaluates an idea using OpenAI.
+ * Progress callback for streaming updates to client.
+ */
+export type ProgressCallback = (step: string) => void;
+
+/**
+ * Thought callback for streaming raw AI analysis to client.
+ */
+export type ThoughtCallback = (thought: string) => void;
+
+/**
+ * Evaluates an idea using OpenAI with optional real-time streaming.
  *
  * @param input The idea submission data.
- * @param options Optional configuration including market context.
+ * @param options Optional configuration including market context and streaming callbacks.
  * @returns A promise that resolves to the evaluation result.
  */
 export async function evaluateIdea(
   input: IdeaSubmission,
-  options?: { market?: MarketSnapshot }
+  options?: {
+    market?: MarketSnapshot;
+    onProgress?: ProgressCallback;
+    onThought?: ThoughtCallback;  // NEW: for streaming analysis
+  }
 ): Promise<IdeaEvaluationResult> {
   const contextSummary = buildIdeaContextSummary(input);
 
@@ -106,8 +123,10 @@ Use this context to judge timing and market fit.
   const isLaunched = detectLaunchedStatus(input);
 
   if (input.tokenAddress) {
+    options?.onProgress?.(`Scanning token contract ${input.tokenAddress.slice(0, 8)}...`);
     try {
       const check = await verifyTokenSecurity(input.tokenAddress);
+      options?.onProgress?.(`Token verified: Mint=${check.mintAuthority ? 'ACTIVE' : 'REVOKED'}, Freeze=${check.freezeAuthority ? 'ACTIVE' : 'REVOKED'}`);
       verificationContext = `
 ON-CHAIN VERIFICATION (Real-Time Data):
 - Token Address: ${input.tokenAddress}
@@ -158,6 +177,7 @@ ON-CHAIN STATUS:
   let referenceProjectsFromMemo: { name: string; chainOrPlatform: string; note: string; metrics?: { marketCap?: string; tvl?: string; dailyUsers?: string; funding?: string; revenue?: string } }[] = [];
 
   if (['memecoin', 'defi', 'ai'].includes(normalizedCategory)) {
+    options?.onProgress?.(`Fetching competitive landscape for ${normalizedCategory}...`);
     try {
       const compResult = await fetchCompetitiveMemo(input, normalizedCategory);
       if (compResult.status === 'ok') {
@@ -183,6 +203,7 @@ INSTRUCTION: Use this data to ground your 'Moat' and 'Market Fit' scores.
       }
     } catch (err) {
       console.warn("Failed to fetch competitive memo (non-blocking):", err);
+      options?.onProgress?.(`Competitive memo skipped (non-blocking)`);
     }
   }
 
@@ -199,7 +220,7 @@ ${JSON.stringify(input, null, 2)}
 ${JSON_OUTPUT_SCHEMA}`;
 
   try {
-    const { model, reasoningEffort } = getEnvModelConfig();
+    const { model, displayName, reasoningEffort } = getEnvModelConfig();
 
     // Langfuse Integration
     const langfuse = new Langfuse({
@@ -248,22 +269,63 @@ ${JSON_OUTPUT_SCHEMA}`;
       if (isReasoningModel) {
         params.reasoning_effort = reasoningEffort;
       }
+      // --- PHASE 1: THOUGHT STREAMING (Raw Analysis) ---
+      // The model "thinks out loud" first, streaming text to the user.
+      let analysisContext = "";
 
+      if (options?.onThought) {
+        options?.onProgress?.(`Initiating deep dive analysis via ${displayName}...`);
+
+        try {
+          const streamParams = {
+            model: model,
+            messages: [
+              { role: "system", content: ANALYSIS_STREAM_PROMPT },
+              { role: "user", content: userContent }
+            ],
+            stream: true
+          };
+
+          const stream = await openai().chat.completions.create(streamParams as any) as unknown as AsyncIterable<any>;
+
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || "";
+            if (content) {
+              analysisContext += content;
+              options.onThought(content);
+            }
+          }
+
+          // Add the thoughts to the context for Phase 2
+          // This ensures the final JSON matches the streamed analysis
+          messages.push({ role: "assistant", content: analysisContext });
+          messages.push({ role: "user", content: "Based on your detailed analysis above, generate the final JSON report following the schema exactly." });
+
+        } catch (err) {
+          console.warn("[Evaluator] Thought stream failed, skipping to JSON phase:", err);
+        }
+      }
+
+      // --- PHASE 2: JSON GENERATION (Final Report) ---
+      options?.onProgress?.(`Synthesizing final report data...`);
+      options?.onProgress?.(`AI synthesizing report via ${displayName}...`);
       response = await openai().chat.completions.create(params);
 
     } catch (error: any) {
-      // Fallback
-      console.warn(`[Evaluator] Primary model '${model}' failed (${error.message || error.status}). Falling back to 'gpt-4o-mini'.`);
+      // Fallback to gpt-5-mini (cost-optimized GPT-5 variant)
+      console.warn(`[Evaluator] Primary model '${model}' failed (${error.message || error.status}). Falling back to 'gpt-5-mini'.`);
 
-      // Retry with gpt-4o-mini as safe fallback
+      // Retry with gpt-5-mini as safe fallback
       const fallbackParams = {
-        model: 'gpt-4o-mini',
+        model: 'gpt-5-mini',
         messages: messages,
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
+        reasoning_effort: "low" // Lower reasoning for fallback
       };
 
       response = await openai().chat.completions.create(fallbackParams as any);
     }
+    options?.onProgress?.(`Report generated, calibrating scores...`);
 
     // Parse response
     let result = parseEvaluationResponse(response);
