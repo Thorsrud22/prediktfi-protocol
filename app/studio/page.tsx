@@ -288,6 +288,7 @@ export default function StudioPage() {
                 streamingThoughts={streamingThoughts}
                 isConnected={isConnected}
                 onConnect={connect}
+                error={error}
               />
             </>
           )}

@@ -57,7 +57,8 @@ export function buildIdeaContextSummary(idea: IdeaSubmission): string {
     `Focus Hints: ${idea.focusHints?.join(', ') || 'None'}`
   ];
 
-  return parts.filter(p => p).join('\n');
+  const context = parts.filter(p => p).join('\n');
+  return `<submission_data>\n${context}\n</submission_data>`;
 }
 
 function getEnvModelConfig() {

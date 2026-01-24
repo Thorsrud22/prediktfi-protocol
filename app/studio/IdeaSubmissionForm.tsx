@@ -14,6 +14,7 @@ interface IdeaSubmissionFormProps {
     streamingThoughts?: string; // CHANGED: Now a single string buffer
     isConnected?: boolean;
     onConnect?: () => void;
+    error?: string | null;
 }
 
 
@@ -28,7 +29,7 @@ interface LogEntry {
     timestamp: string;
 }
 
-function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts }: { projectType?: string; streamingSteps?: string[]; streamingThoughts?: string }) {
+function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, error }: { projectType?: string; streamingSteps?: string[]; streamingThoughts?: string; error?: string | null }) {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [startTime] = useState(() => Date.now());
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -59,7 +60,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts }: {
 
         if (!hasSteps && !hasThoughts) {
             if (logs.length === 0) setLogs([{ text: 'Initializing PrediktFi Evaluator...', type: 'step', timestamp: getTimestamp() }]);
-            return;
+            // Continue to check for error
         }
 
         const newEntries: LogEntry[] = [];
@@ -106,6 +107,17 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts }: {
             setLogs(prev => [...prev, ...newEntries]);
         }
     }, [streamingSteps, streamingThoughts]);
+
+    // Error Handling Effect
+    useEffect(() => {
+        if (error) {
+            setLogs(prev => [
+                ...prev,
+                { text: `CRITICAL FAILURE: ${error}`, type: 'step', timestamp: getTimestamp() },
+                { text: 'System halted.', type: 'step', timestamp: getTimestamp() }
+            ]);
+        }
+    }, [error]);
 
 
     // Auto-scroll
@@ -295,10 +307,10 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts }: {
                     <span className="text-cyan-500/40">LOGS: <span className="text-cyan-400">{logs.length}</span></span>
                     <span className="text-cyan-500/40">
                         STATUS: <span className={streamingSteps && streamingSteps.length > 0 ? 'text-emerald-400' : 'text-amber-400'}>
-                            {streamingSteps && streamingSteps.length > 0 ? 'STREAMING' : 'CONNECTING...'}
+                            {streamingSteps && streamingSteps.length > 0 ? 'STREAMING' : error ? 'FAILURE' : 'CONNECTING...'}
                         </span>
                     </span>
-                    <span className="text-cyan-500/40">NET: <span className="text-emerald-400">ENCRYPTED</span></span>
+                    <span className="text-cyan-500/40">NET: <span className={error ? "text-red-500" : "text-emerald-400"}>{error ? "OFFLINE" : "ENCRYPTED"}</span></span>
                 </div>
             </div>
 
@@ -314,7 +326,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts }: {
 }
 
 
-export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, streamingThoughts, isConnected, onConnect }: IdeaSubmissionFormProps) {
+export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, streamingThoughts, isConnected, onConnect, error }: IdeaSubmissionFormProps) {
     // Consolidated State
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
@@ -437,10 +449,10 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     };
 
     // Render Logic
-    if (isSubmitting) {
+    if (isSubmitting || error) {
         return (
-            <div className="w-full max-w-4xl mx-auto bg-slate-900/95 border border-white/10 shadow-xl rounded-xl relative overflow-hidden font-sans animate-in fade-in duration-500">
-                <ReasoningTerminal projectType={formData.projectType} streamingSteps={streamingSteps} streamingThoughts={streamingThoughts} />
+            <div className={`w-full max-w-4xl mx-auto bg-slate-900/95 border ${error ? 'border-red-500/30' : 'border-white/10'} shadow-xl rounded-xl relative overflow-hidden font-sans animate-in fade-in duration-500`}>
+                <ReasoningTerminal projectType={formData.projectType} streamingSteps={streamingSteps} streamingThoughts={streamingThoughts} error={error} />
             </div>
         );
     }
