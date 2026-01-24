@@ -84,7 +84,16 @@ export async function POST(request: NextRequest) {
 
             } catch (error) {
                 console.error("Streaming evaluation error:", error);
-                const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+                let errorMessage = "Unknown error";
+                if (error instanceof Error) {
+                    if (error.message.includes('429') || error.message.includes('quota')) {
+                        errorMessage = "Daily limit reached (OpenAI Quota). Please check billing.";
+                    } else {
+                        errorMessage = error.message;
+                    }
+                }
+
                 await sendEvent("error", { error: errorMessage });
                 await writer.close();
             }

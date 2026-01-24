@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, Download, Flag } from 'lucide-react';
+import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, Download, Flag, Image as ImageIcon, Loader2, X, Maximize2 } from 'lucide-react';
 import RadarChart from '../components/charts/RadarChart';
 import RiskGauge from '../components/charts/RiskGauge';
 import KeyStatsBar from '../components/charts/KeyStatsBar';
@@ -19,6 +19,45 @@ interface IdeaEvaluationReportProps {
 
 export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: IdeaEvaluationReportProps) {
     const { publicKey } = useSimplifiedWallet();
+    const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [generationError, setGenerationError] = useState<string | null>(null);
+
+    const handleGenerateImage = async () => {
+        if (isGeneratingImage || generatedImage) return;
+        setIsGeneratingImage(true);
+        setGenerationError(null);
+
+        try {
+            console.log("Requesting image generation...");
+            const res = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: `A logo/visual for a ${result.projectType} project named "${result.summary.title}". Context: ${result.summary.oneLiner}`,
+                    projectType: result.projectType
+                })
+            });
+            const data = await res.json();
+            console.log("Image generation response:", data);
+
+            if (data.imageData) {
+                setGeneratedImage(data.imageData);
+                try {
+                    // Dynamic import or global usage if available, but simple alert for dev debug is safer first if unsure about global providers
+                    // alert("Image generated!"); 
+                } catch { }
+            } else if (data.error) {
+                console.error("Image generation API reported error:", data.error);
+                setGenerationError(data.error);
+            }
+        } catch (e) {
+            console.error("Image generation fetch error:", e);
+            setGenerationError("Network error. Please try again.");
+        } finally {
+            setIsGeneratingImage(false);
+        }
+    };
 
     // Prepare Chart Data
     const chartData = React.useMemo(() => {
@@ -129,6 +168,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
         printElement('printable-report', `PrediktFi Evaluation - ${result.summary.title}`);
     };
 
+    // State for image modal
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
     return (
         <div className="w-full max-w-5xl mx-auto font-sans text-sm leading-relaxed">
             <style jsx global>{`
@@ -145,6 +187,38 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                     animation: pulse-glow 2s ease-in-out infinite;
                 }
             `}</style>
+
+            {/* IMAGE MODAL */}
+            {isImageModalOpen && generatedImage && (
+                <div
+                    className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setIsImageModalOpen(false)}
+                >
+                    <div className="relative max-w-4xl max-h-[90vh] w-full h-auto flex flex-col items-center">
+                        <img
+                            src={generatedImage}
+                            alt="Full Concept"
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-white/10"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsImageModalOpen(false); }}
+                            className="absolute -top-12 right-0 md:-right-12 text-white/70 hover:text-white transition-colors p-2"
+                        >
+                            <span className="sr-only">Close</span>
+                            <X size={24} />
+                        </button>
+                        <a
+                            href={generatedImage}
+                            download="nano-banana-concept.png"
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-4 flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors backdrop-blur-md"
+                        >
+                            <Download size={14} /> Download Original
+                        </a>
+                    </div>
+                </div>
+            )}
 
             <div id="printable-report" className="bg-slate-900 border border-white/5 p-6 md:p-8 relative overflow-visible rounded-3xl shadow-2xl text-white flex flex-col">
 
@@ -178,6 +252,38 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew }: Ide
                         <p className="text-white/50 text-sm mb-6 max-w-lg leading-relaxed">
                             {result.summary.oneLiner}
                         </p>
+
+                        {/* VISUAL GENERATION BUTTON */}
+                        <div className="mb-4">
+                            {!generatedImage ? (
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={handleGenerateImage}
+                                        disabled={isGeneratingImage}
+                                        className="self-start flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
+                                    >
+                                        {isGeneratingImage ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
+                                        {isGeneratingImage ? 'Generating Value...' : 'Generate Nano Banana Pro'}
+                                    </button>
+                                    {generationError && (
+                                        <div className="flex items-center gap-2 text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <AlertTriangle size={12} />
+                                            <span className="text-[10px] font-medium">{generationError}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div
+                                    className="relative group w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-lg cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all"
+                                    onClick={() => setIsImageModalOpen(true)}
+                                >
+                                    <img src={generatedImage} alt="Generated Concept" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <span className="text-white/80"><Maximize2 size={20} /></span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {/* MASSIVE SCORE - span wrapper fix for clipping */}
                         <div className="flex items-baseline overflow-visible">

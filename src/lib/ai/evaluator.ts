@@ -13,6 +13,7 @@
 import { IdeaSubmission } from "@/lib/ideaSchema";
 import { IdeaEvaluationResult } from "@/lib/ideaEvaluationTypes";
 import { openai } from "@/lib/openaiClient";
+import { gemini } from "@/lib/geminiClient"; // Gemini Support
 import { Langfuse } from "langfuse";
 import { MarketSnapshot } from "@/lib/market/types";
 import { fetchCompetitiveMemo } from "@/lib/market/competitive";
@@ -22,6 +23,7 @@ import { verifyTokenSecurity } from "@/lib/solana/token-check";
 import { VALIDATOR_SYSTEM_PROMPT, JSON_OUTPUT_SCHEMA, ANALYSIS_STREAM_PROMPT } from "./prompts";
 import { calibrateScore, ScoreCalibrationContext } from "./calibration";
 import { parseEvaluationResponse } from "./parser";
+import { SAFE_DEMO_RESULT } from "./safe-demo";
 
 // Re-export for backwards compatibility
 export type { ScoreCalibrationContext } from "./calibration";
@@ -62,8 +64,21 @@ export function buildIdeaContextSummary(idea: IdeaSubmission): string {
 }
 
 function getEnvModelConfig() {
+  const provider = process.env.EVAL_PROVIDER || "openai";
   const modelEnv = process.env.EVAL_MODEL || "prediktfi-engine-v1";
 
+  // Google Gemini Configuration
+  if (provider === "google") {
+    // strict defaults for Gemini to ensure compatibility
+    return {
+      provider: "google",
+      model: "gemini-1.5-flash", // fast, cheap, good for analysis
+      displayName: "Gemini 1.5 Flash",
+      reasoningEffort: "medium" // ignored by Gemini but kept for type compatibility
+    };
+  }
+
+  // OpenAI Configuration
   // Map internal aliases to real OpenAI models
   // GPT-5.2 is now available as a real model (Jan 2026)
   let model = modelEnv;
@@ -72,6 +87,7 @@ function getEnvModelConfig() {
   }
 
   return {
+    provider: "openai",
     model,
     displayName: "ChatGPT-5.2 (Deep Reasoning)", // Branded name for UI
     // GPT-5.2 supports: none (default), low, medium, high, xhigh
@@ -221,7 +237,7 @@ ${JSON.stringify(input, null, 2)}
 ${JSON_OUTPUT_SCHEMA}`;
 
   try {
-    const { model, displayName, reasoningEffort } = getEnvModelConfig();
+    const { provider, model, displayName, reasoningEffort } = getEnvModelConfig();
 
     // Langfuse Integration
     const langfuse = new Langfuse({
@@ -236,7 +252,8 @@ ${JSON_OUTPUT_SCHEMA}`;
       metadata: {
         projectType: input.projectType,
         teamSize: input.teamSize,
-        tokenAddress: input.tokenAddress
+        tokenAddress: input.tokenAddress,
+        provider: provider
       },
       input: {
         system: VALIDATOR_SYSTEM_PROMPT,
@@ -245,86 +262,132 @@ ${JSON_OUTPUT_SCHEMA}`;
     });
 
     const generation = trace.generation({
-      name: "evaluator-gpt",
+      name: `evaluator-${provider}`,
       model: model,
       input: userContent
     });
 
-    // Prepare messages
-    const messages = [
-      { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
-      { role: "user", content: userContent }
-    ];
-
-    // Use standard Chat Completions API with extra params if needed
     let response;
-    try {
-      const isReasoningModel = (model.startsWith('o1') || model.startsWith('gpt-5'));
 
-      const params: any = {
-        model: model,
-        messages: messages,
-        response_format: { type: "json_object" }
-      };
+    // --- GOOGLE GEMINI EXECUTION ---
+    if (provider === "google") {
+      options?.onProgress?.(`Initializing Gemini (${model})...`);
 
-      if (isReasoningModel) {
-        params.reasoning_effort = reasoningEffort;
-      }
-      // --- PHASE 1: THOUGHT STREAMING (Raw Analysis) ---
-      // The model "thinks out loud" first, streaming text to the user.
-      let analysisContext = "";
+      try {
+        const client = gemini();
 
-      if (options?.onThought) {
-        options?.onProgress?.(`Initiating deep dive analysis via ${displayName}...`);
+        // PHASE 2: GENERATION
+        options?.onProgress?.(`Synthesizing report via ${displayName}...`);
 
-        try {
-          const streamParams = {
-            model: model,
-            messages: [
-              { role: "system", content: ANALYSIS_STREAM_PROMPT },
-              { role: "user", content: userContent }
-            ],
-            stream: true
-          };
-
-          const stream = await openai().chat.completions.create(streamParams as any) as unknown as AsyncIterable<any>;
-
-          for await (const chunk of stream) {
-            const content = chunk.choices[0]?.delta?.content || "";
-            if (content) {
-              analysisContext += content;
-              options.onThought(content);
-            }
+        const result = await client.models.generateContent({
+          model: model,
+          contents: [{ role: 'user', parts: [{ text: userContent }] }],
+          config: {
+            responseMimeType: "application/json",
+            systemInstruction: { parts: [{ text: VALIDATOR_SYSTEM_PROMPT }] }
           }
+        });
 
-          // Add the thoughts to the context for Phase 2
-          // This ensures the final JSON matches the streamed analysis
-          messages.push({ role: "assistant", content: analysisContext });
-          messages.push({ role: "user", content: "Based on your detailed analysis above, generate the final JSON report following the schema exactly." });
-
-        } catch (err) {
-          console.warn("[Evaluator] Thought stream failed, skipping to JSON phase:", err);
+        // Handle response text extraction safely
+        let textResponse = "";
+        // Try common patterns safely
+        if ((result as any).text) {
+          if (typeof (result as any).text === 'function') {
+            textResponse = (result as any).text();
+          } else {
+            textResponse = (result as any).text;
+          }
+        } else if (result?.candidates?.[0]?.content?.parts?.[0]?.text) {
+          textResponse = result.candidates[0].content.parts[0].text;
+        } else {
+          textResponse = JSON.stringify(result);
         }
+
+        response = { output: textResponse };
+
+      } catch (err: any) {
+        console.error("Gemini Error:", err);
+        throw err; // Trigger fallback or error handling
       }
 
-      // --- PHASE 2: JSON GENERATION (Final Report) ---
-      options?.onProgress?.(`Synthesizing final report data...`);
-      options?.onProgress?.(`AI synthesizing report via ${displayName}...`);
-      response = await openai().chat.completions.create(params);
+    }
+    // --- OPENAI EXECUTION (Default) ---
+    else {
+      // Prepare messages
+      const messages = [
+        { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
+        { role: "user", content: userContent }
+      ];
 
-    } catch (error: any) {
-      // Fallback to gpt-5-mini (cost-optimized GPT-5 variant)
-      console.warn(`[Evaluator] Primary model '${model}' failed (${error.message || error.status}). Falling back to 'gpt-5-mini'.`);
+      // Use standard Chat Completions API with extra params if needed
+      try {
+        const isReasoningModel = (model.startsWith('o1') || model.startsWith('gpt-5'));
 
-      // Retry with gpt-5-mini as safe fallback
-      const fallbackParams = {
-        model: 'gpt-5-mini',
-        messages: messages,
-        response_format: { type: "json_object" },
-        reasoning_effort: "low" // Lower reasoning for fallback
-      };
+        const params: any = {
+          model: model,
+          messages: messages,
+          response_format: { type: "json_object" }
+        };
 
-      response = await openai().chat.completions.create(fallbackParams as any);
+        if (isReasoningModel) {
+          params.reasoning_effort = reasoningEffort;
+        }
+        // --- PHASE 1: THOUGHT STREAMING (Raw Analysis) ---
+        // The model "thinks out loud" first, streaming text to the user.
+        let analysisContext = "";
+
+        if (options?.onThought) {
+          options?.onProgress?.(`Initiating deep dive analysis via ${displayName}...`);
+
+          try {
+            const streamParams = {
+              model: model,
+              messages: [
+                { role: "system", content: ANALYSIS_STREAM_PROMPT },
+                { role: "user", content: userContent }
+              ],
+              stream: true
+            };
+
+            const stream = await openai().chat.completions.create(streamParams as any) as unknown as AsyncIterable<any>;
+
+            for await (const chunk of stream) {
+              const content = chunk.choices[0]?.delta?.content || "";
+              if (content) {
+                analysisContext += content;
+                options.onThought(content);
+              }
+            }
+
+            // Add the thoughts to the context for Phase 2
+            // This ensures the final JSON matches the streamed analysis
+            messages.push({ role: "assistant", content: analysisContext });
+            messages.push({ role: "user", content: "Based on your detailed analysis above, generate the final JSON report following the schema exactly." });
+
+          } catch (err) {
+            console.warn("[Evaluator] Thought stream failed, skipping to JSON phase:", err);
+          }
+        }
+
+        // --- PHASE 2: JSON GENERATION (Final Report) ---
+        options?.onProgress?.(`Synthesizing final report data...`);
+        options?.onProgress?.(`AI synthesizing report via ${displayName}...`);
+        response = await openai().chat.completions.create(params);
+
+      } catch (error: any) {
+        // Fallback to gpt-5-mini (cost-optimized GPT-5 variant)
+        console.warn(`[Evaluator] Primary model '${model}' failed (${error.message || error.status}). Falling back to 'gpt-5-mini'.`);
+
+        // Retry with gpt-5-mini as safe fallback
+        const fallbackParams = {
+          model: 'gpt-5-mini',
+          messages: messages,
+          response_format: { type: "json_object" },
+          reasoning_effort: "low" // Lower reasoning for fallback
+        };
+
+        response = await openai().chat.completions.create(fallbackParams as any);
+      }
     }
     options?.onProgress?.(`Report generated, calibrating scores...`);
 
@@ -374,7 +437,17 @@ ${JSON_OUTPUT_SCHEMA}`;
     await langfuse.flushAsync();
 
     return result;
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message?.includes('429') || error.status === 429 || error.code === 'insufficient_quota') {
+      console.warn("OpenAI Quota Exceeded. Falling back to Safe Demo Result.");
+      options?.onProgress?.("⚠️ API Quota limit reached. Switching to DEMO MODE...");
+
+      // Simulate a short delay for realism
+      await new Promise(r => setTimeout(r, 1500));
+
+      return SAFE_DEMO_RESULT;
+    }
+
     console.error("Error evaluating idea with OpenAI:", error);
     throw new Error(
       `Failed to evaluate idea: ${error instanceof Error ? error.message : "Unknown error"}`

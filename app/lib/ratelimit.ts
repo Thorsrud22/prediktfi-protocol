@@ -74,11 +74,23 @@ const rateLimiters = redis ? {
     limiter: Ratelimit.slidingWindow(40, '1 h'), // 40 tips per hour
     analytics: true,
   }),
+  auth: new Ratelimit({
+    redis: redis,
+    limiter: Ratelimit.slidingWindow(10, '1 m'), // 10 attempts per minute
+    analytics: true,
+  }),
+  admin: new Ratelimit({
+    redis: redis,
+    limiter: Ratelimit.slidingWindow(60, '1 h'), // 60 requests per hour
+    analytics: true,
+  }),
 } : null;
+
+export type RateLimitPlan = 'free' | 'pro' | 'global' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim' | 'copilot' | 'auth' | 'admin';
 
 export interface RateLimitOptions {
   identifier?: string; // Custom identifier (defaults to IP)
-  plan?: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim' | 'copilot'; // User plan or specific limiter
+  plan?: RateLimitPlan; // User plan or specific limiter
   skipForDevelopment?: boolean; // Skip rate limiting in development
 }
 
@@ -186,7 +198,7 @@ export async function getBonusQuota(identifier: string): Promise<number> {
 
 export async function getRateLimitInfo(
   identifier: string,
-  plan: 'free' | 'pro' | 'advisor_read' | 'advisor_write' | 'alerts' | 'idea_eval_ip' | 'idea_eval_wallet' | 'bonus_claim' | 'copilot' = 'free'
+  plan: RateLimitPlan = 'free'
 ): Promise<{
   limit: number;
   remaining: number;
