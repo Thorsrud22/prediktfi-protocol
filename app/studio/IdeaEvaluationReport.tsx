@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, Download, Flag, Image as ImageIcon, Loader2, X, Maximize2 } from 'lucide-react';
+import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, Download, Flag, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const RadarChart = dynamic(() => import('../components/charts/RadarChart'), {
@@ -45,70 +45,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
     }, [publicKey, ownerAddress, isExample]);
 
 
-    const [generatedImage, setGeneratedImage] = useState<string | null>(() => {
-        if (isExample || result.summary.title.includes("Demo") || result.summary.mainVerdict.includes("Demo")) {
-            return "https://bafybeigq5t2k33v4b5g3g7n4i4f6f7r7u7x7y7z.ipfs.w3s.link/demo-visual.png";
-        }
-        return null;
-    });
-    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-    const [generationError, setGenerationError] = useState<string | null>(null);
 
-    const handleGenerateImage = async () => {
-        if (isGeneratingImage || generatedImage) return;
-        setIsGeneratingImage(true);
-        setGenerationError(null);
-
-        try {
-            // BLOCK EXPLOIT: Don't generate real images for Demo/Example reports
-            if (result.summary.title.includes("Demo") || result.summary.title.includes("Example") || result.summary.mainVerdict.includes("Demo")) {
-                console.log("Demo report detected - using mock image");
-                await new Promise(r => setTimeout(r, 1500)); // Fake delay
-                setGeneratedImage("https://bafybeigq5t2k33v4b5g3g7n4i4f6f7r7u7x7y7z.ipfs.w3s.link/demo-visual.png"); // Or any static placeholder
-                return;
-            }
-
-            console.log("Requesting image generation...");
-            const res = await fetch('/api/generate-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    prompt: `A logo/visual for a ${result.projectType} project named "${result.summary.title}". Context: ${result.summary.oneLiner}`,
-                    projectType: result.projectType
-                })
-            });
-            const data = await res.json();
-            console.log("Image generation response:", data);
-
-            if (data.imageData) {
-                setGeneratedImage(data.imageData);
-                try {
-                    // Dynamic import or global usage if available, but simple alert for dev debug is safer first if unsure about global providers
-                    // alert("Image generated!"); 
-                } catch { }
-            } else if (data.error) {
-                console.error("Image generation API reported error:", data.error);
-
-                let msg = data.error;
-                if (typeof data.error === 'object') {
-                    msg = data.error.message || JSON.stringify(data.error);
-                }
-
-                if (msg.includes('overloaded') || msg.includes('503')) {
-                    setGenerationError("AI Model is currently overloaded (High Traffic). Please try again in 1 minute.");
-                } else if (msg.includes('Rate limit')) {
-                    setGenerationError("Rate limit exceeded. Please wait a moment.");
-                } else {
-                    setGenerationError(typeof msg === 'string' ? msg : "Failed to generate image.");
-                }
-            }
-        } catch (e) {
-            console.error("Image generation fetch error:", e);
-            setGenerationError("Network error. Please try again.");
-        } finally {
-            setIsGeneratingImage(false);
-        }
-    };
 
     // Prepare Chart Data
     const chartData = React.useMemo(() => {
@@ -219,8 +156,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
         printElement('printable-report', `PrediktFi Evaluation - ${result.summary.title}`);
     };
 
-    // State for image modal
-    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
 
     return (
         <div className="w-full max-w-5xl mx-auto font-sans text-sm leading-relaxed">
@@ -238,38 +174,6 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
                     animation: pulse-glow 2s ease-in-out infinite;
                 }
             `}</style>
-
-            {/* IMAGE MODAL */}
-            {isImageModalOpen && generatedImage && (
-                <div
-                    className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
-                    onClick={() => setIsImageModalOpen(false)}
-                >
-                    <div className="relative max-w-4xl max-h-[90vh] w-full h-auto flex flex-col items-center">
-                        <img
-                            src={generatedImage}
-                            alt="Full Concept"
-                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-white/10"
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setIsImageModalOpen(false); }}
-                            className="absolute -top-12 right-0 md:-right-12 text-white/70 hover:text-white transition-colors p-2"
-                        >
-                            <span className="sr-only">Close</span>
-                            <X size={24} />
-                        </button>
-                        <a
-                            href={generatedImage}
-                            download="nano-banana-concept.png"
-                            onClick={(e) => e.stopPropagation()}
-                            className="mt-4 flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors backdrop-blur-md"
-                        >
-                            <Download size={14} /> Download Original
-                        </a>
-                    </div>
-                </div>
-            )}
 
             <div id="printable-report" className="bg-slate-900 border border-white/5 p-6 md:p-8 relative overflow-visible rounded-3xl shadow-2xl text-white flex flex-col">
 
@@ -303,40 +207,6 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
                         <p className="text-white/50 text-sm mb-6 max-w-lg leading-relaxed">
                             {result.summary.oneLiner}
                         </p>
-
-                        {/* VISUAL GENERATION BUTTON */}
-                        {!isExample && (isOwner || !ownerAddress) && (
-                            <div className="mb-4">
-                                {!generatedImage ? (
-                                    <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={handleGenerateImage}
-                                            disabled={isGeneratingImage}
-                                            className="self-start flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
-                                        >
-                                            {isGeneratingImage ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
-                                            {isGeneratingImage ? 'Generating Value...' : 'Generate Nano Banana Pro'}
-                                        </button>
-                                        {generationError && (
-                                            <div className="flex items-center gap-2 text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
-                                                <AlertTriangle size={12} />
-                                                <span className="text-[10px] font-medium">{generationError}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div
-                                        className="relative group w-24 h-24 rounded-xl overflow-hidden border border-white/10 shadow-lg cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all"
-                                        onClick={() => setIsImageModalOpen(true)}
-                                    >
-                                        <img src={generatedImage} alt="Generated Concept" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                            <span className="text-white/80"><Maximize2 size={20} /></span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
 
                         {/* MASSIVE SCORE - span wrapper fix for clipping */}
                         <div className="flex items-baseline overflow-visible">
@@ -489,9 +359,9 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
                     {/* SCORE CALIBRATION AUDIT */}
                     {result.calibrationNotes && result.calibrationNotes.length > 0 && (
                         <div className="border border-white/5 bg-slate-900/80 p-6 rounded-2xl relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 opacity-50" />
+                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-600 to-cyan-500 opacity-50" />
                             <div className="flex items-center gap-2 mb-4 text-white/90 border-b border-white/5 pb-3">
-                                <Activity size={18} className="text-purple-400" />
+                                <Activity size={18} className="text-cyan-400" />
                                 <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Calibration Audit</h3>
                             </div>
                             <div className="space-y-2 max-h-48 overflow-y-auto">

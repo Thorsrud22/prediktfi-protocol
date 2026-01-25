@@ -132,7 +132,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
     const HIGHLIGHT_KEYWORDS: Array<{ words: string[]; className: string }> = [
         { words: ['CoinGecko', 'Birdeye', 'DexScreener'], className: 'text-cyan-400 font-bold' },
         { words: ['AI', 'GPT', 'LLM', 'Model'], className: 'text-emerald-400 font-bold' },
-        { words: ['Solana', 'SOL', 'ETH', 'Ethereum', 'BTC', 'Bitcoin'], className: 'text-purple-400 font-bold' },
+        { words: ['Solana', 'SOL', 'ETH', 'Ethereum', 'BTC', 'Bitcoin'], className: 'text-amber-400 font-bold' },
         { words: ['Risk', 'Warning', 'Critical', 'Error'], className: 'text-red-400 font-bold' },
         { words: ['Score', 'Analysis', 'Evaluation'], className: 'text-blue-400' },
         { words: ['OK', 'PASS', 'CLEAR', 'SUCCESS'], className: 'text-emerald-400' },
@@ -221,38 +221,43 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
     };
 
     return (
-        <div className="w-full h-[500px] flex flex-col font-mono text-xs md:text-sm bg-slate-950/80 backdrop-blur-md rounded-xl border border-cyan-500/20 relative overflow-hidden">
+        <div className="w-full h-[500px] flex flex-col font-mono text-xs md:text-sm bg-slate-950 backdrop-blur-md rounded-xl border border-white/10 relative overflow-hidden shadow-2xl">
             {/* CRT Scanline Overlay */}
             <div className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]" style={{
                 backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.03) 2px, rgba(0,255,255,0.03) 4px)',
             }} />
 
-            {/* Progress Bar - Top */}
-            <div className="h-1 bg-slate-800 relative overflow-hidden">
-                <div
-                    className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-300 ease-out"
-                    style={{ width: `${displayProgress}%` }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+            {/* MacOS-style Title Bar */}
+            <div className="flex items-center justify-between px-4 py-3 bg-slate-900/80 border-b border-white/5 relative z-20">
+                {/* Traffic Light Buttons */}
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors cursor-default shadow-inner" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-400 transition-colors cursor-default shadow-inner" />
+                    <div className="w-3 h-3 rounded-full bg-green-500 hover:bg-green-400 transition-colors cursor-default shadow-inner" />
+                </div>
+
+                {/* Centered Title */}
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(6,182,212,0.6)]" />
+                    <span className="text-white/60 text-xs font-medium tracking-wide">prediktfi — evaluation</span>
+                </div>
+
+                {/* Right Side Stats */}
+                <div className="flex items-center gap-3 text-[10px] font-mono">
+                    <span className="text-emerald-400/80">{displayProgress.toFixed(0)}%</span>
+                    <span className="text-white/30">T+{formatElapsed(elapsedSeconds)}</span>
+                </div>
             </div>
 
-            <div className="p-6 flex-1 flex flex-col relative z-20 overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4 border-b border-cyan-500/20 pb-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(6,182,212,0.8)]" />
-                        <span className="text-cyan-400 font-bold tracking-[0.2em] uppercase text-[11px]">COMMAND CENTER</span>
-                        <span className="text-cyan-500/50 text-[10px]">// LIVE</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <span className="text-emerald-400/60 font-mono text-[10px] uppercase tracking-widest">
-                            {displayProgress.toFixed(0)}% COMPLETE
-                        </span>
-                        <span className="text-white/30 font-mono text-xs">
-                            T+{formatElapsed(elapsedSeconds)}
-                        </span>
-                    </div>
-                </div>
+            {/* Progress Bar */}
+            <div className="h-0.5 bg-slate-800 relative overflow-hidden">
+                <div
+                    className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-400 transition-all duration-300 ease-out"
+                    style={{ width: `${displayProgress}%` }}
+                />
+            </div>
+
+            <div className="p-5 flex-1 flex flex-col relative z-20 overflow-hidden">
 
                 {/* Log Output - Shows ALL history with auto-scroll */}
                 <div className="flex-1 overflow-y-auto space-y-1 pr-2 scrollbar-thin scrollbar-thumb-cyan-500/20">
@@ -699,7 +704,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                             type="button"
                                             onClick={() => handleChange('responseStyle', style)}
                                             className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all uppercase ${formData.responseStyle === style
-                                                ? 'bg-purple-500/20 border-purple-500/50 text-purple-200'
+                                                ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
                                                 : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
                                         >
                                             {style}
@@ -713,15 +718,16 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
             </div>
 
             {/* ACTION BAR */}
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end pt-6">
                 <button
                     type="submit"
-                    className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl font-bold text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] transition-all overflow-hidden"
+                    className="group relative w-full md:w-auto px-10 py-5 bg-[#0055FF] hover:bg-[#0044CC] text-white font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-[0_0_20px_rgba(0,85,255,0.3)] hover:shadow-[0_0_30px_rgba(0,85,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 border border-white/10 overflow-hidden rounded-2xl"
                 >
-                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                    <div className="relative flex items-center gap-3">
-                        <Rocket size={20} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
-                        <span>RUN ANALYSIS</span>
+                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+
+                    <div className="relative flex items-center justify-center gap-4 z-10">
+                        <span>Initiate Protocol</span>
                     </div>
                 </button>
             </div>

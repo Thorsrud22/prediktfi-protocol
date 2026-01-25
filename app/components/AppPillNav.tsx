@@ -202,7 +202,7 @@ export default function AppPillNav() {
           </InstantLink>
         </div>
 
-        {/* Upgrade button removed - Pro waitlist available at /request-access */}
+
       </div>
 
       {/* Mobile Bottom Navigation - Only visible on mobile */}

@@ -88,7 +88,7 @@ export default function TransparencyPage() {
                 {/* 2. The Code (Hard Rails) */}
                 <div className="mb-20">
                     <div className="flex items-center gap-4 mb-8">
-                        <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-400">
+                        <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-400">
                             <FileCode size={32} />
                         </div>
                         <div>
@@ -100,7 +100,7 @@ export default function TransparencyPage() {
                     <div className="bg-slate-900/80 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-md">
                         <div className="p-8 border-b border-white/5">
                             <p className="text-slate-300 max-w-2xl">
-                                After the AI scores a project, we run the result through <code className="text-purple-300 bg-purple-900/30 px-1.5 py-0.5 rounded text-sm">calibration.ts</code>.
+                                After the AI scores a project, we run the result through <code className="text-amber-300 bg-amber-900/30 px-1.5 py-0.5 rounded text-sm">calibration.ts</code>.
                                 These are hard-coded rules that <strong>override</strong> the AI to prevent hype-based scoring.
                             </p>
                         </div>
@@ -118,7 +118,7 @@ export default function TransparencyPage() {
                                         algorithm caps your Execution Score at <strong>60/100</strong>.
                                     </p>
                                     <div className="bg-black/40 p-4 rounded-lg border border-white/5 font-mono text-xs text-green-400 overflow-x-auto">
-                                        <span className="text-purple-400">if</span> (teamSize === 'solo' && complexity === 'high') {'{'}<br />
+                                        <span className="text-cyan-400">if</span> (teamSize === 'solo' && complexity === 'high') {'{'}<br />
                                         &nbsp;&nbsp;maxScore = 60;<br />
                                         &nbsp;&nbsp;flags.push(<span className="text-yellow-200">"Cap: Solo Founder Risk"</span>);<br />
                                         {'}'}
@@ -138,7 +138,7 @@ export default function TransparencyPage() {
                                         we deduct <strong>-20 points</strong> instantly.
                                     </p>
                                     <div className="bg-black/40 p-4 rounded-lg border border-white/5 font-mono text-xs text-green-400 overflow-x-auto">
-                                        <span className="text-purple-400">if</span> (isGenericBuzzword) {'{'}<br />
+                                        <span className="text-cyan-400">if</span> (isGenericBuzzword) {'{'}<br />
                                         &nbsp;&nbsp;score -= 20;<br />
                                         &nbsp;&nbsp;flags.push(<span className="text-yellow-200">"Penalty: Generic Narrative"</span>);<br />
                                         {'}'}

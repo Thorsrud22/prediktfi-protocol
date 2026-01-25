@@ -124,3 +124,11 @@ jspm_packages/
 .dynamodb/
 
 /src/generated/prisma
+
+# Tools
+.cursor/
+.gemini/
+.agent/
+.codex/
+.github/skills/
+

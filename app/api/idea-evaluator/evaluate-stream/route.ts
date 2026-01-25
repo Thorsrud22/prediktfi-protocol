@@ -9,7 +9,7 @@ import { NextRequest } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
 import { evaluateIdea } from "@/lib/ai/evaluator";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
-import { checkRateLimit } from "@/app/lib/ratelimit";
+import { checkRateLimit, incrementEvalCount } from "@/app/lib/ratelimit";
 
 // Vercel Serverless Function Config
 export const maxDuration = 300; // Max duration (5 minutes)
@@ -45,7 +45,9 @@ export async function POST(request: NextRequest) {
                 }
 
                 // --- Rate Limiting Logic ---
-                const walletAddress = parsed.data.tokenAddress || parsed.data.walletAddress || null;
+                // Use x-wallet-id header as primary source (matches what Studio sends)
+                const walletFromHeader = request.headers.get('x-wallet-id');
+                const walletAddress = walletFromHeader || parsed.data.walletAddress || null;
                 const isWalletConnected = !!walletAddress && walletAddress.length > 30;
                 const rateLimitPlan = isWalletConnected ? 'idea_eval_wallet' : 'idea_eval_ip';
                 const identifier = isWalletConnected ? walletAddress : (request.headers.get('x-forwarded-for') || 'unknown');
@@ -77,7 +79,8 @@ export async function POST(request: NextRequest) {
                     }
                 });
 
-                // 3. Complete
+                // 3. Complete - Increment usage counter for accurate quota display
+                await incrementEvalCount(identifier, rateLimitPlan as 'idea_eval_ip' | 'idea_eval_wallet');
                 await sendEvent("step", { step: "Evaluation complete" });
                 await sendEvent("complete", { result: res });
                 await writer.close();

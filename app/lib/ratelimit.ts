@@ -236,6 +236,46 @@ export async function getBonusQuota(identifier: string): Promise<number> {
   return (await redis.get<number>(`bonus_quota:${identifier}`)) || 0;
 }
 
+/**
+ * Increment evaluation count for tracking (separate from rate limiter)
+ * This allows us to display accurate remaining quota in the UI
+ */
+export async function incrementEvalCount(identifier: string, plan: 'idea_eval_ip' | 'idea_eval_wallet'): Promise<number> {
+  const key = `eval_count:${plan}:${identifier}`;
+
+  if (!redis) {
+    // Memory fallback
+    const existing = memoryStore.get(key);
+    const count = (existing?.count || 0) + 1;
+    memoryStore.set(key, { count, reset: Date.now() + 24 * 60 * 60 * 1000 });
+    return count;
+  }
+
+  const newCount = await redis.incr(key);
+
+  // Set TTL to 24 hours on first increment
+  if (newCount === 1) {
+    await redis.expire(key, 86400);
+  }
+
+  return newCount;
+}
+
+/**
+ * Get current evaluation count for an identifier
+ */
+export async function getEvalCount(identifier: string, plan: 'idea_eval_ip' | 'idea_eval_wallet'): Promise<number> {
+  const key = `eval_count:${plan}:${identifier}`;
+
+  if (!redis) {
+    // Memory fallback
+    const existing = memoryStore.get(key);
+    return existing?.count || 0;
+  }
+
+  return (await redis.get<number>(key)) || 0;
+}
+
 export async function getRateLimitInfo(
   identifier: string,
   plan: RateLimitPlan = 'free'

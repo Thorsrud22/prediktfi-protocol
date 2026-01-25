@@ -14,7 +14,7 @@ export default function AboutPage() {
           <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-white mb-12 uppercase italic leading-[0.9]">
             About Predikt <span className="text-blue-500">.</span>
           </h1>
-          Broadway
+
 
           <div className="space-y-16">
             <section>
@@ -44,9 +44,9 @@ export default function AboutPage() {
                   </p>
                 </div>
 
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-purple-500/30 transition-colors group">
-                  <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <span className="text-purple-400 font-black">02</span>
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-cyan-500/30 transition-colors group">
+                  <div className="w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-cyan-400 font-black">02</span>
                   </div>
                   <h3 className="text-white font-bold text-xl mb-2">AI Stress-Test</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
