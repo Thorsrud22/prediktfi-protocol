@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
 import { evaluateIdea } from "@/lib/ai/evaluator";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
-import { checkRateLimit } from "@/app/lib/ratelimit";
+import { checkRateLimit, incrementEvalCount } from "@/app/lib/ratelimit";
 
 // Vercel Serverless Function Config
 export const maxDuration = 60; // Max duration for Hobby (10s is default, can go up to 60)
@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
         const marketSnapshot = await getMarketSnapshot();
 
         const result = await evaluateIdea(parsed.data, { market: marketSnapshot });
+
+        // Increment evaluation count for daily quota tracking
+        await incrementEvalCount(identifier, rateLimitPlan as 'idea_eval_ip' | 'idea_eval_wallet');
+
         return NextResponse.json({ result });
     } catch (error) {
         console.error("Error evaluating idea:", error);

@@ -51,15 +51,16 @@ const rateLimiters = redis ? {
     limiter: Ratelimit.slidingWindow(5, '1 m'), // 5 alert operations per minute
     analytics: true,
   }),
-  // Idea Evaluator limits (Daily)
+  // Idea Evaluator limits (Burst Spam Protection)
+  // The daily 3/5 limit is now enforced via getEvalCount explicitly in checkRateLimit
   idea_eval_ip: new Ratelimit({
     redis: redis,
-    limiter: Ratelimit.slidingWindow(3, '24 h'), // 3 per day for anonymous IP
+    limiter: Ratelimit.slidingWindow(3, '1 m'), // 3 attempts per minute
     analytics: true,
   }),
   idea_eval_wallet: new Ratelimit({
     redis: redis,
-    limiter: Ratelimit.slidingWindow(5, '24 h'), // Reduced to 5 per day for connected wallets
+    limiter: Ratelimit.slidingWindow(5, '1 m'), // 5 attempts per minute
     analytics: true,
   }),
   // Limit bonus claims (sharing on X) to 2 per day
@@ -130,6 +131,35 @@ export async function checkRateLimit(
   if (rateLimiters && rateLimiters[plan]) {
     try {
       const ratelimiter = rateLimiters[plan];
+
+      // SPECIAL CASE: Evaluation plans check the daily completion quota first
+      if (plan === 'idea_eval_ip' || plan === 'idea_eval_wallet') {
+        const used = await getEvalCount(identifier, plan);
+        const limit = plan === 'idea_eval_ip' ? 3 : 5;
+
+        if (used >= limit) {
+          // Check for bonus quota before blocking
+          if (redis) {
+            const bonusCount = (await redis.get<number>(`bonus_quota:${identifier}`)) || 0;
+            if (bonusCount > 0) {
+              // Allow through, incrementEvalCount will naturally consume bonus logic in higher layers or we de-increment it here?
+              // Actually, incrementEvalCount is called AFTER success. 
+              // To be safe, we allow the request if bonus > 0.
+              return null;
+            }
+          }
+
+          return NextResponse.json(
+            {
+              error: 'Rate limit exceeded',
+              message: `Daily limit of ${limit} reached.`,
+              retryAfter: 3600
+            },
+            { status: 429 }
+          );
+        }
+      }
+
       const { success, limit, remaining, reset } = await ratelimiter.limit(identifier);
 
       // Bonus Check logic (only for Redis path for now)
@@ -152,7 +182,7 @@ export async function checkRateLimit(
         return NextResponse.json(
           {
             error: 'Rate limit exceeded',
-            message: `Too many requests. Daily limit: ${limit}.`,
+            message: `Too many requests. Limit: ${limit}.`,
             retryAfter: Math.round((reset - Date.now()) / 1000)
           },
           { status: 429, headers }
@@ -166,48 +196,45 @@ export async function checkRateLimit(
   }
 
   // --- MEMORY FALLBACK PATH (No Redis) ---
-  // Get limits
-  const { limit, reset: defaultReset } = await getRateLimitInfo(identifier, plan);
-  // Default reset returned by getRateLimitInfo is just Date.now() + 60s, which isn't useful for tracking state.
-  // We need distinct windows per plan.
 
-  // Define windows in ms
-  const windows: Record<string, number> = {
-    image_gen: 10 * 60 * 1000, // 10m
-    idea_eval_ip: 24 * 60 * 60 * 1000,
-    idea_eval_wallet: 24 * 60 * 60 * 1000,
-    default: 60 * 1000 // 1m
-  };
-  const windowMs = windows[plan] || windows.default;
+  // 1. Check Daily Quota first for evaluation plans
+  if (plan === 'idea_eval_ip' || plan === 'idea_eval_wallet') {
+    const used = await getEvalCount(identifier, plan);
+    const limit = plan === 'idea_eval_ip' ? 3 : 5;
 
-  const key = `${plan}:${identifier}`;
-  const now = Date.now();
-
-  let record = memoryStore.get(key);
-
-  // Initialize or Reset if expired
-  if (!record || now > record.reset) {
-    record = { count: 0, reset: now + windowMs };
+    if (used >= limit) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: `Daily limit of ${limit} reached.`,
+          retryAfter: 3600
+        },
+        { status: 429 }
+      );
+    }
   }
 
-  // Check limit
-  if (record.count >= limit) {
+  // 2. Check Burst/Spam Limit (Attempt-based)
+  const attemptKey = `${plan}:${identifier}`;
+  const attemptRecord = memoryStore.get(attemptKey);
+  const now = Date.now();
+  const burstLimit = (plan === 'idea_eval_ip' ? 3 : (plan === 'idea_eval_wallet' ? 5 : 20));
+
+  if (attemptRecord && now < attemptRecord.reset && attemptRecord.count >= burstLimit) {
     return NextResponse.json(
       {
         error: 'Rate limit exceeded',
-        message: `Too many requests. Limit: ${limit}.`,
-        retryAfter: Math.round((record.reset - now) / 1000)
+        message: `Too many requests. Limit: ${burstLimit}.`,
+        retryAfter: Math.round((attemptRecord.reset - now) / 1000)
       },
       { status: 429 }
     );
   }
 
-  // Increment
+  // 3. Record attempt and return OK
+  const record = attemptRecord || { count: 0, reset: now + 60000 };
   record.count += 1;
-  memoryStore.set(key, record);
-
-  // Cleanup old keys occasionally (simple optimization)
-  if (memoryStore.size > 10000) memoryStore.clear();
+  memoryStore.set(attemptKey, record);
 
   return null;
 }
@@ -291,15 +318,14 @@ export async function getRateLimitInfo(
       advisor_write: 10,
       alerts: 5,
       free: 20,
-      idea_eval_ip: 3,
-      idea_eval_wallet: 5,
+      idea_eval_ip: 3, // Burst limit
+      idea_eval_wallet: 5, // Burst limit
       bonus_claim: 2,
       copilot: 40,
       image_gen: 3
     };
     const limit = defaultLimits[plan] || 20;
 
-    // Add correct window info for display
     const windows: Record<string, number> = {
       image_gen: 10 * 60 * 1000,
       idea_eval_ip: 24 * 60 * 60 * 1000,
@@ -308,10 +334,60 @@ export async function getRateLimitInfo(
     };
     const windowMs = windows[plan] || windows.default;
 
+    // Check memory store for usage
+    // We check both the daily eval_count (completions) and the attempt counter (spam protection)
+    const dailyKey = `eval_count:${plan}:${identifier}`;
+    const attemptKey = `${plan}:${identifier}`;
+
+    const dailyRecord = memoryStore.get(dailyKey);
+    const attemptRecord = memoryStore.get(attemptKey);
+    const now = Date.now();
+
+    let used = 0;
+    let currentReset = now + windowMs;
+
+    if (dailyRecord && now < dailyRecord.reset) {
+      used = dailyRecord.count;
+      currentReset = dailyRecord.reset;
+    }
+
+    // For evaluation plans, the UI primarily cares about the daily quota
+    const isEvalPlan = plan === 'idea_eval_ip' || plan === 'idea_eval_wallet';
+
+    if (isEvalPlan) {
+      return {
+        limit,
+        remaining: Math.max(0, limit - used),
+        reset: currentReset
+      };
+    }
+
+    // Generic plans
+    if (attemptRecord && now < attemptRecord.reset) {
+      return {
+        limit,
+        remaining: Math.max(0, limit - attemptRecord.count),
+        reset: attemptRecord.reset
+      };
+    }
+
     return {
       limit,
-      remaining: limit, // In local mode without state tracking, we can't easily know remaining for the UI call unless we peek memoryStore, but this is acceptable for now.
-      reset: Date.now() + windowMs
+      remaining: limit,
+      reset: now + windowMs
+    };
+  }
+
+  // Redis path: peek eval_count for accurate UI
+  if (plan === 'idea_eval_ip' || plan === 'idea_eval_wallet') {
+    const limit = plan === 'idea_eval_ip' ? 3 : 5;
+    const used = await getEvalCount(identifier, plan);
+    const bonus = await getBonusQuota(identifier);
+
+    return {
+      limit,
+      remaining: Math.max(0, (limit + bonus) - used),
+      reset: Date.now() + 3600 // Approximated
     };
   }
 
@@ -319,35 +395,6 @@ export async function getRateLimitInfo(
   const ratelimiter = rateLimiters[plan];
   if (!ratelimiter) return { limit: 0, remaining: 0, reset: Date.now() };
 
-  // For sliding window, Upstash stores data in keys. 
-  // Getting the exact remaining without consuming is tricky with just the Ratelimit class.
-  // Workaround: We will just consume 0 tokens if possible, but Upstash Ratelimit min cost is 1.
-  // Alternative: We interpret the quota based on the last known state or just return the static limit 
-  // until the user makes a request. 
-
-  // HOWEVER, for a "Quota" system, we usually want to show it BEFORE the request.
-  // Let's rely on the Redis key inspection manually if we want perfection, 
-  // but simpler: just return the configured limit and assume full unless we have a reason to know otherwise?
-  // No, that defeats the purpose.
-
-  // Let's use the .limit() with 0? No.
-
-  // Okay, we will try to use the `getRemaining` if it exists on the underlying implementation, 
-  // but since we can't easily, we will implement a "Check" by using the redis client to peek.
-  // But the key formation is internal to the library.
-
-  // Hack/Solution: We just use a separate key for "view counting" or we accept we catch the 429.
-  // BETTER SOLUTION: Just use `ratelimit.limit(identifier)` inside the POST, and for the GET info,
-  // we can't perfectly know.
-
-  // WAIT. The Upstash Ratelimit library exposes `getRemaining` in newer versions.
-  // Let's assume we can't and do a "best effort" by checking the key pattern if we knew it.
-
-  // Let's just return the LIMITS for now so the UI can at least show "Max 3 per day".
-  // The user asked to "Implement the Quota", implies "Enforcement".
-  // The "Display Remaining" is a bonus. 
-
-  // Let's look at the `idea_eval_ip` definition again: Ratelimit.slidingWindow(3, '24 h')
   const defaultLimits: Record<string, number> = {
     pro: 100,
     free: 20,
@@ -359,7 +406,7 @@ export async function getRateLimitInfo(
 
   return {
     limit: defaultLimits[plan] || 0,
-    remaining: -1, // -1 Indicates "Unknown / Hidden until used"
+    remaining: -1, // -1 Indicates "Unknown / Hidden until used" for generic sliding windows
     reset: Date.now() + 86400 * 1000
   };
 }

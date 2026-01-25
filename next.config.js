@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Force reload: 2026-01-25
 const nextConfig = {
   // Performance: External packages that should not be bundled
   serverExternalPackages: ['@solana/web3.js', '@coral-xyz/anchor'],

@@ -2,7 +2,17 @@
 
 import React, { useState } from 'react';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import { AlertTriangle, Terminal, Shield, CheckCircle2, ArrowLeft, Sparkles, Activity, Download, Flag, X } from 'lucide-react';
+import {
+    TriangleAlert as AlertTriangle,
+    Terminal,
+    Shield,
+    CircleCheck as CheckCircle2,
+    ArrowLeft,
+    Sparkles,
+    Activity,
+    Download,
+    Flag
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const RadarChart = dynamic(() => import('../components/charts/RadarChart'), {

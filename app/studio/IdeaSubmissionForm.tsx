@@ -3,7 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { ideaSubmissionSchema, IdeaSubmission } from '@/lib/ideaSchema';
 import { z } from 'zod';
-import { Rocket, Target, Users, Settings2, Lightbulb, X, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+    Rocket,
+    Target,
+    Users,
+    Settings2,
+    Lightbulb,
+    X,
+    ChevronDown,
+    ChevronUp,
+    CircleCheck as CheckCircle2,
+    CircleAlert as AlertCircle
+} from 'lucide-react';
 
 interface IdeaSubmissionFormProps {
     onSubmit: (data: IdeaSubmission) => void;

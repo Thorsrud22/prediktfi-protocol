@@ -13,7 +13,7 @@ const IdeaEvaluationReport = dynamic(() => import('./IdeaEvaluationReport'), {
 });
 import { IdeaSubmission } from '@/lib/ideaSchema';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import { CheckCircle } from 'lucide-react';
+import { CircleCheckBig as CheckCircle } from 'lucide-react';
 
 type Step = 'question' | 'analysis' | 'commit';
 

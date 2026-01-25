@@ -105,14 +105,14 @@ describe('AI Idea Evaluator Studio', () => {
         // Memecoin/DeFi are nested now, so not immediately visible or just as sub-labels
 
         // Check for submit button
-        expect(screen.getByText('RUN ANALYSIS')).toBeInTheDocument();
+        expect(screen.getByText('Initiate Protocol')).toBeInTheDocument();
     });
 
     it('shows validation errors when attempting to submit with empty form', async () => {
         render(<StudioPage />);
 
         // Click Run Analysis without filling anything
-        fireEvent.click(screen.getByText('RUN ANALYSIS'));
+        fireEvent.click(screen.getByText('Initiate Protocol'));
 
         // Wait for validation error
         await waitFor(() => {
@@ -184,11 +184,11 @@ describe('AI Idea Evaluator Studio', () => {
         });
 
         // 5. Submit
-        fireEvent.click(screen.getByText('RUN ANALYSIS'));
+        fireEvent.click(screen.getByText('Initiate Protocol'));
 
-        // 6. Verify Terminal appears (now named "COMMAND CENTER")
+        // 6. Verify Terminal appears (now named "prediktfi — evaluation")
         await waitFor(() => {
-            expect(screen.getByText(/COMMAND CENTER/i)).toBeInTheDocument();
+            expect(screen.getByText(/prediktfi — evaluation/i)).toBeInTheDocument();
         });
     });
 
