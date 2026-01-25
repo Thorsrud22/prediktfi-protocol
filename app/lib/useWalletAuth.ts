@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
+import { usePhantomWallet } from '../components/wallet/PhantomProvider';
 import { toast } from 'react-hot-toast';
 
 interface AuthState {
@@ -13,7 +13,7 @@ interface AuthState {
 
 export function useWalletAuth() {
   // Replace legacy adapter hook with our simplified hook
-  const { isConnected: connected, publicKey, signMessage, disconnect, connect } = useSimplifiedWallet();
+  const { isConnected: connected, publicKey, signMessage, disconnect, connect } = usePhantomWallet();
   const wallet = null; // Legacy adapter object not available/needed in simplified mode
 
   const [authState, setAuthState] = useState<AuthState>({
@@ -273,7 +273,7 @@ export function useWalletAuth() {
 const TTL_MS = 12 * 60 * 60 * 1000; // 12 timer
 
 export function useSiwsGuard() {
-  const { publicKey, signMessage } = useSimplifiedWallet();
+  const { publicKey, signMessage } = usePhantomWallet();
   const [authed, setAuthed] = useState(false);
   const inflight = useRef(false);
 

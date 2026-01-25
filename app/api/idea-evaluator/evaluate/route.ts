@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         }
 
         // --- Rate Limiting & Identification ---
-        const walletAddress = parsed.data.tokenAddress || parsed.data.walletAddress || null;
+        const walletAddress = parsed.data.walletAddress || null;
         const identifier = getClientIdentifier(request, walletAddress);
 
         const isWallet = !!walletAddress && walletAddress.length > 30;

@@ -1,13 +1,13 @@
 'use client'
 
-import { useSimplifiedWallet } from './SimplifiedWalletProvider'
+import { usePhantomWallet } from './PhantomProvider'
 
 function shortAddress(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`
 }
 
 export default function SimplifiedConnectButton() {
-  const { isConnected, publicKey, connect, disconnect, isConnecting } = useSimplifiedWallet()
+  const { isConnected, publicKey, connect, disconnect, isConnecting } = usePhantomWallet()
 
   if (!isConnected) {
     return (

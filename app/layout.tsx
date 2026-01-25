@@ -6,7 +6,7 @@ import "../src/styles/design-tokens.css";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import AppPillNav from "./components/AppPillNav";
 import Footer from "./components/Footer";
-import SimplifiedWalletProvider from "./components/wallet/SimplifiedWalletProvider";
+import PhantomProvider from "./components/wallet/PhantomProvider";
 import ToastProvider from "./components/ToastProvider";
 import ConsentGate from "./components/ConsentGate";
 import AttributionBoot from "./components/AttributionBoot";
@@ -227,7 +227,7 @@ export default async function RootLayout({
 
             <IntentStorageGuard />
             <AuthGuard>
-              <SimplifiedWalletProvider>
+              <PhantomProvider>
                 <ClientErrorBoundary>
                   <ToastProvider>
                     <ConsentGate />
@@ -245,7 +245,7 @@ export default async function RootLayout({
                     )}
                   </ToastProvider>
                 </ClientErrorBoundary>
-              </SimplifiedWalletProvider>
+              </PhantomProvider>
             </AuthGuard>
           </ProgressBarProvider>
         </CSPostHogProvider>

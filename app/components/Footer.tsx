@@ -17,6 +17,9 @@ export default function Footer() {
             <a href="/transparency" className="flex items-center h-full hover:text-white transition-colors">
               Transparency
             </a>
+            <a href="/changelog" className="flex items-center h-full hover:text-white transition-colors">
+              Changelog
+            </a>
             <a href="/about" className="flex items-center h-full hover:text-white transition-colors">
               About
             </a>

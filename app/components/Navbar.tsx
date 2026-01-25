@@ -11,7 +11,7 @@ import { useInstantRouter } from "./InstantRouter";
 
 // Lazy load the wallet component since it's heavy
 const SimplifiedConnectButton = lazy(() => import("./wallet/SimplifiedConnectButton"));
-import { useSimplifiedWallet } from './wallet/SimplifiedWalletProvider';
+import { usePhantomWallet } from './wallet/PhantomProvider';
 
 // Extract constants to prevent recreating on each render
 const SCROLL_THRESHOLD = 10;
@@ -33,7 +33,7 @@ const MobileMenu = memo(function MobileMenu({
   isInsightPage: boolean;
   panelRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const { isConnected, disconnect } = useSimplifiedWallet();
+  const { isConnected, disconnect } = usePhantomWallet();
 
   const navigationItems = useMemo(() => [
     { href: "/feed", label: "Feed", primary: true },

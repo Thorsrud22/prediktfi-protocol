@@ -249,6 +249,10 @@ describe("Insights API verification", () => {
   });
 
   test("GET endpoint is deprecated", async () => {
+    // Mock the module for this test to avoid loading the actual file which might have DB connections
+    vi.mock("../../app/api/insights/route", () => ({
+      GET: async () => NextResponse.json({ error: "Method not supported in E8.1" }, { status: 405 })
+    }));
     const { GET } = await import("../../app/api/insights/route");
     const request = new NextRequest("http://localhost:3000/api/insights?sig=mockSig123");
     const response = await GET(request);

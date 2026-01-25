@@ -46,9 +46,9 @@ export function LightWalletProvider({ children }: { children: React.ReactNode })
 
   const connect = useCallback(async () => {
     if (isConnecting) return;
-    
+
     setIsConnecting(true);
-    
+
     try {
       const adapter = await loadWalletAdapter();
       if (!adapter) {
@@ -58,7 +58,7 @@ export function LightWalletProvider({ children }: { children: React.ReactNode })
       await adapter.connect();
       setIsConnected(true);
       setPublicKey(adapter.publicKey?.toString() || null);
-      
+
       // Store connection state
       localStorage.setItem('predikt:wallet:connected', 'true');
       if (adapter.publicKey) {
@@ -79,10 +79,10 @@ export function LightWalletProvider({ children }: { children: React.ReactNode })
         console.error('Failed to disconnect wallet:', error);
       }
     }
-    
+
     setIsConnected(false);
     setPublicKey(null);
-    
+
     // Clear stored state
     localStorage.removeItem('predikt:wallet:connected');
     localStorage.removeItem('predikt:wallet:publicKey');
@@ -94,7 +94,7 @@ export function LightWalletProvider({ children }: { children: React.ReactNode })
       try {
         const wasConnected = localStorage.getItem('predikt:wallet:connected') === 'true';
         const storedPublicKey = localStorage.getItem('predikt:wallet:publicKey');
-        
+
         if (wasConnected && storedPublicKey) {
           // Try to restore connection
           const adapter = await loadWalletAdapter();
@@ -145,15 +145,15 @@ export function useWalletFallback() {
   } catch {
     try {
       // Fallback to existing simplified wallet
-      const { useSimplifiedWallet } = require('./SimplifiedWalletProvider');
-      return useSimplifiedWallet();
+      const { usePhantomWallet } = require('./PhantomProvider');
+      return usePhantomWallet();
     } catch {
       // Ultimate fallback
       return {
         isConnected: false,
         publicKey: null,
-        connect: async () => {},
-        disconnect: async () => {},
+        connect: async () => { },
+        disconnect: async () => { },
         isConnecting: false,
         isInitialized: true,
       };

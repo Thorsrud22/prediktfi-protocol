@@ -113,7 +113,7 @@ const memoryStore = new Map<string, { count: number; reset: number }>();
 export function getClientIdentifier(request: NextRequest, walletAddress?: string | null): string {
   // 1. Priority: Wallet Address (if valid)
   if (walletAddress && walletAddress.length > 30) {
-    return walletAddress;
+    return walletAddress.toLowerCase();
   }
 
   // 2. Secondary: Normalized IP from Next.js request.ip (reliable on Vercel)
