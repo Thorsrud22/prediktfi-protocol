@@ -108,6 +108,31 @@ export interface RateLimitOptions {
 const memoryStore = new Map<string, { count: number; reset: number }>();
 
 /**
+ * Get a consistent identifier for a user (Wallet > IP)
+ */
+export function getClientIdentifier(request: NextRequest, walletAddress?: string | null): string {
+  // 1. Priority: Wallet Address (if valid)
+  if (walletAddress && walletAddress.length > 30) {
+    return walletAddress;
+  }
+
+  // 2. Secondary: Normalized IP from Next.js request.ip (reliable on Vercel)
+  const reqIp = (request as any).ip;
+  if (reqIp) {
+    return reqIp;
+  }
+
+  // 3. Fallback: Parse x-forwarded-for (first IP in chain)
+  const xff = request.headers.get('x-forwarded-for');
+  if (xff) {
+    return xff.split(',')[0].trim();
+  }
+
+  // 4. Ultimate Fallback: known proxies or unknown
+  return request.headers.get('x-real-ip') || 'unknown';
+}
+
+/**
  * Apply rate limiting to a request
  * Returns null if request is allowed, NextResponse with 429 if rate limited
  */
@@ -120,10 +145,8 @@ export async function checkRateLimit(
     return null;
   }
 
-  const identifier = options.identifier ||
-    request.headers.get('x-forwarded-for') ||
-    request.headers.get('x-real-ip') ||
-    'unknown';
+  // Use normalized identifier (either passed in or calculated)
+  const identifier = options.identifier || getClientIdentifier(request);
 
   const plan = options.plan || 'free';
 
@@ -143,7 +166,7 @@ export async function checkRateLimit(
             const bonusCount = (await redis.get<number>(`bonus_quota:${identifier}`)) || 0;
             if (bonusCount > 0) {
               // Allow through, incrementEvalCount will naturally consume bonus logic in higher layers or we de-increment it here?
-              // Actually, incrementEvalCount is called AFTER success. 
+              // Actually, incrementEvalCount is called AFTER success.
               // To be safe, we allow the request if bonus > 0.
               return null;
             }
@@ -429,11 +452,13 @@ export async function withRateLimit(
 
   // Add rate limit headers to successful responses
   try {
-    const identifier = options.identifier ||
-      request.headers.get('x-forwarded-for') ||
-      request.headers.get('x-real-ip') ||
-      'unknown';
-    const info = await getRateLimitInfo(identifier, options.plan);
+    const searchParams = request.nextUrl.searchParams;
+    const walletAddress = searchParams.get('walletAddress');
+    const identifier = getClientIdentifier(request, walletAddress);
+
+    const isWallet = !!walletAddress && walletAddress.length > 30;
+    const plan = isWallet ? 'idea_eval_wallet' : 'idea_eval_ip';
+    const info = await getRateLimitInfo(identifier, options.plan || plan); // Use the determined plan if options.plan is not set
 
     response.headers.set('X-RateLimit-Limit', info.limit.toString());
     response.headers.set('X-RateLimit-Remaining', info.remaining.toString());

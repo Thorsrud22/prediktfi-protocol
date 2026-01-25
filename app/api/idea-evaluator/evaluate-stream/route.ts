@@ -9,7 +9,7 @@ import { NextRequest } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
 import { evaluateIdea } from "@/lib/ai/evaluator";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
-import { checkRateLimit, incrementEvalCount } from "@/app/lib/ratelimit";
+import { checkRateLimit, incrementEvalCount, getClientIdentifier } from "@/app/lib/ratelimit";
 
 // Vercel Serverless Function Config
 export const maxDuration = 300; // Max duration (5 minutes)
@@ -44,13 +44,14 @@ export async function POST(request: NextRequest) {
                     return;
                 }
 
-                // --- Rate Limiting Logic ---
-                // Use x-wallet-id header as primary source (matches what Studio sends)
+                // --- Rate Limiting & Identification ---
+                // Priority: x-wallet-id header > payload address > client IP
                 const walletFromHeader = request.headers.get('x-wallet-id');
                 const walletAddress = walletFromHeader || parsed.data.walletAddress || null;
-                const isWalletConnected = !!walletAddress && walletAddress.length > 30;
-                const rateLimitPlan = isWalletConnected ? 'idea_eval_wallet' : 'idea_eval_ip';
-                const identifier = isWalletConnected ? walletAddress : (request.headers.get('x-forwarded-for') || 'unknown');
+                const identifier = getClientIdentifier(request, walletAddress);
+
+                const isWallet = !!walletAddress && walletAddress.length > 30;
+                const rateLimitPlan = isWallet ? 'idea_eval_wallet' : 'idea_eval_ip';
 
                 const rateLimitResponse = await checkRateLimit(request, {
                     identifier,

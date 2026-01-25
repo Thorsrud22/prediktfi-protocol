@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
 import { evaluateIdea } from "@/lib/ai/evaluator";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
-import { checkRateLimit, incrementEvalCount } from "@/app/lib/ratelimit";
+import { checkRateLimit, incrementEvalCount, getClientIdentifier } from "@/app/lib/ratelimit";
 
 // Vercel Serverless Function Config
 export const maxDuration = 60; // Max duration for Hobby (10s is default, can go up to 60)
@@ -20,12 +20,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // --- Rate Limiting Logic ---
+        // --- Rate Limiting & Identification ---
         const walletAddress = parsed.data.tokenAddress || parsed.data.walletAddress || null;
-        const isWalletConnected = !!walletAddress && walletAddress.length > 30; // Basic length check
+        const identifier = getClientIdentifier(request, walletAddress);
 
-        const rateLimitPlan = isWalletConnected ? 'idea_eval_wallet' : 'idea_eval_ip';
-        const identifier = isWalletConnected ? walletAddress : (request.headers.get('x-forwarded-for') || 'unknown');
+        const isWallet = !!walletAddress && walletAddress.length > 30;
+        const rateLimitPlan = isWallet ? 'idea_eval_wallet' : 'idea_eval_ip';
 
         const rateLimitResponse = await checkRateLimit(request, {
             identifier,
