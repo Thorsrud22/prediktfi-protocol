@@ -232,6 +232,7 @@ export default async function RootLayout({
                   <ToastProvider>
                     <ConsentGate />
                     <RoutePreloader />
+                    <RoutePreloader />
                     <ShellWrapper
                       navbar={<AppPillNav />}
                       footer={<Footer />}

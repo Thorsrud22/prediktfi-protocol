@@ -261,9 +261,9 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
             </div>
 
             {/* Progress Bar */}
-            <div className="h-0.5 bg-slate-800 relative overflow-hidden">
+            <div className="h-1.5 bg-slate-800 relative overflow-hidden">
                 <div
-                    className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-400 transition-all duration-300 ease-out"
+                    className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-400 transition-all duration-300 ease-out shadow-[0_0_15px_rgba(6,182,212,0.8)]"
                     style={{ width: `${displayProgress}%` }}
                 />
             </div>
@@ -495,58 +495,65 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             </label>
                             <div className="space-y-4">
                                 {/* Hierarchical Selection */}
-                                <div className="grid grid-cols-2 gap-3">
+                                {/* Explicit 3-Option Selection */}
+                                <div className="space-y-3">
+                                    {/* Option 1: Memecoin */}
                                     <button
                                         type="button"
-                                        onClick={() => handleChange('projectType', 'memecoin')} // Default to memecoin when switching to Crypto group, or keep existing if matched
-                                        className={`p-3 text-left rounded-xl border transition-all ${['memecoin', 'defi'].includes(formData.projectType || '')
+                                        onClick={() => handleChange('projectType', 'memecoin')}
+                                        className={`w-full p-4 text-left rounded-xl border transition-all relative overflow-hidden group ${formData.projectType === 'memecoin'
                                             ? 'bg-blue-500/10 border-blue-500/50 text-white ring-1 ring-blue-500/20'
-                                            : 'border-white/10 text-white/40 hover:bg-white/5'}`}
+                                            : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10 hover:border-white/10'}`}
                                     >
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-bold text-sm">Crypto & Web3</span>
+                                        <div className="relative z-10 flex items-center justify-between">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className={`font-bold text-sm ${formData.projectType === 'memecoin' ? 'text-white' : 'text-white/60'}`}>Memecoin</span>
+                                                </div>
+                                                <span className="text-[10px] opacity-50 uppercase tracking-widest block">Viral • Narrative • Hype</span>
+                                            </div>
+                                            {formData.projectType === 'memecoin' && <CheckCircle2 size={18} className="text-blue-400" />}
                                         </div>
-                                        <span className="text-[10px] opacity-50 uppercase tracking-widest">Memes, DeFi</span>
                                     </button>
 
+                                    {/* Option 2: DeFi / Utility */}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleChange('projectType', 'defi')}
+                                        className={`w-full p-4 text-left rounded-xl border transition-all relative overflow-hidden group ${formData.projectType === 'defi'
+                                            ? 'bg-blue-500/10 border-blue-500/50 text-white ring-1 ring-blue-500/20'
+                                            : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10 hover:border-white/10'}`}
+                                    >
+                                        <div className="relative z-10 flex items-center justify-between">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className={`font-bold text-sm ${formData.projectType === 'defi' ? 'text-white' : 'text-white/60'}`}>DeFi & Utility</span>
+                                                </div>
+                                                <span className="text-[10px] opacity-50 uppercase tracking-widest block">Yield • Protocol • Tech</span>
+                                            </div>
+                                            {formData.projectType === 'defi' && <CheckCircle2 size={18} className="text-blue-400" />}
+                                        </div>
+                                    </button>
+
+                                    {/* Option 3: AI Agent */}
                                     <button
                                         type="button"
                                         onClick={() => handleChange('projectType', 'ai')}
-                                        className={`p-3 text-left rounded-xl border transition-all ${formData.projectType === 'ai'
+                                        className={`w-full p-4 text-left rounded-xl border transition-all relative overflow-hidden group ${formData.projectType === 'ai'
                                             ? 'bg-blue-500/10 border-blue-500/50 text-white ring-1 ring-blue-500/20'
-                                            : 'border-white/10 text-white/40 hover:bg-white/5'}`}
+                                            : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10 hover:border-white/10'}`}
                                     >
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-bold text-sm">AI Agent</span>
+                                        <div className="relative z-10 flex items-center justify-between">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className={`font-bold text-sm ${formData.projectType === 'ai' ? 'text-white' : 'text-white/60'}`}>AI Agent</span>
+                                                </div>
+                                                <span className="text-[10px] opacity-50 uppercase tracking-widest block">LLM • Infrastructure</span>
+                                            </div>
+                                            {formData.projectType === 'ai' && <CheckCircle2 size={18} className="text-blue-400" />}
                                         </div>
-                                        <span className="text-[10px] opacity-50 uppercase tracking-widest">LLM, Infra</span>
                                     </button>
                                 </div>
-
-                                {/* Sub-Selection for Crypto */}
-                                {['memecoin', 'defi'].includes(formData.projectType || '') && (
-                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                                        <label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Specific Sector</label>
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {[
-                                                { id: 'memecoin', label: 'Memecoin', desc: 'Viral / Hype' },
-                                                { id: 'defi', label: 'DeFi / Protocol', desc: 'Yield / Tech' }
-                                            ].map((sub) => (
-                                                <button
-                                                    key={sub.id}
-                                                    type="button"
-                                                    onClick={() => handleChange('projectType', sub.id)}
-                                                    className={`w-full p-3 flex items-center justify-between rounded-lg border transition-all ${formData.projectType === sub.id
-                                                        ? 'bg-blue-600/20 border-blue-500/60 text-white'
-                                                        : 'bg-white/5 border-transparent text-white/60 hover:bg-white/10'}`}
-                                                >
-                                                    <span className="text-xs font-bold">{sub.label}</span>
-                                                    {formData.projectType === sub.id && <CheckCircle2 size={14} className="text-blue-400" />}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
 
                             </div>
                         </div>

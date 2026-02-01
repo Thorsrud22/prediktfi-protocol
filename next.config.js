@@ -121,6 +121,34 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com", // Keeping unsafe-inline for hydration, removed unsafe-eval
+              "style-src 'self' 'unsafe-inline'", // Needed for inline styles/CSS-in-JS
+              "img-src 'self' blob: data: https://assets.coingecko.com https://icons.llamao.fi", // Allow images from specific external sources
+              "font-src 'self'",
+              "connect-src 'self' https://api.coingecko.com https://coins.llama.fi https://api.dexscreener.com https://api.openai.com", // Allow API connections
+              "frame-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+        ],
+      },
+      {
         source: '/_next/static/:path*',
         headers: [
           {

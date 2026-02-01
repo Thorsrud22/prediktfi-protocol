@@ -1,7 +1,6 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import PersistentLogo from './PersistentLogo';
 
 interface ShellWrapperProps {
@@ -20,21 +19,12 @@ function getCookie(name: string) {
 
 export default function ShellWrapper({ children, navbar, footer }: ShellWrapperProps) {
     const pathname = usePathname();
-    const searchParams = useSearchParams();
-    const isGuestView = searchParams?.get('view') === 'guest';
-    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
 
-    useEffect(() => {
-        const checkAccess = () => {
-            const status = getCookie('predikt_auth_status');
-            setHasAccess(!!status);
-        };
-
-        checkAccess();
-    }, []);
 
     // We now allow full navigation for everyone (Public Beta)
     // Legacy logic for hiding nav is removed.
+    // Changelog now uses standard global navigation.
+
 
     return (
         <>

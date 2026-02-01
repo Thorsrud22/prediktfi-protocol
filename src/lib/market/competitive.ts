@@ -4,6 +4,7 @@ import { CompetitiveMemo, CompetitiveMemoResult } from "./competitiveTypes";
 import { searchCompetitors } from "@/lib/tavilyClient";
 import { generateDeFiCompetitiveSummary, getDeFiCompetitors, formatTVL } from "@/lib/defiLlamaClient";
 import { analyzeMemecoinNarrative, generateMemecoinCompetitiveSummary } from "@/lib/dexscreenerClient";
+import { getTopCoinsByCategory, getCoinsMarkets } from "@/lib/coingecko";
 import { BirdeyeMarketService } from "./birdeye";
 
 const COMPETITIVE_SYSTEM_PROMPT = `You are a Competitive Intelligence Scout for specialized crypto/tech sectors.
@@ -184,35 +185,61 @@ ${formattedResults}
         try {
             // Detect mechanism type from idea
             const mechanism = detectDeFiMechanism(idea);
-            const competitors = await getDeFiCompetitors(mechanism, "Solana");
 
-            if (competitors.length > 0) {
-                const totalTVL = competitors.reduce((sum, p) => sum + p.tvl, 0);
-                const top5 = competitors.slice(0, 5);
+            // Fetch SOLANA competitors (for local context)
+            const solanaCompetitors = await getDeFiCompetitors(mechanism, "Solana");
+
+            // Fetch GLOBAL competitors (for broader context like GMX, Aave)
+            const globalCompetitors = await getDeFiCompetitors(mechanism, "Global");
+
+            if (solanaCompetitors.length > 0 || globalCompetitors.length > 0) {
+                // Combine lists for context, prioritizing Solana but including global giants
+                const allCompetitors = [...solanaCompetitors, ...globalCompetitors]
+                    // Dedup by name
+                    .filter((v, i, a) => a.findIndex(t => t.name === v.name) === i)
+                    .sort((a, b) => b.tvl - a.tvl)
+                    .slice(0, 10);
+
+                const totalTVL = allCompetitors.reduce((sum, p) => sum + p.tvl, 0);
 
                 defiLlamaContext = `
-REAL-TIME DEFILLAMA TVL DATA (Live Solana ${mechanism.toUpperCase()} Market):
-Total category TVL: ${formatTVL(totalTVL)}
-
-Top Competitors by TVL:
-${top5.map((p, i) => {
+REAL-TIME DEFILLAMA TVL DATA (Global & Solana ${mechanism.toUpperCase()} Market):
+Top Competitors by TVL (Global Context):
+${allCompetitors.map((p, i) => {
                     const change = p.change_7d !== null ? ` (${p.change_7d > 0 ? '+' : ''}${p.change_7d.toFixed(1)}% 7d)` : '';
-                    return `${i + 1}. ${p.name}: ${formatTVL(p.tvl)}${change}`;
+                    return `${i + 1}. ${p.name} (${p.chain}): ${formatTVL(p.tvl)}${change}`;
                 }).join('\n')}
 
 Use these REAL numbers when analyzing competitive landscape.
 If user's target TVL is provided, compare it to these actual figures.
+If competitors like GMX or Gains are relevant, they should appear here.
 `;
-                console.log(`[Competitive] Found ${competitors.length} DeFi competitors via DeFiLlama (${mechanism})`);
+                console.log(`[Competitive] Found ${allCompetitors.length} DeFi competitors via DeFiLlama (Global+Solana)`);
             }
         } catch (err) {
             console.warn("[Competitive] DeFiLlama fetch failed (non-blocking):", err);
         }
     }
 
-    // 4. Fetch DexScreener data for Memecoin projects
+    // 4. Fetch Memecoin Data (DexScreener + Coingecko)
     let dexScreenerContext = "";
     if (normalizedCategory === 'memecoin') {
+        // 4a. Coingecko Top Memecoins (Global Context)
+        try {
+            const topMemecoins = await getTopCoinsByCategory("meme-token", 5);
+            if (topMemecoins.length > 0) {
+                const coingeckoContext = `
+GLOBAL MEMECOIN LEADERS (Coingecko Data):
+These are the current market leaders to compare against. ADVISE user to study these.
+${topMemecoins.map((c, i) => `${i + 1}. ${c.name} (${c.symbol.toUpperCase()}): MCap $${c.market_cap.toLocaleString()} | Vol $${c.total_volume.toLocaleString()}`).join('\n')}
+`;
+                dexScreenerContext += coingeckoContext;
+            }
+        } catch (err) {
+            console.warn("[Competitive] Coingecko fetch failed:", err);
+        }
+
+        // 4b. DexScreener Narrative Analysis
         try {
             // Extract narrative from idea (use memecoinNarrative field or parse from description)
             const narrative = idea.memecoinNarrative || extractNarrativeFromDescription(idea.description);

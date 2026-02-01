@@ -74,6 +74,9 @@ export async function middleware(request: NextRequest) {
     response.headers.set('x-wallet-id', walletId);
   }
 
+  // Add pathname header for server-side layout logic (fixes hydration mismatch)
+  response.headers.set('x-pathname', pathname);
+
   // Log request for monitoring
   if (process.env.NODE_ENV === 'development') {
     // console.log(`${method} ${pathname} - ${duration}ms`);

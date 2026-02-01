@@ -162,7 +162,10 @@ export async function getDeFiCompetitors(
         const matchesCategory = categories.some(cat =>
             p.category.toLowerCase().includes(cat.toLowerCase())
         );
+
+        // Allow "All" or "Global" to skip chain filtering
         const matchesChain = chain.toLowerCase() === "all" ||
+            chain.toLowerCase() === "global" ||
             p.chain.toLowerCase() === chain.toLowerCase();
 
         return matchesCategory && matchesChain;
