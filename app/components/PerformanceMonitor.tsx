@@ -20,7 +20,7 @@ export function usePerformanceMetrics() {
 
     const measurePerformance = () => {
       const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      
+
       if (navigation) {
         setMetrics(prev => ({
           ...prev,
@@ -96,21 +96,21 @@ export default function PerformanceMonitor({ pageName = 'Unknown' }: Performance
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-20 left-4 sm:bottom-4 sm:right-16 z-50">
       <button
         onClick={() => setShowDetails(!showDetails)}
         className="bg-slate-800/90 backdrop-blur-sm border border-slate-600 rounded-lg px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/90 transition-colors"
       >
         ⚡ Performance
       </button>
-      
+
       {showDetails && (
         <div className="absolute bottom-12 right-0 bg-slate-800/95 backdrop-blur-sm border border-slate-600 rounded-lg p-4 min-w-80 text-xs">
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-600">
             <h3 className="font-semibold text-white">Performance Metrics</h3>
             <span className="text-slate-400">{pageName}</span>
           </div>
-          
+
           <div className="space-y-2">
             {metrics.firstContentfulPaint && (
               <div className="flex justify-between">
@@ -120,7 +120,7 @@ export default function PerformanceMonitor({ pageName = 'Unknown' }: Performance
                 </span>
               </div>
             )}
-            
+
             {metrics.largestContentfulPaint && (
               <div className="flex justify-between">
                 <span className="text-slate-300">Largest Contentful Paint:</span>
@@ -129,7 +129,7 @@ export default function PerformanceMonitor({ pageName = 'Unknown' }: Performance
                 </span>
               </div>
             )}
-            
+
             {metrics.cumulativeLayoutShift !== undefined && (
               <div className="flex justify-between">
                 <span className="text-slate-300">Cumulative Layout Shift:</span>
@@ -138,7 +138,7 @@ export default function PerformanceMonitor({ pageName = 'Unknown' }: Performance
                 </span>
               </div>
             )}
-            
+
             {metrics.firstInputDelay && (
               <div className="flex justify-between">
                 <span className="text-slate-300">First Input Delay:</span>
@@ -147,7 +147,7 @@ export default function PerformanceMonitor({ pageName = 'Unknown' }: Performance
                 </span>
               </div>
             )}
-            
+
             {metrics.loadComplete && (
               <div className="flex justify-between">
                 <span className="text-slate-300">Total Load Time:</span>
@@ -157,7 +157,7 @@ export default function PerformanceMonitor({ pageName = 'Unknown' }: Performance
               </div>
             )}
           </div>
-          
+
           <div className="mt-3 pt-2 border-t border-slate-600 text-xs text-slate-400">
             <div className="flex space-x-4">
               <span>🟢 Good</span>

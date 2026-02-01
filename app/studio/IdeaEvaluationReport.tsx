@@ -38,10 +38,43 @@ interface IdeaEvaluationReportProps {
     onStartNew?: () => void;
     ownerAddress?: string;
     isExample?: boolean;
+    evalId?: string | null;
 }
 
-export default function IdeaEvaluationReport({ result, onEdit, onStartNew, ownerAddress, isExample }: IdeaEvaluationReportProps) {
+export default function IdeaEvaluationReport({ result, onEdit, onStartNew, ownerAddress, isExample, evalId }: IdeaEvaluationReportProps) {
     const { publicKey } = useSimplifiedWallet();
+
+    const handleShare = () => {
+        // Construct Share URL
+        // If we have an evalId (permalink), use that.
+        // Otherwise use the dynamic /share page.
+
+        let shareUrl = '';
+        if (evalId) {
+            shareUrl = `https://prediktfi.xyz/idea/${evalId}`;
+        } else {
+            const params = new URLSearchParams();
+            params.set('title', result.summary.title);
+            params.set('score', result.overallScore.toString());
+
+            // Metrics
+            params.set('tech', result.technical.feasibilityScore.toString());
+            params.set('market', result.market.marketFitScore.toString());
+            params.set('execution', (100 - (result.execution?.executionRiskScore || 50)).toString());
+            params.set('token', result.projectType === 'ai' ? '50' : result.tokenomics.designScore.toString());
+
+            shareUrl = `https://prediktfi.xyz/share?${params.toString()}`;
+        }
+
+        const text = `I just used AI to stress-test my crypto project idea.
+
+Score: ${result.overallScore}/100 🔮
+
+Get your own evaluation here:`;
+
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+        window.open(twitterUrl, '_blank');
+    };
 
     // Check ownership
     const isOwner = React.useMemo(() => {
@@ -220,7 +253,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
 
                         {/* MASSIVE SCORE - span wrapper fix for clipping */}
                         <div className="flex items-baseline overflow-visible">
-                            <span className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 pt-4 pb-2 leading-[1.15]">
+                            <span className="text-5xl sm:text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 pt-4 pb-2 leading-[1.15]">
                                 {result.overallScore}
                             </span>
                             <span className="text-sm text-gray-500 ml-2 font-medium">/ 100</span>
@@ -513,6 +546,17 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
                             New Evaluation <Sparkles size={16} />
                         </button>
                     )}
+
+                    {/* Share Button (Viral Loop) */}
+                    <button
+                        onClick={handleShare}
+                        className="flex-1 bg-black text-white border border-white/20 p-5 hover:bg-gray-900 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl shadow-lg flex items-center justify-center gap-3 active:scale-95 group"
+                    >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white group-hover:scale-110 transition-transform">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                        </svg>
+                        Share Result
+                    </button>
                 </div>
 
             </div>

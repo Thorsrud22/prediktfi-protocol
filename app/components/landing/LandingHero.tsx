@@ -23,10 +23,10 @@ export default function LandingHero() {
                     Turn your idea into an
                 </motion.span>
                 <h1 className="flex flex-col items-center justify-center font-black text-white leading-[0.8] uppercase italic">
-                    <span className="px-4 text-4xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl text-balance">
+                    <span className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl text-balance">
                         investor-grade
                     </span>
-                    <span className="px-4 text-4xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl mt-[-0.1em] text-balance">
+                    <span className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl mt-[-0.1em] text-balance">
                         answer
                     </span>
                 </h1>

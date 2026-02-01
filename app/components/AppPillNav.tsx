@@ -145,7 +145,7 @@ export default function AppPillNav() {
       {/* Main Navigation - Hidden on mobile to prevent overlap */}
       <div
         id="debug-navbar"
-        className={`block fixed top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'
+        className={`hidden sm:block fixed top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'
           }`}
       >
         {/* Pill Nav - Outer wrapper with ring */}

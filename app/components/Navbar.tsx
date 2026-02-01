@@ -36,9 +36,7 @@ const MobileMenu = memo(function MobileMenu({
   const { isConnected, disconnect } = usePhantomWallet();
 
   const navigationItems = useMemo(() => [
-    { href: "/feed", label: "Feed", primary: true },
     { href: "/studio", label: "Studio", primary: true },
-    { href: "/leaderboard", label: "Leaderboard", primary: true },
     { href: "/my-predictions", label: "My Predictions", primary: true },
     { href: "/pricing", label: "Pricing", primary: true },
     { href: "/account", label: "Account", primary: false, showPro: true },
@@ -405,17 +403,7 @@ export default function Navbar() {
 
         {/* Desktop nav - Optimized with memoized components */}
         <div className="hidden items-center gap-6 sm:flex">
-          <a
-            href="/feed"
-            onClick={(e) => instantNavigate('/feed', e)}
-            onMouseEnter={() => preloadOnHover('/feed')}
-            className={`flex h-14 items-center px-4 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${pathname === '/feed'
-              ? 'text-white bg-blue-500/20 rounded-lg'
-              : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-              } ${isTransitioning ? 'opacity-70' : ''}`}
-          >
-            Feed
-          </a>
+
 
           <a
             href="/studio"
@@ -429,17 +417,7 @@ export default function Navbar() {
             Studio
           </a>
 
-          <a
-            href="/leaderboard"
-            onClick={(e) => instantNavigate('/leaderboard', e)}
-            onMouseEnter={() => preloadOnHover('/leaderboard')}
-            className={`flex h-14 items-center px-3 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${pathname === '/leaderboard'
-              ? 'text-white bg-blue-500/20 rounded-lg'
-              : 'text-blue-100 hover:text-white hover:bg-blue-500/10 rounded-lg'
-              } ${isTransitioning ? 'opacity-70' : ''}`}
-          >
-            Leaderboard
-          </a>
+
 
           <a
             href="/my-predictions"

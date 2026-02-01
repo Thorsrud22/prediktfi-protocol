@@ -7,17 +7,17 @@ import { useEffect, useState, useCallback } from 'react';
 const pageCache = new Map<string, any>();
 const preloadPromises = new Map<string, Promise<any>>();
 
-const CRITICAL_ROUTES = ['/studio', '/advisor', '/advisor/actions', '/feed'];
+const CRITICAL_ROUTES = ['/studio'];
 
 async function preloadRoute(route: string) {
   try {
     console.log(`🚀 Preloading route: ${route}`);
-    
+
     // Use Next.js 15 compatible prefetching
     // Just mark as preloaded for now - the actual prefetch happens via Link hover
     pageCache.set(route, true);
     console.log(`✅ Route marked for prefetch: ${route}`);
-    
+
     return true;
   } catch (error) {
     console.warn(`❌ Failed to preload ${route}:`, error);
@@ -37,10 +37,10 @@ export function useInstantRouter() {
     const preloadCriticalRoutes = async () => {
       const routesToPreload = CRITICAL_ROUTES.filter(route => route !== pathname);
       console.log(`🚀 Preloading routes:`, routesToPreload);
-      
+
       // Wait a bit for initial page to settle
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       for (const route of routesToPreload) {
         if (!preloadPromises.has(route)) {
           const promise = preloadRoute(route);
@@ -60,10 +60,10 @@ export function useInstantRouter() {
 
     console.log(`🔄 Instant navigating to: ${href}`);
     setIsTransitioning(true);
-    
+
     // Navigate immediately
     router.push(href);
-    
+
     // Reset transition state quickly
     setTimeout(() => {
       setIsTransitioning(false);
@@ -79,10 +79,10 @@ export function useInstantRouter() {
     }
   }, []);
 
-  return { 
-    instantNavigate, 
-    preloadOnHover, 
-    isTransitioning 
+  return {
+    instantNavigate,
+    preloadOnHover,
+    isTransitioning
   };
 }
 

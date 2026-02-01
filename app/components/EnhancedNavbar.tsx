@@ -59,8 +59,7 @@ export default function EnhancedNavbar() {
     }
   };
 
-  const primaryNavigation = [
-    { name: "Feed", href: "/feed", primary: true },
+  const primaryNavigation: { name: string; href: string; primary?: boolean }[] = [
     { name: "Studio", href: "/studio" },
     { name: "Markets", href: "/markets" },
   ];
@@ -73,8 +72,8 @@ export default function EnhancedNavbar() {
   return (
     <nav
       className={`sticky top-0 z-50 transition-all duration-200 ${scrolled
-          ? 'bg-[color:var(--bg)] border-b border-[var(--border)]'
-          : 'bg-transparent'
+        ? 'bg-[color:var(--bg)] border-b border-[var(--border)]'
+        : 'bg-transparent'
         }`}
     >
       <div className="mx-auto max-w-[1100px] px-6">
@@ -101,10 +100,10 @@ export default function EnhancedNavbar() {
                   key={item.name}
                   href={item.href}
                   className={`text-sm font-medium transition-all duration-200 hover:text-[color:var(--text)] px-3 py-2 rounded-lg ${pathname === item.href
-                      ? 'text-[color:var(--text)] bg-blue-500/20'
-                      : item.primary
-                        ? 'text-[color:var(--text)] font-semibold hover:bg-blue-500/10'
-                        : 'text-[color:var(--muted)] hover:bg-blue-500/10'
+                    ? 'text-[color:var(--text)] bg-blue-500/20'
+                    : item.primary
+                      ? 'text-[color:var(--text)] font-semibold hover:bg-blue-500/10'
+                      : 'text-[color:var(--muted)] hover:bg-blue-500/10'
                     }`}
                 >
                   {item.name}
@@ -119,8 +118,8 @@ export default function EnhancedNavbar() {
                   key={item.name}
                   href={item.href}
                   className={`text-sm font-medium transition-all duration-200 hover:text-[color:var(--text)] px-3 py-2 rounded-lg ${pathname === item.href
-                      ? 'text-[color:var(--text)] bg-blue-500/20'
-                      : 'text-[color:var(--muted)] hover:bg-blue-500/10'
+                    ? 'text-[color:var(--text)] bg-blue-500/20'
+                    : 'text-[color:var(--muted)] hover:bg-blue-500/10'
                     }`}
                 >
                   {item.name}

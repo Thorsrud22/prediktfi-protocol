@@ -7,7 +7,7 @@ export default function Footer() {
         {/* Top: Navigation Links */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
           {/* Left: Legal */}
-          <div className="flex items-center justify-center md:justify-start h-8 gap-8 w-full md:w-auto">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 w-full md:w-auto">
             <a href="/legal/terms" className="flex items-center h-full hover:text-white transition-colors">
               Terms
             </a>

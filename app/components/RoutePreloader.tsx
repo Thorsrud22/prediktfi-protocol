@@ -6,11 +6,8 @@ import { cachedFetch } from '@/app/lib/request-cache';
 
 // Aggressive preloading - preload ALL likely pages
 const PAGE_PRELOADS: Record<string, string[]> = {
-  '/': ['/api/feed?limit=10'], // Home -> likely go to feed
+  '/': ['/api/studio/templates'], // Home -> likely go to studio
   '/studio': ['/api/studio/templates'], // Studio -> templates
-  '/feed': ['/api/insights/trending'], // Feed -> trending insights
-  '/advisor': ['/api/advisor/history'], // Advisor pages load history
-  '/leaderboard': ['/api/leaderboard?limit=20'], // Leaderboard -> top 20
 };
 
 export default function RoutePreloader() {
@@ -153,7 +150,7 @@ export default function RoutePreloader() {
 
   // Prefetch critical pages on mount (similar to SPA behavior)
   useEffect(() => {
-    const criticalPages = ['/feed', '/studio', '/advisor', '/leaderboard'];
+    const criticalPages = ['/studio'];
 
     // Prefetch critical pages after 2 seconds
     const prefetchTimer = setTimeout(() => {

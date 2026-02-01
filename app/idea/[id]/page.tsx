@@ -26,9 +26,26 @@ export async function generateMetadata(
     const title = idea.title || 'Crypto Idea Evaluation';
     const score = idea.score;
 
-    const ogUrl = new URL('https://predikt.fi/og');
+    const ogUrl = new URL('https://prediktfi.xyz/og');
     ogUrl.searchParams.set('title', title);
     if (score) ogUrl.searchParams.set('score', score.toString());
+
+    // Extract metrics for Radar Chart if available
+    try {
+        const result = JSON.parse(idea.resultJson);
+        if (result) {
+            if (result.technical?.feasibilityScore) ogUrl.searchParams.set('tech', result.technical.feasibilityScore.toString());
+            if (result.market?.marketFitScore) ogUrl.searchParams.set('market', result.market.marketFitScore.toString());
+
+            const executionScore = 100 - (result.execution?.executionRiskScore || 50);
+            ogUrl.searchParams.set('execution', executionScore.toString());
+
+            const tokenScore = result.projectType === 'ai' ? '50' : (result.tokenomics?.designScore || '50');
+            ogUrl.searchParams.set('token', tokenScore.toString());
+        }
+    } catch (e) {
+        // Ignore JSON parse errors for metadata
+    }
 
     return {
         title: `${title} - Score: ${score}/100 • Predikt`,
@@ -110,6 +127,7 @@ export default async function IdeaPage({ params }: Props) {
                     <IdeaEvaluationReport
                         result={result}
                         ownerAddress={idea.wallet?.address}
+                        evalId={idea.id}
                     />
                 </div>
 

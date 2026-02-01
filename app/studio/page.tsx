@@ -305,6 +305,7 @@ export default function StudioPage() {
                 result={evaluationResult}
                 onEdit={handleEdit}
                 onStartNew={handleStartNew}
+                evalId={insightId}
               />
 
               <div className="flex justify-end pt-8 border-t border-white/10">

@@ -12,15 +12,15 @@ interface CreatorListItem {
 
 async function getCreators(): Promise<CreatorListItem[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://predikt.fi'
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://prediktfi.xyz'
     const response = await fetch(`${baseUrl}/api/public/creators?limit=200`, {
       next: { revalidate: 3600 } // 1 hour cache
     });
-    
+
     if (!response.ok) {
       return [];
     }
-    
+
     return response.json();
   } catch (error) {
     console.error('Failed to fetch creators for sitemap:', error);
@@ -29,9 +29,9 @@ async function getCreators(): Promise<CreatorListItem[]> {
 }
 
 export async function GET() {
-  const baseUrl = 'https://predikt.fi'
+  const baseUrl = 'https://prediktfi.xyz'
   const currentDate = new Date().toISOString()
-  
+
   // Fetch creators for sitemap
   const creators = await getCreators()
 
@@ -49,18 +49,8 @@ export async function GET() {
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
-  <url>
-    <loc>${baseUrl}/feed</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/leaderboard-v2</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.8</priority>
-  </url>
+
+
   <url>
     <loc>${baseUrl}/about</loc>
     <lastmod>${currentDate}</lastmod>

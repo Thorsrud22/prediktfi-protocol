@@ -318,8 +318,17 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
                     <div ref={bottomRef} />
                 </div>
 
+                {/* Hanging Perception Fix: Reassurance Message */}
+                {(streamingSteps && streamingSteps.length > 0) || (streamingThoughts && streamingThoughts.length > 0) ? (
+                    <div className="px-4 py-2 bg-slate-900/50 border-t border-cyan-500/10 text-center animate-pulse">
+                        <p className="text-[10px] text-cyan-400/70 font-mono">
+                            Deep reasoning takes ~120s. Please wait.
+                        </p>
+                    </div>
+                ) : null}
+
                 {/* Footer Status Bar */}
-                <div className="mt-4 pt-3 border-t border-cyan-500/10 flex justify-between items-center text-[9px] uppercase tracking-[0.15em]">
+                <div className="pt-3 border-t border-cyan-500/10 flex justify-between items-center text-[9px] uppercase tracking-[0.15em] px-4 pb-2">
                     <span className="text-cyan-500/40">LOGS: <span className="text-cyan-400">{logs.length}</span></span>
                     <span className="text-cyan-500/40">
                         STATUS: <span className={streamingSteps && streamingSteps.length > 0 ? 'text-emerald-400' : 'text-amber-400'}>
@@ -477,7 +486,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* MAIN CARD */}
-            <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 shadow-2xl rounded-[32px] overflow-hidden p-8 relative">
+            <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 shadow-2xl rounded-[32px] overflow-hidden p-6 sm:p-8 relative">
 
                 {/* Header */}
                 <div className="mb-8">

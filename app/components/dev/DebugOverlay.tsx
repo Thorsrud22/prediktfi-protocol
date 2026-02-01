@@ -44,7 +44,7 @@ export default function DebugOverlay({ className = '' }: DebugOverlayProps) {
     };
 
     gatherDebugData();
-    
+
     // Update every 5 seconds
     const interval = setInterval(gatherDebugData, 5000);
     return () => clearInterval(interval);
@@ -69,7 +69,7 @@ export default function DebugOverlay({ className = '' }: DebugOverlayProps) {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-4 right-4 z-50 bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg transition-all ${className}`}
+        className={`fixed bottom-32 sm:bottom-4 right-4 z-50 bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg transition-all ${className}`}
         title="Debug Overlay"
       >
         <Bug className="w-5 h-5" />
