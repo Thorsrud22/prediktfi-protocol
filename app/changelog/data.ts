@@ -11,6 +11,22 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
     {
+        version: "1.10.0",
+        date: "Feb 04, 2026",
+        title: "SEO, CMS & UX Hardening",
+        description: "Comprehensive update focusing on SEO correctness, legal compliance, accessibility, and sharing capabilities.",
+        changes: [
+            { category: 'feature', text: 'Added "Copy Link" features to evaluation reports.' },
+            { category: 'feature', text: 'Added /.well-known/security.txt for vulnerability disclosure.' },
+            { category: 'fix', text: 'Fixed Canonical Tags to prevent localhost indexing issues.' },
+            { category: 'fix', text: 'Updated Sitemap to include pricing, legal, and share pages.' },
+            { category: 'fix', text: 'Consolidated Privacy Policy pages and added proper redirects.' },
+            { category: 'fix', text: 'Improved Studio form accessibility with aria-labels.' },
+            { category: 'improvement', text: 'Updated "Print / Save PDF" button for better user expectations.' },
+            { category: 'improvement', text: 'Hardened Content Security Policy (CSP) for production.' }
+        ]
+    },
+    {
         version: "1.7.0",
         date: "Feb 01, 2026",
         title: "Market Intelligence & Security Hardening",
