@@ -273,7 +273,7 @@ INSTRUCTION: Use this REAL on-chain data to assess narrative crowdedness and com
                     const birdeyeContext = `
 BIRDEYE SEARCH RESULTS (Real-time Solana Token Search):
 Found ${searchResults.length} tokens matching "${narrative}":
-${searchResults.slice(0, 5).map(t => `- ${t.name} (${t.symbol}): ${t.verified ? 'Verified' : 'Unverified'}, Network: ${t.network}`).join('\n')}
+${searchResults.slice(0, 5).map(t => `- ${t.name} (${t.symbol}): ${t.verified ? 'Metadata Verified' : 'Unverified'}, Network: ${t.network}`).join('\n')}
 
 INSTRUCTION: Reference these as potential competitors or similar projects in the landscape.
 `;

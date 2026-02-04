@@ -13,7 +13,9 @@ import {
     ChevronDown,
     ChevronUp,
     CircleCheck as CheckCircle2,
-    CircleAlert as AlertCircle
+    CircleAlert as AlertCircle,
+    Activity,
+    Terminal
 } from 'lucide-react';
 
 interface IdeaSubmissionFormProps {
@@ -231,112 +233,164 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const [showTechnicalLogs, setShowTechnicalLogs] = useState(false);
+
+    // Get current activity for simple view
+    const currentActivity = React.useMemo(() => {
+        const lastStep = logs.filter(l => l.type === 'step').pop();
+        return lastStep ? lastStep.text : "Initializing PrediktFi Protocol...";
+    }, [logs]);
+
     return (
-        <div className="w-full h-[500px] flex flex-col font-mono text-xs md:text-sm bg-slate-950 backdrop-blur-md rounded-xl border border-white/10 relative overflow-hidden shadow-2xl">
-            {/* CRT Scanline Overlay */}
+        <div className="w-full h-[500px] flex flex-col font-mono text-xs md:text-sm bg-slate-950 backdrop-blur-md rounded-xl border border-white/10 relative overflow-hidden shadow-2xl transition-all duration-500">
+            {/* CRT Scanline Overlay - Always visible for vibe */}
             <div className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]" style={{
                 backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.03) 2px, rgba(0,255,255,0.03) 4px)',
             }} />
 
             {/* MacOS-style Title Bar */}
             <div className="flex items-center justify-between px-4 py-3 bg-slate-900/80 border-b border-white/5 relative z-20">
-                {/* Traffic Light Buttons */}
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors cursor-default shadow-inner" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-400 transition-colors cursor-default shadow-inner" />
-                    <div className="w-3 h-3 rounded-full bg-green-500 hover:bg-green-400 transition-colors cursor-default shadow-inner" />
+                    <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50" />
                 </div>
-
-                {/* Centered Title */}
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
                     <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(6,182,212,0.6)]" />
                     <span className="text-white/60 text-xs font-medium tracking-wide">prediktfi — evaluation</span>
                 </div>
-
-                {/* Right Side Stats */}
                 <div className="flex items-center gap-3 text-[10px] font-mono">
                     <span className="text-emerald-400/80">{displayProgress.toFixed(0)}%</span>
                     <span className="text-white/30">T+{formatElapsed(elapsedSeconds)}</span>
                 </div>
             </div>
 
-            {/* Progress Bar */}
-            <div className="h-1.5 bg-slate-800 relative overflow-hidden">
+            {/* Progress Bar - Always at top */}
+            <div className="h-1 bg-slate-800 relative overflow-hidden">
                 <div
                     className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-400 transition-all duration-300 ease-out shadow-[0_0_15px_rgba(6,182,212,0.8)]"
                     style={{ width: `${displayProgress}%` }}
                 />
             </div>
 
-            <div className="p-5 flex-1 flex flex-col relative z-20 overflow-hidden">
+            <div className="flex-1 relative z-20 overflow-hidden flex flex-col">
 
-                {/* Log Output - Shows ALL history with auto-scroll */}
-                <div className="flex-1 overflow-y-auto space-y-1 pr-2 scrollbar-thin scrollbar-thumb-cyan-500/20">
-                    {logs.map((log, i) => {
-                        const isLast = i === logs.length - 1;
-                        const isComplete = !isLast && log.type === 'step';
-                        const isThought = log.type === 'thought';
-
-                        return (
-                            <div
-                                key={i}
-                                className={`flex gap-2 animate-in fade-in duration-75 ${isThought ? 'pl-4 border-l border-white/5 ml-1' : ''}`}
-                            >
-                                <span className={`select-none font-mono text-[9px] min-w-[52px] ${isThought ? 'text-white/20' : 'text-slate-700'}`}>
-                                    {log.timestamp}
-                                </span>
-                                <span className={`select-none ${isThought ? 'text-white/20' : 'text-cyan-500/50'}`}>
-                                    {'>'}
-                                </span>
-                                <span className={
-                                    isThought
-                                        ? 'text-white/40 italic font-mono tracking-tight' // Thoughts styling
-                                        : isComplete
-                                            ? 'text-white/70'
-                                            : 'text-white' // Step styling
-                                }>
-                                    {renderColoredLog(log.text, isComplete)}
-                                    {/* Spinning cursor on active (last) log */}
-                                    {isLast && (
-                                        <span className="text-cyan-400 ml-2 font-bold">
-                                            {SPINNER_CHARS[spinnerIndex]}
-                                        </span>
-                                    )}
-                                </span>
+                {!showTechnicalLogs ? (
+                    /* === SIMPLE VIEW === */
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+                        {/* Central Pulse */}
+                        <div className="relative mb-8">
+                            <div className="w-24 h-24 rounded-full border border-cyan-500/20 flex items-center justify-center relative">
+                                <div className="absolute inset-0 rounded-full border border-cyan-500/30 animate-[ping_3s_linear_infinite]" />
+                                <div className="absolute inset-0 rounded-full border border-cyan-500/10 animate-[ping_2s_linear_infinite_reverse]" />
+                                <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center backdrop-blur-sm">
+                                    <Activity size={32} className="text-cyan-400 animate-pulse" />
+                                </div>
                             </div>
-                        );
-                    })}
+                        </div>
 
-                    {/* Aggressive Blinking Cursor */}
-                    <div className="flex gap-2 items-center">
-                        <span className="text-slate-700 select-none font-mono text-[9px] min-w-[52px]">
-                            {getTimestamp()}
-                        </span>
-                        <span className="text-cyan-500/50 select-none">{'>'}</span>
-                        <span className="text-cyan-400 animate-[blink_0.4s_infinite] font-bold text-lg">_</span>
-                    </div>
-                    <div ref={bottomRef} />
-                </div>
+                        {/* Current Activity */}
+                        <h3 className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight">
+                            {error ? "Analysis Halted" : currentActivity}
+                        </h3>
 
-                {/* Hanging Perception Fix: Reassurance Message */}
-                {(streamingSteps && streamingSteps.length > 0) || (streamingThoughts && streamingThoughts.length > 0) ? (
-                    <div className="px-4 py-2 bg-slate-900/50 border-t border-cyan-500/10 text-center animate-pulse">
-                        <p className="text-[10px] text-cyan-400/70 font-mono">
-                            Deep reasoning takes ~120s. Please wait.
+                        <p className="text-white/40 text-sm max-w-sm mx-auto mb-8 h-6">
+                            {streamingThoughts ? (
+                                <span className="animate-pulse italic text-cyan-500/60">
+                                    "{streamingThoughts.split('\n').filter(t => t.trim()).pop() || 'Reasoning...'}"
+                                </span>
+                            ) : (
+                                <span className="text-white/20">Processing data...</span>
+                            )}
                         </p>
-                    </div>
-                ) : null}
 
-                {/* Footer Status Bar */}
-                <div className="pt-3 border-t border-cyan-500/10 flex justify-between items-center text-[9px] uppercase tracking-[0.15em] px-4 pb-2">
-                    <span className="text-cyan-500/40">LOGS: <span className="text-cyan-400">{logs.length}</span></span>
-                    <span className="text-cyan-500/40">
-                        STATUS: <span className={streamingSteps && streamingSteps.length > 0 ? 'text-emerald-400' : 'text-amber-400'}>
-                            {streamingSteps && streamingSteps.length > 0 ? 'STREAMING' : error ? 'FAILURE' : 'CONNECTING...'}
-                        </span>
-                    </span>
-                    <span className="text-cyan-500/40">NET: <span className={error ? "text-red-500" : "text-emerald-400"}>{error ? "OFFLINE" : "ENCRYPTED"}</span></span>
-                </div>
+                        <button
+                            onClick={() => setShowTechnicalLogs(true)}
+                            className="flex items-center gap-2 text-xs text-white/30 hover:text-white transition-colors uppercase tracking-widest bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/5"
+                        >
+                            <Terminal size={12} /> Show Technical Logs
+                        </button>
+                    </div>
+                ) : (
+                    /* === TECHNICAL TERMINAL VIEW === */
+                    <div className="flex-1 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <div className="flex-1 overflow-y-auto space-y-1 p-5 pr-2 scrollbar-thin scrollbar-thumb-cyan-500/20">
+                            {logs.map((log, i) => {
+                                const isLast = i === logs.length - 1;
+                                const isComplete = !isLast && log.type === 'step';
+                                const isThought = log.type === 'thought';
+
+                                return (
+                                    <div
+                                        key={i}
+                                        className={`flex gap-2 animate-in fade-in duration-75 ${isThought ? 'pl-4 border-l border-white/5 ml-1' : ''}`}
+                                    >
+                                        <span className={`select-none font-mono text-[9px] min-w-[52px] ${isThought ? 'text-white/20' : 'text-slate-700'}`}>
+                                            {log.timestamp}
+                                        </span>
+                                        <span className={`select-none ${isThought ? 'text-white/20' : 'text-cyan-500/50'}`}>
+                                            {'>'}
+                                        </span>
+                                        <span className={
+                                            isThought
+                                                ? 'text-white/40 italic font-mono tracking-tight' // Thoughts styling
+                                                : isComplete
+                                                    ? 'text-white/70'
+                                                    : 'text-white' // Step styling
+                                        }>
+                                            {renderColoredLog(log.text, isComplete)}
+                                            {/* Spinning cursor on active (last) log */}
+                                            {isLast && (
+                                                <span className="text-cyan-400 ml-2 font-bold">
+                                                    {SPINNER_CHARS[spinnerIndex]}
+                                                </span>
+                                            )}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Aggressive Blinking Cursor */}
+                            <div className="flex gap-2 items-center">
+                                <span className="text-slate-700 select-none font-mono text-[9px] min-w-[52px]">
+                                    {getTimestamp()}
+                                </span>
+                                <span className="text-cyan-500/50 select-none">{'>'}</span>
+                                <span className="text-cyan-400 animate-[blink_0.4s_infinite] font-bold text-lg">_</span>
+                            </div>
+                            <div ref={bottomRef} />
+                        </div>
+
+                        {/* Hanging Perception Fix: Reassurance Message */}
+                        {(streamingSteps && streamingSteps.length > 0) || (streamingThoughts && streamingThoughts.length > 0) ? (
+                            <div className="px-4 py-2 bg-slate-900/50 border-t border-cyan-500/10 text-center animate-pulse">
+                                <p className="text-[10px] text-cyan-400/70 font-mono">
+                                    Deep reasoning takes ~120s. Please wait.
+                                </p>
+                            </div>
+                        ) : null}
+
+                        {/* Footer Status Bar with Hide Toggle */}
+                        <div className="pt-3 border-t border-cyan-500/10 flex justify-between items-center text-[9px] uppercase tracking-[0.15em] px-4 pb-2 bg-slate-900/50">
+                            <div className="flex gap-4">
+                                <span className="text-cyan-500/40">LOGS: <span className="text-cyan-400">{logs.length}</span></span>
+                                <span className="text-cyan-500/40 hidden sm:inline">
+                                    STATUS: <span className={streamingSteps && streamingSteps.length > 0 ? 'text-emerald-400' : 'text-amber-400'}>
+                                        {streamingSteps && streamingSteps.length > 0 ? 'STREAMING' : error ? 'FAILURE' : 'CONNECTING...'}
+                                    </span>
+                                </span>
+                                <span className="text-cyan-500/40 hidden sm:inline">NET: <span className={error ? "text-red-500" : "text-emerald-400"}>{error ? "OFFLINE" : "ENCRYPTED"}</span></span>
+                            </div>
+
+                            <button
+                                onClick={() => setShowTechnicalLogs(false)}
+                                className="text-white/30 hover:text-white transition-colors flex items-center gap-1"
+                            >
+                                Hide Logs <ChevronDown size={10} />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Keyframes for aggressive blink */}
@@ -424,6 +478,14 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         return () => clearTimeout(timer);
     }, [formData.description, isConnected, formData.projectType]);
 
+    // Validate Solana address format (base58, 32-44 chars)
+    const isValidSolanaAddress = (addr: string): boolean => {
+        if (!addr) return true; // Empty is OK
+        if (addr.length < 32 || addr.length > 44) return false;
+        // Base58 character set (no 0, O, I, l)
+        return /^[1-9A-HJ-NP-Za-km-z]+$/.test(addr);
+    };
+
     // Handlers
     const handleChange = (field: keyof IdeaSubmission, value: any) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -458,17 +520,25 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
             return;
         }
 
-        // Use Zod for final cleanup/defaults, but don't block on optional fields
+        // Validate token address if provided
+        if (formData.tokenAddress && !isValidSolanaAddress(formData.tokenAddress)) {
+            setErrors({ tokenAddress: "Invalid Solana address format (must be 32-44 base58 characters)" });
+            return;
+        }
+
+        // Use Zod for final cleanup/defaults
         try {
             const validatedData = ideaSubmissionSchema.parse(formData);
             onSubmit(validatedData);
         } catch (error) {
             if (error instanceof z.ZodError) {
                 console.error("Submission Schema Error", error);
-                // Fallback: Just submit what we have if strict schema check fails on something trivial
-                // (Though schema should handle defaults). 
-                // Just in case, block only if critical:
-                onSubmit(formData as IdeaSubmission);
+                // Extract the first error message to show to user
+                const firstError = error.errors[0];
+                if (firstError?.path[0]) {
+                    setErrors({ [firstError.path[0] as string]: firstError.message });
+                }
+                // Don't submit if Zod validation fails
             }
         }
     };
@@ -621,10 +691,11 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             onChange={(e) => handleChange('description', e.target.value)}
                             placeholder="e.g., A Solana memecoin that taxes sells to fund carbon credits. Target: eco-conscious degens. Vibe: Pepe meets Al Gore."
                             aria-describedby={errors.description ? "pitch-error" : undefined}
-                            className="w-full flex-1 p-6 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-mono text-sm leading-relaxed rounded-2xl min-h-[300px]"
+                            aria-invalid={errors.description ? "true" : undefined}
+                            className={`w-full flex-1 p-6 bg-slate-900/60 border text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-mono text-sm leading-relaxed rounded-2xl min-h-[300px] ${errors.description ? 'border-red-500/50' : 'border-white/5'}`}
                         />
                         {errors.description && (
-                            <p id="pitch-error" className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
+                            <p id="pitch-error" role="alert" className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
                                 <AlertCircle size={12} /> {errors.description}
                             </p>
                         )}
@@ -686,9 +757,20 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                     type="text"
                                     value={formData.tokenAddress}
                                     onChange={(e) => handleChange('tokenAddress', e.target.value)}
-                                    placeholder="Solana CA..."
-                                    className="w-full p-3 bg-slate-900/60 border border-white/5 rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none"
+                                    placeholder="e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                                    aria-describedby={errors.tokenAddress ? "token-address-error" : undefined}
+                                    aria-invalid={errors.tokenAddress ? "true" : undefined}
+                                    className={`w-full p-3 bg-slate-900/60 border rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none transition-colors ${errors.tokenAddress ? 'border-red-500/50' : 'border-white/5'
+                                        }`}
                                 />
+                                {errors.tokenAddress && (
+                                    <p id="token-address-error" role="alert" className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
+                                        <AlertCircle size={12} /> {errors.tokenAddress}
+                                    </p>
+                                )}
+                                <p className="text-[10px] text-white/30 mt-2 leading-relaxed">
+                                    We use this to verify on-chain security checks like mint authority and liquidity status. Requires a valid Solana contract address (base58).
+                                </p>
                             </div>
 
                             {/* SECTOR SPECIFIC EXTRA FIELDS */}
@@ -755,7 +837,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     type="submit"
                     className="group relative w-full md:w-auto px-10 py-5 bg-[#0055FF] hover:bg-[#0044CC] text-white font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-[0_0_20px_rgba(0,85,255,0.3)] hover:shadow-[0_0_30px_rgba(0,85,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 border border-white/10 overflow-hidden rounded-2xl"
                 >
-                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                    <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20"></div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 
                     <div className="relative flex items-center justify-center gap-4 z-10">

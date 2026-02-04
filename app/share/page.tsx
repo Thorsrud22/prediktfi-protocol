@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight, Share2, Search, ExternalLink } from 'lucide-react';
 
 type Props = {
     searchParams: Promise<{
@@ -16,10 +15,26 @@ type Props = {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
     const params = await searchParams;
-    const title = params.title || 'Crypto Idea Verification';
-    const score = params.score || '0';
 
-    // Construct OG Image URL
+    // Check if this is a valid share link with actual data
+    const hasValidParams = params.title && params.score;
+
+    if (!hasValidParams) {
+        // No params = base /share route, should not be indexed
+        return {
+            title: 'Share Your Evaluation • Predikt',
+            description: 'Share your AI-powered crypto project evaluation results with others.',
+            robots: {
+                index: false,  // Don't index the base /share page
+                follow: true,
+            },
+        };
+    }
+
+    const title = params.title!;  // Safe: hasValidParams guarantees these exist
+    const score = params.score!;
+
+    // Construct OG Image URL for valid share links
     const ogUrl = new URL('https://prediktfi.xyz/og');
     ogUrl.searchParams.set('title', title);
     ogUrl.searchParams.set('score', score);
@@ -31,9 +46,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     return {
         title: `${title} - Score: ${score}/100 • Predikt`,
         description: `Check out the AI evaluation for ${title}. Just validated on Predikt protocol.`,
-        alternates: {
-            canonical: '/share',
-        },
+        // Don't set canonical for share links with params - each is unique
         openGraph: {
             title: `${title} - Score: ${score}/100`,
             description: `AI-verified crypto project evaluation.`,
@@ -58,7 +71,78 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function SharePage({ searchParams }: Props) {
     const params = await searchParams;
 
-    // If we have just basic params, we show a preview card and a CTA
+    // Check if this is a valid share link
+    const hasValidParams = params.title && params.score;
+
+    // If no valid params, show an informational landing page
+    if (!hasValidParams) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+                {/* Background Gradients */}
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 blur-[100px] rounded-full" />
+                    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-cyan-500/10 blur-[80px] rounded-full" />
+                </div>
+
+                <div className="max-w-lg w-full relative z-10 text-center">
+                    {/* Icon */}
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500/10 border border-blue-500/20 rounded-2xl mb-8">
+                        <Share2 className="w-10 h-10 text-blue-400" />
+                    </div>
+
+                    {/* Hero Text */}
+                    <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter mb-4 italic">
+                        Share Page <span className="text-blue-500">.</span>
+                    </h1>
+                    <p className="text-white/60 text-base mb-10 max-w-md mx-auto leading-relaxed">
+                        This page displays shared evaluation results.
+                        To view a result, use the share link provided after completing an evaluation.
+                    </p>
+
+                    {/* Info Box */}
+                    <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 p-6 rounded-2xl mb-8 text-left">
+                        <h2 className="text-sm font-bold text-white/80 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Search size={14} className="text-blue-400" />
+                            How to Get a Share Link
+                        </h2>
+                        <ol className="space-y-3 text-sm text-white/60">
+                            <li className="flex items-start gap-3">
+                                <span className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                                <span>Go to the Studio and evaluate your project</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                                <span>After receiving your score, click the Share button</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                                <span>Copy the link and share it with others</span>
+                            </li>
+                        </ol>
+                    </div>
+
+                    {/* CTAs */}
+                    <div className="space-y-4">
+                        <Link
+                            href="/studio"
+                            className="group w-full block bg-white text-black p-4 rounded-xl font-bold uppercase tracking-widest text-center text-xs hover:bg-gray-200 transition-colors shadow-lg shadow-white/10"
+                        >
+                            Start an Evaluation <ArrowRight className="inline ml-1 -mt-0.5 group-hover:translate-x-1 transition-transform" size={14} />
+                        </Link>
+
+                        <Link
+                            href="/example-report"
+                            className="group w-full block bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-xl font-bold uppercase tracking-widest text-center text-xs transition-colors"
+                        >
+                            See Example Report <ExternalLink className="inline ml-1 -mt-0.5" size={12} />
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Valid share link - show the score card
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
 
@@ -84,11 +168,11 @@ export default async function SharePage({ searchParams }: Props) {
                     <div className="text-center">
                         <div className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em] mb-4">Project Score</div>
                         <div className="text-6xl sm:text-7xl font-black text-white mb-2 tracking-tighter">
-                            {params.score || '0'}
+                            {params.score}
                             <span className="text-2xl text-white/20 font-medium ml-2">/100</span>
                         </div>
                         <h2 className="text-lg font-bold text-blue-200">
-                            {params.title || 'Untitled Project'}
+                            {params.title}
                         </h2>
                     </div>
                 </div>
@@ -110,3 +194,4 @@ export default async function SharePage({ searchParams }: Props) {
         </div>
     );
 }
+

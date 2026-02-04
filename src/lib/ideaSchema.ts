@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+/**
+ * Validate Solana address format (base58, 32-44 chars)
+ */
+function isValidSolanaAddress(address: string): boolean {
+    if (!address || address.length < 32 || address.length > 44) return false;
+    // Base58 character set (no 0, O, I, l)
+    return /^[1-9A-HJ-NP-Za-km-z]+$/.test(address);
+}
+
 export const ideaSubmissionSchema = z.object({
     description: z.string().min(10, 'Description must be at least 10 characters long'),
     projectType: z.enum(['memecoin', 'defi', 'ai'], {
@@ -19,8 +28,12 @@ export const ideaSubmissionSchema = z.object({
     mvpScope: z.string().optional().default('Standard MVP'),
     goToMarketPlan: z.string().optional().default('Organic Growth'),
     launchLiquidityPlan: z.string().optional().default('Not yet decided'),
-    tokenAddress: z.string().optional(),
+    tokenAddress: z.string().optional().refine(
+        (val) => !val || isValidSolanaAddress(val),
+        { message: 'Invalid Solana address format (must be 32-44 base58 characters)' }
+    ),
     walletAddress: z.string().optional(),
+
 
     // --- Smart Evaluation Fields ---
     // Memecoin

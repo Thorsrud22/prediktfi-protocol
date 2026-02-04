@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     description: 'Manage your wallet, plan, and payment history.',
     type: 'website',
   },
+  alternates: {
+    canonical: '/account',
+  },
   robots: {
     index: false, // Account pages should not be indexed
     follow: false,

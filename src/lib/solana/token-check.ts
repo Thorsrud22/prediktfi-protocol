@@ -1,9 +1,10 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { getAccount, getMint } from "@solana/spl-token";
+import { getMint } from "@solana/spl-token";
 import { BirdeyeMarketService } from "@/lib/market/birdeye";
 
 export interface TokenSecurityCheck {
-    mintAuthority: boolean; // true = DANGER (can mint more)
+    valid: boolean;           // true only if successfully verified on-chain
+    mintAuthority: boolean;   // true = DANGER (can mint more)
     freezeAuthority: boolean; // true = DANGER (can freeze)
     supply: number;
     decimals: number;
@@ -20,7 +21,30 @@ export interface TokenSecurityCheck {
 // 1. Setup connection (use mainnet public RPC or env)
 const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_ENDPOINT || "https://api.mainnet-beta.solana.com";
 
+/**
+ * Validate Solana address format (base58, 32-44 chars)
+ */
+export function isValidSolanaAddress(address: string): boolean {
+    if (!address || address.length < 32 || address.length > 44) return false;
+    // Base58 character set (no 0, O, I, l)
+    return /^[1-9A-HJ-NP-Za-km-z]+$/.test(address);
+}
+
 export async function verifyTokenSecurity(tokenAddress: string): Promise<TokenSecurityCheck> {
+    // Early validation - reject obviously invalid addresses
+    if (!isValidSolanaAddress(tokenAddress)) {
+        console.warn("[TokenCheck] Invalid address format:", tokenAddress);
+        return {
+            valid: false,
+            mintAuthority: false,
+            freezeAuthority: false,
+            supply: 0,
+            decimals: 0,
+            isPumpFun: false,
+            error: "Invalid Solana address format"
+        };
+    }
+
     try {
         const connection = new Connection(RPC_ENDPOINT, "confirmed");
         const mintPubkey = new PublicKey(tokenAddress);
@@ -37,6 +61,7 @@ export async function verifyTokenSecurity(tokenAddress: string): Promise<TokenSe
         const isPumpFun = tokenAddress.endsWith("pump");
 
         const result: TokenSecurityCheck = {
+            valid: true,
             mintAuthority: hasMintAuth,
             freezeAuthority: hasFreezeAuth,
             supply: Number(mintInfo.supply),
@@ -64,12 +89,13 @@ export async function verifyTokenSecurity(tokenAddress: string): Promise<TokenSe
     } catch (error) {
         console.error("Token verification failed:", error);
         return {
-            mintAuthority: false, // Default to safe if fail? No, better to error.
+            valid: false,
+            mintAuthority: false,
             freezeAuthority: false,
             supply: 0,
             decimals: 0,
             isPumpFun: false,
-            error: "Invalid token address or network error"
+            error: "Token not found or network error"
         };
     }
 }

@@ -12,7 +12,9 @@ import {
     Activity,
     Download,
     Link as LinkIcon,
-    Flag
+    Flag,
+    Check,
+    Zap
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useToast } from '../components/ToastProvider';
@@ -41,11 +43,13 @@ interface IdeaEvaluationReportProps {
     ownerAddress?: string;
     isExample?: boolean;
     evalId?: string | null;
+    onCommit?: () => void;
+    commitStatus?: 'idle' | 'committing' | 'success' | 'error';
 }
 
 
 
-export default function IdeaEvaluationReport({ result, onEdit, onStartNew, ownerAddress, isExample, evalId }: IdeaEvaluationReportProps) {
+export default function IdeaEvaluationReport({ result, onEdit, onStartNew, ownerAddress, isExample, evalId, onCommit, commitStatus = 'idle' }: IdeaEvaluationReportProps) {
     const { publicKey } = useSimplifiedWallet();
     const { addToast } = useToast();
 
@@ -78,15 +82,21 @@ Get your own evaluation here:`;
         window.open(twitterUrl, '_blank');
     };
 
+    // Copy link state for visual feedback
+    const [copied, setCopied] = React.useState(false);
+
     const handleCopyLink = () => {
         const shareUrl = getShareUrlParams();
         navigator.clipboard.writeText(shareUrl).then(() => {
+            setCopied(true);
             addToast({
                 title: "Link Copied",
                 description: "Share URL copied to clipboard",
                 variant: 'success',
                 duration: 2000
             });
+            // Reset copied state after 2 seconds
+            setTimeout(() => setCopied(false), 2000);
         }).catch(() => {
             addToast({
                 title: "Error",
@@ -549,47 +559,151 @@ Get your own evaluation here:`;
                 )}
 
                 {/* ACTION BUTTONS */}
-                <div className="flex flex-col md:flex-row gap-4 border-t border-white/5 pt-8 noprint items-stretch md:items-center">
-                    {onEdit && (
-                        <button
-                            onClick={onEdit}
-                            className="flex-1 bg-white/5 border border-white/10 text-white p-5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl flex items-center justify-center gap-3 active:scale-95"
-                        >
-                            <ArrowLeft size={16} /> Refine Input
-                        </button>
-                    )}
-                    {onStartNew && (
-                        <button
-                            onClick={onStartNew}
-                            className="flex-1 bg-blue-600 text-white border border-transparent p-5 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl shadow-lg shadow-blue-900/40 flex items-center justify-center gap-3 active:scale-95"
-                        >
-                            New Evaluation <Sparkles size={16} />
-                        </button>
-                    )}
+                {/* ACTION PANEL - "Next Best Action" */}
+                <div className="mt-12 border border-blue-500/20 bg-blue-500/5 rounded-2xl p-6 md:p-8 animate-in fade-in slide-in-from-bottom-8 duration-700 noprint">
 
-
-                    {/* Share Button Group */}
-                    <div className="flex-1 flex gap-2">
-                        {/* Copy Link */}
-                        <button
-                            onClick={handleCopyLink}
-                            className="bg-white/5 border border-white/10 text-white p-5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl flex items-center justify-center gap-2 active:scale-95 group"
-                            title="Copy Link"
-                        >
-                            <LinkIcon size={16} className="text-white/60 group-hover:text-white transition-colors" />
-                        </button>
-
-                        {/* Share on X */}
-                        <button
-                            onClick={handleShare}
-                            className="flex-1 bg-black text-white border border-white/20 p-5 hover:bg-gray-900 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl shadow-lg flex items-center justify-center gap-3 active:scale-95 group"
-                        >
-                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white group-hover:scale-110 transition-transform">
-                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                            </svg>
-                            Share Result
-                        </button>
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
+                            <Zap size={20} />
+                        </div>
+                        <h3 className="text-lg font-bold text-white tracking-wide uppercase">Recommended Next Steps</h3>
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                        {/* 1. Share (Primary) */}
+                        <div className="md:col-span-2 p-6 bg-slate-900/80 border border-blue-500/30 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-blue-900/10 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                            <div className="relative z-10 text-center md:text-left">
+                                <h4 className="text-white font-bold mb-1 flex items-center justify-center md:justify-start gap-2">
+                                    Share this Report <Sparkles size={14} className="text-amber-400" />
+                                </h4>
+                                <p className="text-white/40 text-xs max-w-sm">
+                                    Generate a shareable link or post directly to X/Twitter to get community feedback.
+                                </p>
+                            </div>
+                            <div className="flex gap-3 w-full md:w-auto relative z-10">
+                                {/* Copy Link */}
+                                <button
+                                    onClick={handleCopyLink}
+                                    className={`flex-1 md:flex-none px-6 py-3 border text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-xl flex items-center justify-center gap-2 active:scale-95 ${copied
+                                        ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
+                                        : 'border-white/10 bg-white/5 hover:bg-white/10 text-white'}`}
+                                >
+                                    {copied ? (
+                                        <>
+                                            <Check size={14} /> Copied!
+                                        </>
+                                    ) : (
+                                        <>
+                                            <LinkIcon size={14} /> Copy Link
+                                        </>
+                                    )}
+                                </button>
+
+                                {/* Share on X */}
+                                <button
+                                    onClick={handleShare}
+                                    className="flex-1 md:flex-none px-6 py-3 bg-white text-black hover:bg-gray-200 border-transparent text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95"
+                                >
+                                    <svg viewBox="0 0 24 24" className="w-3 h-3 fill-black">
+                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                    </svg>
+                                    Post
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 2. Refine (Secondary) */}
+                        {onEdit && (
+                            <button
+                                onClick={onEdit}
+                                className="group p-5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-left flex flex-col justify-between h-full min-h-[140px]"
+                            >
+                                <div>
+                                    <div className="flex items-center justify-between mb-3 text-white/60 group-hover:text-blue-400 transition-colors">
+                                        <ArrowLeft size={20} />
+                                    </div>
+                                    <h4 className="text-white font-bold text-sm mb-1">Refine Input</h4>
+                                    <p className="text-white/40 text-[10px]">Tweak your pitch details to improve your score.</p>
+                                </div>
+                                <div className="mt-4 text-[10px] font-bold text-white/50 uppercase tracking-widest group-hover:text-white transition-colors">
+                                    Edit Analysis →
+                                </div>
+                            </button>
+                        )}
+
+                        {/* 3. Commit On-Chain (Tertiary) */}
+                        {onCommit && (
+                            <button
+                                onClick={onCommit}
+                                disabled={commitStatus === 'committing' || commitStatus === 'success'}
+                                className={`group p-5 border rounded-xl transition-all text-left flex flex-col justify-between h-full min-h-[140px] relative overflow-hidden ${commitStatus === 'success'
+                                    ? 'bg-emerald-500/10 border-emerald-500/30 cursor-default'
+                                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                    }`}
+                            >
+                                {commitStatus === 'success' && <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none" />}
+
+                                <div className="relative z-10">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <Shield size={20} className={commitStatus === 'success' ? 'text-emerald-400' : 'text-white/60 group-hover:text-emerald-400 transition-colors'} />
+                                        {commitStatus === 'success' && <CheckCircle2 size={16} className="text-emerald-400" />}
+                                    </div>
+                                    <h4 className={`font-bold text-sm mb-1 ${commitStatus === 'success' ? 'text-emerald-400' : 'text-white'}`}>
+                                        {commitStatus === 'success' ? 'Insight Committed' : 'Commit to Chain'}
+                                    </h4>
+                                    <p className={`text-[10px] ${commitStatus === 'success' ? 'text-emerald-400/60' : 'text-white/40'}`}>
+                                        {commitStatus === 'success'
+                                            ? 'Immutably recorded on Solana.'
+                                            : 'Record this evaluation on-chain. Requires wallet.'}
+                                    </p>
+                                </div>
+
+                                <div className={`mt-4 text-[10px] font-bold uppercase tracking-widest transition-colors relative z-10 flex items-center gap-2 ${commitStatus === 'success' ? 'text-emerald-500' : 'text-white/50 group-hover:text-white'
+                                    }`}>
+                                    {commitStatus === 'committing' ? (
+                                        <>Processing...</>
+                                    ) : commitStatus === 'success' ? (
+                                        <>View Record <LinkIcon size={10} /></>
+                                    ) : (
+                                        <>Commit Insight →</>
+                                    )}
+                                </div>
+                            </button>
+                        )}
+
+                        {/* Fallback New Evaluation if no onCommit */}
+                        {!onCommit && onStartNew && (
+                            <button
+                                onClick={onStartNew}
+                                className="group p-5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-left flex flex-col justify-between h-full min-h-[140px]"
+                            >
+                                <div>
+                                    <div className="flex items-center justify-between mb-3 text-white/60 group-hover:text-blue-400 transition-colors">
+                                        <Sparkles size={20} />
+                                    </div>
+                                    <h4 className="text-white font-bold text-sm mb-1">New Evaluation</h4>
+                                    <p className="text-white/40 text-[10px]">Start fresh with a different idea.</p>
+                                </div>
+                                <div className="mt-4 text-[10px] font-bold text-white/50 uppercase tracking-widest group-hover:text-white transition-colors">
+                                    Start Over →
+                                </div>
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Footer for Start New if not visible in grid */}
+                    {onStartNew && onCommit && (
+                        <div className="mt-6 text-center border-t border-white/5 pt-4">
+                            <button
+                                onClick={onStartNew}
+                                className="text-[10px] text-white/30 hover:text-white uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mx-auto group"
+                            >
+                                <Sparkles size={12} className="group-hover:text-cyan-400 transition-colors" /> Start New Evaluation
+                            </button>
+                        </div>
+                    )}
                 </div>
 
             </div>

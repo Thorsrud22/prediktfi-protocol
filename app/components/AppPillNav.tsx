@@ -206,39 +206,41 @@ export default function AppPillNav() {
 
       </div>
 
-      {/* Mobile Bottom Navigation - Only visible on mobile */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-700/50 safe-area-pb">
-        <div className="flex items-center justify-around h-16">
-          {navItems.map((item) => {
-            const active = pathname === item.href || pathname?.startsWith(item.href + '/');
-            return (
-              <InstantLink
-                key={item.href}
-                href={item.href}
-                className={`flex flex-col items-center justify-center gap-1.5 px-4 py-3 transition-all ${active ? 'text-sky-400 opacity-100' : 'text-slate-300 opacity-60 hover:opacity-100'}`}
-                aria-current={active ? 'page' : undefined}
-              >
-                {item.href === '/studio' && (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                )}
-                {item.href === '/account' && (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                )}
-                {item.href === '/pricing' && (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                )}
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{item.label}</span>
-              </InstantLink>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Mobile Bottom Navigation - Only visible on mobile, hidden on legal pages to prevent overlap */}
+      {!pathname?.startsWith('/legal') && (
+        <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-700/50 safe-area-pb">
+          <div className="flex items-center justify-around h-16">
+            {navItems.map((item) => {
+              const active = pathname === item.href || pathname?.startsWith(item.href + '/');
+              return (
+                <InstantLink
+                  key={item.href}
+                  href={item.href}
+                  className={`flex flex-col items-center justify-center gap-1.5 px-4 py-3 transition-all ${active ? 'text-sky-400 opacity-100' : 'text-slate-300 opacity-60 hover:opacity-100'}`}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  {item.href === '/studio' && (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                  {item.href === '/account' && (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  )}
+                  {item.href === '/pricing' && (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{item.label}</span>
+                </InstantLink>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </>
   );
 }

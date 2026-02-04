@@ -239,7 +239,8 @@ export default function StudioPage() {
       const data = await response.json();
       setInsightId(data.id);
       setCommitStatus('success');
-      setCurrentStep('commit');
+      // Keep user on the report page to see the success state in the button
+      // setCurrentStep('commit'); 
     } catch (error) {
       console.error('Error committing insight:', error);
       setCommitStatus('error');
@@ -265,14 +266,23 @@ export default function StudioPage() {
           {/* FAIR USE LIMIT DISPLAY */}
           {quota && (
             <div className="text-right block">
-              <div className="text-[10px] uppercase text-blue-300/60 mb-1 tracking-widest font-mono">DAILY LIMIT</div>
+              <div className="text-[10px] uppercase text-blue-300/60 mb-1 tracking-widest font-mono">EVALS TODAY</div>
               <div className={`font-bold text-2xl font-mono ${quota.remaining === 0 ? 'text-amber-400' : 'text-blue-400'}`}>
-                {quota.remaining === -1 ? 'UNLIMITED' : `${quota.remaining}/${quota.limit}`}
+                {quota.remaining === -1 ? 'UNLIMITED' : (
+                  <>
+                    {quota.remaining} <span className="text-sm text-white/40 font-normal">left</span>
+                  </>
+                )}
               </div>
               {quota.remaining === 0 && (
                 <a href="/pricing" className="text-[9px] text-amber-400/80 hover:text-amber-300 uppercase tracking-widest mt-1 block">
                   Want more? Join Pro waitlist →
                 </a>
+              )}
+              {quota.remaining > 0 && quota.remaining !== -1 && (
+                <div className="text-[9px] text-white/30 uppercase tracking-widest mt-1">
+                  of {quota.limit} daily
+                </div>
               )}
             </div>
           )}
@@ -306,27 +316,9 @@ export default function StudioPage() {
                 onEdit={handleEdit}
                 onStartNew={handleStartNew}
                 evalId={insightId}
+                onCommit={handleCommit}
+                commitStatus={commitStatus}
               />
-
-              <div className="flex justify-end pt-8 border-t border-white/10">
-                {commitStatus === 'success' ? (
-                  <div className="flex items-center gap-2 text-green-400 font-bold uppercase tracking-widest text-sm">
-                    <CheckCircle size={20} /> Insight Committed
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleCommit}
-                    disabled={commitStatus === 'committing'}
-                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white uppercase tracking-widest font-bold text-sm hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 rounded-full shadow-lg hover:shadow-blue-500/25 transition-all"
-                  >
-                    {commitStatus === 'committing' ? (
-                      <>Processing...</>
-                    ) : (
-                      <>Commit Insight to Chain →</>
-                    )}
-                  </button>
-                )}
-              </div>
             </div>
           )}
 

@@ -90,7 +90,22 @@ export default function TermsPage() {
                 6. Contact
               </h2>
               <p className="text-slate-400 leading-relaxed">
-                For questions about these terms, please contact us via GitHub issues on our repository.
+                For questions about these terms, please contact us via{' '}
+                <a
+                  href="https://github.com/prediktfi/prediktfi-protocol/issues"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sky-400 hover:text-sky-300 underline underline-offset-2 transition-colors"
+                >
+                  GitHub issues
+                </a>
+                {' '}on our repository, or email us at{' '}
+                <a
+                  href="mailto:support@prediktfi.xyz"
+                  className="text-sky-400 hover:text-sky-300 underline underline-offset-2 transition-colors"
+                >
+                  support@prediktfi.xyz
+                </a>.
               </p>
             </section>
           </div>

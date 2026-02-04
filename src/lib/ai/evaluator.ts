@@ -143,9 +143,21 @@ Use this context to judge timing and market fit.
     options?.onProgress?.(`Scanning token contract ${input.tokenAddress.slice(0, 8)}...`);
     try {
       const check = await verifyTokenSecurity(input.tokenAddress);
-      options?.onProgress?.(`Token verified: Mint=${check.mintAuthority ? 'ACTIVE' : 'REVOKED'}, Freeze=${check.freezeAuthority ? 'ACTIVE' : 'REVOKED'}`);
-      verificationContext = `
-ON-CHAIN VERIFICATION (Real-Time Data):
+
+      // Check if verification actually succeeded
+      if (!check.valid) {
+        options?.onProgress?.(`⚠️ Token check failed: ${check.error || 'Unknown error'}`);
+        verificationContext = `
+ON-CHAIN CHECK FAILED:
+- Token Address Provided: ${input.tokenAddress}
+- Error: ${check.error || 'Invalid address or token not found'}
+- Status: NOT VALIDATED
+- INSTRUCTION: Flag as "Unvalidated Token" in the report. Do NOT display authority status.
+`;
+      } else {
+        options?.onProgress?.(`✓ Authorities checked: Mint=${check.mintAuthority ? 'ACTIVE' : 'REVOKED'}, Freeze=${check.freezeAuthority ? 'ACTIVE' : 'REVOKED'}`);
+        verificationContext = `
+ON-CHAIN DATA (Real-Time):
 - Token Address: ${input.tokenAddress}
 - Supply: ${check.supply}
 - Mint Authority: ${check.mintAuthority ? "ACTIVE (High Risk - Dev can print tokens)" : "REVOKED (Safe)"}
@@ -156,16 +168,17 @@ ${check.top10HolderPercentage !== undefined ? `- Top 10 Holder Concentration: ${
 ${check.creatorPercentage !== undefined ? `- Creator Holding: ${check.creatorPercentage.toFixed(2)}%` : ""}
 ${check.ownerPercentage !== undefined ? `- Owner Holding: ${check.ownerPercentage.toFixed(2)}%` : ""}
 ${check.totalLiquidity !== undefined ? `- Total Liquidity (USD): $${check.totalLiquidity.toLocaleString()}` : ""}
-
-INSTRUCTION: 
-1. Analyze the 'Holder Concentration'. If > 50%, flag as "Centralized Supply".
-2. Analyze 'Liquidity Locked'. If NO, flag as "Rug Hazard".
-3. Analyze 'Mint Authority'. If ACTIVE, flag as "Infinite Mint Risk".
 `;
-    } catch {
+      }
+    } catch (error) {
+      console.warn("Token check error:", error);
+      // Don't fail the whole eval, just skip detailed token context
+      options?.onProgress?.(`⚠️ Could not validate token: ${error instanceof Error ? error.message : 'Unknown error'}`);
       verificationContext = `
-ON-CHAIN VERIFICATION FAILED:
-Could not verify token address: ${input.tokenAddress}. Assume "Unverified" status.
+ON-CHAIN CHECK FAILED (System Error):
+- Token Address: ${input.tokenAddress}
+- Error: ${error instanceof Error ? error.message : String(error)}
+- Status: NOT VALIDATED
 `;
     }
   } else if (isLaunched) {
@@ -179,9 +192,9 @@ INTELLIGENCE GAP ALERT:
 `;
   } else {
     verificationContext = `
-ON-CHAIN STATUS:
-- Not yet launched (or no CA provided).
-- Assume 'Pre-Launch' phase.
+ON-CHAIN DATA:
+- No token address provided.
+- Status: Pre-Launch / Unvalidated
 `;
   }
 
@@ -208,19 +221,19 @@ ON-CHAIN STATUS:
           .join(', ');
 
         competitiveContext = `
-COMPETITIVE_MEMO:
-- Category: ${memo.categoryLabel}
-- Crowdedness: ${memo.crowdednessLevel}
-- Landscape: ${memo.shortLandscapeSummary}
-- Known Competitors: ${competitorList || "None specific listed"}
-- Evaluator Note: ${memo.evaluatorNotes}
+    COMPETITIVE_MEMO:
+    - Category: ${memo.categoryLabel}
+    - Crowdedness: ${memo.crowdednessLevel}
+    - Landscape: ${memo.shortLandscapeSummary}
+    - Known Competitors: ${competitorList || "None specific listed"}
+    - Evaluator Note: ${memo.evaluatorNotes}
 
-INSTRUCTION: Use this data to ground your 'Moat' and 'Market Fit' scores.
+    INSTRUCTION: Use this data to ground your 'Moat' and 'Market Fit' scores.
 `;
       }
     } catch (err) {
       console.warn("Failed to fetch competitive memo (non-blocking):", err);
-      options?.onProgress?.(`Competitive memo skipped (non-blocking)`);
+      options?.onProgress?.(`Competitive memo skipped(non - blocking)`);
     }
   }
 
@@ -234,7 +247,7 @@ ${competitiveContext}
 Idea Submission:
 ${JSON.stringify(input, null, 2)}
 
-${JSON_OUTPUT_SCHEMA}`;
+${JSON_OUTPUT_SCHEMA} `;
 
   try {
     const { provider, model, displayName, reasoningEffort } = getEnvModelConfig();
@@ -262,7 +275,7 @@ ${JSON_OUTPUT_SCHEMA}`;
     });
 
     const generation = trace.generation({
-      name: `evaluator-${provider}`,
+      name: `evaluator - ${provider} `,
       model: model,
       input: userContent
     });
@@ -271,7 +284,7 @@ ${JSON_OUTPUT_SCHEMA}`;
 
     // --- GOOGLE GEMINI EXECUTION ---
     if (provider === "google") {
-      options?.onProgress?.(`Initializing Gemini (${model})...`);
+      options?.onProgress?.(`Initializing Gemini(${model})...`);
 
       try {
         const client = gemini();
@@ -376,7 +389,7 @@ ${JSON_OUTPUT_SCHEMA}`;
 
       } catch (error: any) {
         // Fallback to gpt-5-mini (cost-optimized GPT-5 variant)
-        console.warn(`[Evaluator] Primary model '${model}' failed (${error.message || error.status}). Falling back to 'gpt-5-mini'.`);
+        console.warn(`[Evaluator] Primary model '${model}' failed(${error.message || error.status}).Falling back to 'gpt-5-mini'.`);
 
         // Retry with gpt-5-mini as safe fallback
         const fallbackParams = {
@@ -450,7 +463,7 @@ ${JSON_OUTPUT_SCHEMA}`;
 
     console.error("Error evaluating idea with OpenAI:", error);
     throw new Error(
-      `Failed to evaluate idea: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to evaluate idea: ${error instanceof Error ? error.message : "Unknown error"} `
     );
   }
 }

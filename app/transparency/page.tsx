@@ -6,6 +6,9 @@ import Link from 'next/link';
 export const metadata = {
     title: 'Transparency & Methodology | PrediktFi',
     description: 'How PrediktFi evaluates Web3 projects using Neuro-Symbolic AI and on-chain verification.',
+    alternates: {
+        canonical: '/transparency',
+    },
 };
 
 export default function TransparencyPage() {

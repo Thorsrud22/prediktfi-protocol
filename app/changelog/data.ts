@@ -11,6 +11,19 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
     {
+        version: "1.11.0",
+        date: "Feb 05, 2026",
+        title: "Studio Experience & Trust Polish",
+        description: "A significant polish to the Studio workflow, focusing on clarity, trust, and mobile usability.",
+        changes: [
+            { category: 'feature', text: 'Revamped Post-Report Actions: A unified panel for Sharing, Refining, and Committing insights.' },
+            { category: 'feature', text: 'Progressive Logs: New adaptive analysis view that keeps technical details accessible but unobtrusive.' },
+            { category: 'improvement', text: 'Evaluation Trust: Refined terminology to strictly distinguish "Data Checks" from "Security verification".' },
+            { category: 'improvement', text: 'Mobile Reading Mode: Optimized layout on legal pages for distraction-free reading.' },
+            { category: 'fix', text: 'Token Validation: Enhanced error handling for pre-launch and invalid token addresses.' }
+        ]
+    },
+    {
         version: "1.10.0",
         date: "Feb 04, 2026",
         title: "SEO, CMS & UX Hardening",
