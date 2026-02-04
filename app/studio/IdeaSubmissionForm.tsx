@@ -612,17 +612,19 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                     {/* RIGHT COLUMN: DESCRIPTION */}
                     <div className="lg:col-span-8 flex flex-col h-full">
-                        <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                        <label htmlFor="pitch-description" className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                             The Pitch <span className="text-blue-400 ml-1">*</span>
                         </label>
                         <textarea
+                            id="pitch-description"
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
                             placeholder="e.g., A Solana memecoin that taxes sells to fund carbon credits. Target: eco-conscious degens. Vibe: Pepe meets Al Gore."
+                            aria-describedby={errors.description ? "pitch-error" : undefined}
                             className="w-full flex-1 p-6 bg-slate-900/60 border border-white/5 text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-mono text-sm leading-relaxed rounded-2xl min-h-[300px]"
                         />
                         {errors.description && (
-                            <p className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
+                            <p id="pitch-error" className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
                                 <AlertCircle size={12} /> {errors.description}
                             </p>
                         )}
@@ -678,8 +680,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                             {/* Token Address */}
                             <div>
-                                <label className="text-white/40 text-xs mb-2 block">Token Address (Optional)</label>
+                                <label htmlFor="token-address" className="text-white/40 text-xs mb-2 block">Token Address (Optional)</label>
                                 <input
+                                    id="token-address"
                                     type="text"
                                     value={formData.tokenAddress}
                                     onChange={(e) => handleChange('tokenAddress', e.target.value)}
@@ -691,8 +694,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             {/* SECTOR SPECIFIC EXTRA FIELDS */}
                             {formData.projectType === 'memecoin' && (
                                 <div>
-                                    <label className="text-white/40 text-xs mb-2 block">Community Vibe</label>
+                                    <label htmlFor="community-vibe" className="text-white/40 text-xs mb-2 block">Community Vibe</label>
                                     <select
+                                        id="community-vibe"
                                         value={formData.memecoinVibe || ''}
                                         onChange={(e) => handleChange('memecoinVibe', e.target.value)}
                                         className="w-full p-3 bg-slate-900/60 border border-white/5 rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none appearance-none cursor-pointer"
@@ -712,8 +716,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                             {/* Success Def */}
                             <div>
-                                <label className="text-white/40 text-xs mb-2 block">Success Definition</label>
+                                <label htmlFor="success-definition" className="text-white/40 text-xs mb-2 block">Success Definition</label>
                                 <input
+                                    id="success-definition"
                                     type="text"
                                     value={formData.successDefinition}
                                     onChange={(e) => handleChange('successDefinition', e.target.value)}

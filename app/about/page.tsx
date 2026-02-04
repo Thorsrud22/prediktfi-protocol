@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { Metadata } from "next";
 
+// Merged metadata export
 export const metadata: Metadata = {
   title: "About",
   description: "Learn about Predikt - the AI-powered evaluation studio built on Solana.",
+  alternates: {
+    canonical: '/about',
+  },
 };
 
 export default function AboutPage() {

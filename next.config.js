@@ -10,6 +10,16 @@ const nextConfig = {
 
 
   // Performance optimizations
+  async redirects() {
+    return [
+      {
+        source: '/policy',
+        destination: '/legal/privacy',
+        permanent: true,
+      },
+    ];
+  },
+
   webpack: (config, { dev, isServer, webpack }) => {
     // Universal alias to kill the build error (REMOVED - root cause was splitChunks)
     // config.plugins.push(...)

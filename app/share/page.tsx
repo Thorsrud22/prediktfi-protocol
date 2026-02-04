@@ -31,6 +31,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     return {
         title: `${title} - Score: ${score}/100 • Predikt`,
         description: `Check out the AI evaluation for ${title}. Just validated on Predikt protocol.`,
+        alternates: {
+            canonical: '/share',
+        },
         openGraph: {
             title: `${title} - Score: ${score}/100`,
             description: `AI-verified crypto project evaluation.`,

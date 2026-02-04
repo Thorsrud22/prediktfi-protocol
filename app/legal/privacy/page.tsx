@@ -1,8 +1,12 @@
 import { Metadata } from 'next';
 
+// Merged metadata export
 export const metadata: Metadata = {
   title: 'Privacy Policy • Predikt',
   description: 'Privacy policy for Predikt evaluation platform.',
+  alternates: {
+    canonical: '/legal/privacy',
+  },
 };
 
 export default function PrivacyPage() {
@@ -41,6 +45,27 @@ export default function PrivacyPage() {
                   Standard server logs
                 </li>
               </ul>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-cyan-500 rounded-full" />
+                Terms of Use
+              </h2>
+              <div className="space-y-6 text-slate-400 leading-relaxed">
+                <div>
+                  <strong className="text-white block mb-2">Geographic Restrictions</strong>
+                  <p>Access to certain features may be restricted in specific jurisdictions based on local regulations. We comply with applicable laws and regulations in the regions where we operate.</p>
+                </div>
+                <div>
+                  <strong className="text-white block mb-2">Responsible Use</strong>
+                  <p>Users are expected to use the platform responsibly and in accordance with applicable laws. Predictions should be used for information discovery and insight sharing purposes.</p>
+                </div>
+                <div>
+                  <strong className="text-white block mb-2">Age Restriction</strong>
+                  <p>Users must be at least 18 years old to use our evaluation studio.</p>
+                </div>
+              </div>
             </section>
 
             <section>

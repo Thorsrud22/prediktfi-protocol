@@ -28,8 +28,8 @@ export default function TransparencyPage() {
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-white">Prompt & Pray.</span>
                     </h1>
                     <p className="text-xl text-slate-400 max-w-2xl leading-relaxed">
-                        PrediktFi uses a <strong>Neuro-Symbolic Architecture</strong>. We combine the reasoning power of
-                        <span className="text-white font-mono bg-white/5 px-2 py-0.5 rounded mx-1">GPT-5.2</span>
+                        PrediktFi uses a <strong>Neuro-Symbolic Architecture</strong>. We combine the reasoning power of{' '}
+                        <span className="text-white font-mono bg-white/5 px-2 py-0.5 rounded mx-1">GPT-5.2</span>{' '}
                         with rigid, deterministic code that enforces investor discipline.
                     </p>
                 </div>

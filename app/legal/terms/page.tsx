@@ -1,8 +1,12 @@
 import { Metadata } from 'next';
 
+// Merged metadata export
 export const metadata: Metadata = {
   title: 'Terms of Service • Predikt',
   description: 'Terms of service for Predikt evaluation platform.',
+  alternates: {
+    canonical: '/legal/terms',
+  },
 };
 
 export default function TermsPage() {

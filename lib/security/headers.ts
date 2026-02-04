@@ -62,12 +62,21 @@ export const CSP_POLICY = {
  * Generate CSP header value
  */
 export function generateCSP(): string {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   return Object.entries(CSP_POLICY)
     .map(([directive, sources]) => {
-      if (sources.length === 0) {
+      let finalSources = [...sources];
+
+      // Remove unsafe-eval in production for script-src
+      if (isProduction && directive === 'script-src') {
+        finalSources = finalSources.filter(s => s !== "'unsafe-eval'");
+      }
+
+      if (finalSources.length === 0) {
         return directive;
       }
-      return `${directive} ${sources.join(' ')}`;
+      return `${directive} ${finalSources.join(' ')}`;
     })
     .join('; ');
 }

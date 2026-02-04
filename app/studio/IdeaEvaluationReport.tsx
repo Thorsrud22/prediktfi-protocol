@@ -11,9 +11,11 @@ import {
     Sparkles,
     Activity,
     Download,
+    Link as LinkIcon,
     Flag
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useToast } from '../components/ToastProvider';
 
 const RadarChart = dynamic(() => import('../components/charts/RadarChart'), {
     loading: () => <div className="w-full h-64 bg-white/5 animate-pulse rounded-xl" />,
@@ -41,31 +43,31 @@ interface IdeaEvaluationReportProps {
     evalId?: string | null;
 }
 
+
+
 export default function IdeaEvaluationReport({ result, onEdit, onStartNew, ownerAddress, isExample, evalId }: IdeaEvaluationReportProps) {
     const { publicKey } = useSimplifiedWallet();
+    const { addToast } = useToast();
+
+    const getShareUrlParams = () => {
+        if (evalId) {
+            return `https://prediktfi.xyz/idea/${evalId}`;
+        }
+        const params = new URLSearchParams();
+        params.set('title', result.summary.title);
+        params.set('score', result.overallScore.toString());
+
+        // Metrics
+        params.set('tech', result.technical.feasibilityScore.toString());
+        params.set('market', result.market.marketFitScore.toString());
+        params.set('execution', (100 - (result.execution?.executionRiskScore || 50)).toString());
+        params.set('token', result.projectType === 'ai' ? '50' : result.tokenomics.designScore.toString());
+
+        return `https://prediktfi.xyz/share?${params.toString()}`;
+    };
 
     const handleShare = () => {
-        // Construct Share URL
-        // If we have an evalId (permalink), use that.
-        // Otherwise use the dynamic /share page.
-
-        let shareUrl = '';
-        if (evalId) {
-            shareUrl = `https://prediktfi.xyz/idea/${evalId}`;
-        } else {
-            const params = new URLSearchParams();
-            params.set('title', result.summary.title);
-            params.set('score', result.overallScore.toString());
-
-            // Metrics
-            params.set('tech', result.technical.feasibilityScore.toString());
-            params.set('market', result.market.marketFitScore.toString());
-            params.set('execution', (100 - (result.execution?.executionRiskScore || 50)).toString());
-            params.set('token', result.projectType === 'ai' ? '50' : result.tokenomics.designScore.toString());
-
-            shareUrl = `https://prediktfi.xyz/share?${params.toString()}`;
-        }
-
+        const shareUrl = getShareUrlParams();
         const text = `I just used AI to stress-test my crypto project idea.
 
 Score: ${result.overallScore}/100 🔮
@@ -74,6 +76,24 @@ Get your own evaluation here:`;
 
         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
         window.open(twitterUrl, '_blank');
+    };
+
+    const handleCopyLink = () => {
+        const shareUrl = getShareUrlParams();
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            addToast({
+                title: "Link Copied",
+                description: "Share URL copied to clipboard",
+                variant: 'success',
+                duration: 2000
+            });
+        }).catch(() => {
+            addToast({
+                title: "Error",
+                description: "Failed to copy link",
+                variant: 'error'
+            });
+        });
     };
 
     // Check ownership
@@ -231,9 +251,9 @@ Get your own evaluation here:`;
                         <button
                             onClick={handleDownloadPDF}
                             className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-white/5 active:scale-95"
-                            title="Download PDF Report"
+                            title="Print or Save as PDF"
                         >
-                            <Download size={14} /> PDF
+                            <Download size={14} /> Print / Save PDF
                         </button>
                     </div>
                 </div>
@@ -547,16 +567,29 @@ Get your own evaluation here:`;
                         </button>
                     )}
 
-                    {/* Share Button (Viral Loop) */}
-                    <button
-                        onClick={handleShare}
-                        className="flex-1 bg-black text-white border border-white/20 p-5 hover:bg-gray-900 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl shadow-lg flex items-center justify-center gap-3 active:scale-95 group"
-                    >
-                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white group-hover:scale-110 transition-transform">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                        </svg>
-                        Share Result
-                    </button>
+
+                    {/* Share Button Group */}
+                    <div className="flex-1 flex gap-2">
+                        {/* Copy Link */}
+                        <button
+                            onClick={handleCopyLink}
+                            className="bg-white/5 border border-white/10 text-white p-5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl flex items-center justify-center gap-2 active:scale-95 group"
+                            title="Copy Link"
+                        >
+                            <LinkIcon size={16} className="text-white/60 group-hover:text-white transition-colors" />
+                        </button>
+
+                        {/* Share on X */}
+                        <button
+                            onClick={handleShare}
+                            className="flex-1 bg-black text-white border border-white/20 p-5 hover:bg-gray-900 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-2xl shadow-lg flex items-center justify-center gap-3 active:scale-95 group"
+                        >
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white group-hover:scale-110 transition-transform">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                            Share Result
+                        </button>
+                    </div>
                 </div>
 
             </div>

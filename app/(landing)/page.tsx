@@ -5,6 +5,14 @@ import LandingHero from '../components/landing/LandingHero';
 export const dynamic = "force-static";
 export const revalidate = 86400;
 
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/',
+  },
+}
+
 export default function Home() {
   return (
     <div className="relative min-h-screen overflow-hidden">

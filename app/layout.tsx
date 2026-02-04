@@ -37,14 +37,14 @@ const inter = Inter({
 const isProduction = process.env.NODE_ENV === 'production' && process.env.SOLANA_CLUSTER !== 'devnet';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://prediktfi.xyz"),
   title: {
     default: "PrediktFi — AI Evaluation Protocol for Web3",
     template: "%s | PrediktFi",
   },
   description: "Institutional-grade AI evaluation for Web3, DeFi, and Memecoins. Real-time market signals and on-chain security verification.",
   alternates: {
-    canonical: isProduction ? '/' : undefined,
+    // canonical: isProduction ? '/' : undefined, // Deleted to force explicit canonicals per page
   },
   robots: isProduction ? undefined : {
     index: false,

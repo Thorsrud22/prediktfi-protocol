@@ -98,13 +98,13 @@ const AuthenticationPrompt = React.memo(
 
         {/* Option 2: Email (Secondary) */}
         <button
-          onClick={() => alert("Email login is coming soon. For now, please use a wallet to save your progress on-chain, or use the Studio without logging in.")}
-          className="w-full px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-3 group"
+          disabled
+          className="w-full px-8 py-4 bg-white/5 border border-white/5 text-white/40 font-bold rounded-2xl cursor-not-allowed transition-all flex items-center justify-center gap-3"
         >
-          <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
-          <span className="text-sm uppercase tracking-wider">Continue with Email</span>
+          <span className="text-sm uppercase tracking-wider">Email Login (Coming Soon)</span>
         </button>
       </div>
 

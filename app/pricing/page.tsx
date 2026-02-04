@@ -1,7 +1,14 @@
-'use client'
+
 import React from 'react'
 import Link from 'next/link' // Import Link for internal navigation
 import { Check, ArrowRight, Zap, Shield, Globe } from 'lucide-react'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/pricing',
+  },
+}
 
 export default function PricingPage() {
   return (
