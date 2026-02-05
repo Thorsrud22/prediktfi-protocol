@@ -72,23 +72,17 @@ export default function ProcessTimeline() {
 
                 const isLeft = index % 2 === 0;
 
-                gsap.fromTo(step,
-                    {
-                        opacity: 0,
-                        x: isLeft ? -30 : 30, // Reduced travel distance
-                    },
-                    {
-                        opacity: 1,
-                        x: 0,
-                        duration: 0.6,
-                        ease: 'power2.out',
-                        scrollTrigger: {
-                            trigger: step,
-                            start: 'top 85%',
-                            toggleActions: 'play none none reverse'
-                        }
+                gsap.from(step, {
+                    opacity: 0,
+                    x: isLeft ? -30 : 30, // Reduced travel distance
+                    duration: 0.6,
+                    ease: 'power2.out',
+                    scrollTrigger: {
+                        trigger: step,
+                        start: 'top 85%',
+                        toggleActions: 'play none none reverse'
                     }
-                );
+                });
             });
         }, containerRef);
 
