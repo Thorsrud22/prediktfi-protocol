@@ -145,7 +145,7 @@ export default function AppPillNav() {
       {/* Main Navigation - Hidden on mobile to prevent overlap */}
       <div
         id="debug-navbar"
-        className={`hidden sm:block fixed top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'
+        className={`hidden sm:block ${pathname?.startsWith('/studio') ? 'absolute' : 'fixed'} top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'
           }`}
       >
         {/* Pill Nav - Outer wrapper with ring */}
@@ -195,7 +195,7 @@ export default function AppPillNav() {
               ? 'bg-white/5 text-slate-200 hover:bg-white/10 ring-1 ring-inset ring-white/10'
               : 'bg-white/5 text-slate-400 hover:bg-white/10 ring-1 ring-inset ring-white/5'
               }`}
-            aria-label="Account Dashboard"
+            aria-label="Account"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

@@ -77,6 +77,8 @@ describe('AI Idea Evaluator Studio', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         window.scrollTo = vi.fn();
+        window.HTMLElement.prototype.scrollIntoView = vi.fn();
+
 
         // Default mock for Quota calls
         (global.fetch as any).mockImplementation((url: string) => {

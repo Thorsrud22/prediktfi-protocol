@@ -84,6 +84,7 @@ export default async function RootLayout({
       <head>
         <meta name="x-plan" content={plan} />
         <script
+          suppressHydrationWarning
           nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
@@ -167,6 +168,7 @@ export default async function RootLayout({
           }}
         />
         <script
+          suppressHydrationWarning
           nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `

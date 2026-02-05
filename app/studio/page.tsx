@@ -305,6 +305,7 @@ export default function StudioPage() {
               <IdeaSubmissionForm
                 onSubmit={handleEvaluate}
                 isSubmitting={isAnalyzing}
+                initialData={submissionData || undefined}
                 quota={quota}
                 streamingSteps={streamingSteps}
                 streamingThoughts={streamingThoughts}

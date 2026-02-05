@@ -431,6 +431,13 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         targetDAU: '',
     });
 
+    // Sync form state with initialData when it changes (for "Refine Input" flow)
+    useEffect(() => {
+        if (initialData) {
+            setFormData(prev => ({ ...prev, ...initialData }));
+        }
+    }, [initialData]);
+
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showAdvanced, setShowAdvanced] = useState(false);
 

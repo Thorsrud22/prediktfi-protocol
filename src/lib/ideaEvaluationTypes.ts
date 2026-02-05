@@ -86,6 +86,8 @@ export type IdeaEvaluationResult = {
     top10HolderPercentage?: number;
     totalLiquidity?: number;
     creatorPercentage?: number;
+    // Verification status
+    isVerified?: boolean; // true when token address was provided and on-chain check ran
   };
 
   calibrationNotes?: string[];

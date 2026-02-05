@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getEvalCount, getClientIdentifier } from "@/app/lib/ratelimit";
+import { getEvalCount, getClientIdentifier, isRedisAvailable, getBonusQuota } from "@/app/lib/ratelimit";
 
 export const dynamic = 'force-dynamic';
 
@@ -18,25 +18,45 @@ export async function GET(request: NextRequest) {
         const isWallet = !!walletAddress && walletAddress.length > 30;
         const plan = isWallet ? 'idea_eval_wallet' : 'idea_eval_ip';
 
-        console.log(`[QuotaAPI] Request from: ${identifier} (isWallet=${isWallet}) -> Plan: ${plan}`);
+        // Check if Redis is available for reliable quota tracking
+        const redisAvailable = isRedisAvailable();
+        
+        if (!redisAvailable) {
+            console.warn(`[QuotaAPI] Redis unavailable - quota tracking unreliable for ${identifier}`);
+            // Return unknown/unlimited state when Redis isn't available
+            // This prevents showing misleading "3 left of 3" that never changes
+            return NextResponse.json({
+                limit: LIMITS[plan],
+                remaining: -1, // -1 indicates "unknown/unlimited" in the UI
+                used: 0,
+                identifier,
+                plan,
+                reliable: false,
+                message: 'Quota tracking unavailable'
+            });
+        }
 
         const used = await getEvalCount(identifier, plan);
-        const limit = LIMITS[plan];
-        const remaining = Math.max(0, limit - used);
+        const bonus = await getBonusQuota(identifier);
+        const baseLimit = LIMITS[plan];
+        const effectiveLimit = baseLimit + bonus;
+        const remaining = Math.max(0, effectiveLimit - used);
 
-        console.log(`[QuotaAPI] ${identifier}: used=${used}, limit=${limit}, remaining=${remaining}`);
+        console.log(`[QuotaAPI] ${identifier}: used=${used}, limit=${baseLimit}, bonus=${bonus}, remaining=${remaining}`);
 
         return NextResponse.json({
-            limit,
+            limit: effectiveLimit,
             remaining,
             used,
             identifier,
-            plan
+            plan,
+            reliable: true,
+            bonus
         });
     } catch (error) {
         console.error('Error fetching quota:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch quota' },
+            { error: 'Failed to fetch quota', reliable: false },
             { status: 500 }
         );
     }

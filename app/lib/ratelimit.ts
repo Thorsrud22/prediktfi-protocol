@@ -10,12 +10,23 @@ import { handler } from 'next/dist/build/templates/app-page';
 import { number } from 'zod';
 
 // Initialize Redis (fallback to in-memory for development)
-const redis = process.env.UPSTASH_REDIS_REST_URL
+// Support both Vercel KV naming (KV_REST_API_*) and traditional Upstash naming (UPSTASH_REDIS_REST_*)
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
+const redis = redisUrl && redisToken
   ? new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    url: redisUrl,
+    token: redisToken,
   })
   : null;
+
+/**
+ * Check if Redis is available for reliable quota tracking
+ */
+export function isRedisAvailable(): boolean {
+  return redis !== null;
+}
 
 // Rate limiters for different user tiers
 const rateLimiters = redis ? {

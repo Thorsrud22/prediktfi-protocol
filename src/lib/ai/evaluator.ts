@@ -238,16 +238,37 @@ ON-CHAIN DATA:
   }
 
   // 4. Build final user prompt
-  const userContent = `Idea Context:
+  const baseUserContent = `Idea Context:
 ${contextSummary}
 ${marketContext}
 ${verificationContext}
 ${competitiveContext}
 
 Idea Submission:
-${JSON.stringify(input, null, 2)}
+${JSON.stringify(input, null, 2)}`;
 
-${JSON_OUTPUT_SCHEMA} `;
+  const generationContent = `${baseUserContent}\n\n${JSON_OUTPUT_SCHEMA}`;
+
+  // --- EARLY QUOTA CHECK: Fail fast before wasting user's time ---
+  // This prevents the "bait and switch" where users wait through thinking phase
+  // only to get a demo result at the end
+  try {
+    options?.onProgress?.("Validating API access...");
+    await openai().chat.completions.create({
+      model: 'gpt-4o-mini', // Cheapest model for validation
+      messages: [{ role: 'user', content: 'ok' }],
+      max_tokens: 1
+    });
+  } catch (pingError: any) {
+    if (pingError.status === 429 || pingError.code === 'insufficient_quota' || pingError.message?.includes('429')) {
+      console.warn("[Evaluator] Early quota check failed: 429. Returning demo mode immediately.");
+      options?.onProgress?.("⚠️ API quota exhausted. Switching to demo mode...");
+      await new Promise(r => setTimeout(r, 500)); // Brief pause for UX
+      return SAFE_DEMO_RESULT;
+    }
+    // Other errors (network, auth) - log but continue, let the main flow handle
+    console.warn("[Evaluator] Early quota check failed with non-429 error:", pingError.message);
+  }
 
   try {
     const { provider, model, displayName, reasoningEffort } = getEnvModelConfig();
@@ -270,14 +291,14 @@ ${JSON_OUTPUT_SCHEMA} `;
       },
       input: {
         system: VALIDATOR_SYSTEM_PROMPT,
-        user: userContent
+        user: generationContent
       }
     });
 
     const generation = trace.generation({
       name: `evaluator - ${provider} `,
       model: model,
-      input: userContent
+      input: generationContent
     });
 
     let response;
@@ -294,7 +315,7 @@ ${JSON_OUTPUT_SCHEMA} `;
 
         const result = await client.models.generateContent({
           model: model,
-          contents: [{ role: 'user', parts: [{ text: userContent }] }],
+          contents: [{ role: 'user', parts: [{ text: generationContent }] }],
           config: {
             responseMimeType: "application/json",
             systemInstruction: { parts: [{ text: VALIDATOR_SYSTEM_PROMPT }] }
@@ -329,7 +350,7 @@ ${JSON_OUTPUT_SCHEMA} `;
       // Prepare messages
       const messages = [
         { role: "system", content: VALIDATOR_SYSTEM_PROMPT },
-        { role: "user", content: userContent }
+        { role: "user", content: generationContent }
       ];
 
       // Use standard Chat Completions API with extra params if needed
@@ -357,7 +378,7 @@ ${JSON_OUTPUT_SCHEMA} `;
               model: model,
               messages: [
                 { role: "system", content: ANALYSIS_STREAM_PROMPT },
-                { role: "user", content: userContent }
+                { role: "user", content: baseUserContent } // Use base content without schema for pure analysis
               ],
               stream: true
             };
@@ -423,6 +444,11 @@ ${JSON_OUTPUT_SCHEMA} `;
       result.execution.estimatedTimeline = "Live / Deployed";
       if (!result.calibrationNotes) result.calibrationNotes = [];
       result.calibrationNotes.push("Timeline: Overridden to 'Live' loop due to detected launch status.");
+    }
+
+    // Set isVerified flag on cryptoNativeChecks based on whether token address was provided
+    if (result.cryptoNativeChecks) {
+      result.cryptoNativeChecks.isVerified = !!input.tokenAddress;
     }
 
     // Merge real competitor data from competitive memo into result

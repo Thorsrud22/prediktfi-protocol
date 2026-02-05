@@ -291,6 +291,23 @@ Get your own evaluation here:`;
                         <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border mt-2 inline-block ${getScoreBadgeClass(result.overallScore)}`}>
                             {getScoreLabel(result.overallScore)}
                         </span>
+
+                        {/* Score Methodology Explainer */}
+                        <div className="mt-4 text-[10px] text-white/40 max-w-md leading-relaxed">
+                            <span className="font-bold text-white/60">Score breakdown: </span>
+                            Technical ({result.technical.feasibilityScore}) + Market ({result.market.marketFitScore}) + Execution ({100 - (result.execution?.executionRiskScore || 50)})
+                            {result.projectType === 'ai' && result.aiStrategy
+                                ? ` + AI (${Math.round((result.aiStrategy.modelQualityScore + result.aiStrategy.dataMoatScore + result.aiStrategy.userAcquisitionScore) / 3)})`
+                                : ` + Token (${result.tokenomics.designScore})`
+                            }
+                        </div>
+
+                        {/* Tier Legend */}
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[9px] text-white/30">
+                            <span><span className="text-emerald-400">●</span> 75+ Strong Potential</span>
+                            <span><span className="text-amber-400">●</span> 50-74 Watchlist</span>
+                            <span><span className="text-red-400">●</span> &lt;50 Pass</span>
+                        </div>
                     </div>
 
                     {/* RIGHT: RISK RADAR (1/3) */}
@@ -363,52 +380,76 @@ Get your own evaluation here:`;
                         <Terminal size={18} />
                         <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Market Intelligence</h3>
                     </div>
-                    {result.market?.competitors && result.market.competitors.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                                <thead>
-                                    <tr className="text-left text-white/40 uppercase tracking-widest text-[9px] border-b border-white/5">
-                                        <th className="pb-2 pr-4">Competitor</th>
-                                        <th className="pb-2 pr-4">MCap/TVL</th>
-                                        <th className="pb-2 pr-4">Users</th>
-                                        <th className="pb-2">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {result.market.competitors.slice(0, 4).map((comp, i) => {
-                                        const primaryMetric =
-                                            comp.metrics?.marketCap && comp.metrics.marketCap !== 'N/A' ? comp.metrics.marketCap :
-                                                comp.metrics?.tvl && comp.metrics.tvl !== 'N/A' ? comp.metrics.tvl :
-                                                    comp.metrics?.funding && comp.metrics.funding.includes('$') ? comp.metrics.funding : '-';
+                    {(() => {
+                        // Helper to check if a value is "real" data
+                        const hasValue = (v?: string) => v && v !== 'N/A' && v !== '-' && v !== 'unknown' && v.trim() !== '';
 
-                                        const users = comp.metrics?.dailyUsers && comp.metrics.dailyUsers !== 'N/A' ? comp.metrics.dailyUsers : '-';
+                        // Filter competitors with at least one real metric
+                        const competitorsWithData = (result.market?.competitors || []).filter(comp => {
+                            const m = comp.metrics;
+                            if (!m) return false;
+                            return hasValue(m.marketCap) || hasValue(m.tvl) || hasValue(m.dailyUsers) || hasValue(m.funding) || hasValue(m.revenue);
+                        });
 
-                                        return (
-                                            <tr key={i} className="border-b border-white/5 hover:bg-white/5">
-                                                <td className="py-2 pr-4 text-blue-100 font-bold">{comp.name}</td>
-                                                <td className="py-2 pr-4 text-white/60 font-mono">{primaryMetric}</td>
-                                                <td className="py-2 pr-4 text-white/60 font-mono">{users}</td>
-                                                <td className="py-2">
-                                                    <span className="text-[9px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded font-mono">
-                                                        Active
-                                                    </span>
-                                                </td>
+                        if (competitorsWithData.length > 0) {
+                            return (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="text-left text-white/40 uppercase tracking-widest text-[9px] border-b border-white/5">
+                                                <th className="pb-2 pr-4">Competitor</th>
+                                                <th className="pb-2 pr-4">MCap/TVL</th>
+                                                <th className="pb-2 pr-4">Users</th>
+                                                <th className="pb-2">Status</th>
                                             </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <ul className="space-y-2">
-                            {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
-                                <li key={i} className="flex gap-3 text-blue-200/80 text-xs">
-                                    <span className="text-blue-500">•</span>
-                                    <span>{signal}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                                        </thead>
+                                        <tbody>
+                                            {competitorsWithData.slice(0, 4).map((comp, i) => {
+                                                const primaryMetric =
+                                                    hasValue(comp.metrics?.marketCap) ? comp.metrics!.marketCap :
+                                                        hasValue(comp.metrics?.tvl) ? comp.metrics!.tvl :
+                                                            hasValue(comp.metrics?.funding) ? comp.metrics!.funding : '—';
+
+                                                const users = hasValue(comp.metrics?.dailyUsers) ? comp.metrics!.dailyUsers : '—';
+
+                                                return (
+                                                    <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                                                        <td className="py-2 pr-4 text-blue-100 font-bold">{comp.name}</td>
+                                                        <td className="py-2 pr-4 text-white/60 font-mono">{primaryMetric}</td>
+                                                        <td className="py-2 pr-4 text-white/60 font-mono">{users}</td>
+                                                        <td className="py-2">
+                                                            <span className="text-[9px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded font-mono">
+                                                                Active
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            );
+                        } else if ((result.market?.competitorSignals ?? []).length > 0) {
+                            // Fallback to competitor signals if no structured data
+                            return (
+                                <ul className="space-y-2">
+                                    {(result.market?.competitorSignals ?? []).slice(0, 5).map((signal, i) => (
+                                        <li key={i} className="flex gap-3 text-blue-200/80 text-xs">
+                                            <span className="text-blue-500">•</span>
+                                            <span>{signal}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            );
+                        } else {
+                            // No real data available
+                            return (
+                                <p className="text-white/40 text-xs italic">
+                                    Competitive landscape data not available for this category. Consider providing a token address or more project details.
+                                </p>
+                            );
+                        }
+                    })()}
                 </div>
 
                 {/* THREAT DETECTION + CALIBRATION (2-col grid) */}
@@ -472,6 +513,16 @@ Get your own evaluation here:`;
                                 <Shield size={18} />
                                 <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Security Check</h3>
                             </div>
+                            {/* Verification status indicator */}
+                            {result.cryptoNativeChecks.isVerified ? (
+                                <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded font-bold uppercase tracking-wider flex items-center gap-1">
+                                    🔗 On-Chain Verified
+                                </span>
+                            ) : (
+                                <span className="text-[9px] bg-amber-500/20 text-amber-400 px-2 py-1 rounded font-bold uppercase tracking-wider">
+                                    ⚠️ AI Estimate
+                                </span>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -506,6 +557,12 @@ Get your own evaluation here:`;
                                 </div>
                             )}
                         </div>
+                        {/* Help text when not verified */}
+                        {!result.cryptoNativeChecks.isVerified && (
+                            <p className="text-[10px] text-white/30 mt-4 italic">
+                                💡 Provide a token address for verified on-chain security checks.
+                            </p>
+                        )}
                     </div>
                 )}
 
