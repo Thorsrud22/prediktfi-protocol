@@ -20,7 +20,9 @@ export const changelogData: ChangelogEntry[] = [
             { category: 'feature', text: 'Progressive Logs: New adaptive analysis view that keeps technical details accessible but unobtrusive.' },
             { category: 'improvement', text: 'Evaluation Trust: Refined terminology to strictly distinguish "Data Checks" from "Security verification".' },
             { category: 'improvement', text: 'Mobile Reading Mode: Optimized layout on legal pages for distraction-free reading.' },
-            { category: 'fix', text: 'Token Validation: Enhanced error handling for pre-launch and invalid token addresses.' }
+            { category: 'fix', text: 'Token Validation: Enhanced error handling for pre-launch and invalid token addresses.' },
+            { category: 'security', text: 'Hardening: Configured rewrite for /security.txt to serve centralized disclosure file.' },
+            { category: 'removed', text: 'Cleanup: Removed legacy /api/studio/templates endpoint to reduce attack surface.' }
         ]
     },
     {

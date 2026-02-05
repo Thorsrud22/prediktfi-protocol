@@ -28,6 +28,7 @@ export default function StudioPage() {
   const [commitStatus, setCommitStatus] = useState<'idle' | 'committing' | 'success' | 'error'>('idle');
   const [insightId, setInsightId] = useState<string | null>(null);
   const [quota, setQuota] = useState<{ limit: number; remaining: number } | null>(null);
+  const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
 
   // Performance tracking
   usePerformanceTracking('StudioPage');
@@ -45,7 +46,10 @@ export default function StudioPage() {
       try {
         // console.log('[Studio] Fetching quota. PublicKey:', publicKey);
         const addressParam = publicKey ? `?walletAddress=${publicKey}` : '';
-        const res = await fetch(`/api/idea-evaluator/quota${addressParam}`, {
+        // Add cache-busting timestamp to bypass any aggressive caching
+        const cacheBuster = `_t=${Date.now()}`;
+        const separator = addressParam ? '&' : '?';
+        const res = await fetch(`/api/idea-evaluator/quota${addressParam}${separator}${cacheBuster}`, {
           cache: 'no-store',
           headers: {
             'Pragma': 'no-cache',
@@ -62,7 +66,7 @@ export default function StudioPage() {
       }
     }
     fetchQuota();
-  }, [publicKey, evaluationResult]);
+  }, [publicKey, quotaRefreshKey]);
 
   // Stream reasoning steps for the UI
 
@@ -145,6 +149,8 @@ export default function StudioPage() {
                 setStreamingThoughts(thoughtAccumulator);
                 setEvaluationResult(event.result);
                 setCurrentStep('analysis');
+                // Trigger quota refresh after a small delay to ensure server has persisted increment
+                setTimeout(() => setQuotaRefreshKey(k => k + 1), 500);
 
                 // AUTO-SAVE if connected
                 // We use the local 'data' (submission) and 'event.result' variables because state updates are async

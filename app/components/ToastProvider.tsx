@@ -153,8 +153,9 @@ export default function ToastProvider({
 
   const toastContainer = mounted ? createPortal(
     <div
-      role="status"
-      aria-live="polite"
+      id="toast-portal"
+      className="toast-container"
+      aria-live="assertive"
       aria-atomic="true"
       aria-relevant="additions"
       style={{

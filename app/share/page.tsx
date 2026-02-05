@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Share2, Search, ExternalLink } from 'lucide-react';
+import { ArrowRight, Share2, Search, ExternalLink, AlertTriangle } from 'lucide-react';
 
 type Props = {
     searchParams: Promise<{
@@ -43,26 +43,30 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     if (params.execution) ogUrl.searchParams.set('execution', params.execution);
     if (params.token) ogUrl.searchParams.set('token', params.token);
 
+    // SECURITY: Param-based shares are unverified - use noindex and remove exact score from title
     return {
-        title: `${title} - Score: ${score}/100 • Predikt`,
-        description: `Check out the AI evaluation for ${title}. Just validated on Predikt protocol.`,
-        // Don't set canonical for share links with params - each is unique
+        title: `${title} - Shared Score • Predikt`,
+        description: `Shared evaluation preview for ${title}. For verified results, visit prediktfi.xyz/idea/{id}.`,
+        robots: {
+            index: false,  // Don't index param-based shares (can be forged)
+            follow: true,
+        },
         openGraph: {
-            title: `${title} - Score: ${score}/100`,
-            description: `AI-verified crypto project evaluation.`,
+            title: `${title} - Shared Preview (Unverified)`,
+            description: `This is an unverified share link. Authentic evaluations are available at prediktfi.xyz/idea/{id}`,
             images: [
                 {
                     url: ogUrl.toString(),
                     width: 1200,
                     height: 630,
-                    alt: `${title} Evaluation Score`,
+                    alt: `${title} Evaluation Preview`,
                 },
             ],
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${title} - Score: ${score}/100`,
-            description: `AI-verified crypto project evaluation.`,
+            title: `${title} - Shared Preview (Unverified)`,
+            description: `Unverified share link. For authentic evaluations, visit prediktfi.xyz`,
             images: [ogUrl.toString()],
         },
     }
@@ -163,10 +167,18 @@ export default async function SharePage({ searchParams }: Props) {
                     </p>
                 </div>
 
+                {/* UNVERIFIED WARNING BANNER */}
+                <div className="bg-amber-500/20 border border-amber-500/30 text-amber-200 p-3 rounded-xl mb-4 text-center flex items-center justify-center gap-2">
+                    <AlertTriangle size={14} className="text-amber-400" />
+                    <span className="text-xs font-bold uppercase tracking-widest">
+                        UNVERIFIED PREVIEW — Score not validated by Predikt
+                    </span>
+                </div>
+
                 {/* Score Card Preview */}
                 <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl mb-8 transform rotate-1 hover:rotate-0 transition-transform duration-500">
                     <div className="text-center">
-                        <div className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em] mb-4">Project Score</div>
+                        <div className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em] mb-4">Shared Score</div>
                         <div className="text-6xl sm:text-7xl font-black text-white mb-2 tracking-tighter">
                             {params.score}
                             <span className="text-2xl text-white/20 font-medium ml-2">/100</span>

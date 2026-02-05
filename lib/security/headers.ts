@@ -60,17 +60,33 @@ export const CSP_POLICY = {
 
 /**
  * Generate CSP header value
+ * @param nonce - Optional cryptographic nonce for inline scripts (production only)
  */
-export function generateCSP(): string {
+export function generateCSP(nonce?: string): string {
   const isProduction = process.env.NODE_ENV === 'production';
 
   return Object.entries(CSP_POLICY)
     .map(([directive, sources]) => {
       let finalSources = [...sources];
 
-      // Remove unsafe-eval in production for script-src
-      if (isProduction && directive === 'script-src') {
-        finalSources = finalSources.filter(s => s !== "'unsafe-eval'");
+      // Handle script-src directive
+      if (directive === 'script-src') {
+        // Always remove unsafe-eval in production
+        if (isProduction) {
+          finalSources = finalSources.filter(s => s !== "'unsafe-eval'");
+        }
+
+        // In production with nonce: replace 'unsafe-inline' with nonce + strict-dynamic
+        if (isProduction && nonce) {
+          finalSources = finalSources.filter(s => s !== "'unsafe-inline'");
+          // Add nonce and strict-dynamic for better security
+          // 'strict-dynamic' allows scripts loaded by trusted scripts
+          // Keep 'unsafe-inline' as fallback for older browsers (ignored when nonce present)
+          finalSources.push(`'nonce-${nonce}'`);
+          finalSources.push("'strict-dynamic'");
+          // Add additional allowed script sources
+          finalSources.push('https://va.vercel-scripts.com');
+        }
       }
 
       if (finalSources.length === 0) {
@@ -119,14 +135,22 @@ export const SECURITY_HEADERS = {
 
 /**
  * Apply security headers to response
+ * @param response - NextResponse to add headers to
+ * @param nonce - Optional cryptographic nonce for CSP inline scripts
  */
-export function applySecurityHeaders(response: NextResponse): NextResponse {
+export function applySecurityHeaders(response: NextResponse, nonce?: string): NextResponse {
   // Only apply HTTPS headers in production
   const isProduction = process.env.NODE_ENV === 'production';
 
   Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
     // Skip HTTPS-only headers in development
     if (!isProduction && key === 'Strict-Transport-Security') {
+      return;
+    }
+
+    // Override CSP with nonce-based version if nonce provided
+    if (key === 'Content-Security-Policy' && nonce) {
+      response.headers.set(key, generateCSP(nonce));
       return;
     }
 

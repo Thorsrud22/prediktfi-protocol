@@ -74,15 +74,17 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Get plan from middleware header
+  // Get plan and nonce from middleware headers
   const headersList = await headers();
   const plan = headersList.get('x-plan') || 'free';
+  const nonce = headersList.get('x-nonce') || '';
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="x-plan" content={plan} />
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
               (function () {
@@ -165,6 +167,7 @@ export default async function RootLayout({
           }}
         />
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
               // Hide Phantom wallet overlays as soon as possible

@@ -615,23 +615,30 @@ iframe[src*="phantom"],
   opacity: 0 !important;
 }
 
-/* Target common wallet overlay patterns */
-div[style*="position: fixed"][style*="z-index: 9999"],
-div[style*="position: fixed"][style*="z-index: 10000"],
-div[style*="position: fixed"][style*="z-index: 99999"] {
+/* Target common wallet overlay patterns - except toast container */
+div[style*="position: fixed"][style*="z-index: 9999"]:not(.toast-container),
+div[style*="position: fixed"][style*="z-index: 10000"]:not(.toast-container),
+div[style*="position: fixed"][style*="z-index: 99999"]:not(.toast-container) {
   display: none !important;
 }
 
 /* Common top-right positioned elements that are likely wallet overlays */
-div[style*="position: fixed"][style*="right: 16px"][style*="top: 16px"],
-div[style*="position: fixed"][style*="right: 20px"][style*="top: 20px"],
-div[style*="position: fixed"][style*="right: 24px"][style*="top: 24px"] {
+div[style*="position: fixed"][style*="right: 16px"][style*="top: 16px"]:not(.toast-container),
+div[style*="position: fixed"][style*="right: 20px"][style*="top: 20px"]:not(.toast-container),
+div[style*="position: fixed"][style*="right: 24px"][style*="top: 24px"]:not(.toast-container) {
   display: none !important;
 }
 
-/* Ultra-aggressive approach - hide any suspicious fixed elements */
-div[style*="position: fixed"]:not([class]):not([id]) {
+/* Ultra-aggressive approach - hide any suspicious fixed elements - skip toast container */
+div[style*="position: fixed"]:not([class]):not([id]):not(.toast-container) {
   display: none !important;
+}
+
+/* Toast container styling - ensure visibility */
+.toast-container {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Target Phantom-specific classes and IDs */

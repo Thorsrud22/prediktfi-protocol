@@ -6,8 +6,8 @@ import { cachedFetch } from '@/app/lib/request-cache';
 
 // Aggressive preloading - preload ALL likely pages
 const PAGE_PRELOADS: Record<string, string[]> = {
-  '/': ['/api/studio/templates'], // Home -> likely go to studio
-  '/studio': ['/api/studio/templates'], // Studio -> templates
+  // '/': [], 
+  // '/studio': [],
 };
 
 export default function RoutePreloader() {
