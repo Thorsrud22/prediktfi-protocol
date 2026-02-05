@@ -297,7 +297,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
                         <p className="text-white/40 text-sm max-w-sm mx-auto mb-8 h-6">
                             {streamingThoughts ? (
                                 <span className="animate-pulse italic text-cyan-500/60">
-                                    "{streamingThoughts.split('\n').filter(t => t.trim()).pop() || 'Reasoning...'}"
+                                    {(streamingThoughts.split('\n').filter(t => t.trim()).pop() || 'Reasoning...').replace(/^["']|["']$/g, '')}
                                 </span>
                             ) : (
                                 <span className="text-white/20">Processing data...</span>
@@ -512,6 +512,12 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         // Simple Validation
         if (!formData.description || formData.description.length < 10) {
             setErrors({ description: "Please provide a more detailed description (min 10 chars)." });
+            // Auto-scroll to error
+            const element = document.getElementById('pitch-description');
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.focus();
+            }
             return;
         }
 
@@ -692,7 +698,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             placeholder="e.g., A Solana memecoin that taxes sells to fund carbon credits. Target: eco-conscious degens. Vibe: Pepe meets Al Gore."
                             aria-describedby={errors.description ? "pitch-error" : undefined}
                             aria-invalid={errors.description ? "true" : undefined}
-                            className={`w-full flex-1 p-6 bg-slate-900/60 border text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-mono text-sm leading-relaxed rounded-2xl min-h-[300px] ${errors.description ? 'border-red-500/50' : 'border-white/5'}`}
+                            className={`w-full flex-1 p-6 bg-slate-900/60 border text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-mono text-sm leading-relaxed rounded-2xl min-h-[300px] ${errors.description ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/5' : 'border-white/5'}`}
                         />
                         {errors.description && (
                             <p id="pitch-error" role="alert" className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
