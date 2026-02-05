@@ -2,8 +2,7 @@ import React from 'react';
 import ProcessTimeline from '../components/ProcessTimeline';
 import LandingHero from '../components/landing/LandingHero';
 
-export const dynamic = "force-static";
-export const revalidate = 86400;
+
 
 import { Metadata } from 'next'
 
