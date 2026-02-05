@@ -88,6 +88,7 @@ export type IdeaEvaluationResult = {
     creatorPercentage?: number;
     // Verification status
     isVerified?: boolean; // true when token address was provided and on-chain check ran
+    tokenAddress?: string; // The token address that was checked (if any)
   };
 
   calibrationNotes?: string[];

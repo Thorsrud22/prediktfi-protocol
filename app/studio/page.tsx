@@ -79,6 +79,11 @@ export default function StudioPage() {
     setError(null);
     setStreamingSteps([]);
 
+    // Optimistically decrement quota at run start so UI shows reserved count
+    if (quota && quota.remaining > 0 && quota.remaining !== -1) {
+      setQuota({ ...quota, remaining: quota.remaining - 1 });
+    }
+
     try {
       const payload = {
         ...data,
@@ -272,15 +277,18 @@ export default function StudioPage() {
           {/* FAIR USE LIMIT DISPLAY */}
           {quota && (
             <div className="text-right block">
-              <div className="text-[10px] uppercase text-blue-300/60 mb-1 tracking-widest font-mono">EVALS TODAY</div>
+              <div className="text-[10px] uppercase text-blue-300/60 mb-1 tracking-widest font-mono">
+                EVALS TODAY{isAnalyzing && <span className="text-cyan-400 animate-pulse ml-1">•</span>}
+              </div>
               <div className={`font-bold text-2xl font-mono ${quota.remaining === 0 ? 'text-amber-400' : 'text-blue-400'}`}>
                 {quota.remaining === -1 ? 'UNLIMITED' : (
                   <>
                     {quota.remaining} <span className="text-sm text-white/40 font-normal">left</span>
+                    {isAnalyzing && <span className="text-xs text-cyan-400/60 font-normal ml-1">(reserved)</span>}
                   </>
                 )}
               </div>
-              {quota.remaining === 0 && (
+              {quota.remaining === 0 && !isAnalyzing && (
                 <a href="/pricing" className="text-[9px] text-amber-400/80 hover:text-amber-300 uppercase tracking-widest mt-1 block">
                   Want more? Join Pro waitlist →
                 </a>

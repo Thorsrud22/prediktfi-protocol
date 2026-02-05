@@ -292,8 +292,21 @@ Get your own evaluation here:`;
                             {getScoreLabel(result.overallScore)}
                         </span>
 
+                        {/* What This Score Means - Inline Definition */}
+                        <div className="mt-4 bg-slate-800/50 border border-white/5 rounded-xl p-4 max-w-md">
+                            <h4 className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <Activity size={12} className="text-blue-400" />
+                                What this score means
+                            </h4>
+                            <p className="text-xs text-white/50 leading-relaxed">
+                                The <span className="text-white font-medium">Predikt Score</span> is a weighted assessment of your project's viability based on
+                                technical feasibility, market positioning, execution readiness, and {result.projectType === 'ai' ? 'AI strategy strength' : 'tokenomics design'}.
+                                Scores above 75 indicate strong investment potential; 50-74 suggests promise with notable risks; below 50 signals significant concerns.
+                            </p>
+                        </div>
+
                         {/* Score Methodology Explainer */}
-                        <div className="mt-4 text-[10px] text-white/40 max-w-md leading-relaxed">
+                        <div className="mt-3 text-[10px] text-white/40 max-w-md leading-relaxed">
                             <span className="font-bold text-white/60">Score breakdown: </span>
                             Technical ({result.technical.feasibilityScore}) + Market ({result.market.marketFitScore}) + Execution ({100 - (result.execution?.executionRiskScore || 50)})
                             {result.projectType === 'ai' && result.aiStrategy
@@ -520,35 +533,68 @@ Get your own evaluation here:`;
                                 </span>
                             ) : (
                                 <span className="text-[9px] bg-amber-500/20 text-amber-400 px-2 py-1 rounded font-bold uppercase tracking-wider">
-                                    ⚠️ AI Estimate
+                                    ⚠️ Simulated (Not Checked)
                                 </span>
                             )}
                         </div>
 
+                        {/* Show token address when verified */}
+                        {result.cryptoNativeChecks.isVerified && result.cryptoNativeChecks.tokenAddress && (
+                            <div className="mb-4 bg-slate-800/50 p-3 rounded-lg">
+                                <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Token Address</div>
+                                <div className="text-xs font-mono text-emerald-400 break-all">
+                                    {result.cryptoNativeChecks.tokenAddress}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-slate-800/50 p-3 rounded-lg text-center">
+                            <div className="bg-slate-800/50 p-3 rounded-lg text-center relative">
+                                {!result.cryptoNativeChecks.isVerified && (
+                                    <div className="absolute top-1 right-1 text-[7px] text-amber-400/60 font-mono">SIM</div>
+                                )}
                                 <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Rug Risk</div>
-                                <div className={`text-sm font-bold uppercase ${result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-emerald-400' :
-                                    result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-amber-400' : 'text-red-400'
+                                <div className={`text-sm font-bold uppercase ${!result.cryptoNativeChecks.isVerified
+                                        ? 'text-white/30'
+                                        : result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-emerald-400' :
+                                            result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-amber-400' : 'text-red-400'
                                     }`}>
-                                    {result.cryptoNativeChecks.rugPullRisk}
+                                    {result.cryptoNativeChecks.isVerified
+                                        ? result.cryptoNativeChecks.rugPullRisk
+                                        : 'Not Checked'}
                                 </div>
                             </div>
-                            <div className="bg-slate-800/50 p-3 rounded-lg text-center">
+                            <div className="bg-slate-800/50 p-3 rounded-lg text-center relative">
+                                {!result.cryptoNativeChecks.isVerified && (
+                                    <div className="absolute top-1 right-1 text-[7px] text-amber-400/60 font-mono">SIM</div>
+                                )}
                                 <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Audit</div>
-                                <div className={`text-sm font-bold uppercase ${result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-emerald-400' : 'text-amber-400'
+                                <div className={`text-sm font-bold uppercase ${!result.cryptoNativeChecks.isVerified
+                                        ? 'text-white/30'
+                                        : result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-emerald-400' : 'text-amber-400'
                                     }`}>
-                                    {result.cryptoNativeChecks.auditStatus}
+                                    {result.cryptoNativeChecks.isVerified
+                                        ? result.cryptoNativeChecks.auditStatus
+                                        : 'Not Checked'}
                                 </div>
                             </div>
-                            <div className="bg-slate-800/50 p-3 rounded-lg text-center">
+                            <div className="bg-slate-800/50 p-3 rounded-lg text-center relative">
+                                {!result.cryptoNativeChecks.isVerified && (
+                                    <div className="absolute top-1 right-1 text-[7px] text-amber-400/60 font-mono">SIM</div>
+                                )}
                                 <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Liquidity</div>
-                                <div className={`text-sm font-bold uppercase ${result.cryptoNativeChecks.isLiquidityLocked || result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned' ? 'text-emerald-400' : 'text-red-400'
+                                <div className={`text-sm font-bold uppercase ${!result.cryptoNativeChecks.isVerified
+                                        ? 'text-white/30'
+                                        : (result.cryptoNativeChecks.isLiquidityLocked || result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned')
+                                            ? 'text-emerald-400'
+                                            : 'text-red-400'
                                     }`}>
-                                    {result.cryptoNativeChecks.isLiquidityLocked ? 'Locked' : result.cryptoNativeChecks.liquidityStatus}
+                                    {result.cryptoNativeChecks.isVerified
+                                        ? (result.cryptoNativeChecks.isLiquidityLocked ? 'Locked' : result.cryptoNativeChecks.liquidityStatus)
+                                        : 'Not Checked'}
                                 </div>
                             </div>
-                            {result.cryptoNativeChecks.top10HolderPercentage != null && (
+                            {result.cryptoNativeChecks.isVerified && result.cryptoNativeChecks.top10HolderPercentage != null && (
                                 <div className="bg-slate-800/50 p-3 rounded-lg text-center">
                                     <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Top 10</div>
                                     <div className={`text-sm font-bold ${result.cryptoNativeChecks.top10HolderPercentage > 50 ? 'text-red-400' : 'text-emerald-400'}`}>
@@ -556,12 +602,37 @@ Get your own evaluation here:`;
                                     </div>
                                 </div>
                             )}
+                            {!result.cryptoNativeChecks.isVerified && (
+                                <div className="bg-slate-800/50 p-3 rounded-lg text-center relative">
+                                    <div className="absolute top-1 right-1 text-[7px] text-amber-400/60 font-mono">SIM</div>
+                                    <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Holdings</div>
+                                    <div className="text-sm font-bold uppercase text-white/30">Not Checked</div>
+                                </div>
+                            )}
                         </div>
+
+                        {/* Checks Performed List (when verified) */}
+                        {result.cryptoNativeChecks.isVerified && (
+                            <div className="mt-4 pt-4 border-t border-white/5">
+                                <div className="text-[9px] text-white/40 uppercase tracking-widest mb-2">Checks Performed</div>
+                                <div className="flex flex-wrap gap-2 text-[10px]">
+                                    <span className="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">✓ Mint Authority</span>
+                                    <span className="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">✓ Freeze Authority</span>
+                                    <span className="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">✓ Liquidity Status</span>
+                                    <span className="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">✓ Holder Distribution</span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Help text when not verified */}
                         {!result.cryptoNativeChecks.isVerified && (
-                            <p className="text-[10px] text-white/30 mt-4 italic">
-                                💡 Provide a token address for verified on-chain security checks.
-                            </p>
+                            <div className="mt-4 pt-4 border-t border-white/5">
+                                <p className="text-[10px] text-amber-400/80 italic flex items-center gap-2">
+                                    <AlertTriangle size={12} />
+                                    No token address provided. Security data above is simulated by AI and NOT verified on-chain.
+                                    Provide a token address for real security checks.
+                                </p>
+                            </div>
                         )}
                     </div>
                 )}

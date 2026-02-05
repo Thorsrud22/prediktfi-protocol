@@ -446,9 +446,12 @@ ${JSON.stringify(input, null, 2)}`;
       result.calibrationNotes.push("Timeline: Overridden to 'Live' loop due to detected launch status.");
     }
 
-    // Set isVerified flag on cryptoNativeChecks based on whether token address was provided
+    // Set isVerified flag and tokenAddress on cryptoNativeChecks based on whether token address was provided
     if (result.cryptoNativeChecks) {
       result.cryptoNativeChecks.isVerified = !!input.tokenAddress;
+      if (input.tokenAddress) {
+        result.cryptoNativeChecks.tokenAddress = input.tokenAddress;
+      }
     }
 
     // Merge real competitor data from competitive memo into result

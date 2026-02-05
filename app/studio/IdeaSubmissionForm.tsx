@@ -496,7 +496,19 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     // Handlers
     const handleChange = (field: keyof IdeaSubmission, value: any) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
-        if (errors[field]) {
+
+        // Real-time validation for tokenAddress
+        if (field === 'tokenAddress') {
+            if (value && !isValidSolanaAddress(value)) {
+                setErrors((prev) => ({ ...prev, tokenAddress: 'Invalid Solana address format (must be 32-44 base58 characters)' }));
+            } else if (errors.tokenAddress) {
+                setErrors((prev) => {
+                    const newErrors = { ...prev };
+                    delete newErrors.tokenAddress;
+                    return newErrors;
+                });
+            }
+        } else if (errors[field]) {
             setErrors((prev) => {
                 const newErrors = { ...prev };
                 delete newErrors[field];
@@ -845,16 +857,36 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
             </div>
 
             {/* ACTION BAR */}
-            <div className="flex justify-end pt-6">
+            <div className="flex flex-col items-end gap-4 pt-6">
+                {/* Quota Exceeded Warning */}
+                {quota?.remaining === 0 && (
+                    <div className="w-full md:w-auto bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in duration-300">
+                        <AlertCircle className="text-amber-400 shrink-0 mt-0.5" size={18} />
+                        <div>
+                            <p className="text-amber-200 text-sm font-medium mb-1">Daily Limit Reached</p>
+                            <p className="text-amber-200/60 text-xs">
+                                You've used all {quota.limit} free evaluations for today. Limit resets at midnight UTC.{' '}
+                                <a href="/pricing" className="text-amber-400 hover:text-amber-300 underline">
+                                    Want unlimited access? →
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 <button
                     type="submit"
-                    className="group relative w-full md:w-auto px-10 py-5 bg-[#0055FF] hover:bg-[#0044CC] text-white font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-[0_0_20px_rgba(0,85,255,0.3)] hover:shadow-[0_0_30px_rgba(0,85,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 border border-white/10 overflow-hidden rounded-2xl"
+                    disabled={quota?.remaining === 0 || !!errors.tokenAddress}
+                    className={`group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 border border-white/10 overflow-hidden rounded-2xl ${quota?.remaining === 0 || errors.tokenAddress
+                        ? 'bg-slate-700 text-white/40 cursor-not-allowed'
+                        : 'bg-[#0055FF] hover:bg-[#0044CC] text-white shadow-[0_0_20px_rgba(0,85,255,0.3)] hover:shadow-[0_0_30px_rgba(0,85,255,0.6)] hover:-translate-y-0.5 active:translate-y-0'
+                        }`}
                 >
                     <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20"></div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 
                     <div className="relative flex items-center justify-center gap-4 z-10">
-                        <span>Initiate Protocol</span>
+                        <span>{quota?.remaining === 0 ? 'Limit Reached' : errors.tokenAddress ? 'Invalid Address' : 'Initiate Protocol'}</span>
                     </div>
                 </button>
             </div>
