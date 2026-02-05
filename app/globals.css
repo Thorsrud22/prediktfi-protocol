@@ -3,7 +3,7 @@
 /* Force dark mode globally to prevent hydration issues */
 html {
   color-scheme: dark;
-  background-color: transparent;
+  background-color: #0A0F1E;
 }
 
 /* Force dark mode classes to always apply */
