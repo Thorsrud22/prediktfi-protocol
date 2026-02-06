@@ -11,6 +11,21 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
     {
+        version: "1.12.0",
+        date: "Feb 06, 2026",
+        title: "Security, Trust & UX Enhancements",
+        description: "Significant improvements to the authentication experience, security messaging, and first-time user flow.",
+        changes: [
+            { category: 'improvement', text: 'Updated Account page with clearer "Sign In" vs "Dashboard" states.' },
+            { category: 'improvement', text: 'Added explicit trust signals to wallet connection (Signature only, No seed phrase).' },
+            { category: 'improvement', text: 'Improved wallet benefit messaging in "Why a Wallet?".' },
+            { category: 'feature', text: 'Added "Continue without login" flow for quicker access to Studio.' },
+            { category: 'improvement', text: 'Refined Token Address label to explicitly mention Solana.' },
+            { category: 'security', text: 'Hardening: Enforced strict visual warnings for unverified share links.' },
+            { category: 'improvement', text: 'Reset evaluation quotas for all users.' }
+        ]
+    },
+    {
         version: "1.11.0",
         date: "Feb 05, 2026",
         title: "Studio Polish & Security Hardening",

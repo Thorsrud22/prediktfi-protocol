@@ -1,0 +1,20 @@
+
+> prediktfi-protocol@0.1.0 test
+> vitest run tests/studio.test.tsx
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v3.2.4 /Users/thorsrud/prediktfi-protocol-1
+
+stderr | tests/studio.test.tsx > AI Idea Evaluator Studio > submits successfully with valid data
+Received `true` for a non-boolean attribute `jsx`.
+
+If you want to write it to the DOM, pass a string instead: jsx="true" or jsx={value.toString()}.
+
+ ✓ tests/studio.test.tsx (4 tests) 463ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  16:06:01
+   Duration  3.93s (transform 404ms, setup 159ms, collect 738ms, tests 463ms, environment 727ms, prepare 135ms)
+

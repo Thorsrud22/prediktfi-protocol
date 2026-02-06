@@ -115,13 +115,33 @@ const AuthenticationPrompt = React.memo(
           Why a Wallet?
         </h3>
         <p className="text-xs text-slate-400 leading-relaxed">
-          Predikt logging uses Solana signatures to create an <strong>immutable proof</strong> of your evaluations. Email accounts (Read-Only) are coming soon.
+          Connect to <strong>save your history</strong>, track your scores over time, and access your detailed reports anytime.
         </p>
+
+        <ul className="mt-3 space-y-2 border-t border-blue-500/10 pt-3">
+          <li className="text-[10px] text-slate-400/80 flex items-center gap-2">
+            <div className="w-1 h-1 rounded-full bg-blue-400" />
+            Signature only (no transaction, no gas)
+          </li>
+          <li className="text-[10px] text-slate-400/80 flex items-center gap-2">
+            <div className="w-1 h-1 rounded-full bg-blue-400" />
+            We never ask for your seed phrase
+          </li>
+          <li className="text-[10px] text-slate-400/80 flex items-center gap-2">
+            <div className="w-1 h-1 rounded-full bg-blue-400" />
+            You can disconnect anytime
+          </li>
+        </ul>
       </div>
 
-      <p className="text-slate-500 text-xs mt-6">
-        Just want to test it? <a href="/studio" className="text-blue-400 hover:text-blue-300 underline">Enter Studio</a> without login.
-      </p>
+      <div className="mt-8 pt-6 border-t border-white/5 w-full">
+        <Link
+          href="/studio"
+          className="w-full block text-center py-3 rounded-xl border border-white/10 text-white/40 hover:text-white hover:bg-white/5 hover:border-white/20 transition-all text-sm font-medium"
+        >
+          Continue without login →
+        </Link>
+      </div>
     </div>
   ),
 );
@@ -317,10 +337,10 @@ export default function AccountClient() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6">
         <div>
           <h1 className="text-5xl sm:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent uppercase italic">
-            Account <span className="text-blue-500">.</span>
+            {canShowAccount ? 'Account' : 'Sign In'} <span className="text-blue-500">.</span>
           </h1>
           <p className="text-white/40 text-[10px] sm:text-lg max-w-xl font-medium tracking-[0.2em] uppercase">
-            Manage your wallet and evaluations
+            {canShowAccount ? 'Manage your wallet and evaluations' : 'Connect your wallet to access your dashboard'}
           </p>
         </div>
       </div>

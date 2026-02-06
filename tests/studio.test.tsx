@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
 import StudioPage from '../app/studio/page';
+import ToastProvider from '../app/components/ToastProvider';
 
 // Mock the wallet provider
 vi.mock('@/app/components/wallet/SimplifiedWalletProvider', () => ({
@@ -95,7 +96,11 @@ describe('AI Idea Evaluator Studio', () => {
     });
 
     it('renders the single page form initially', async () => {
-        render(<StudioPage />);
+        render(
+            <ToastProvider>
+                <StudioPage />
+            </ToastProvider>
+        );
 
         // Check for main headers
         expect(screen.getByText(/What are you building?/i)).toBeInTheDocument();
@@ -111,7 +116,11 @@ describe('AI Idea Evaluator Studio', () => {
     });
 
     it('shows validation errors when attempting to submit with empty form', async () => {
-        render(<StudioPage />);
+        render(
+            <ToastProvider>
+                <StudioPage />
+            </ToastProvider>
+        );
 
         // Click Run Analysis without filling anything
         const submitBtn = await screen.findByText('Initiate Protocol');
@@ -166,7 +175,11 @@ describe('AI Idea Evaluator Studio', () => {
             return Promise.resolve({ ok: true, json: async () => ({}) });
         });
 
-        render(<StudioPage />);
+        render(
+            <ToastProvider>
+                <StudioPage />
+            </ToastProvider>
+        );
 
         // 1. Select Project Type (Memecoin)
         fireEvent.click(screen.getByText('Memecoin'));
@@ -194,7 +207,11 @@ describe('AI Idea Evaluator Studio', () => {
     });
 
     it('toggles advanced options correctly', async () => {
-        render(<StudioPage />);
+        render(
+            <ToastProvider>
+                <StudioPage />
+            </ToastProvider>
+        );
 
         // Initially hidden
         expect(screen.queryByText('Team Size')).not.toBeInTheDocument();

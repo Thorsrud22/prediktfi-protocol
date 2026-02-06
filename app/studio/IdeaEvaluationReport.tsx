@@ -14,7 +14,8 @@ import {
     Link as LinkIcon,
     Flag,
     Check,
-    Zap
+    Zap,
+    Info
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useToast } from '../components/ToastProvider';
@@ -33,6 +34,26 @@ const KeyStatsBar = dynamic(() => import('../components/charts/KeyStatsBar'), {
 });
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 import { printElement } from '../utils/print';
+
+// Internal Tooltip Component
+const ScoreTooltip = ({ label, text, children }: { label: string, text: string, children: React.ReactNode }) => {
+    return (
+        <div className="group relative inline-flex items-center">
+            {children}
+            {/* Tooltip Popup */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 border border-white/10 rounded-xl p-3 shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all pointer-events-none z-50">
+                <div className="text-[10px] font-bold text-white mb-1 flex items-center gap-1">
+                    <Info size={10} className="text-blue-400" /> {label}
+                </div>
+                <div className="text-[9px] text-white/60 leading-relaxed">
+                    {text}
+                </div>
+                {/* Arrow */}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" />
+            </div>
+        </div>
+    );
+};
 
 
 
@@ -305,14 +326,62 @@ Get your own evaluation here:`;
                             </p>
                         </div>
 
-                        {/* Score Methodology Explainer */}
-                        <div className="mt-3 text-[10px] text-white/40 max-w-md leading-relaxed">
-                            <span className="font-bold text-white/60">Score breakdown: </span>
-                            Technical ({result.technical.feasibilityScore}) + Market ({result.market.marketFitScore}) + Execution ({100 - (result.execution?.executionRiskScore || 50)})
-                            {result.projectType === 'ai' && result.aiStrategy
-                                ? ` + AI (${Math.round((result.aiStrategy.modelQualityScore + result.aiStrategy.dataMoatScore + result.aiStrategy.userAcquisitionScore) / 3)})`
-                                : ` + Token (${result.tokenomics.designScore})`
-                            }
+                        {/* Score Methodology Explainer with Tooltips */}
+                        <div className="mt-3 text-[10px] text-white/40 max-w-md leading-relaxed flex flex-wrap gap-x-1 items-center">
+                            <span className="font-bold text-white/60 mr-1">Score breakdown: </span>
+
+                            <ScoreTooltip
+                                label="Technical"
+                                text="Measures feasibility & technical moat. Improve by detailing proprietary tech or unique architecture."
+                            >
+                                <span className="hover:text-blue-400 border-b border-dashed border-white/20 hover:border-blue-400 cursor-help transition-colors">
+                                    Technical ({result.technical.feasibilityScore})
+                                </span>
+                            </ScoreTooltip>
+                            +
+                            <ScoreTooltip
+                                label="Market"
+                                text="Evaluates demand & competition. Improve by defining specific audience & validating against real competitors."
+                            >
+                                <span className="hover:text-blue-400 border-b border-dashed border-white/20 hover:border-blue-400 cursor-help transition-colors">
+                                    Market ({result.market.marketFitScore})
+                                </span>
+                            </ScoreTooltip>
+                            +
+                            <ScoreTooltip
+                                label="Execution"
+                                text="Judges team capability & roadmap. Improve by highlighting relevant experience & realistic staging."
+                            >
+                                <span className="hover:text-blue-400 border-b border-dashed border-white/20 hover:border-blue-400 cursor-help transition-colors">
+                                    Execution ({100 - (result.execution?.executionRiskScore || 50)})
+                                </span>
+                            </ScoreTooltip>
+
+                            {result.projectType === 'ai' && result.aiStrategy ? (
+                                <>
+                                    +
+                                    <ScoreTooltip
+                                        label="AI Strategy"
+                                        text="Assesses model/data differentiation. Improve by securing unique datasets & avoiding generic wrappers."
+                                    >
+                                        <span className="hover:text-blue-400 border-b border-dashed border-white/20 hover:border-blue-400 cursor-help transition-colors">
+                                            AI ({Math.round((result.aiStrategy.modelQualityScore + result.aiStrategy.dataMoatScore + result.aiStrategy.userAcquisitionScore) / 3)})
+                                        </span>
+                                    </ScoreTooltip>
+                                </>
+                            ) : (
+                                <>
+                                    +
+                                    <ScoreTooltip
+                                        label="Tokenomics"
+                                        text="Analyzes utility & sustainability. Improve by ensuring token has utility beyond speculation."
+                                    >
+                                        <span className="hover:text-blue-400 border-b border-dashed border-white/20 hover:border-blue-400 cursor-help transition-colors">
+                                            Token ({result.tokenomics.designScore})
+                                        </span>
+                                    </ScoreTooltip>
+                                </>
+                            )}
                         </div>
 
                         {/* Tier Legend */}
@@ -555,9 +624,9 @@ Get your own evaluation here:`;
                                 )}
                                 <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Rug Risk</div>
                                 <div className={`text-sm font-bold uppercase ${!result.cryptoNativeChecks.isVerified
-                                        ? 'text-white/30'
-                                        : result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-emerald-400' :
-                                            result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-amber-400' : 'text-red-400'
+                                    ? 'text-white/30'
+                                    : result.cryptoNativeChecks.rugPullRisk === 'low' ? 'text-emerald-400' :
+                                        result.cryptoNativeChecks.rugPullRisk === 'medium' ? 'text-amber-400' : 'text-red-400'
                                     }`}>
                                     {result.cryptoNativeChecks.isVerified
                                         ? result.cryptoNativeChecks.rugPullRisk
@@ -570,8 +639,8 @@ Get your own evaluation here:`;
                                 )}
                                 <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Audit</div>
                                 <div className={`text-sm font-bold uppercase ${!result.cryptoNativeChecks.isVerified
-                                        ? 'text-white/30'
-                                        : result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-emerald-400' : 'text-amber-400'
+                                    ? 'text-white/30'
+                                    : result.cryptoNativeChecks.auditStatus === 'audited' ? 'text-emerald-400' : 'text-amber-400'
                                     }`}>
                                     {result.cryptoNativeChecks.isVerified
                                         ? result.cryptoNativeChecks.auditStatus
@@ -584,10 +653,10 @@ Get your own evaluation here:`;
                                 )}
                                 <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Liquidity</div>
                                 <div className={`text-sm font-bold uppercase ${!result.cryptoNativeChecks.isVerified
-                                        ? 'text-white/30'
-                                        : (result.cryptoNativeChecks.isLiquidityLocked || result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned')
-                                            ? 'text-emerald-400'
-                                            : 'text-red-400'
+                                    ? 'text-white/30'
+                                    : (result.cryptoNativeChecks.isLiquidityLocked || result.cryptoNativeChecks.liquidityStatus === 'locked' || result.cryptoNativeChecks.liquidityStatus === 'burned')
+                                        ? 'text-emerald-400'
+                                        : 'text-red-400'
                                     }`}>
                                     {result.cryptoNativeChecks.isVerified
                                         ? (result.cryptoNativeChecks.isLiquidityLocked ? 'Locked' : result.cryptoNativeChecks.liquidityStatus)
@@ -647,12 +716,31 @@ Get your own evaluation here:`;
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {[
-                                { label: 'Model Quality', score: result.aiStrategy.modelQualityScore, comment: result.aiStrategy.modelQualityComment },
-                                { label: 'Data Moat', score: result.aiStrategy.dataMoatScore, comment: result.aiStrategy.dataMoatComment },
-                                { label: 'Acquisition', score: result.aiStrategy.userAcquisitionScore, comment: result.aiStrategy.userAcquisitionComment },
+                                {
+                                    label: 'Model Quality',
+                                    score: result.aiStrategy.modelQualityScore,
+                                    comment: result.aiStrategy.modelQualityComment,
+                                    tooltip: "Architecture & customization depth. Improve: Move beyond vanilla APIs; use custom fine-tuning."
+                                },
+                                {
+                                    label: 'Data Moat',
+                                    score: result.aiStrategy.dataMoatScore,
+                                    comment: result.aiStrategy.dataMoatComment,
+                                    tooltip: "Exclusivity of training data. Improve: Integrate unique data loops or exclusive partnerships."
+                                },
+                                {
+                                    label: 'Acquisition',
+                                    score: result.aiStrategy.userAcquisitionScore,
+                                    comment: result.aiStrategy.userAcquisitionComment,
+                                    tooltip: "User growth & feedback loops. Improve: Define clear distribution channels beyond 'organic'."
+                                },
                             ].map((item, idx) => (
                                 <div key={idx} className="flex flex-col">
-                                    <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">{item.label}</div>
+                                    <ScoreTooltip label={item.label} text={item.tooltip}>
+                                        <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1 hover:text-blue-400 cursor-help border-b border-dashed border-white/10 w-fit transition-colors">
+                                            {item.label}
+                                        </div>
+                                    </ScoreTooltip>
                                     <div className={`text-2xl font-bold mb-2 ${getScoreColor(item.score)}`}>
                                         {item.score}<span className="text-sm text-white/20">/100</span>
                                     </div>

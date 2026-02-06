@@ -159,9 +159,9 @@ export default function ExampleReportPage() {
                         </div>
                         <p className="text-slate-400 text-lg md:text-xl font-light leading-relaxed max-w-2xl">
                             This is an example of the deep analysis you receive.
-                            We stress-test your idea against <span className="text-blue-400 font-medium">real market data</span>,
-                            <span className="text-blue-400 font-medium"> on-chain security patterns</span>, and
-                            <span className="text-blue-400 font-medium"> institutional risk models</span>.
+                            We evaluate your idea against <span className="text-blue-400 font-medium">live market metrics</span>,
+                            <span className="text-blue-400 font-medium"> security best practices</span>, and
+                            <span className="text-blue-400 font-medium"> strategic risk factors</span>.
                         </p>
                     </div>
 

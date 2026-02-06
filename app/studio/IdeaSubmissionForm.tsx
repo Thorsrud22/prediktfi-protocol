@@ -18,6 +18,7 @@ import {
     Terminal
 } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '../components/ToastProvider';
 
 interface IdeaSubmissionFormProps {
     onSubmit: (data: IdeaSubmission) => void;
@@ -443,6 +444,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showAdvanced, setShowAdvanced] = useState(false);
+    const { addToast } = useToast();
 
     // Coach Tip Logic
     const [coachTip, setCoachTip] = useState<string | null>(null);
@@ -568,6 +570,20 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                 }
                 // Don't submit if Zod validation fails
             }
+        }
+    };
+
+    // Save Draft Function
+    const handleSaveDraft = () => {
+        // In a real app, you might save to localStorage or a specific draft endpoint
+        // For now, these inputs are preserved in state, but we'll simulate a save action logic
+        // to give user peace of mind.
+        try {
+            localStorage.setItem('prediktfi_draft', JSON.stringify(formData));
+            addToast({ title: 'Draft saved safely to browser', variant: 'success' });
+        } catch (e) {
+            console.error('Failed to save draft', e);
+            addToast({ title: 'Could not save draft locally', variant: 'error' });
         }
     };
 
@@ -744,7 +760,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         </div>
                         <div className="text-left">
                             <h3 className={`text-sm font-bold tracking-wide transition-colors ${showAdvanced ? 'text-blue-100' : 'text-white/60 group-hover:text-white'}`}>Advanced Configuration</h3>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Team, Metrics, Resources</p>
+                            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Team, Token, Strategy</p>
                         </div>
                     </div>
                     <div className={`transition-transform duration-300 ${showAdvanced ? 'rotate-180 text-blue-400' : 'text-white/20'}`}>
@@ -779,7 +795,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                             {/* Token Address */}
                             <div>
-                                <label htmlFor="token-address" className="text-white/40 text-xs mb-2 block">Token Address (Optional)</label>
+                                <label htmlFor="token-address" className="text-white/40 text-xs mb-2 block">Solana token address (optional)</label>
                                 <input
                                     id="token-address"
                                     type="text"
@@ -870,22 +886,18 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
             {/* ACTION BAR */}
             <div className="flex flex-col items-end gap-4 pt-6">
-                {/* Quota Exceeded Warning */}
+                {/* Quota Exceeded Warning - SOFTENED */}
                 {quota?.remaining === 0 && (
-                    <div className="w-full md:w-auto bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in duration-300">
-                        <AlertCircle className="text-amber-400 shrink-0 mt-0.5" size={18} />
+                    <div className="w-full md:w-auto bg-slate-800/80 border border-blue-500/20 rounded-2xl p-5 flex items-start gap-3 animate-in fade-in duration-300">
+                        <div className="p-2 bg-blue-500/10 rounded-full text-blue-400">
+                            <Lightbulb size={16} />
+                        </div>
                         <div>
-                            <p className="text-amber-200 text-sm font-medium mb-1">Daily Limit Reached</p>
-                            <p className="text-amber-200/60 text-xs">
-                                You've used all {quota.limit} free evaluations for today.{' '}
-                                {resetCountdown ? (
-                                    <>Resets in <span className="text-amber-400 font-mono">{resetCountdown}</span>.{' '}</>
-                                ) : (
-                                    'Limit resets at midnight UTC. '
-                                )}
-                                <a href="/pricing" className="text-amber-400 hover:text-amber-300 underline">
-                                    Get Unlimited Access →
-                                </a>
+                            <p className="text-white font-bold text-sm mb-1">Daily Limit Reached</p>
+                            <p className="text-white/60 text-xs leading-relaxed max-w-sm">
+                                You've hit the free tier limit for today.
+                                <br />
+                                You can <strong>save your draft</strong> and continue tomorrow, or upgrade for instant access.
                             </p>
                         </div>
                     </div>
@@ -899,35 +911,54 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         className="group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] border border-white/5 overflow-hidden rounded-2xl bg-slate-800/50 text-white/20 cursor-wait"
                     >
                         <div className="relative flex items-center justify-center gap-4 z-10 animate-pulse">
-                            <span>Checking Authorization...</span>
+                            <span>Checking Status...</span>
                         </div>
                     </button>
                 ) : quota?.remaining === 0 ? (
-                    <Link
-                        href="/pricing"
-                        className="group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 border border-amber-500/30 overflow-hidden rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.2)] hover:shadow-[0_0_30px_rgba(245,158,11,0.4)] hover:-translate-y-0.5 active:translate-y-0 inline-flex items-center justify-center"
-                    >
-                        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20"></div>
-                        <span className="relative z-10 flex items-center gap-2">
-                            Get Unlimited Access <Rocket size={14} />
-                        </span>
-                    </Link>
-                ) : (
-                    <button
-                        type="submit"
-                        disabled={!!errors.tokenAddress}
-                        className={`group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 border border-white/10 overflow-hidden rounded-2xl ${errors.tokenAddress
-                            ? 'bg-slate-700 text-white/40 cursor-not-allowed'
-                            : 'bg-[#0055FF] hover:bg-[#0044CC] text-white shadow-[0_0_20px_rgba(0,85,255,0.3)] hover:shadow-[0_0_30px_rgba(0,85,255,0.6)] hover:-translate-y-0.5 active:translate-y-0'
-                            }`}
-                    >
-                        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20"></div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                        <button
+                            type="button"
+                            onClick={handleSaveDraft}
+                            className="group relative w-full md:w-auto px-8 py-4 font-bold text-xs uppercase tracking-widest border border-white/10 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all flex items-center justify-center gap-2"
+                        >
+                            <span>Save Draft</span>
+                        </button>
 
-                        <div className="relative flex items-center justify-center gap-4 z-10">
-                            <span>{errors.tokenAddress ? 'Invalid Address' : 'Initiate Protocol'}</span>
-                        </div>
-                    </button>
+                        <Link
+                            href="/pricing"
+                            className="group relative w-full md:w-auto px-8 py-4 font-bold text-xs uppercase tracking-widest border border-blue-500/30 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-200 hover:text-blue-100 transition-all shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2"
+                        >
+                            <span>Get Unlimited</span> <Rocket size={14} />
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-end gap-2 w-full md:w-auto">
+                        <button
+                            type="submit"
+                            disabled={!!errors.tokenAddress}
+                            className={`group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 border border-white/10 overflow-hidden rounded-2xl ${errors.tokenAddress
+                                ? 'bg-slate-700 text-white/40 cursor-not-allowed'
+                                : 'bg-[#0055FF] hover:bg-[#0044CC] text-white shadow-[0_0_20px_rgba(0,85,255,0.3)] hover:shadow-[0_0_30px_rgba(0,85,255,0.6)] hover:-translate-y-0.5 active:translate-y-0'
+                                }`}
+                        >
+                            <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20"></div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+
+                            <div className="relative flex items-center justify-center gap-4 z-10">
+                                <span>{errors.tokenAddress ? 'Invalid Address' : 'Initiate Protocol'}</span>
+                            </div>
+                        </button>
+                        {!isConnected && (
+                            <button
+                                type="button"
+                                onClick={() => onConnect?.()}
+                                className="text-[10px] text-white/30 hover:text-blue-400 transition-colors uppercase tracking-widest flex items-center gap-1"
+                            >
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50 animate-pulse" />
+                                Connect wallet to save history
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
 

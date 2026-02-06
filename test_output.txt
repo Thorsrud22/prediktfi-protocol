@@ -1,0 +1,50 @@
+
+> prediktfi-protocol@0.1.0 test
+> vitest run tests/studio.test.tsx
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v3.2.4 /Users/thorsrud/prediktfi-protocol-1
+
+ ❯ tests/studio.test.tsx (4 tests | 4 failed) 77ms
+   × AI Idea Evaluator Studio > renders the single page form initially 56ms
+     → useToast must be used within ToastProvider
+   × AI Idea Evaluator Studio > shows validation errors when attempting to submit with empty form 8ms
+     → useToast must be used within ToastProvider
+   × AI Idea Evaluator Studio > submits successfully with valid data 6ms
+     → useToast must be used within ToastProvider
+   × AI Idea Evaluator Studio > toggles advanced options correctly 4ms
+     → useToast must be used within ToastProvider
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > renders the single page form initially
+ FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > shows validation errors when attempting to submit with empty form
+ FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > submits successfully with valid data
+ FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > toggles advanced options correctly
+Error: useToast must be used within ToastProvider
+ ❯ Module.useToast app/components/ToastProvider.tsx:43:19
+     41| export function useToast() {
+     42|   const ctx = useContext(ToastContext);
+     43|   if (!ctx) throw new Error("useToast must be used within ToastProvide…
+       |                   ^
+     44|   return ctx;
+     45| }
+ ❯ IdeaSubmissionForm app/studio/IdeaSubmissionForm.tsx:447:26
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:23863:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:5529:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:8897:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:10522:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:1522:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:15140:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:14956:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:14936:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  16:05:04
+   Duration  3.19s (transform 234ms, setup 154ms, collect 580ms, tests 77ms, environment 706ms, prepare 134ms)
+
