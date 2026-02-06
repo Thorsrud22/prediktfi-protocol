@@ -316,7 +316,7 @@ export function getSecondsUntilMidnightUTC(): number {
  * This allows us to display accurate remaining quota in the UI
  */
 export async function incrementEvalCount(identifier: string, plan: 'idea_eval_ip' | 'idea_eval_wallet'): Promise<number> {
-  const key = `eval_count:${plan}:${identifier}`;
+  const key = `eval_count_v2:${plan}:${identifier}`;
 
   if (!redis) {
     // Memory fallback - use midnight UTC reset
@@ -348,7 +348,7 @@ export async function incrementEvalCount(identifier: string, plan: 'idea_eval_ip
  * Get current evaluation count for an identifier
  */
 export async function getEvalCount(identifier: string, plan: 'idea_eval_ip' | 'idea_eval_wallet'): Promise<number> {
-  const key = `eval_count:${plan}:${identifier}`;
+  const key = `eval_count_v2:${plan}:${identifier}`;
 
   if (!redis) {
     // Memory fallback
@@ -392,7 +392,7 @@ export async function getRateLimitInfo(
 
     // Check memory store for usage
     // We check both the daily eval_count (completions) and the attempt counter (spam protection)
-    const dailyKey = `eval_count:${plan}:${identifier}`;
+    const dailyKey = `eval_count_v2:${plan}:${identifier}`;
     const attemptKey = `${plan}:${identifier}`;
 
     const dailyRecord = memoryStore.get(dailyKey);
