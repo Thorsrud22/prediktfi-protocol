@@ -298,6 +298,20 @@ export async function getBonusQuota(identifier: string): Promise<number> {
 }
 
 /**
+ * Calculate seconds until next midnight UTC
+ */
+export function getSecondsUntilMidnightUTC(): number {
+  const now = new Date();
+  const midnightUTC = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1, // next day
+    0, 0, 0, 0 // midnight
+  ));
+  return Math.floor((midnightUTC.getTime() - now.getTime()) / 1000);
+}
+
+/**
  * Increment evaluation count for tracking (separate from rate limiter)
  * This allows us to display accurate remaining quota in the UI
  */
@@ -305,18 +319,26 @@ export async function incrementEvalCount(identifier: string, plan: 'idea_eval_ip
   const key = `eval_count:${plan}:${identifier}`;
 
   if (!redis) {
-    // Memory fallback
+    // Memory fallback - use midnight UTC reset
     const existing = memoryStore.get(key);
+    const now = new Date();
+    const midnightUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0, 0, 0, 0
+    ));
     const count = (existing?.count || 0) + 1;
-    memoryStore.set(key, { count, reset: Date.now() + 24 * 60 * 60 * 1000 });
+    memoryStore.set(key, { count, reset: midnightUTC.getTime() });
     return count;
   }
 
   const newCount = await redis.incr(key);
 
-  // Set TTL to 24 hours on first increment
+  // Set TTL to expire at midnight UTC (not rolling 24h)
   if (newCount === 1) {
-    await redis.expire(key, 86400);
+    const ttl = getSecondsUntilMidnightUTC();
+    await redis.expire(key, ttl);
   }
 
   return newCount;

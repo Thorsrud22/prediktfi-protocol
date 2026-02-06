@@ -27,9 +27,10 @@ export default function StudioPage() {
   const [error, setError] = useState<string | null>(null);
   const [commitStatus, setCommitStatus] = useState<'idle' | 'committing' | 'success' | 'error'>('idle');
   const [insightId, setInsightId] = useState<string | null>(null);
-  const [quota, setQuota] = useState<{ limit: number; remaining: number } | null>(null);
+  const [quota, setQuota] = useState<{ limit: number; remaining: number; resetAt?: number } | null>(null);
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const [isQuotaLoading, setIsQuotaLoading] = useState(true);
+  const [resetCountdown, setResetCountdown] = useState<string>('');
 
   // Performance tracking
   usePerformanceTracking('StudioPage');
@@ -70,6 +71,36 @@ export default function StudioPage() {
     }
     fetchQuota();
   }, [publicKey, quotaRefreshKey]);
+
+  // Countdown timer effect - updates every second when quota is 0
+  useEffect(() => {
+    if (!quota?.resetAt || quota.remaining !== 0) {
+      setResetCountdown('');
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = Date.now();
+      const diff = quota.resetAt! - now;
+
+      if (diff <= 0) {
+        // Reset has occurred, refresh quota
+        setQuotaRefreshKey(k => k + 1);
+        setResetCountdown('');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setResetCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    };
+
+    updateCountdown(); // Run immediately
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [quota?.resetAt, quota?.remaining]);
 
   // Stream reasoning steps for the UI
 
@@ -292,9 +323,17 @@ export default function StudioPage() {
                 )}
               </div>
               {quota.remaining === 0 && !isAnalyzing && (
-                <a href="/pricing" className="text-[9px] text-amber-400/80 hover:text-amber-300 uppercase tracking-widest mt-1 block">
-                  Get Unlimited Access →
-                </a>
+                <div className="mt-1">
+                  {resetCountdown ? (
+                    <div className="text-[9px] text-amber-400/80 uppercase tracking-widest font-mono">
+                      Resets in <span className="text-amber-300">{resetCountdown}</span>
+                    </div>
+                  ) : (
+                    <a href="/pricing" className="text-[9px] text-amber-400/80 hover:text-amber-300 uppercase tracking-widest block">
+                      Get Unlimited Access →
+                    </a>
+                  )}
+                </div>
               )}
               {quota.remaining > 0 && quota.remaining !== -1 && (
                 <div className="text-[9px] text-white/30 uppercase tracking-widest mt-1">
@@ -324,6 +363,7 @@ export default function StudioPage() {
                 onConnect={connect}
                 error={error}
                 isQuotaLoading={isQuotaLoading}
+                resetCountdown={resetCountdown}
               />
             </>
           )}

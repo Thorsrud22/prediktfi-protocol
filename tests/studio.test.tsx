@@ -94,7 +94,7 @@ describe('AI Idea Evaluator Studio', () => {
         window.alert = vi.fn();
     });
 
-    it('renders the single page form initially', () => {
+    it('renders the single page form initially', async () => {
         render(<StudioPage />);
 
         // Check for main headers
@@ -107,14 +107,15 @@ describe('AI Idea Evaluator Studio', () => {
         expect(screen.getByText('AI Agent')).toBeInTheDocument();
 
         // Check for submit button
-        expect(screen.getByText('Initiate Protocol')).toBeInTheDocument();
+        expect(await screen.findByText('Initiate Protocol')).toBeInTheDocument();
     });
 
     it('shows validation errors when attempting to submit with empty form', async () => {
         render(<StudioPage />);
 
         // Click Run Analysis without filling anything
-        fireEvent.click(screen.getByText('Initiate Protocol'));
+        const submitBtn = await screen.findByText('Initiate Protocol');
+        fireEvent.click(submitBtn);
 
         // Wait for validation error
         await waitFor(() => {
@@ -183,7 +184,8 @@ describe('AI Idea Evaluator Studio', () => {
         });
 
         // 5. Submit
-        fireEvent.click(screen.getByText('Initiate Protocol'));
+        const submitBtn = await screen.findByText('Initiate Protocol');
+        fireEvent.click(submitBtn);
 
         // 6. Verify Terminal appears (now named "prediktfi — evaluation")
         await waitFor(() => {

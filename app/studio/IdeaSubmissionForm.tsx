@@ -30,6 +30,7 @@ interface IdeaSubmissionFormProps {
     onConnect?: () => void;
     error?: string | null;
     isQuotaLoading?: boolean;
+    resetCountdown?: string;
 }
 
 
@@ -407,7 +408,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
 }
 
 
-export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, streamingThoughts, isConnected, onConnect, error, isQuotaLoading }: IdeaSubmissionFormProps) {
+export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, streamingThoughts, isConnected, onConnect, error, isQuotaLoading, resetCountdown }: IdeaSubmissionFormProps) {
     // Consolidated State
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
@@ -876,7 +877,12 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         <div>
                             <p className="text-amber-200 text-sm font-medium mb-1">Daily Limit Reached</p>
                             <p className="text-amber-200/60 text-xs">
-                                You've used all {quota.limit} free evaluations for today. Limit resets at midnight UTC.{' '}
+                                You've used all {quota.limit} free evaluations for today.{' '}
+                                {resetCountdown ? (
+                                    <>Resets in <span className="text-amber-400 font-mono">{resetCountdown}</span>.{' '}</>
+                                ) : (
+                                    'Limit resets at midnight UTC. '
+                                )}
                                 <a href="/pricing" className="text-amber-400 hover:text-amber-300 underline">
                                     Get Unlimited Access →
                                 </a>

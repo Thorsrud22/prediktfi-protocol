@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getEvalCount, getClientIdentifier, isRedisAvailable, getBonusQuota } from "@/app/lib/ratelimit";
+import { getEvalCount, getClientIdentifier, isRedisAvailable, getBonusQuota, getSecondsUntilMidnightUTC } from "@/app/lib/ratelimit";
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +8,17 @@ const LIMITS = {
     idea_eval_ip: 3,
     idea_eval_wallet: 5
 } as const;
+
+// Calculate midnight UTC timestamp
+function getMidnightUTCTimestamp(): number {
+    const now = new Date();
+    return Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        0, 0, 0, 0
+    );
+}
 
 export async function GET(request: NextRequest) {
     try {
@@ -20,7 +31,7 @@ export async function GET(request: NextRequest) {
 
         // Check if Redis is available for reliable quota tracking
         const redisAvailable = isRedisAvailable();
-        
+
         if (!redisAvailable) {
             console.warn(`[QuotaAPI] Redis unavailable - quota tracking unreliable for ${identifier}`);
             // Return unknown/unlimited state when Redis isn't available
@@ -32,7 +43,8 @@ export async function GET(request: NextRequest) {
                 identifier,
                 plan,
                 reliable: false,
-                message: 'Quota tracking unavailable'
+                message: 'Quota tracking unavailable',
+                resetAt: getMidnightUTCTimestamp()
             });
         }
 
@@ -51,7 +63,8 @@ export async function GET(request: NextRequest) {
             identifier,
             plan,
             reliable: true,
-            bonus
+            bonus,
+            resetAt: getMidnightUTCTimestamp()
         });
     } catch (error) {
         console.error('Error fetching quota:', error);
