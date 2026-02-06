@@ -17,6 +17,7 @@ import {
     Activity,
     Terminal
 } from 'lucide-react';
+import Link from 'next/link';
 
 interface IdeaSubmissionFormProps {
     onSubmit: (data: IdeaSubmission) => void;
@@ -28,6 +29,7 @@ interface IdeaSubmissionFormProps {
     isConnected?: boolean;
     onConnect?: () => void;
     error?: string | null;
+    isQuotaLoading?: boolean;
 }
 
 
@@ -405,7 +407,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
 }
 
 
-export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, streamingThoughts, isConnected, onConnect, error }: IdeaSubmissionFormProps) {
+export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, streamingThoughts, isConnected, onConnect, error, isQuotaLoading }: IdeaSubmissionFormProps) {
     // Consolidated State
     const [formData, setFormData] = useState<Partial<IdeaSubmission>>(initialData || {
         description: '',
@@ -836,19 +838,28 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             {/* Response Style */}
                             <div>
                                 <label className="text-white/40 text-xs mb-2 block">Report Style</label>
-                                <div className="flex gap-2">
-                                    {['roast', 'balanced', 'analytical'].map((style) => (
-                                        <button
-                                            key={style}
-                                            type="button"
-                                            onClick={() => handleChange('responseStyle', style)}
-                                            className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all uppercase ${formData.responseStyle === style
-                                                ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
-                                                : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
-                                        >
-                                            {style}
-                                        </button>
-                                    ))}
+                                <div className="space-y-3">
+                                    <div className="flex gap-2">
+                                        {['roast', 'balanced', 'analytical'].map((style) => (
+                                            <button
+                                                key={style}
+                                                type="button"
+                                                onClick={() => handleChange('responseStyle', style)}
+                                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all uppercase ${formData.responseStyle === style
+                                                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                                                    : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
+                                            >
+                                                {style}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Style Description */}
+                                    <p className="text-[10px] text-white/40 italic pl-1 border-l-2 border-white/5 animate-in fade-in duration-300">
+                                        {formData.responseStyle === 'roast' && "Ruthless critique focused on flaws and hard truths. High entertainment, strict scoring."}
+                                        {formData.responseStyle === 'balanced' && "Fair, objective evaluation with constructive feedback. Standard depth and scoring."}
+                                        {formData.responseStyle === 'analytical' && "Rigorous technical deep-dive. Data-driven, strictly professional, and highly critical."}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -867,28 +878,51 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             <p className="text-amber-200/60 text-xs">
                                 You've used all {quota.limit} free evaluations for today. Limit resets at midnight UTC.{' '}
                                 <a href="/pricing" className="text-amber-400 hover:text-amber-300 underline">
-                                    Want unlimited access? →
+                                    Get Unlimited Access →
                                 </a>
                             </p>
                         </div>
                     </div>
                 )}
 
-                <button
-                    type="submit"
-                    disabled={quota?.remaining === 0 || !!errors.tokenAddress}
-                    className={`group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 border border-white/10 overflow-hidden rounded-2xl ${quota?.remaining === 0 || errors.tokenAddress
-                        ? 'bg-slate-700 text-white/40 cursor-not-allowed'
-                        : 'bg-[#0055FF] hover:bg-[#0044CC] text-white shadow-[0_0_20px_rgba(0,85,255,0.3)] hover:shadow-[0_0_30px_rgba(0,85,255,0.6)] hover:-translate-y-0.5 active:translate-y-0'
-                        }`}
-                >
-                    <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                {/* Action Button Logic */}
+                {isQuotaLoading ? (
+                    <button
+                        type="button"
+                        disabled
+                        className="group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] border border-white/5 overflow-hidden rounded-2xl bg-slate-800/50 text-white/20 cursor-wait"
+                    >
+                        <div className="relative flex items-center justify-center gap-4 z-10 animate-pulse">
+                            <span>Checking Authorization...</span>
+                        </div>
+                    </button>
+                ) : quota?.remaining === 0 ? (
+                    <Link
+                        href="/pricing"
+                        className="group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 border border-amber-500/30 overflow-hidden rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.2)] hover:shadow-[0_0_30px_rgba(245,158,11,0.4)] hover:-translate-y-0.5 active:translate-y-0 inline-flex items-center justify-center"
+                    >
+                        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20"></div>
+                        <span className="relative z-10 flex items-center gap-2">
+                            Get Unlimited Access <Rocket size={14} />
+                        </span>
+                    </Link>
+                ) : (
+                    <button
+                        type="submit"
+                        disabled={!!errors.tokenAddress}
+                        className={`group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 border border-white/10 overflow-hidden rounded-2xl ${errors.tokenAddress
+                            ? 'bg-slate-700 text-white/40 cursor-not-allowed'
+                            : 'bg-[#0055FF] hover:bg-[#0044CC] text-white shadow-[0_0_20px_rgba(0,85,255,0.3)] hover:shadow-[0_0_30px_rgba(0,85,255,0.6)] hover:-translate-y-0.5 active:translate-y-0'
+                            }`}
+                    >
+                        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 
-                    <div className="relative flex items-center justify-center gap-4 z-10">
-                        <span>{quota?.remaining === 0 ? 'Limit Reached' : errors.tokenAddress ? 'Invalid Address' : 'Initiate Protocol'}</span>
-                    </div>
-                </button>
+                        <div className="relative flex items-center justify-center gap-4 z-10">
+                            <span>{errors.tokenAddress ? 'Invalid Address' : 'Initiate Protocol'}</span>
+                        </div>
+                    </button>
+                )}
             </div>
 
         </form>

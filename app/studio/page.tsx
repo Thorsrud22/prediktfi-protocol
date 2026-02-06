@@ -29,6 +29,7 @@ export default function StudioPage() {
   const [insightId, setInsightId] = useState<string | null>(null);
   const [quota, setQuota] = useState<{ limit: number; remaining: number } | null>(null);
   const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
+  const [isQuotaLoading, setIsQuotaLoading] = useState(true);
 
   // Performance tracking
   usePerformanceTracking('StudioPage');
@@ -63,6 +64,8 @@ export default function StudioPage() {
         }
       } catch (e) {
         console.error("Failed to fetch quota", e);
+      } finally {
+        setIsQuotaLoading(false);
       }
     }
     fetchQuota();
@@ -290,7 +293,7 @@ export default function StudioPage() {
               </div>
               {quota.remaining === 0 && !isAnalyzing && (
                 <a href="/pricing" className="text-[9px] text-amber-400/80 hover:text-amber-300 uppercase tracking-widest mt-1 block">
-                  Want more? Join Pro waitlist →
+                  Get Unlimited Access →
                 </a>
               )}
               {quota.remaining > 0 && quota.remaining !== -1 && (
@@ -320,6 +323,7 @@ export default function StudioPage() {
                 isConnected={isConnected}
                 onConnect={connect}
                 error={error}
+                isQuotaLoading={isQuotaLoading}
               />
             </>
           )}
