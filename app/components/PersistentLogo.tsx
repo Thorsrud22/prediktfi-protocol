@@ -42,7 +42,7 @@ export default function PersistentLogo() {
         >
             <InstantLink
                 href="/"
-                className="group flex items-center gap-2.5 rounded-full bg-slate-900/95 px-2.5 py-1.5 pr-4 ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] duration-300"
+                className="group flex items-center gap-2.5 rounded-full bg-slate-900/95 px-2.5 py-1.5 sm:pr-4 ring-1 ring-inset ring-white/10 transition-all hover:ring-white/20 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] duration-300"
                 aria-label="Predikt home"
             >
                 <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/20 shadow-[0_8px_32px_rgba(59,130,246,0.4)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_12px_40px_rgba(59,130,246,0.6)] group-hover:ring-white/30 overflow-hidden">

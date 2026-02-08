@@ -60,7 +60,7 @@ export default function AboutPage() {
                   </div>
                   <h3 className="text-white font-bold text-xl mb-2">AI Stress-Test</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    The model simulates an investment committee debate, attacking your weaknesses before outputting a Probability Score (0-100%).
+                    The model spawns three specialized agents (Bear, Bull, and Judge) to debate your idea's flaws and potential before synthesizing a final Score.
                   </p>
                 </div>
 

@@ -55,7 +55,7 @@ export default function MethodologyPage() {
                             <li className="flex items-start gap-3">
                                 <span className="text-blue-400 mt-1">•</span>
                                 <div>
-                                    <strong className="text-white">Solana On-Chain</strong> — Token mint/freeze authority checks to detect rug pull risk
+                                    <strong className="text-white">Solana On-Chain</strong> — Live verification of token authority, LP locks, and holder distribution (vs. simulated data)
                                 </div>
                             </li>
                             <li className="flex items-start gap-3">
@@ -85,7 +85,7 @@ export default function MethodologyPage() {
                             </div>
                             <div className="p-4 bg-slate-800/50 rounded-xl">
                                 <div className="text-2xl font-bold text-blue-400 mb-1">Rug Risk</div>
-                                <p className="text-sm text-slate-400">On-chain contract analysis, mint authority, and freeze authority</p>
+                                <p className="text-sm text-slate-400">Universal contract scanning for both DeFi and AI Agent tokens (RugCheck & Solscan)</p>
                             </div>
                             <div className="p-4 bg-slate-800/50 rounded-xl">
                                 <div className="text-2xl font-bold text-purple-400 mb-1">Team Execution</div>

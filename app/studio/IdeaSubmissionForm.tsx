@@ -148,6 +148,8 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
     // Keyword definitions for highlighting
     const HIGHLIGHT_KEYWORDS: Array<{ words: string[]; className: string }> = [
         { words: ['CoinGecko', 'Birdeye', 'DexScreener'], className: 'text-cyan-400 font-bold' },
+        { words: ['[BEAR]'], className: 'text-red-500 font-bold tracking-wider' },
+        { words: ['[BULL]'], className: 'text-green-400 font-bold tracking-wider' },
         { words: ['AI', 'GPT', 'LLM', 'Model'], className: 'text-emerald-400 font-bold' },
         { words: ['Solana', 'SOL', 'ETH', 'Ethereum', 'BTC', 'Bitcoin'], className: 'text-amber-400 font-bold' },
         { words: ['Risk', 'Warning', 'Critical', 'Error'], className: 'text-red-400 font-bold' },
@@ -265,7 +267,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
                 </div>
                 <div className="flex items-center gap-3 text-[10px] font-mono">
                     <span className="text-emerald-400/80">{displayProgress.toFixed(0)}%</span>
-                    <span className={`transition-colors duration-500 ${elapsedSeconds > 20 ? "text-purple-400 animate-pulse font-bold" : "text-white/30"}`}>
+                    <span className={`transition-colors duration-500 ${elapsedSeconds > 20 ? "text-blue-400 animate-pulse font-bold" : "text-white/30"}`}>
                         {elapsedSeconds > 20 ? "DEEP REASONING" : `T+${formatElapsed(elapsedSeconds)}`}
                     </span>
                 </div>
@@ -300,7 +302,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
                             {error ? "Analysis Halted" : currentActivity}
                         </h3>
 
-                        <p className="text-white/40 text-sm max-w-sm mx-auto mb-8 h-6">
+                        <p className="text-white/40 text-sm max-w-lg mx-auto mb-8 min-h-[1.5rem]">
                             {streamingThoughts ? (
                                 <span className="animate-pulse italic text-cyan-500/60">
                                     {(streamingThoughts.split('\n').filter(t => t.trim()).pop() || 'Reasoning...').replace(/^["']|["']$/g, '')}

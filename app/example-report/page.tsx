@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import IdeaEvaluationReport from '../studio/IdeaEvaluationReport';
+import IdeaEvaluationReport from '../studio/IdeaEvaluationReportNew';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -46,7 +46,11 @@ const EXAMPLE_RESULT: IdeaEvaluationResult = {
             "Solana program anchor interface",
             "Real-time market data indexer"
         ],
-        comments: "Technically ambitious but feasible."
+        comments: `Technically ambitious but feasible.
+        
+[COMMITTEE LOG]
+Bear Verdict: AVOID ("This is just over-engineered vaporware. Solana mainnet congestion will eat your 'real-time' inference for breakfast.")
+Bull Verdict: ALL IN ("Finally, an agent that actually does something on-chain. If the latency claims hold up, this is the Holy Grail of DeFi UX.")`
     },
 
     aiStrategy: {
@@ -125,7 +129,9 @@ const EXAMPLE_RESULT: IdeaEvaluationResult = {
         liquidityStatus: 'locked',
         liquidityDetail: "Locked for 1 year",
         liquidityGrade: 'strong',
-        isAnonTeam: false
+        isAnonTeam: false,
+        isVerified: true,
+        tokenAddress: "EXAMPLE-TOKEN-ADDRESS"
     },
 
     launchReadinessScore: 85,

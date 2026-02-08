@@ -11,6 +11,19 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
     {
+        version: "1.13.0",
+        date: "Feb 08, 2026",
+        title: "The Committee Update & AI Verification",
+        description: "Major architectural upgrade to the evaluation engine, introducing Multi-Agent Verdicts and universal security scanning for AI agents.",
+        changes: [
+            { category: 'feature', text: 'Evaluation Committee: New Bear/Bull/Judge agent architecture for balanced, debate-style analysis.' },
+            { category: 'feature', text: 'Verdict Cards: Replaced generic comments with specific "AVOID" vs "ALL IN" theses.' },
+            { category: 'security', text: 'Universal Scanning: Security checks (RugCheck, Liquidity) now active for AI Agent tokens.' },
+            { category: 'improvement', text: 'Trust Signals: Explicit "Verified" vs "Simulated" badges for on-chain data.' },
+            { category: 'improvement', text: 'Example Report: Updated to reflect the new "Institutional Grade" standard.' }
+        ]
+    },
+    {
         version: "1.12.0",
         date: "Feb 06, 2026",
         title: "Security, Trust & UX Enhancements",

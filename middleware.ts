@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
       identifier: walletId || undefined // Use wallet as identifier if available
     });
 
-    if (rateLimitResponse) {
+    if (process.env.NODE_ENV === 'production' && rateLimitResponse) {
       return rateLimitResponse;
     }
   }

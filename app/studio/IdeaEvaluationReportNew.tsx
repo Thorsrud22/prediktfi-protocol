@@ -9,15 +9,14 @@ import {
     CircleCheck as CheckCircle2,
     ArrowLeft,
     Sparkles,
-    Activity,
     Download,
     Link as LinkIcon,
     Flag,
     Check,
-    Zap,
     Info
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { useToast } from '../components/ToastProvider';
 
 const RadarChart = dynamic(() => import('../components/charts/RadarChart'), {
@@ -316,7 +315,7 @@ Get your own evaluation here:`;
                         {/* What This Score Means - Inline Definition */}
                         <div className="mt-4 bg-slate-800/50 border border-white/5 rounded-xl p-4 max-w-md">
                             <h4 className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                <Activity size={12} className="text-blue-400" />
+                                <Image src="/images/logo.png" width={12} height={12} alt="Predikt" className="object-contain" />
                                 What this score means
                             </h4>
                             <p className="text-xs text-white/50 leading-relaxed">
@@ -398,6 +397,64 @@ Get your own evaluation here:`;
                     </div>
                 </div>
 
+                {/* ========== INVESTMENT COMMITTEE DEBATE ========== */}
+                {(() => {
+                    const committeeLog = result.technical.comments?.match(/\[COMMITTEE LOG\]([\s\S]*)/)?.[1];
+                    if (committeeLog) {
+                        const bearVerdict = committeeLog.match(/Bear Verdict: (.*?) \("/)?.[1] || "SHORT";
+                        const bearRoast = committeeLog.match(/Bear Verdict: .*? \("(.*?)"\)/)?.[1] || "No comment.";
+                        const bullVerdict = committeeLog.match(/Bull Verdict: (.*?) \("/)?.[1] || "LONG";
+                        const bullPitch = committeeLog.match(/Bull Verdict: .*? \("(.*?)"\)/)?.[1] || "No comment.";
+
+                        return (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                {/* BEAR CARD */}
+                                <div className="bg-red-950/20 border border-red-500/20 rounded-2xl p-6 relative overflow-hidden group hover:bg-red-950/30 transition-colors">
+
+                                    <div className="relative z-10">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-2 bg-red-500/20 rounded-lg">
+                                                    <Flag size={16} className="text-red-500" />
+                                                </div>
+                                                <h3 className="text-red-400 font-black uppercase tracking-widest text-xs">The Bear Case</h3>
+                                            </div>
+                                            <span className="text-red-500 font-black uppercase tracking-widest text-xs border border-red-500/50 px-2 py-1 rounded bg-red-500/10">
+                                                {bearVerdict}
+                                            </span>
+                                        </div>
+                                        <p className="text-red-200/90 text-sm leading-relaxed italic border-l-2 border-red-500/30 pl-4">
+                                            "{bearRoast}"
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* BULL CARD */}
+                                <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-6 relative overflow-hidden group hover:bg-emerald-950/30 transition-colors">
+
+                                    <div className="relative z-10">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-2 bg-emerald-500/20 rounded-lg">
+                                                    <Image src="/images/logo.png" width={16} height={16} alt="Predikt" className="object-contain" />
+                                                </div>
+                                                <h3 className="text-emerald-400 font-black uppercase tracking-widest text-xs">The Bull Case</h3>
+                                            </div>
+                                            <span className="text-emerald-500 font-black uppercase tracking-widest text-xs border border-emerald-500/50 px-2 py-1 rounded bg-emerald-500/10">
+                                                {bullVerdict}
+                                            </span>
+                                        </div>
+                                        <p className="text-emerald-200/90 text-sm leading-relaxed italic border-l-2 border-emerald-500/30 pl-4">
+                                            "{bullPitch}"
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+                    return null;
+                })()}
+
                 {/* ========== RED FLAG BOX ========== */}
                 {redFlags.length > 0 && (
                     <div className={`border-2 border-red-500/50 bg-red-950/30 p-4 rounded-xl mb-6 pulse-glow`}>
@@ -426,7 +483,7 @@ Get your own evaluation here:`;
                     {/* RADAR CHART - Own Card */}
                     <div className="border border-white/10 bg-slate-900/60 p-6 rounded-2xl flex flex-col items-center justify-center min-h-[360px]">
                         <div className="flex items-center gap-2 mb-4 text-white/60 border-b border-white/5 pb-3 w-full">
-                            <Activity size={16} className="text-blue-400" />
+                            <Image src="/images/logo.png" width={16} height={16} alt="Predikt" className="object-contain" />
                             <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Performance Radar</h3>
                         </div>
                         <RadarChart data={chartData} width={300} height={300} />
@@ -557,7 +614,7 @@ Get your own evaluation here:`;
                         <div className="border border-white/5 bg-slate-900/80 p-6 rounded-2xl relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-600 to-cyan-500 opacity-50" />
                             <div className="flex items-center gap-2 mb-4 text-white/90 border-b border-white/5 pb-3">
-                                <Activity size={18} className="text-cyan-400" />
+                                <Image src="/images/logo.png" width={18} height={18} alt="Predikt" className="object-contain" />
                                 <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Calibration Audit</h3>
                             </div>
                             <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -588,7 +645,7 @@ Get your own evaluation here:`;
                 </div>
 
                 {/* SECURITY / CRYPTO-NATIVE CHECKS GRID */}
-                {result.cryptoNativeChecks && result.projectType !== 'ai' && (
+                {result.cryptoNativeChecks && (
                     <div className="border border-white/5 bg-slate-900 p-6 mb-6 rounded-2xl">
                         <div className="flex items-center justify-between mb-5 border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-blue-400">
@@ -780,7 +837,7 @@ Get your own evaluation here:`;
 
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
-                            <Zap size={20} />
+                            <Image src="/images/logo.png" width={20} height={20} alt="Predikt" className="object-contain" />
                         </div>
                         <h3 className="text-lg font-bold text-white tracking-wide uppercase">Recommended Next Steps</h3>
                     </div>

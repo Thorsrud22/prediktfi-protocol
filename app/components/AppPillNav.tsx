@@ -146,21 +146,21 @@ export default function AppPillNav() {
       <div
         id="debug-navbar"
         className={`hidden sm:block ${['/studio', '/example-report', '/idea', '/changelog', '/legal'].some(r => pathname?.startsWith(r))
-            ? 'absolute'
-            : 'fixed'
+          ? 'absolute'
+          : 'fixed'
           } top-3 left-1/2 z-40 -translate-x-1/2 transition-transform duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'
           }`}
       >
         {/* Pill Nav - Outer wrapper with ring */}
         <nav
-          className="rounded-full bg-slate-900/95 ring-1 ring-inset ring-white/10 shadow-lg px-1 py-1 transition-all duration-300"
+          className="rounded-full bg-slate-900/95 ring-1 ring-inset ring-white/10 shadow-lg p-1 transition-all duration-300 w-fit mx-auto"
           aria-label="Main navigation"
         >
           {/* Inner wrapper with overflow-hidden to clip animated pill */}
           <div className="rounded-full overflow-hidden">
             <ul
               ref={navListRef}
-              className="relative flex items-center gap-1 whitespace-nowrap overflow-x-auto px-1"
+              className="relative flex items-center gap-1 whitespace-nowrap overflow-x-auto"
             >
               <span
                 ref={indicatorRef}
@@ -174,7 +174,7 @@ export default function AppPillNav() {
                   <li key={item.href}>
                     <InstantLink
                       href={item.href}
-                      className={`relative inline-flex h-10 md:h-11 items-center justify-center rounded-full px-4 text-sm font-semibold focusing-outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide ${active ? 'text-white' : 'text-white/80 hover:text-white'}`}
+                      className={`relative inline-flex h-10 md:h-11 min-w-[100px] items-center justify-center rounded-full px-4 text-sm font-semibold focusing-outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide ${active ? 'text-white' : 'text-white/80 hover:text-white'}`}
                       aria-current={active ? 'page' : undefined}
                     >
                       <span className="relative z-10 translate-y-[0.5px]">{item.label}</span>
@@ -223,21 +223,21 @@ export default function AppPillNav() {
                   aria-current={active ? 'page' : undefined}
                 >
                   {item.href === '/studio' && (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <svg className="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   )}
                   {item.href === '/account' && (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <svg className="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   )}
                   {item.href === '/pricing' && (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <svg className="w-5 h-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )}
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{item.label}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
                 </InstantLink>
               );
             })}

@@ -7,7 +7,6 @@
 
 import { NextRequest } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
-import { evaluateIdea } from "@/lib/ai/evaluator";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
 import { checkRateLimit, incrementEvalCount, getClientIdentifier } from "@/app/lib/ratelimit";
 
@@ -69,8 +68,9 @@ export async function POST(request: NextRequest) {
                 const marketSnapshot = await getMarketSnapshot();
                 await sendEvent("step", { step: `Market snapshot: SOL $${marketSnapshot.solPriceUsd?.toLocaleString() || 'N/A'}` });
 
-                // 2. AI Inference with real-time progress
-                const res = await evaluateIdea(parsed.data, {
+                // 2. AI Inference with real-time committee debate
+                const { evaluateWithCommittee } = await import("@/lib/ai/committee");
+                const res = await evaluateWithCommittee(parsed.data, {
                     market: marketSnapshot,
                     onProgress: async (step) => {
                         await sendEvent("step", { step });

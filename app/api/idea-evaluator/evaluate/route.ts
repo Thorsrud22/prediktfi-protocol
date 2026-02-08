@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
-import { evaluateIdea } from "@/lib/ai/evaluator";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
 import { checkRateLimit, incrementEvalCount, getClientIdentifier } from "@/app/lib/ratelimit";
 
@@ -32,15 +31,18 @@ export async function POST(request: NextRequest) {
             plan: rateLimitPlan
         });
 
-        if (rateLimitResponse) {
+        if (process.env.NODE_ENV === 'production' && rateLimitResponse) {
             return rateLimitResponse;
         }
         // ---------------------------
 
+
         // Fetch market context (latencies handled by internal cache/timeout)
         const marketSnapshot = await getMarketSnapshot();
 
-        const result = await evaluateIdea(parsed.data, { market: marketSnapshot });
+        // Use new Investment Committee Protocol
+        const { evaluateWithCommittee } = await import("@/lib/ai/committee");
+        const result = await evaluateWithCommittee(parsed.data, { market: marketSnapshot });
 
         // Increment evaluation count for daily quota tracking
         await incrementEvalCount(identifier, rateLimitPlan as 'idea_eval_ip' | 'idea_eval_wallet');

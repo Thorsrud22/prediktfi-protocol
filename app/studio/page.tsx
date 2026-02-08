@@ -7,7 +7,7 @@ import PerformanceMonitor from '../components/PerformanceMonitor';
 import IdeaSubmissionForm from './IdeaSubmissionForm';
 import dynamic from 'next/dynamic';
 
-const IdeaEvaluationReport = dynamic(() => import('./IdeaEvaluationReport'), {
+const IdeaEvaluationReport = dynamic(() => import('./IdeaEvaluationReportNew'), {
   loading: () => <div className="min-h-[600px] w-full bg-slate-900/40 animate-pulse rounded-3xl" />,
   ssr: false
 });
@@ -136,7 +136,7 @@ export default function StudioPage() {
 
       if (!response.ok) {
         if (response.status === 429) {
-          throw new Error('Daily limit reached. Your limit resets at midnight UTC. Want unlimited access? Join the Pro waitlist at /pricing');
+          throw new Error('Daily limit reached. Your limit resets at midnight UTC. Get Unlimited Access → /pricing');
         }
         throw new Error('Evaluation failed');
       }

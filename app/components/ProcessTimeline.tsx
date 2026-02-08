@@ -102,7 +102,7 @@ export default function ProcessTimeline() {
             <div className="max-w-6xl mx-auto relative z-10">
                 {/* Section Header */}
                 <div className="text-center mb-16 sm:mb-32 space-y-4">
-                    <h2 className="text-[10px] font-black tracking-[0.2em] text-blue-500 uppercase italic border-l-2 border-blue-500 pl-3 inline-block">
+                    <h2 className="text-xs font-bold tracking-widest text-blue-500 uppercase italic border-l-2 border-blue-500 pl-3 inline-block">
                         The Protocol
                     </h2>
                     <h3 className="text-4xl md:text-7xl font-black text-white uppercase italic tracking-tighter">

@@ -1,6 +1,6 @@
 
 import { prisma } from '@/app/lib/prisma';
-import IdeaEvaluationReport from '@/app/studio/IdeaEvaluationReport';
+import IdeaEvaluationReport from '@/app/studio/IdeaEvaluationReportNew';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Metadata } from 'next';

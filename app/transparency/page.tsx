@@ -60,12 +60,12 @@ export default function TransparencyPage() {
                                 Instead of next-token prediction, it simulates an investment committee debate before outputting a score.
                             </p>
                             <div className="bg-black/50 rounded-xl p-4 border border-white/5 font-mono text-xs text-slate-300">
-                                <div className="text-slate-500 mb-2 border-b border-white/5 pb-2">Internal Chain-of-Thought Log</div>
+                                <div className="text-slate-500 mb-2 border-b border-white/5 pb-2">The Committee Debate (Bear vs Bull)</div>
                                 <div className="space-y-2 opacity-80">
-                                    <p>&gt; Analyzing market saturation for 'AI wrapper'...</p>
-                                    <p>&gt; Querying product hunt trends & git activity...</p>
-                                    <p>&gt; DETECTED: Core logic is just an OpenAI API call...</p>
-                                    <p>&gt; VERDICT: Discounting innovation score by 40% (Wrapper Tax).</p>
+                                    <p><span className="text-red-400 font-bold">BEAR:</span> "AVOID. This is just a wrapper. No moat."</p>
+                                    <p><span className="text-emerald-400 font-bold">BULL:</span> "ALL IN. First mover advantage is real."</p>
+                                    <p className="text-blue-300 mt-2 border-t border-white/5 pt-2">&gt; JUDGE: Synthesizing verdict...</p>
+                                    <p>&gt; FINAL SCORE: 42/100 (Bear case prevails due to lack of IP).</p>
                                 </div>
                             </div>
                         </div>
@@ -160,7 +160,7 @@ export default function TransparencyPage() {
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold text-white">Verification Layer</h2>
-                            <p className="text-slate-400 text-sm">Fact-Checking (RPC & APIS)</p>
+                            <p className="text-slate-400 text-sm">Fact-Checking (Verified vs Simulated)</p>
                         </div>
                     </div>
 

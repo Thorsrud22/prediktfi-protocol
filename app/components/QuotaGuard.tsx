@@ -36,7 +36,7 @@ export default function QuotaGuard({ children, onExhausted, className }: QuotaGu
                 href="/pricing"
                 className="text-[--accent] hover:text-[--accent]/80 text-sm font-medium"
               >
-                Join Pro Waitlist for unlimited insights →
+                Get Unlimited Access →
               </Link>
             </div>
           </div>
