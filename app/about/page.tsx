@@ -28,10 +28,16 @@ export default function AboutPage() {
                 Predikt is an AI-powered evaluation studio for <span className="text-white font-bold">Web3 protocols, AI agents, and SaaS startups</span>.
                 We bridge the gap between speculative markets and fundamental analysis by creating verifiable, shareable evaluations.
               </p>
-              <p className="text-slate-400 leading-relaxed">
+              <p className="text-slate-400 leading-relaxed mb-8">
                 Whether you're launching a memecoin or a B2B platform, our neuro-symbolic AI provides the rigorous "System 2" thinking
                 that founders need and smart investors require.
               </p>
+
+              <div className="border-t border-white/5 pt-6 mt-6">
+                <p className="text-xs text-slate-500 font-mono">
+                  Built by <strong className="text-slate-300">Thorsrud</strong>. Shipping in public on Solana.
+                </p>
+              </div>
             </section>
 
             <section>

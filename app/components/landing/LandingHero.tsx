@@ -15,20 +15,38 @@ export default function LandingHero() {
             {/* Main Heading */}
             <div className="space-y-4">
                 <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2, duration: 0.6 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 1.0, ease: "easeOut" }}
                     className="text-xs sm:text-sm font-bold tracking-[0.3em] text-accent uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-4"
                 >
-                    Turn your idea into an
+                    Stop guessing. Start shipping.
                 </motion.span>
                 <h1 className="flex flex-col items-center justify-center font-black text-white leading-[0.8] uppercase italic">
-                    <span className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl text-balance">
+                    <motion.span
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4, duration: 1.2, ease: "easeOut" }}
+                        className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl text-balance"
+                    >
                         investor-grade
-                    </span>
-                    <span className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl mt-[-0.1em] text-balance">
-                        answer
-                    </span>
+                    </motion.span>
+                    <motion.span
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
+                        className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl mt-[-0.1em] text-balance"
+                    >
+                        due diligence
+                    </motion.span>
+                    <motion.span
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.9, duration: 1.0, ease: "easeOut" }}
+                        className="mt-4 text-lg sm:text-2xl font-bold text-accent tracking-[0.2em] relative top-2 block"
+                    >
+                        IN 4.2 SECONDS
+                    </motion.span>
                 </h1>
             </div>
 
@@ -36,7 +54,7 @@ export default function LandingHero() {
             <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
+                transition={{ delay: 1.2, duration: 1.2, ease: "easeOut" }}
                 className="text-base md:text-xl text-muted max-w-2xl mx-auto font-medium leading-relaxed"
             >
                 Brutally honest feedback on your project idea with <span className="text-white">live market data</span> and <span className="text-white">expert-level analysis</span>.
@@ -69,7 +87,7 @@ export default function LandingHero() {
                 </div>
                 <div className="flex items-center gap-3">
                     <span className="w-1 h-1 rounded-full bg-accent-secondary animate-pulse" />
-                    Semantic Analysis
+                    Deterministic Hard Rails
                 </div>
                 <div className="flex items-center gap-3">
                     <span className="w-1 h-1 rounded-full bg-accent animate-pulse" />
