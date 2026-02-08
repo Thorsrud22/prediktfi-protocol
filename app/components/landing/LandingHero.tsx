@@ -5,6 +5,40 @@ import { motion } from 'framer-motion';
 import HeroActions from './HeroActions';
 
 export default function LandingHero() {
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) {
+        return (
+            <div className="text-center max-w-5xl mx-auto space-y-6 md:space-y-10 opacity-100">
+                {/* Static Server Render (SEO Friendly) */}
+                <div className="space-y-4">
+                    <span className="text-xs sm:text-sm font-bold tracking-[0.3em] text-accent uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-4">
+                        Stop guessing. Start shipping.
+                    </span>
+                    <h1 className="flex flex-col items-center justify-center font-black text-white leading-[0.8] uppercase italic">
+                        <span className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl text-balance">
+                            investor-grade
+                        </span>
+                        <span className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 bg-clip-text text-transparent filter drop-shadow-2xl mt-[-0.1em] text-balance">
+                            due diligence
+                        </span>
+                        <span className="mt-4 text-2xl sm:text-4xl md:text-5xl font-bold text-accent tracking-[0.2em] relative top-2 block">
+                            IN ~2 MINUTES
+                        </span>
+                    </h1>
+                </div>
+                <p className="text-lg md:text-xl text-muted max-w-2xl mx-auto font-medium leading-relaxed">
+                    Brutally honest feedback on your project idea with <span className="text-white">live market data</span> and <span className="text-white">expert-level analysis</span>.
+                </p>
+                <HeroActions />
+            </div>
+        );
+    }
+
     return (
         <motion.div
             initial={{ opacity: 1, y: 0 }}
@@ -43,9 +77,9 @@ export default function LandingHero() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.9, duration: 1.0, ease: "easeOut" }}
-                        className="mt-4 text-lg sm:text-2xl font-bold text-accent tracking-[0.2em] relative top-2 block"
+                        className="mt-4 text-2xl sm:text-4xl md:text-5xl font-bold text-accent tracking-[0.2em] relative top-2 block"
                     >
-                        IN 4.2 SECONDS
+                        IN ~2 MINUTES
                     </motion.span>
                 </h1>
             </div>
@@ -55,7 +89,7 @@ export default function LandingHero() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.2, duration: 1.2, ease: "easeOut" }}
-                className="text-base md:text-xl text-muted max-w-2xl mx-auto font-medium leading-relaxed"
+                className="text-lg md:text-xl text-muted max-w-2xl mx-auto font-medium leading-relaxed"
             >
                 Brutally honest feedback on your project idea with <span className="text-white">live market data</span> and <span className="text-white">expert-level analysis</span>.
             </motion.p>
@@ -75,7 +109,7 @@ export default function LandingHero() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
                     </span>
-                    Example: User analyzed <span className="text-white">$DOGE</span> in 4.2s
+                    Example: User analyzed <span className="text-white">$DOGE</span> (Deep Audit in ~2m)
                 </div>
             </motion.div>
 

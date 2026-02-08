@@ -265,7 +265,9 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
                 </div>
                 <div className="flex items-center gap-3 text-[10px] font-mono">
                     <span className="text-emerald-400/80">{displayProgress.toFixed(0)}%</span>
-                    <span className="text-white/30">T+{formatElapsed(elapsedSeconds)}</span>
+                    <span className={`transition-colors duration-500 ${elapsedSeconds > 20 ? "text-purple-400 animate-pulse font-bold" : "text-white/30"}`}>
+                        {elapsedSeconds > 20 ? "DEEP REASONING" : `T+${formatElapsed(elapsedSeconds)}`}
+                    </span>
                 </div>
             </div>
 

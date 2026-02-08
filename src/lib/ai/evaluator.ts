@@ -139,24 +139,41 @@ Use this context to judge timing and market fit.
   // Helper to detect if project claims to be launched
   const isLaunched = detectLaunchedStatus(input);
 
-  if (input.tokenAddress) {
-    options?.onProgress?.(`Scanning token contract ${input.tokenAddress.slice(0, 8)}...`);
-    try {
-      const check = await verifyTokenSecurity(input.tokenAddress);
+  // --- PARALLEL EXECUTION OPTIMIZATION ---
+  const normalizedCategory = input.projectType.toLowerCase();
 
-      // Check if verification actually succeeded
-      if (!check.valid) {
-        options?.onProgress?.(`⚠️ Token check failed: ${check.error || 'Unknown error'}`);
-        verificationContext = `
+  // Launch both market checks simultaneously to save ~3-5 seconds
+  options?.onProgress?.("Initiating parallel market & security scans...");
+
+  const tokenCheckPromise = input.tokenAddress
+    ? verifyTokenSecurity(input.tokenAddress).catch(err => ({ valid: false, error: err instanceof Error ? err.message : String(err) } as any))
+    : Promise.resolve(null);
+
+  const competitiveMemoPromise = ['memecoin', 'defi', 'ai'].includes(normalizedCategory)
+    ? fetchCompetitiveMemo(input, normalizedCategory).catch(err => ({ status: 'error', error: err } as any))
+    : Promise.resolve(null);
+
+  // Store reference projects for later merging into result
+  let referenceProjectsFromMemo: { name: string; chainOrPlatform: string; note: string; metrics?: { marketCap?: string; tvl?: string; dailyUsers?: string; funding?: string; revenue?: string } }[] = [];
+
+  // Await both results
+  const [tokenCheckRaw, competitiveMemoResult] = await Promise.all([tokenCheckPromise, competitiveMemoPromise]);
+
+  // --- Process Token Check Results ---
+  if (tokenCheckRaw) {
+    if (!tokenCheckRaw.valid) {
+      options?.onProgress?.(`⚠️ Token check failed: ${tokenCheckRaw.error || 'Unknown error'}`);
+      verificationContext = `
 ON-CHAIN CHECK FAILED:
 - Token Address Provided: ${input.tokenAddress}
-- Error: ${check.error || 'Invalid address or token not found'}
+- Error: ${tokenCheckRaw.error || 'Invalid address or token not found'}
 - Status: NOT VALIDATED
 - INSTRUCTION: Flag as "Unvalidated Token" in the report. Do NOT display authority status.
 `;
-      } else {
-        options?.onProgress?.(`✓ Authorities checked: Mint=${check.mintAuthority ? 'ACTIVE' : 'REVOKED'}, Freeze=${check.freezeAuthority ? 'ACTIVE' : 'REVOKED'}`);
-        verificationContext = `
+    } else {
+      const check = tokenCheckRaw; // Type safe as it's valid
+      options?.onProgress?.(`✓ Authorities checked: Mint=${check.mintAuthority ? 'ACTIVE' : 'REVOKED'}, Freeze=${check.freezeAuthority ? 'ACTIVE' : 'REVOKED'}`);
+      verificationContext = `
 ON-CHAIN DATA (Real-Time):
 - Token Address: ${input.tokenAddress}
 - Supply: ${check.supply}
@@ -169,20 +186,9 @@ ${check.creatorPercentage !== undefined ? `- Creator Holding: ${check.creatorPer
 ${check.ownerPercentage !== undefined ? `- Owner Holding: ${check.ownerPercentage.toFixed(2)}%` : ""}
 ${check.totalLiquidity !== undefined ? `- Total Liquidity (USD): $${check.totalLiquidity.toLocaleString()}` : ""}
 `;
-      }
-    } catch (error) {
-      console.warn("Token check error:", error);
-      // Don't fail the whole eval, just skip detailed token context
-      options?.onProgress?.(`⚠️ Could not validate token: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      verificationContext = `
-ON-CHAIN CHECK FAILED (System Error):
-- Token Address: ${input.tokenAddress}
-- Error: ${error instanceof Error ? error.message : String(error)}
-- Status: NOT VALIDATED
-`;
     }
   } else if (isLaunched) {
-    // INTENTIONAL GAP: User claims launched but gave no CA
+    // Claims launch but no CA
     verificationContext = `
 INTELLIGENCE GAP ALERT:
 - User claims project is "Launched" or "Live" but provided NO Contract Address (CA).
@@ -201,26 +207,16 @@ ON-CHAIN DATA:
 
   // 3. Competitive Memo (Micro / Landscape)
   let competitiveContext = "";
-  const normalizedCategory = input.projectType.toLowerCase();
 
-  // Store reference projects for later merging into result
-  let referenceProjectsFromMemo: { name: string; chainOrPlatform: string; note: string; metrics?: { marketCap?: string; tvl?: string; dailyUsers?: string; funding?: string; revenue?: string } }[] = [];
+  // --- Process Competitive Memo Results ---
+  if (competitiveMemoResult && competitiveMemoResult.status === 'ok') {
+    const memo = competitiveMemoResult.memo;
+    referenceProjectsFromMemo = memo.referenceProjects || [];
+    const competitorList = memo.referenceProjects
+      .map((p: any) => `${p.name} (${p.note})`)
+      .join(', ');
 
-  if (['memecoin', 'defi', 'ai'].includes(normalizedCategory)) {
-    options?.onProgress?.(`Fetching competitive landscape for ${normalizedCategory}...`);
-    try {
-      const compResult = await fetchCompetitiveMemo(input, normalizedCategory);
-      if (compResult.status === 'ok') {
-        const memo = compResult.memo;
-
-        // Capture referenceProjects for merging into final result
-        referenceProjectsFromMemo = memo.referenceProjects || [];
-
-        const competitorList = memo.referenceProjects
-          .map(p => `${p.name} (${p.note})`)
-          .join(', ');
-
-        competitiveContext = `
+    competitiveContext = `
     COMPETITIVE_MEMO:
     - Category: ${memo.categoryLabel}
     - Crowdedness: ${memo.crowdednessLevel}
@@ -230,11 +226,7 @@ ON-CHAIN DATA:
 
     INSTRUCTION: Use this data to ground your 'Moat' and 'Market Fit' scores.
 `;
-      }
-    } catch (err) {
-      console.warn("Failed to fetch competitive memo (non-blocking):", err);
-      options?.onProgress?.(`Competitive memo skipped(non - blocking)`);
-    }
+    options?.onProgress?.("Competitive landscape visualized.");
   }
 
   // 4. Build final user prompt
@@ -405,8 +397,32 @@ ${JSON.stringify(input, null, 2)}`;
 
         // --- PHASE 2: JSON GENERATION (Final Report) ---
         options?.onProgress?.(`Synthesizing final report data...`);
-        options?.onProgress?.(`AI synthesizing report via ${displayName}...`);
-        response = await openai().chat.completions.create(params);
+
+        // HEARTBEAT MECHANISM: Keep connection alive during long reasoning
+        const heartbeatMessages = [
+          `AI synthesizing report via ${displayName}...`,
+          "Fact-checking claims against market data...",
+          "Calculating risk-adjusted scores...",
+          "Finalizing strategic recommendations...",
+          "Generating JSON output..."
+        ];
+
+        let hbIndex = 0;
+        // Initial message immediately
+        options?.onProgress?.(heartbeatMessages[hbIndex++]);
+
+        const heartbeatInterval = setInterval(() => {
+          if (hbIndex < heartbeatMessages.length) {
+            const msg = heartbeatMessages[hbIndex++];
+            if (msg) options?.onProgress?.(msg);
+          }
+        }, 5000); // 5s interval for heartbeat
+
+        try {
+          response = await openai().chat.completions.create(params);
+        } finally {
+          clearInterval(heartbeatInterval);
+        }
 
       } catch (error: any) {
         // Fallback to gpt-5-mini (cost-optimized GPT-5 variant)
