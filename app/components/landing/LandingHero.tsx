@@ -13,7 +13,7 @@ export default function LandingHero() {
 
     if (!isMounted) {
         return (
-            <div className="text-center max-w-5xl mx-auto space-y-6 md:space-y-10 opacity-100">
+            <div className="text-center max-w-5xl mx-auto space-y-6 md:space-y-10 opacity-0">
                 {/* Static Server Render (SEO Friendly) */}
                 <div className="space-y-4">
                     <span className="text-xs sm:text-sm font-bold tracking-[0.3em] text-accent uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-4">
