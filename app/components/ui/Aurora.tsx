@@ -84,13 +84,15 @@ interface AuroraProps {
   speed?: number;
   className?: string;
   variant?: AuroraVariant;
+  forceStatic?: boolean; // New prop for manual override
 }
 
 export function Aurora(props: AuroraProps) {
   const {
     amplitude = 1.0,
     blend = 0.5,
-    variant = 'default'
+    variant = 'default',
+    forceStatic = false
   } = props;
   const resolvedColorStops = useMemo(
     () => props.colorStops ?? ['#5227FF', '#7cff67', '#5227FF'],
@@ -106,7 +108,29 @@ export function Aurora(props: AuroraProps) {
 
   const ctnDom = useRef<HTMLDivElement>(null);
 
+  // State for static mode (reduced motion or forced)
+  const [isStatic, setIsStatic] = React.useState(forceStatic);
+
   useEffect(() => {
+    // Check for reduced motion preference
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const handleChange = () => {
+      setIsStatic(forceStatic || mediaQuery.matches);
+    };
+
+    // Initial check
+    handleChange();
+
+    // Listen for changes
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [forceStatic]);
+
+  useEffect(() => {
+    // If static mode is active, skip WebGL initialization
+    if (isStatic) return;
+
     const ctn = ctnDom.current;
     if (!ctn) return;
 
@@ -272,9 +296,22 @@ export function Aurora(props: AuroraProps) {
       }
       cleanup?.();
     };
-  }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed]);
+  }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed, isStatic]);
 
-  return <div ref={ctnDom} className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''} `} />;
+  return (
+    <div
+      ref={ctnDom}
+      className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''} `}
+      style={isStatic ? {
+        // Fallback gradient logic: use first, middle, and last color stops
+        background: `linear-gradient(180deg, 
+          ${resolvedColorStops[0]} 0%, 
+          ${resolvedColorStops[Math.floor(resolvedColorStops.length / 2)]} 50%, 
+          ${resolvedColorStops[resolvedColorStops.length - 1]} 100%)`,
+        opacity: isSubtle ? 0.5 : 0.8, // Slightly lower opacity for static background to blend better
+      } : undefined}
+    />
+  );
 }
 
 // Memoize the component to prevent unnecessary re-renders
