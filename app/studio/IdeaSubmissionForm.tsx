@@ -726,6 +726,42 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 </div>
                             </div>
                         )}
+
+                        {/* TEAM SIZE - MOVED HERE */}
+                        <div>
+                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                Team Size <span className="text-blue-400 ml-1">*</span>
+                            </label>
+                            <div className="flex gap-2">
+                                {['solo', 'team_2_5', 'team_6_plus'].map((size) => (
+                                    <button
+                                        key={size}
+                                        type="button"
+                                        onClick={() => handleChange('teamSize', size)}
+                                        className={`flex-1 py-3 px-3 rounded-xl text-xs font-mono border transition-all ${formData.teamSize === size
+                                            ? 'bg-blue-500/20 border-blue-500/50 text-blue-200 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
+                                            : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
+                                    >
+                                        {size === 'solo' ? 'Solo' : size === 'team_2_5' ? '2-5' : '6+'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* SUCCESS DEFINITION - MOVED HERE */}
+                        <div>
+                            <label htmlFor="success-definition" className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                Success Definition
+                            </label>
+                            <input
+                                id="success-definition"
+                                type="text"
+                                value={formData.successDefinition}
+                                onChange={(e) => handleChange('successDefinition', e.target.value)}
+                                placeholder="e.g. 10k users, $1M TVL, or just learning"
+                                className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-xl text-sm font-mono text-white placeholder-white/20 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
+                            />
+                        </div>
                     </div>
 
                     {/* RIGHT COLUMN: DESCRIPTION */}
@@ -748,6 +784,52 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             </p>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* SOLANA TOKEN ADDRESS - NOW PROMINENT */}
+            <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 shadow-xl rounded-[24px] p-6 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-3">
+                        <label htmlFor="token-address" className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                            Solana Token Address <span className="text-white/20 font-normal normal-case tracking-normal ml-1">(Optional)</span>
+                        </label>
+                        {formData.tokenAddress && isValidSolanaAddress(formData.tokenAddress || '') && (
+                            <span className="text-emerald-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 bg-emerald-500/10 px-2 py-1 rounded-full">
+                                <CheckCircle2 size={10} /> Valid Address
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="relative">
+                        <input
+                            id="token-address"
+                            type="text"
+                            value={formData.tokenAddress}
+                            onChange={(e) => handleChange('tokenAddress', e.target.value)}
+                            placeholder="e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                            aria-describedby={errors.tokenAddress ? "token-address-error" : undefined}
+                            aria-invalid={errors.tokenAddress ? "true" : undefined}
+                            className={`w-full p-4 bg-slate-900/60 border rounded-xl text-sm font-mono text-white placeholder-white/10 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all ${errors.tokenAddress ? 'border-red-500/50 bg-red-500/5' : 'border-white/5 group-hover:border-white/10'
+                                }`}
+                        />
+                        {/* Optional decorative icon inside input */}
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 pointer-events-none">
+                            <Target size={16} />
+                        </div>
+                    </div>
+
+                    {errors.tokenAddress && (
+                        <p id="token-address-error" role="alert" className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
+                            <AlertCircle size={12} /> {errors.tokenAddress}
+                        </p>
+                    )}
+
+                    <p className="text-[10px] text-white/30 mt-3 leading-relaxed max-w-2xl">
+                        <span className="text-blue-400 font-bold">Recommended:</span> Provide a contract address to enable <strong>On-Chain Verification</strong> (Liquidity, Mint Authority, Holders). Without this, you will receive a <em>Simulated Report</em> only.
+                    </p>
                 </div>
             </div>
 
@@ -778,48 +860,12 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         <div className="space-y-6 mt-6">
                             <h4 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Execution Readiness</h4>
 
-                            {/* Team Size */}
-                            <div>
-                                <label className="text-white/40 text-xs mb-2 block">Team Size</label>
-                                <div className="flex gap-2">
-                                    {['solo', 'team_2_5', 'team_6_plus'].map((size) => (
-                                        <button
-                                            key={size}
-                                            type="button"
-                                            onClick={() => handleChange('teamSize', size)}
-                                            className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all ${formData.teamSize === size
-                                                ? 'bg-blue-500/20 border-blue-500/50 text-blue-200'
-                                                : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
-                                        >
-                                            {size === 'solo' ? 'Solo' : size === 'team_2_5' ? '2-5' : '6+'}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Team Size: Moved to Main Left Column */}
+                            {/* <div className="p-4 rounded-lg bg-white/5 border border-white/5">
+                                <span className="text-xs text-white/30">Team Size moved to main view.</span>
+                            </div> */}
 
-                            {/* Token Address */}
-                            <div>
-                                <label htmlFor="token-address" className="text-white/40 text-xs mb-2 block">Solana token address (optional)</label>
-                                <input
-                                    id="token-address"
-                                    type="text"
-                                    value={formData.tokenAddress}
-                                    onChange={(e) => handleChange('tokenAddress', e.target.value)}
-                                    placeholder="e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                                    aria-describedby={errors.tokenAddress ? "token-address-error" : undefined}
-                                    aria-invalid={errors.tokenAddress ? "true" : undefined}
-                                    className={`w-full p-3 bg-slate-900/60 border rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none transition-colors ${errors.tokenAddress ? 'border-red-500/50' : 'border-white/5'
-                                        }`}
-                                />
-                                {errors.tokenAddress && (
-                                    <p id="token-address-error" role="alert" className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
-                                        <AlertCircle size={12} /> {errors.tokenAddress}
-                                    </p>
-                                )}
-                                <p className="text-[10px] text-white/30 mt-2 leading-relaxed">
-                                    We use this to verify on-chain security checks like mint authority and liquidity status. Requires a valid Solana contract address (base58).
-                                </p>
-                            </div>
+                            {/* Token Address: Moved to main form above for better visibility */}
 
                             {/* SECTOR SPECIFIC EXTRA FIELDS */}
                             {formData.projectType === 'memecoin' && (
@@ -845,16 +891,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             <h4 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Strategy & Goals</h4>
 
                             {/* Success Def */}
-                            <div>
-                                <label htmlFor="success-definition" className="text-white/40 text-xs mb-2 block">Success Definition</label>
-                                <input
-                                    id="success-definition"
-                                    type="text"
-                                    value={formData.successDefinition}
-                                    onChange={(e) => handleChange('successDefinition', e.target.value)}
-                                    className="w-full p-3 bg-slate-900/60 border border-white/5 rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none"
-                                />
-                            </div>
+                            {/* Success Def: Moved to Main Left Column */}
 
                             {/* Response Style */}
                             <div>
@@ -952,6 +989,11 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 <span>{errors.tokenAddress ? 'Invalid Address' : 'Initiate Protocol'}</span>
                             </div>
                         </button>
+                        <div className="mt-3 text-center">
+                            <span className="text-[10px] text-white/40 font-mono tracking-wide">
+                                Estimated time: ~2 minutes
+                            </span>
+                        </div>
                         {!isConnected && (
                             <button
                                 type="button"

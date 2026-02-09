@@ -213,8 +213,8 @@ describe('AI Idea Evaluator Studio', () => {
             </ToastProvider>
         );
 
-        // Initially hidden
-        expect(screen.queryByText('Team Size')).not.toBeInTheDocument();
+        // Initially visible (moved out of Advanced)
+        expect(screen.getByText('Team Size')).toBeInTheDocument();
 
         // Click to show
         fireEvent.click(screen.getByText('Advanced Configuration'));
@@ -225,7 +225,10 @@ describe('AI Idea Evaluator Studio', () => {
         // Click to hide
         fireEvent.click(screen.getByText('Advanced Configuration'));
         await waitFor(() => {
-            expect(screen.queryByText('Team Size')).not.toBeInTheDocument();
+            // Team Size remains visible even if advanced is toggled (it's outside now)
+            expect(screen.getByText('Team Size')).toBeInTheDocument();
+            // But Response Style should be hidden
+            expect(screen.queryByText('Report Style')).not.toBeInTheDocument();
         });
     });
 });
