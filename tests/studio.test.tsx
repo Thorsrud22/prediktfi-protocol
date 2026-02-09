@@ -227,8 +227,8 @@ describe('AI Idea Evaluator Studio', () => {
         await waitFor(() => {
             // Team Size remains visible even if advanced is toggled (it's outside now)
             expect(screen.getByText('Team Size')).toBeInTheDocument();
-            // But Response Style should be hidden
-            expect(screen.queryByText('Report Style')).not.toBeInTheDocument();
+            // But Response Style should be visible (moved out of Advanced)
+            expect(screen.getByText('Report Style')).toBeInTheDocument();
         });
     });
 });

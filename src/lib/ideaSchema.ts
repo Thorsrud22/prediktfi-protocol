@@ -19,7 +19,7 @@ export const ideaSubmissionSchema = z.object({
     teamSize: z.string().optional().default('solo'),
     resources: z.array(z.string()).optional().default([]),
 
-    successDefinition: z.string().optional().default('Launch and learn'),
+    successDefinition: z.string().optional(),
     attachments: z.string().optional(),
 
     responseStyle: z.string().optional().default('balanced'),

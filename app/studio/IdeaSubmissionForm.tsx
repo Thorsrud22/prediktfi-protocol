@@ -422,7 +422,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         // Advanced / Optional Defaults
         teamSize: 'solo',
         resources: [],
-        successDefinition: 'Launch and learn',
+        successDefinition: '',
         attachments: '',
         responseStyle: 'balanced',
         focusHints: [],
@@ -758,9 +758,39 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 type="text"
                                 value={formData.successDefinition}
                                 onChange={(e) => handleChange('successDefinition', e.target.value)}
-                                placeholder="e.g. 10k users, $1M TVL, or just learning"
+                                placeholder="e.g. 10k users, $1M TVL, or active community"
                                 className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-xl text-sm font-mono text-white placeholder-white/20 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
                             />
+                        </div>
+
+                        {/* REPORT STYLE - MOVED HERE */}
+                        <div>
+                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                Report Style
+                            </label>
+                            <div className="space-y-3">
+                                <div className="flex gap-2">
+                                    {['roast', 'balanced', 'analytical'].map((style) => (
+                                        <button
+                                            key={style}
+                                            type="button"
+                                            onClick={() => handleChange('responseStyle', style)}
+                                            className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all uppercase ${formData.responseStyle === style
+                                                ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                                                : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
+                                        >
+                                            {style}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Style Description */}
+                                <p className="text-[10px] text-white/40 italic pl-1 border-l-2 border-white/5 animate-in fade-in duration-300">
+                                    {formData.responseStyle === 'roast' && "Ruthless critique focused on flaws and hard truths. High entertainment, strict scoring."}
+                                    {formData.responseStyle === 'balanced' && "Fair, objective evaluation with constructive feedback. Standard depth and scoring."}
+                                    {formData.responseStyle === 'analytical' && "Rigorous technical deep-dive. Data-driven, strictly professional, and highly critical."}
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -858,7 +888,10 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     <div className="p-8 pt-0 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4 duration-300">
                         {/* Sub-Section: Execution */}
                         <div className="space-y-6 mt-6">
-                            <h4 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Execution Readiness</h4>
+                            <h4 className="text-blue-100 text-xs font-bold uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
+                                <Activity size={14} className="text-blue-400" />
+                                Execution Readiness
+                            </h4>
 
                             {/* Team Size: Moved to Main Left Column */}
                             {/* <div className="p-4 rounded-lg bg-white/5 border border-white/5">
@@ -888,38 +921,16 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                         {/* Sub-Section: Strategy */}
                         <div className="space-y-6 mt-6">
-                            <h4 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Strategy & Goals</h4>
+                            <h4 className="text-blue-100 text-xs font-bold uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
+                                <Target size={14} className="text-blue-400" />
+                                Strategy & Goals
+                            </h4>
 
                             {/* Success Def */}
                             {/* Success Def: Moved to Main Left Column */}
 
                             {/* Response Style */}
-                            <div>
-                                <label className="text-white/40 text-xs mb-2 block">Report Style</label>
-                                <div className="space-y-3">
-                                    <div className="flex gap-2">
-                                        {['roast', 'balanced', 'analytical'].map((style) => (
-                                            <button
-                                                key={style}
-                                                type="button"
-                                                onClick={() => handleChange('responseStyle', style)}
-                                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all uppercase ${formData.responseStyle === style
-                                                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
-                                                    : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
-                                            >
-                                                {style}
-                                            </button>
-                                        ))}
-                                    </div>
 
-                                    {/* Style Description */}
-                                    <p className="text-[10px] text-white/40 italic pl-1 border-l-2 border-white/5 animate-in fade-in duration-300">
-                                        {formData.responseStyle === 'roast' && "Ruthless critique focused on flaws and hard truths. High entertainment, strict scoring."}
-                                        {formData.responseStyle === 'balanced' && "Fair, objective evaluation with constructive feedback. Standard depth and scoring."}
-                                        {formData.responseStyle === 'analytical' && "Rigorous technical deep-dive. Data-driven, strictly professional, and highly critical."}
-                                    </p>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 )}
