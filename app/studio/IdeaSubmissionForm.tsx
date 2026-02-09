@@ -885,7 +885,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 placeholder={projectTypeConfig[formData.projectType || 'ai']?.pitchPlaceholder || projectTypeConfig['ai'].pitchPlaceholder}
                                 aria-describedby={errors.description ? "pitch-error" : undefined}
                                 aria-invalid={errors.description ? "true" : undefined}
-                                className={`w-full flex-1 p-6 bg-slate-900/60 border text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-sans text-base leading-relaxed rounded-2xl min-h-[420px] border-white/10 ${errors.description ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/5' : ''}`}
+                                className={`w-full flex-1 p-6 bg-slate-900/60 border text-white placeholder-white/40 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-sans text-base leading-relaxed rounded-2xl min-h-[420px] border-white/10 ${errors.description ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/5' : ''}`}
                             />
                         </div>
 
