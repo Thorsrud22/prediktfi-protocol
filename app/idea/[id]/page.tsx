@@ -100,7 +100,7 @@ export default async function IdeaPage({ params }: Props) {
 
     return (
         <div className="min-h-screen bg-transparent text-white pt-24 pb-20">
-            <div className="max-w-5xl mx-auto px-4 md:px-8">
+            <div className="max-w-6xl mx-auto px-4 md:px-8">
                 {/* Header Navigation */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6">
                     <div>

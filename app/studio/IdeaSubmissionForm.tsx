@@ -46,6 +46,34 @@ interface LogEntry {
     timestamp: string;
 }
 
+// CONFIGURATION FOR CONTEXT-AWARE FIELDS
+const projectTypeConfig: Record<string, { successChips: string[], pitchPlaceholder: string }> = {
+    ai: {
+        successChips: ["10k Daily Active Users", "$100k ARR", "1M Inference Requests", "Top 5 on AgentRegistry"],
+        pitchPlaceholder: "e.g., An autonomous trading agent that executes arb strategies on Solana. Target: DeFi power users. Vibe: Institutional & Precise..."
+    },
+    defi: {
+        successChips: ["$10M TVL", "$50M Volume", "10 Confirmed Partners", "Audit by Certik"],
+        pitchPlaceholder: "e.g., A lending protocol optimizing yield for stablecoins. Target: Risk-averse yield farmers. Mechanism: Delta-neutral hedging..."
+    },
+    memecoin: {
+        successChips: ["$10M Market Cap", "10k Holders", "Listed on Raydium", "Viral TikTok Trend"],
+        pitchPlaceholder: "e.g., A community-driven token for eco-conscious degens. Vibe: Pepe meets Al Gore. Utility: Taxes fund reforestation..."
+    },
+    nft: {
+        successChips: ["Sold Out Mint", "10 SOL Floor Price", "Blue Chip Partnerships", "DAO Governance Active"],
+        pitchPlaceholder: "e.g., A generative art collection exploring digital identity. Utility: Holders get exclusive access to..."
+    },
+    gaming: {
+        successChips: ["10k Daily Active Users", "1M On-Chain Txns", "Featured on Epic Games", " Sustainable Economy"],
+        pitchPlaceholder: "e.g., A high-fidelity extraction shooter with on-chain assets. Target: Web2 gamers bridging to Web3..."
+    },
+    other: {
+        successChips: ["1k Paying Customers", "Grant Approval", "Mainnet Launch", "10k Community Members"],
+        pitchPlaceholder: "e.g., A decentralized social graph protocol. Solves: Data sovereignty. Target: Developers..."
+    }
+};
+
 const vibeHelpers: Record<string, string> = {
     cult: "Analyzes holder conviction, raid activity, and meme velocity.",
     chill: "Analyzes organic growth and retention over hype cycles.",
@@ -599,14 +627,14 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     // Render Logic
     if (isSubmitting || error) {
         return (
-            <div className={`w-full max-w-4xl mx-auto bg-slate-900/95 border ${error ? 'border-red-500/30' : 'border-white/10'} shadow-xl rounded-xl relative overflow-hidden font-sans animate-in fade-in duration-500`}>
+            <div className={`w-full max-w-6xl mx-auto bg-slate-900/95 border ${error ? 'border-red-500/30' : 'border-white/10'} shadow-xl rounded-xl relative overflow-hidden font-sans animate-in fade-in duration-500`}>
                 <ReasoningTerminal projectType={formData.projectType} streamingSteps={streamingSteps} streamingThoughts={streamingThoughts} error={error} />
             </div>
         );
     }
 
     return (
-        <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <form onSubmit={handleSubmit} className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* MAIN CARD */}
             <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 shadow-2xl rounded-[32px] overflow-hidden p-6 sm:p-8 relative">
@@ -788,6 +816,22 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                         placeholder="e.g. 10k users, $1M TVL, or active community"
                                         className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-xl text-sm font-mono text-white placeholder-white/20 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
                                     />
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        {(projectTypeConfig[formData.projectType || 'ai']?.successChips || projectTypeConfig['ai'].successChips).map((goal) => (
+                                            <button
+                                                key={goal}
+                                                type="button"
+                                                onClick={() => {
+                                                    const current = formData.successDefinition || "";
+                                                    const newValue = current ? `${current}, ${goal}` : goal;
+                                                    handleChange('successDefinition', newValue);
+                                                }}
+                                                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/5 hover:border-blue-500/30 text-xs font-mono text-white/60 hover:text-blue-400 transition-all active:scale-95"
+                                            >
+                                                + {goal}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* REPORT STYLE - MOVED HERE */}
@@ -824,19 +868,27 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     </div>
 
                     {/* RIGHT COLUMN: DESCRIPTION */}
-                    <div className="lg:col-span-8 flex flex-col h-full">
+                    <div className="lg:col-span-8 flex flex-col h-full group relative">
                         <label htmlFor="pitch-description" className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
                             The Pitch <span className="text-blue-400 ml-1">*</span>
                         </label>
-                        <textarea
-                            id="pitch-description"
-                            value={formData.description}
-                            onChange={(e) => handleChange('description', e.target.value)}
-                            placeholder="e.g., A Solana memecoin that taxes sells to fund carbon credits. Target: eco-conscious degens. Vibe: Pepe meets Al Gore."
-                            aria-describedby={errors.description ? "pitch-error" : undefined}
-                            aria-invalid={errors.description ? "true" : undefined}
-                            className={`w-full flex-1 p-6 bg-slate-900/60 border text-white placeholder-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-mono text-sm leading-relaxed rounded-2xl min-h-[300px] ${errors.description ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/5' : 'border-white/5'}`}
-                        />
+
+                        {/* NORMAL MODE TEXTAREA (Always rendered in flow to maintain layout, hidden when expanded to avoid ID conflict if needed, or just synced) */}
+                        {/* Actually, we keep this one visible? No, if we expand, we likely want the focused experience. */}
+                        {/* But simple toggle: We can just render the portal depending on state. */}
+
+                        <div className="relative flex-1 flex flex-col">
+                            <textarea
+                                id="pitch-description"
+                                value={formData.description}
+                                onChange={(e) => handleChange('description', e.target.value)}
+                                placeholder={projectTypeConfig[formData.projectType || 'ai']?.pitchPlaceholder || projectTypeConfig['ai'].pitchPlaceholder}
+                                aria-describedby={errors.description ? "pitch-error" : undefined}
+                                aria-invalid={errors.description ? "true" : undefined}
+                                className={`w-full flex-1 p-6 bg-slate-900/60 border text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none font-sans text-base leading-relaxed rounded-2xl min-h-[420px] border-white/10 ${errors.description ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/5' : ''}`}
+                            />
+                        </div>
+
                         {errors.description && (
                             <p id="pitch-error" role="alert" className="text-red-500 text-xs mt-2 font-mono flex items-center gap-2 animate-pulse">
                                 <AlertCircle size={12} /> {errors.description}
