@@ -80,7 +80,7 @@ const vibeHelpers: Record<string, string> = {
     raiding: "Analyzes social volume, raid targets, and engagement spikes."
 };
 
-function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, error }: { projectType?: string; streamingSteps?: string[]; streamingThoughts?: string; error?: string | null }) {
+function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, error, isSubmitting }: { projectType?: string; streamingSteps?: string[]; streamingThoughts?: string; error?: string | null; isSubmitting?: boolean }) {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [startTime] = useState(() => Date.now());
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -110,9 +110,11 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
         const hasThoughts = streamingThoughts && streamingThoughts.length > 0;
 
         if (!hasSteps && !hasThoughts) {
-            if (logs.length === 0) setLogs([{ text: 'Initializing PrediktFi Evaluator...', type: 'step', timestamp: getTimestamp() }]);
-            // Continue to check for error
+            if (logs.length === 0) setLogs([{ text: 'Initializing Predikt Evaluator...', type: 'step', timestamp: getTimestamp() }]);
         }
+    }, [isSubmitting, logs.length]);
+
+    useEffect(() => {
 
         const newEntries: LogEntry[] = [];
 
@@ -278,7 +280,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
     // Get current activity for simple view
     const currentActivity = React.useMemo(() => {
         const lastStep = logs.filter(l => l.type === 'step').pop();
-        return lastStep ? lastStep.text : "Initializing PrediktFi Protocol...";
+        return lastStep ? lastStep.text : "Initializing Predikt Protocol...";
     }, [logs]);
 
     return (
@@ -624,11 +626,34 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
         }
     };
 
+    // Calculate Form Progress (0-100)
+    const calculateProgress = React.useCallback(() => {
+        let score = 0;
+        let total = 0;
+
+        // Required Fields (Weighted heavily)
+        total += 40; // Sector
+        if (formData.projectType) score += 40;
+
+        total += 40; // Description
+        if (formData.description && formData.description.length >= 10) score += 40;
+
+        total += 10; // Team Size (defaults to solo, so always technically filled, but let's count it)
+        if (formData.teamSize) score += 10;
+
+        // Optional / Bonus Fields
+        total += 10; // Token Address or Success Definition
+        if (formData.tokenAddress || formData.successDefinition) score += 10;
+
+        // Cap at 100
+        return Math.min(100, Math.round((score / total) * 100));
+    }, [formData]);
+
     // Render Logic
     if (isSubmitting || error) {
         return (
             <div className={`w-full max-w-6xl mx-auto bg-slate-900/95 border ${error ? 'border-red-500/30' : 'border-white/10'} shadow-xl rounded-xl relative overflow-hidden font-sans animate-in fade-in duration-500`}>
-                <ReasoningTerminal projectType={formData.projectType} streamingSteps={streamingSteps} streamingThoughts={streamingThoughts} error={error} />
+                <ReasoningTerminal projectType={formData.projectType} streamingSteps={streamingSteps} streamingThoughts={streamingThoughts} error={error} isSubmitting={isSubmitting} />
             </div>
         );
     }
@@ -650,8 +675,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                     {/* LEFT COLUMN: TYPE */}
                     <div className="lg:col-span-4 space-y-6">
                         <div>
-                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                Sector <span className="text-blue-400 ml-1">*</span>
+                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3 flex items-center gap-2">
+                                Sector <span className="text-blue-400">*</span>
+                                {formData.projectType && <CheckCircle2 size={12} className="text-emerald-400 animate-in fade-in zoom-in" />}
                             </label>
                             <div className="space-y-4">
                                 {/* Hierarchical Selection */}
@@ -784,8 +810,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                                 {/* TEAM SIZE - MOVED HERE */}
                                 <div>
-                                    <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                        Team Size <span className="text-blue-400 ml-1">*</span>
+                                    <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3 flex items-center gap-2">
+                                        Team Size <span className="text-blue-400">*</span>
+                                        {formData.teamSize && <CheckCircle2 size={12} className="text-emerald-400 animate-in fade-in zoom-in" />}
                                     </label>
                                     <div className="flex gap-2">
                                         {['solo', 'team_2_5', 'team_6_plus'].map((size) => (
@@ -805,32 +832,50 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                                 {/* SUCCESS DEFINITION - MOVED HERE */}
                                 <div>
-                                    <label htmlFor="success-definition" className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                        Success Definition
-                                    </label>
-                                    <input
-                                        id="success-definition"
-                                        type="text"
-                                        value={formData.successDefinition}
-                                        onChange={(e) => handleChange('successDefinition', e.target.value)}
-                                        placeholder="e.g. 10k users, $1M TVL, or active community"
-                                        className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-xl text-sm font-mono text-white placeholder-white/20 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
-                                    />
-                                    <div className="flex flex-wrap gap-2 mt-3">
-                                        {(projectTypeConfig[formData.projectType || 'ai']?.successChips || projectTypeConfig['ai'].successChips).map((goal) => (
-                                            <button
-                                                key={goal}
-                                                type="button"
-                                                onClick={() => {
-                                                    const current = formData.successDefinition || "";
-                                                    const newValue = current ? `${current}, ${goal}` : goal;
-                                                    handleChange('successDefinition', newValue);
-                                                }}
-                                                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/5 hover:border-blue-500/30 text-xs font-mono text-white/60 hover:text-blue-400 transition-all active:scale-95"
-                                            >
-                                                + {goal}
-                                            </button>
-                                        ))}
+                                    <div className="flex justify-between items-end mb-3">
+                                        <label htmlFor="success-definition" className="block text-white/60 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                            Success Definition
+                                        </label>
+                                        <span className="text-[9px] text-white/30 uppercase tracking-widest hidden sm:inline-block">
+                                            How we benchmark you
+                                        </span>
+                                    </div>
+
+                                    <div className="relative group">
+                                        <input
+                                            id="success-definition"
+                                            type="text"
+                                            value={formData.successDefinition}
+                                            onChange={(e) => handleChange('successDefinition', e.target.value)}
+                                            placeholder="e.g. 10k monthly active users, $5M TVL"
+                                            className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-xl text-sm font-mono text-white placeholder-white/20 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/10 group-hover:text-blue-400/50 transition-colors pointer-events-none">
+                                            <Target size={16} />
+                                        </div>
+                                    </div>
+
+                                    {/* Helper Text / Quick Add */}
+                                    <div className="mt-3 space-y-2">
+                                        <p className="text-[10px] text-white/40 leading-relaxed">
+                                            <span className="text-blue-400 font-bold">Pro Tip:</span> Be specific. The AI uses this to calculate your <span className="text-white/60">Reality Gap Score</span>.
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(projectTypeConfig[formData.projectType || 'ai']?.successChips || projectTypeConfig['ai'].successChips).map((goal) => (
+                                                <button
+                                                    key={goal}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current = formData.successDefinition || "";
+                                                        const newValue = current ? `${current}, ${goal}` : goal;
+                                                        handleChange('successDefinition', newValue);
+                                                    }}
+                                                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/5 hover:border-blue-500/30 text-xs font-mono text-white/60 hover:text-blue-400 transition-all active:scale-95 flex items-center gap-1"
+                                                >
+                                                    <span>+</span> {goal}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -869,8 +914,9 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
                     {/* RIGHT COLUMN: DESCRIPTION */}
                     <div className="lg:col-span-8 flex flex-col h-full group relative">
-                        <label htmlFor="pitch-description" className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                            The Pitch <span className="text-blue-400 ml-1">*</span>
+                        <label htmlFor="pitch-description" className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3 flex items-center gap-2">
+                            The Pitch <span className="text-blue-400">*</span>
+                            {formData.description && formData.description.length >= 10 && <CheckCircle2 size={12} className="text-emerald-400 animate-in fade-in zoom-in" />}
                         </label>
 
                         {/* NORMAL MODE TEXTAREA (Always rendered in flow to maintain layout, hidden when expanded to avoid ID conflict if needed, or just synced) */}
@@ -946,8 +992,122 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
 
 
 
+            {/* REPORT PREVIEW - NEW FEATURE */}
+            <div className="w-full mt-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-6 relative overflow-hidden group">
+                    {/* Background decorations */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+
+                    <div className="relative z-10">
+                        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                            <Terminal size={16} className="text-blue-400" />
+                            What you'll get in your report
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Column 1: Core Metrics */}
+                            <div className="space-y-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-1.5 bg-green-500/10 rounded-md mt-0.5">
+                                        <Activity size={12} className="text-green-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-white/90">Predikt Score (0-100)</p>
+                                        <p className="text-[10px] text-white/50">Comprehensive rating based on {formData.projectType === 'memecoin' ? 'virality & hype' : 'viability & tech'}.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="p-1.5 bg-blue-500/10 rounded-md mt-0.5">
+                                        <Target size={12} className="text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-white/90">Strategic Advice</p>
+                                        <p className="text-[10px] text-white/50">Actionable steps to improve your {formData.projectType || 'project'}.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Column 2: Sector Specific */}
+                            <div className="space-y-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-1.5 bg-purple-500/10 rounded-md mt-0.5">
+                                        <Users size={12} className="text-purple-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-white/90">
+                                            {formData.projectType === 'memecoin' ? 'Viral Narrative Check' :
+                                                formData.projectType === 'defi' ? 'Tokenomics Audit' :
+                                                    formData.projectType === 'ai' ? 'Agentic Workflow Analysis' :
+                                                        'Market Fit Analysis'}
+                                        </p>
+                                        <p className="text-[10px] text-white/50">Deep dive into specific {formData.projectType || 'sector'} risks.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="p-1.5 bg-amber-500/10 rounded-md mt-0.5">
+                                        <CheckCircle2 size={12} className="text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-white/90">Reality Gap</p>
+                                        <p className="text-[10px] text-white/50">Comparison of your goals vs. current execution.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Column 3: Output */}
+                            <div className="space-y-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-1.5 bg-cyan-500/10 rounded-md mt-0.5">
+                                        <Rocket size={12} className="text-cyan-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-white/90">Launch Readiness</p>
+                                        <p className="text-[10px] text-white/50">Go/No-Go recommendation for mainnet.</p>
+                                    </div>
+                                </div>
+                                {formData.tokenAddress ? (
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-1.5 bg-emerald-500/10 rounded-md mt-0.5">
+                                            <Settings2 size={12} className="text-emerald-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-white/90">On-Chain Verification</p>
+                                            <p className="text-[10px] text-white/50">Real-time analysis of your contract data.</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start gap-3 opacity-50">
+                                        <div className="p-1.5 bg-white/5 rounded-md mt-0.5">
+                                            <Settings2 size={12} className="text-white/40" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-white/60">On-Chain Verification</p>
+                                            <p className="text-[10px] text-white/40">Add token address to unlock.</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* ACTION BAR */}
             <div className="flex flex-col items-end gap-4 pt-6">
+                {/* Visual Progress Bar (Sticky on mobile or just placed here for now) */}
+                <div className="w-full bg-slate-800/50 rounded-full h-2 overflow-hidden mb-4 border border-white/5 relative group">
+                    <div
+                        className={`h-full transition-all duration-500 ease-out ${Object.values(errors).length > 0 ? 'bg-red-500/50' :
+                            calculateProgress() === 100 ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' :
+                                'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
+                            }`}
+                        style={{ width: `${calculateProgress()}%` }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {calculateProgress()}% Complete
+                    </div>
+                </div>
+
                 {/* Quota Exceeded Warning - SOFTENED */}
                 {quota?.remaining === 0 && (
                     <div className="w-full md:w-auto bg-slate-800/80 border border-blue-500/20 rounded-2xl p-5 flex items-start gap-3 animate-in fade-in duration-300">
@@ -994,12 +1154,13 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                         </Link>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-end gap-2 w-full md:w-auto">
+                    <div className="flex flex-col items-end gap-2 w-full md:w-auto transition-all duration-300">
                         <button
                             type="submit"
-                            disabled={!!errors.tokenAddress}
-                            className={`group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 border border-white/10 overflow-hidden rounded-2xl ${errors.tokenAddress
-                                ? 'bg-slate-700 text-white/40 cursor-not-allowed'
+                            // Disable if no project type or description too short
+                            disabled={!formData.projectType || !formData.description || formData.description.length < 10 || !!errors.tokenAddress}
+                            className={`group relative w-full md:w-auto px-10 py-5 font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 border border-white/10 overflow-hidden rounded-2xl ${!formData.projectType || !formData.description || formData.description.length < 10 || !!errors.tokenAddress
+                                ? 'bg-slate-800/50 text-white/20 cursor-not-allowed border-transparent'
                                 : 'bg-[#0055FF] hover:bg-[#0044CC] text-white shadow-[0_0_20px_rgba(0,85,255,0.3)] hover:shadow-[0_0_30px_rgba(0,85,255,0.6)] hover:-translate-y-0.5 active:translate-y-0'
                                 }`}
                         >
@@ -1007,7 +1168,12 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 
                             <div className="relative flex items-center justify-center gap-4 z-10">
-                                <span>{errors.tokenAddress ? 'Invalid Address' : 'Initiate Protocol'}</span>
+                                <span>
+                                    {!!errors.tokenAddress ? 'Invalid Address' :
+                                        !formData.projectType ? 'Select Sector' :
+                                            (!formData.description || formData.description.length < 10) ? 'Describe Idea' :
+                                                'Initiate Protocol'}
+                                </span>
                             </div>
                         </button>
                         <div className="mt-3 text-center">
@@ -1024,6 +1190,21 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50 animate-pulse" />
                                 Connect wallet to save history
                             </button>
+                        )}
+
+                        {/* SUBTLE QUOTA DISPLAY - MOVED FROM HEADER */}
+                        {quota && quota.remaining !== -1 && (
+                            <div className="mt-2 text-[9px] text-white/20 font-mono text-center md:text-right group cursor-help relative">
+                                <span className="border-b border-dashed border-white/10 pb-0.5">
+                                    Daily Limit: <span className="text-white/40">{quota.remaining}</span>/{quota.limit} left
+                                </span>
+
+                                {/* Tooltip */}
+                                <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-900 border border-white/10 p-3 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 text-left pointer-events-none">
+                                    <p className="text-white/60 mb-1">Resets at midnight UTC.</p>
+                                    <p className="text-blue-400 font-bold">Upgrade for unlimited access.</p>
+                                </div>
+                            </div>
                         )}
                     </div>
                 )}

@@ -308,40 +308,7 @@ export default function StudioPage() {
             </p>
           </div>
 
-          {/* FAIR USE LIMIT DISPLAY */}
-          {quota && (
-            <div className="text-right block">
-              <div className="text-[10px] uppercase text-blue-300/60 mb-1 tracking-widest font-mono">
-                EVALS TODAY{isAnalyzing && <span className="text-cyan-400 animate-pulse ml-1">•</span>}
-              </div>
-              <div className={`font-bold text-2xl font-mono ${quota.remaining === 0 ? 'text-amber-400' : 'text-blue-400'}`}>
-                {quota.remaining === -1 ? 'UNLIMITED' : (
-                  <>
-                    {quota.remaining} <span className="text-sm text-white/40 font-normal">left</span>
-                    {isAnalyzing && <span className="text-xs text-cyan-400/60 font-normal ml-1">(reserved)</span>}
-                  </>
-                )}
-              </div>
-              {quota.remaining === 0 && !isAnalyzing && (
-                <div className="mt-1">
-                  {resetCountdown ? (
-                    <div className="text-[9px] text-amber-400/80 uppercase tracking-widest font-mono">
-                      Resets in <span className="text-amber-300">{resetCountdown}</span>
-                    </div>
-                  ) : (
-                    <a href="/pricing" className="text-[9px] text-amber-400/80 hover:text-amber-300 uppercase tracking-widest block">
-                      Get Unlimited Access →
-                    </a>
-                  )}
-                </div>
-              )}
-              {quota.remaining > 0 && quota.remaining !== -1 && (
-                <div className="text-[9px] text-white/30 uppercase tracking-widest mt-1">
-                  of {quota.limit} daily
-                </div>
-              )}
-            </div>
-          )}
+          {/* FAIR USE LIMIT DISPLAY - REMOVED TO REDUCE ANXIETY (Moved to Form Footer) */}
         </div>
 
         <div className="min-h-[400px]">
