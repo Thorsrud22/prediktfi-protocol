@@ -298,9 +298,9 @@ export default function StudioPage() {
       <PerformanceMonitor />
 
       <div className="relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6" style={{ contain: 'layout' }}>
           <div>
-            <h1 className="text-5xl sm:text-6xl font-black tracking-tighter mb-2 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent uppercase italic">
+            <h1 className="text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic">
               Studio <span className="text-blue-500">.</span>
             </h1>
             <p className="text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase">

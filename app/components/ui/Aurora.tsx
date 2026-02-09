@@ -145,7 +145,7 @@ export function Aurora(props: AuroraProps) {
         antialias: false,
         powerPreference: 'high-performance', // optimize for speed
         depth: false,
-        dpr: Math.min(window.devicePixelRatio, 1.5), // Cap at 1.5 for better quality but good performance
+        dpr: Math.min(window.devicePixelRatio, 1.2), // Reduced from 1.5 to 1.2 for better performance
       });
       const gl = renderer.gl;
       gl.clearColor(0, 0, 0, 0);
@@ -185,6 +185,7 @@ export function Aurora(props: AuroraProps) {
       gl.canvas.style.display = 'block';
       gl.canvas.style.width = '100%';
       gl.canvas.style.height = '100%';
+      gl.canvas.style.willChange = 'transform';
 
       let lastStopsKey = '';
       const updateColorStops = (stops: string[]) => {
@@ -233,9 +234,9 @@ export function Aurora(props: AuroraProps) {
         // Skip rendering when not visible or during scroll
         if (!isVisible || isScrolling) return;
 
-        // Throttle to 30fps (render every other frame)
+        // Throttle to ~20fps (render every 3rd frame) to free up main thread
         frameCount++;
-        if (frameCount % 2 !== 0) return;
+        if (frameCount % 3 !== 0) return;
 
         // Calculate delta time
         const now = performance.now();

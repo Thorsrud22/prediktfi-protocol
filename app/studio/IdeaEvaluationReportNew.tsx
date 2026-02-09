@@ -34,7 +34,7 @@ const KeyStatsBar = dynamic(() => import('../components/charts/KeyStatsBar'), {
 import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
 import { printElement } from '../utils/print';
 
-// Internal Tooltip Component
+// Internal Tooltip Component - Moved outside to prevent re-definition on every render
 const ScoreTooltip = ({ label, text, children }: { label: string, text: string, children: React.ReactNode }) => {
     return (
         <div className="group relative inline-flex items-center">
@@ -480,8 +480,8 @@ Get your own evaluation here:`;
 
                 {/* RADAR CHART + ACTION PLAN - Side by Side */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-                    {/* RADAR CHART - Own Card */}
-                    <div className="border border-white/10 bg-slate-900/60 p-6 rounded-2xl flex flex-col items-center justify-center min-h-[360px]">
+                    {/* RADAR CHART - Own Card - Optimized with containment */}
+                    <div className="border border-white/10 bg-slate-900/80 p-6 rounded-2xl flex flex-col items-center justify-center min-h-[360px]" style={{ contain: 'layout style' }}>
                         <div className="flex items-center gap-2 mb-4 text-white/60 border-b border-white/5 pb-3 w-full">
                             <Image src="/images/logo.png" width={16} height={16} alt="Predikt" className="object-contain" />
                             <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Performance Radar</h3>
@@ -513,8 +513,8 @@ Get your own evaluation here:`;
                     </div>
                 </div>
 
-                {/* MARKET INTELLIGENCE - TABLE VIEW */}
-                <div className="border border-blue-500/20 bg-blue-500/5 p-6 rounded-2xl mb-8">
+                {/* MARKET INTELLIGENCE - TABLE VIEW - Reduced transparency */}
+                <div className="border border-blue-500/20 bg-blue-500/10 p-6 rounded-2xl mb-8" style={{ contain: 'layout style' }}>
                     <div className="flex items-center gap-2 mb-5 text-blue-400 border-b border-blue-500/10 pb-3">
                         <Terminal size={18} />
                         <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Market Intelligence</h3>
@@ -594,7 +594,7 @@ Get your own evaluation here:`;
                 {/* THREAT DETECTION + CALIBRATION (2-col grid) */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     {/* THREAT DETECTION */}
-                    <div className="border border-slate-700/50 bg-slate-900/60 p-6 rounded-2xl">
+                    <div className="border border-slate-700/50 bg-slate-900/80 p-6 rounded-2xl" style={{ contain: 'layout style' }}>
                         <div className="flex items-center gap-2 mb-4 text-slate-400 border-b border-white/5 pb-3">
                             <AlertTriangle size={18} />
                             <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Threat Detection</h3>

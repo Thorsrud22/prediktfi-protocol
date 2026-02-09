@@ -44,6 +44,7 @@ interface LogEntry {
     text: string;
     type: 'step' | 'thought';
     timestamp: string;
+    parsed?: React.ReactNode[]; // Pre-parsed highlights
 }
 
 // CONFIGURATION FOR CONTEXT-AWARE FIELDS
@@ -80,7 +81,7 @@ const vibeHelpers: Record<string, string> = {
     raiding: "Analyzes social volume, raid targets, and engagement spikes."
 };
 
-function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, error, isSubmitting }: { projectType?: string; streamingSteps?: string[]; streamingThoughts?: string; error?: string | null; isSubmitting?: boolean }) {
+function ReasoningTerminalComponent({ projectType, streamingSteps, streamingThoughts, error, isSubmitting }: { projectType?: string; streamingSteps?: string[]; streamingThoughts?: string; error?: string | null; isSubmitting?: boolean }) {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [startTime] = useState(() => Date.now());
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -104,85 +105,8 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
     // Get current timestamp
     const getTimestamp = () => new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    // Streaming Logic - displays Steps AND Thoughts
-    useEffect(() => {
-        const hasSteps = streamingSteps && streamingSteps.length > 0;
-        const hasThoughts = streamingThoughts && streamingThoughts.length > 0;
-
-        if (!hasSteps && !hasThoughts) {
-            if (logs.length === 0) setLogs([{ text: 'Initializing Predikt Evaluator...', type: 'step', timestamp: getTimestamp() }]);
-        }
-    }, [isSubmitting, logs.length]);
-
-    useEffect(() => {
-
-        const newEntries: LogEntry[] = [];
-
-        // Process new STEPS
-        if (streamingSteps) {
-            const newSteps = streamingSteps.slice(processedStepsRef.current);
-            newSteps.forEach(step => {
-                newEntries.push({ text: step, type: 'step', timestamp: getTimestamp() });
-            });
-            processedStepsRef.current = streamingSteps.length;
-        }
-
-        // Process new THOUGHTS (from string buffer)
-        if (streamingThoughts) {
-            // Split by newline to get lines
-            const allThoughtLines = streamingThoughts.split('\n');
-
-            // Only add NEW lines that haven't been processed yet
-            const newThoughts = allThoughtLines.slice(processedThoughtsRef.current);
-
-            if (newThoughts.length > 0) {
-                newThoughts.forEach((thought, idx) => {
-                    // If it's the very last line and it's not empty, we ignore it for now 
-                    // unless it's the ONLY line we have. 
-                    // Actually, we want to show the typing effect! 
-                    // But splitting by newline means the last element is the "current" line.
-
-                    // Optimization: Only push non-empty lines, or update the *last* log entry if it's incomplete?
-                    // For simplicity/stability: Just push everything that is non-empty.
-                    // The "vertical text" bug happened because we pushed char-by-char. 
-                    // Now we push line-by-line.
-
-                    if (thought.trim()) {
-                        newEntries.push({ text: thought, type: 'thought', timestamp: getTimestamp() });
-                    }
-                });
-                // We processed all lines provided in this batch
-                processedThoughtsRef.current = allThoughtLines.length;
-            }
-        }
-
-        if (newEntries.length > 0) {
-            setLogs(prev => [...prev, ...newEntries]);
-        }
-    }, [streamingSteps, streamingThoughts]);
-
-    // Error Handling Effect
-    useEffect(() => {
-        if (error) {
-            setLogs(prev => [
-                ...prev,
-                { text: `CRITICAL FAILURE: ${error}`, type: 'step', timestamp: getTimestamp() },
-                { text: 'System halted.', type: 'step', timestamp: getTimestamp() }
-            ]);
-        }
-    }, [error]);
-
-
-    // Auto-scroll
-    const bottomRef = React.useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        if (bottomRef.current?.scrollIntoView) {
-            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [logs]);
-
     // Keyword definitions for highlighting
-    const HIGHLIGHT_KEYWORDS: Array<{ words: string[]; className: string }> = [
+    const HIGHLIGHT_KEYWORDS = React.useMemo(() => [
         { words: ['CoinGecko', 'Birdeye', 'DexScreener'], className: 'text-cyan-400 font-bold' },
         { words: ['[BEAR]'], className: 'text-red-500 font-bold tracking-wider' },
         { words: ['[BULL]'], className: 'text-green-400 font-bold tracking-wider' },
@@ -191,10 +115,10 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
         { words: ['Risk', 'Warning', 'Critical', 'Error'], className: 'text-red-400 font-bold' },
         { words: ['Score', 'Analysis', 'Evaluation'], className: 'text-blue-400' },
         { words: ['OK', 'PASS', 'CLEAR', 'SUCCESS'], className: 'text-emerald-400' },
-    ];
+    ], []);
 
     // Parse text and return React elements with highlighted keywords
-    const parseTextWithHighlights = (text: string): React.ReactNode[] => {
+    const parseTextWithHighlights = React.useCallback((text: string): React.ReactNode[] => {
         // Build a single regex pattern for all keywords
         const allKeywords = HIGHLIGHT_KEYWORDS.flatMap(k => k.words);
         const pattern = new RegExp(`\\b(${allKeywords.join('|')})\\b`, 'gi');
@@ -235,13 +159,91 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
         }
 
         return parts.length > 0 ? parts : [text];
-    };
+    }, [HIGHLIGHT_KEYWORDS]);
 
-    // Render a log entry with proper React components
-    const renderColoredLog = (text: string, isComplete: boolean) => {
+    // Streaming Logic - displays Steps AND Thoughts
+    useEffect(() => {
+        const hasSteps = streamingSteps && streamingSteps.length > 0;
+        const hasThoughts = streamingThoughts && streamingThoughts.length > 0;
+
+        if (!hasSteps && !hasThoughts) {
+            if (logs.length === 0) setLogs([{ text: 'Initializing Predikt Evaluator...', type: 'step', timestamp: getTimestamp(), parsed: parseTextWithHighlights('Initializing Predikt Evaluator...') }]);
+        }
+    }, [isSubmitting, logs.length, parseTextWithHighlights]);
+
+    useEffect(() => {
+
+        const newEntries: LogEntry[] = [];
+
+        // Process new STEPS
+        if (streamingSteps) {
+            const newSteps = streamingSteps.slice(processedStepsRef.current);
+            newSteps.forEach(step => {
+                newEntries.push({ text: step, type: 'step', timestamp: getTimestamp() });
+            });
+            processedStepsRef.current = streamingSteps.length;
+        }
+
+        // Process new THOUGHTS (from string buffer)
+        if (streamingThoughts) {
+            // Split by newline to get lines
+            const allThoughtLines = streamingThoughts.split('\n');
+
+            // Only add NEW lines that haven't been processed yet
+            const newThoughts = allThoughtLines.slice(processedThoughtsRef.current);
+
+            if (newThoughts.length > 0) {
+                newThoughts.forEach((thought, idx) => {
+                    if (thought.trim()) {
+                        newEntries.push({ text: thought, type: 'thought', timestamp: getTimestamp() });
+                    }
+                });
+                // We processed all lines provided in this batch
+                processedThoughtsRef.current = allThoughtLines.length;
+            }
+        }
+
+        if (newEntries.length > 0) {
+            // Pre-parse the entries before putting them into state
+            const entriesWithParsed = newEntries.map(entry => ({
+                ...entry,
+                parsed: parseTextWithHighlights(entry.text)
+            }));
+            setLogs(prev => [...prev, ...entriesWithParsed]);
+        }
+    }, [streamingSteps, streamingThoughts, parseTextWithHighlights]);
+
+    // Error Handling Effect
+    useEffect(() => {
+        if (error) {
+            const errorEntries: LogEntry[] = [
+                { text: `CRITICAL FAILURE: ${error}`, type: 'step', timestamp: getTimestamp() },
+                { text: 'System halted.', type: 'step', timestamp: getTimestamp() }
+            ];
+            const parsedErrorEntries = errorEntries.map(entry => ({
+                ...entry,
+                parsed: parseTextWithHighlights(entry.text)
+            }));
+            setLogs(prev => [...prev, ...parsedErrorEntries]);
+        }
+    }, [error, parseTextWithHighlights]);
+
+
+    // Auto-scroll
+    const bottomRef = React.useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (bottomRef.current?.scrollIntoView) {
+            bottomRef.current.scrollIntoView({ behavior: 'auto' });
+        }
+    }, [logs]);
+
+
+
+    // Render a log entry with pre-parsed content
+    const renderColoredLog = (log: LogEntry, isComplete: boolean) => {
         return (
             <span className="flex items-center gap-2">
-                <span>{parseTextWithHighlights(text)}</span>
+                <span>{log.parsed || log.text}</span>
                 {isComplete && (
                     <span className="text-emerald-400 font-bold text-[10px] tracking-wider">[DONE]</span>
                 )}
@@ -382,7 +384,7 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
                                                     ? 'text-white/70'
                                                     : 'text-white' // Step styling
                                         }>
-                                            {renderColoredLog(log.text, isComplete)}
+                                            {renderColoredLog(log, isComplete)}
                                             {/* Spinning cursor on active (last) log */}
                                             {isLast && (
                                                 <span className="text-cyan-400 ml-2 font-bold">
@@ -447,6 +449,16 @@ function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, err
         </div>
     );
 }
+
+// Memoize the terminal to prevent re-renders when form fields change
+const ReasoningTerminal = React.memo(ReasoningTerminalComponent, (prev, next) => {
+    return (
+        prev.streamingSteps?.length === next.streamingSteps?.length &&
+        prev.streamingThoughts === next.streamingThoughts &&
+        prev.error === next.error &&
+        prev.isSubmitting === next.isSubmitting
+    );
+});
 
 
 export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData, quota, streamingSteps, streamingThoughts, isConnected, onConnect, error, isQuotaLoading, resetCountdown }: IdeaSubmissionFormProps) {
@@ -661,8 +673,8 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     return (
         <form onSubmit={handleSubmit} className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-            {/* MAIN CARD */}
-            <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 shadow-2xl rounded-[32px] overflow-hidden p-6 sm:p-8 relative">
+            {/* MAIN CARD - Reduced backdrop-blur for performance */}
+            <div className="bg-slate-900/80 backdrop-blur-[4px] border border-white/5 shadow-2xl rounded-[32px] overflow-hidden p-6 sm:p-8 relative">
 
                 {/* Header */}
                 <div className="mb-8">
@@ -770,7 +782,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                 {(coachTip || isCoaching) && (
                                     <div className="animate-in fade-in slide-in-from-top-2 duration-500">
                                         <div className="bg-blue-600/5 border border-blue-500/10 rounded-2xl p-4 relative overflow-hidden">
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -skew-x-12 animate-shimmer" />
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/2 to-transparent -skew-x-12 animate-shimmer" />
                                             <div className="relative z-10 flex gap-3">
                                                 <div className="mt-1">
                                                     {isCoaching ? (
