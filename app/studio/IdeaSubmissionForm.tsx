@@ -46,6 +46,12 @@ interface LogEntry {
     timestamp: string;
 }
 
+const vibeHelpers: Record<string, string> = {
+    cult: "Analyzes holder conviction, raid activity, and meme velocity.",
+    chill: "Analyzes organic growth and retention over hype cycles.",
+    raiding: "Analyzes social volume, raid targets, and engagement spikes."
+};
+
 function ReasoningTerminal({ projectType, streamingSteps, streamingThoughts, error }: { projectType?: string; streamingSteps?: string[]; streamingThoughts?: string; error?: string | null }) {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [startTime] = useState(() => Date.now());
@@ -447,7 +453,6 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
     }, [initialData]);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [showAdvanced, setShowAdvanced] = useState(false);
     const { addToast } = useToast();
 
     // Coach Tip Logic
@@ -682,114 +687,138 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                                     </button>
                                 </div>
 
-                            </div>
-                        </div>
+                                {/* SECTOR SPECIFIC EXTRA FIELDS (MOVED FROM ADVANCED) */}
+                                {formData.projectType === 'memecoin' && (
+                                    <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label htmlFor="community-vibe" className="text-white/60 mb-2 block text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                            Community Vibe
+                                        </label>
+                                        <select
+                                            id="community-vibe"
+                                            value={formData.memecoinVibe || ''}
+                                            onChange={(e) => handleChange('memecoinVibe', e.target.value)}
+                                            className="w-full p-3 bg-slate-900/60 border border-white/5 rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none appearance-none cursor-pointer"
+                                        >
+                                            <option value="" className="bg-slate-900">Select...</option>
+                                            <option value="cult" className="bg-slate-900">Cult / Conviction</option>
+                                            <option value="chill" className="bg-slate-900">Chill</option>
+                                            <option value="raiding" className="bg-slate-900">Raiding</option>
+                                        </select>
+                                        {formData.memecoinVibe && vibeHelpers[formData.memecoinVibe] && (
+                                            <p className="text-[10px] text-white/40 italic mt-2 animate-in fade-in duration-300">
+                                                <span className="text-blue-400 font-bold">{formData.memecoinVibe.charAt(0).toUpperCase() + formData.memecoinVibe.slice(1)}:</span> {vibeHelpers[formData.memecoinVibe]}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
 
-                        {/* Coach Tip */}
-                        {(coachTip || isCoaching) && (
-                            <div className="animate-in fade-in slide-in-from-top-2 duration-500">
-                                <div className="bg-blue-600/5 border border-blue-500/10 rounded-2xl p-4 relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -skew-x-12 animate-shimmer" />
-                                    <div className="relative z-10 flex gap-3">
-                                        <div className="mt-1">
-                                            {isCoaching ? (
-                                                <div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-                                            ) : (
-                                                <Lightbulb size={16} className="text-blue-400" />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <div className="flex justify-between items-start">
-                                                <h4 className="text-[10px] font-bold text-blue-300 uppercase tracking-wider mb-1">
-                                                    {isCoaching ? 'Analyzing Pitch...' : 'Copilot Tip'}
-                                                </h4>
-                                                {!isCoaching && coachTip !== 'LOCKED' && (
-                                                    <button onClick={() => setCoachTip(null)} className="text-white/20 hover:text-white">
-                                                        <X size={12} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                            {coachTip === 'LOCKED' && !isConnected ? (
-                                                <div onClick={() => onConnect?.()} className="cursor-pointer group">
-                                                    <p className="text-xs text-blue-100/40 blur-sm select-none">Hidden tip regarding your narrative.</p>
-                                                    <div className="mt-2 text-blue-400 text-[10px] font-bold uppercase flex items-center gap-1 group-hover:text-blue-300">
-                                                        <AlertCircle size={10} /> Connect Wallet to view
-                                                    </div>
+                                {/* Coach Tip */}
+                                {(coachTip || isCoaching) && (
+                                    <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+                                        <div className="bg-blue-600/5 border border-blue-500/10 rounded-2xl p-4 relative overflow-hidden">
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -skew-x-12 animate-shimmer" />
+                                            <div className="relative z-10 flex gap-3">
+                                                <div className="mt-1">
+                                                    {isCoaching ? (
+                                                        <div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                                                    ) : (
+                                                        <Lightbulb size={16} className="text-blue-400" />
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <p className="text-xs text-blue-100/80 leading-relaxed font-medium">
-                                                    {isCoaching ? "Scanning..." : coachTip}
-                                                </p>
-                                            )}
+                                                <div>
+                                                    <div className="flex justify-between items-start">
+                                                        <h4 className="text-[10px] font-bold text-blue-300 uppercase tracking-wider mb-1">
+                                                            {isCoaching ? 'Analyzing Pitch...' : 'Copilot Tip'}
+                                                        </h4>
+                                                        {!isCoaching && coachTip !== 'LOCKED' && (
+                                                            <button onClick={() => setCoachTip(null)} className="text-white/20 hover:text-white">
+                                                                <X size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {coachTip === 'LOCKED' && !isConnected ? (
+                                                        <div onClick={() => onConnect?.()} className="cursor-pointer group">
+                                                            <p className="text-xs text-blue-100/40 blur-sm select-none">Hidden tip regarding your narrative.</p>
+                                                            <div className="mt-2 text-blue-400 text-[10px] font-bold uppercase flex items-center gap-1 group-hover:text-blue-300">
+                                                                <AlertCircle size={10} /> Connect Wallet to view
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs text-blue-100/80 leading-relaxed font-medium">
+                                                            {isCoaching ? "Scanning..." : coachTip}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        )}
+                                )}
 
-                        {/* TEAM SIZE - MOVED HERE */}
-                        <div>
-                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                Team Size <span className="text-blue-400 ml-1">*</span>
-                            </label>
-                            <div className="flex gap-2">
-                                {['solo', 'team_2_5', 'team_6_plus'].map((size) => (
-                                    <button
-                                        key={size}
-                                        type="button"
-                                        onClick={() => handleChange('teamSize', size)}
-                                        className={`flex-1 py-3 px-3 rounded-xl text-xs font-mono border transition-all ${formData.teamSize === size
-                                            ? 'bg-blue-500/20 border-blue-500/50 text-blue-200 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
-                                            : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
-                                    >
-                                        {size === 'solo' ? 'Solo' : size === 'team_2_5' ? '2-5' : '6+'}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* SUCCESS DEFINITION - MOVED HERE */}
-                        <div>
-                            <label htmlFor="success-definition" className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                Success Definition
-                            </label>
-                            <input
-                                id="success-definition"
-                                type="text"
-                                value={formData.successDefinition}
-                                onChange={(e) => handleChange('successDefinition', e.target.value)}
-                                placeholder="e.g. 10k users, $1M TVL, or active community"
-                                className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-xl text-sm font-mono text-white placeholder-white/20 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
-                            />
-                        </div>
-
-                        {/* REPORT STYLE - MOVED HERE */}
-                        <div>
-                            <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
-                                Report Style
-                            </label>
-                            <div className="space-y-3">
-                                <div className="flex gap-2">
-                                    {['roast', 'balanced', 'analytical'].map((style) => (
-                                        <button
-                                            key={style}
-                                            type="button"
-                                            onClick={() => handleChange('responseStyle', style)}
-                                            className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all uppercase ${formData.responseStyle === style
-                                                ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
-                                                : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
-                                        >
-                                            {style}
-                                        </button>
-                                    ))}
+                                {/* TEAM SIZE - MOVED HERE */}
+                                <div>
+                                    <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                        Team Size <span className="text-blue-400 ml-1">*</span>
+                                    </label>
+                                    <div className="flex gap-2">
+                                        {['solo', 'team_2_5', 'team_6_plus'].map((size) => (
+                                            <button
+                                                key={size}
+                                                type="button"
+                                                onClick={() => handleChange('teamSize', size)}
+                                                className={`flex-1 py-3 px-3 rounded-xl text-xs font-mono border transition-all ${formData.teamSize === size
+                                                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-200 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
+                                                    : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
+                                            >
+                                                {size === 'solo' ? 'Solo' : size === 'team_2_5' ? '2-5' : '6+'}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                {/* Style Description */}
-                                <p className="text-[10px] text-white/40 italic pl-1 border-l-2 border-white/5 animate-in fade-in duration-300">
-                                    {formData.responseStyle === 'roast' && "Ruthless critique focused on flaws and hard truths. High entertainment, strict scoring."}
-                                    {formData.responseStyle === 'balanced' && "Fair, objective evaluation with constructive feedback. Standard depth and scoring."}
-                                    {formData.responseStyle === 'analytical' && "Rigorous technical deep-dive. Data-driven, strictly professional, and highly critical."}
-                                </p>
+                                {/* SUCCESS DEFINITION - MOVED HERE */}
+                                <div>
+                                    <label htmlFor="success-definition" className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                        Success Definition
+                                    </label>
+                                    <input
+                                        id="success-definition"
+                                        type="text"
+                                        value={formData.successDefinition}
+                                        onChange={(e) => handleChange('successDefinition', e.target.value)}
+                                        placeholder="e.g. 10k users, $1M TVL, or active community"
+                                        className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-xl text-sm font-mono text-white placeholder-white/20 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
+                                    />
+                                </div>
+
+                                {/* REPORT STYLE - MOVED HERE */}
+                                <div>
+                                    <label className="block text-white/60 mb-3 text-[10px] font-black uppercase tracking-[0.2em] italic border-l-2 border-blue-500 pl-3">
+                                        Report Style
+                                    </label>
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2">
+                                            {['roast', 'balanced', 'analytical'].map((style) => (
+                                                <button
+                                                    key={style}
+                                                    type="button"
+                                                    onClick={() => handleChange('responseStyle', style)}
+                                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono border transition-all uppercase ${formData.responseStyle === style
+                                                        ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                                                        : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10'}`}
+                                                >
+                                                    {style}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* Style Description */}
+                                        <p className="text-[10px] text-white/40 italic pl-1 border-l-2 border-white/5 animate-in fade-in duration-300">
+                                            {formData.responseStyle === 'roast' && "Ruthless critique focused on flaws and hard truths. High entertainment, strict scoring."}
+                                            {formData.responseStyle === 'balanced' && "Fair, objective evaluation with constructive feedback. Standard depth and scoring."}
+                                            {formData.responseStyle === 'analytical' && "Rigorous technical deep-dive. Data-driven, strictly professional, and highly critical."}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -863,78 +892,7 @@ export default function IdeaSubmissionForm({ onSubmit, isSubmitting, initialData
                 </div>
             </div>
 
-            {/* COLLAPSIBLE ADVANCED SECTION */}
-            <div className="border border-white/5 rounded-[24px] overflow-hidden bg-slate-900/20 backdrop-blur-sm transition-all duration-300">
-                <button
-                    type="button"
-                    onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="w-full flex items-center justify-between p-6 hover:bg-white/5 transition-colors group"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg transition-colors ${showAdvanced ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-white/40 group-hover:text-white/60'}`}>
-                            <Settings2 size={18} />
-                        </div>
-                        <div className="text-left">
-                            <h3 className={`text-sm font-bold tracking-wide transition-colors ${showAdvanced ? 'text-blue-100' : 'text-white/60 group-hover:text-white'}`}>Advanced Configuration</h3>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Team, Token, Strategy</p>
-                        </div>
-                    </div>
-                    <div className={`transition-transform duration-300 ${showAdvanced ? 'rotate-180 text-blue-400' : 'text-white/20'}`}>
-                        <ChevronDown size={20} />
-                    </div>
-                </button>
 
-                {showAdvanced && (
-                    <div className="p-8 pt-0 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4 duration-300">
-                        {/* Sub-Section: Execution */}
-                        <div className="space-y-6 mt-6">
-                            <h4 className="text-blue-100 text-xs font-bold uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
-                                <Activity size={14} className="text-blue-400" />
-                                Execution Readiness
-                            </h4>
-
-                            {/* Team Size: Moved to Main Left Column */}
-                            {/* <div className="p-4 rounded-lg bg-white/5 border border-white/5">
-                                <span className="text-xs text-white/30">Team Size moved to main view.</span>
-                            </div> */}
-
-                            {/* Token Address: Moved to main form above for better visibility */}
-
-                            {/* SECTOR SPECIFIC EXTRA FIELDS */}
-                            {formData.projectType === 'memecoin' && (
-                                <div>
-                                    <label htmlFor="community-vibe" className="text-white/40 text-xs mb-2 block">Community Vibe</label>
-                                    <select
-                                        id="community-vibe"
-                                        value={formData.memecoinVibe || ''}
-                                        onChange={(e) => handleChange('memecoinVibe', e.target.value)}
-                                        className="w-full p-3 bg-slate-900/60 border border-white/5 rounded-xl text-xs font-mono text-white focus:border-blue-500/50 outline-none appearance-none cursor-pointer"
-                                    >
-                                        <option value="" className="bg-slate-900">Select...</option>
-                                        <option value="cult" className="bg-slate-900">Cult / Conviction</option>
-                                        <option value="chill" className="bg-slate-900">Chill</option>
-                                        <option value="raiding" className="bg-slate-900">Raiding</option>
-                                    </select>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Sub-Section: Strategy */}
-                        <div className="space-y-6 mt-6">
-                            <h4 className="text-blue-100 text-xs font-bold uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
-                                <Target size={14} className="text-blue-400" />
-                                Strategy & Goals
-                            </h4>
-
-                            {/* Success Def */}
-                            {/* Success Def: Moved to Main Left Column */}
-
-                            {/* Response Style */}
-
-                        </div>
-                    </div>
-                )}
-            </div>
 
             {/* ACTION BAR */}
             <div className="flex flex-col items-end gap-4 pt-6">

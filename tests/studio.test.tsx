@@ -188,13 +188,7 @@ describe('AI Idea Evaluator Studio', () => {
         const descriptionInput = screen.getByPlaceholderText(/A Solana memecoin/i);
         fireEvent.change(descriptionInput, { target: { value: 'This is a test memecoin description that is long enough.' } });
 
-        // 3. Open Advanced Options
-        fireEvent.click(screen.getByText('Advanced Configuration'));
 
-        // 4. Check Advanced Field visibility
-        await waitFor(() => {
-            expect(screen.getByText('Team Size')).toBeInTheDocument();
-        });
 
         // 5. Submit
         const submitBtn = await screen.findByText('Initiate Protocol');
@@ -206,29 +200,26 @@ describe('AI Idea Evaluator Studio', () => {
         });
     });
 
-    it('toggles advanced options correctly', async () => {
+
+    it('shows conditional fields based on project type', async () => {
         render(
             <ToastProvider>
                 <StudioPage />
             </ToastProvider>
         );
 
-        // Initially visible (moved out of Advanced)
-        expect(screen.getByText('Team Size')).toBeInTheDocument();
-
-        // Click to show
-        fireEvent.click(screen.getByText('Advanced Configuration'));
+        // Initially Memecoin is selected by default (or user clicks it)
+        fireEvent.click(screen.getByText('Memecoin'));
+        // Community Vibe should appear
         await waitFor(() => {
-            expect(screen.getByText('Team Size')).toBeInTheDocument();
+            expect(screen.getByText('Community Vibe')).toBeInTheDocument();
         });
 
-        // Click to hide
-        fireEvent.click(screen.getByText('Advanced Configuration'));
+        // Switch to AI Agent
+        fireEvent.click(screen.getByText('AI Agent'));
         await waitFor(() => {
-            // Team Size remains visible even if advanced is toggled (it's outside now)
-            expect(screen.getByText('Team Size')).toBeInTheDocument();
-            // But Response Style should be visible (moved out of Advanced)
-            expect(screen.getByText('Report Style')).toBeInTheDocument();
+            // Community Vibe should disappear
+            expect(screen.queryByText('Community Vibe')).not.toBeInTheDocument();
         });
     });
 });
