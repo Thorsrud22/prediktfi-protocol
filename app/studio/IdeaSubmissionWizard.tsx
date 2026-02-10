@@ -194,14 +194,27 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        // Validation before proceeding
+        const getMeaningfulLength = (text: string) => text.replace(/\s/g, '').length;
+
+        // Command/Control + Enter logic for Step 2 (Multiline)
+        if (currentStep === 2 && (e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            const meaningfulLength = getMeaningfulLength(formData.description);
+            if (meaningfulLength < 10) {
+                setErrors(prev => ({ ...prev, description: meaningfulLength === 0 ? "Pitch is required" : "Pitch must be at least 10 non-space characters" }));
+                return;
+            }
+            handleNext();
+            return;
+        }
+
+        // Standard Enter logic for single-line fields
         if (e.key === 'Enter' && !e.shiftKey) {
-            // Prevent default behavior for textarea to allow new lines with Shift+Enter
+            // Prevent default behavior for textarea unless Cmd/Ctrl is pressed (handled above)
             if (currentStep === 2 && (e.target as HTMLElement).tagName === 'TEXTAREA') {
                 return;
             }
-
-            // Validation before proceeding
-            const getMeaningfulLength = (text: string) => text.replace(/\s/g, '').length;
 
             if (currentStep === 0 && !formData.projectType) return;
 
@@ -213,12 +226,15 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                 }
             }
 
-            if (currentStep === 2) {
-                const meaningfulLength = getMeaningfulLength(formData.description);
-                if (meaningfulLength < 10) {
-                    setErrors(prev => ({ ...prev, description: meaningfulLength === 0 ? "Pitch is required" : "Pitch must be at least 10 non-space characters" }));
-                    return;
-                }
+            if (currentStep === 3) {
+                // Strategic insights don't have hard validation yet, but we allow Enter to proceed
+            }
+
+            if (currentStep === 4) {
+                // Review step
+                e.preventDefault();
+                onSubmit(formData);
+                return;
             }
 
             e.preventDefault();
@@ -376,7 +392,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                     </div>
                                 )}
                                 <div className="absolute right-0 bottom-4 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity">
-                                    <span className="text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded">Press Enter ↵</span>
+                                    <span className="text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded">Enter ↵</span>
                                 </div>
                             </div>
                             <p id="name-helper" className="mt-8 text-white/40 flex items-center gap-2">
@@ -403,12 +419,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                     id="project-pitch"
                                     value={formData.description}
                                     onChange={(e) => updateField('description', e.target.value)}
-                                    onKeyDown={(e) => {
-                                        // Allow Ctrl+Enter to submit
-                                        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                                            handleNext();
-                                        }
-                                    }}
+                                    onKeyDown={handleKeyDown}
                                     placeholder={
                                         formData.projectType === 'memecoin'
                                             ? "Explain the viral potential, community vibe, and core narrative..."
@@ -440,7 +451,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                         {formData.description.replace(/\s/g, '').length} meaningful chars (min 10)
                                     </span>
                                     <span className="text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded hidden sm:inline-block">
-                                        Cmd + Enter to Continue
+                                        Cmd + Enter ↵
                                     </span>
                                 </div>
                             </div>
@@ -656,7 +667,11 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
 
                 <div className="hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30">
                     <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Tab</span> to navigate</span>
-                    <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to proceed</span>
+                    {currentStep === 0 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Click</span> to select</span>}
+                    {currentStep === 1 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to proceed</span>}
+                    {currentStep === 2 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Cmd + Enter</span> to proceed</span>}
+                    {currentStep === 3 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to review</span>}
+                    {currentStep === 4 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to launch</span>}
                 </div>
             </div>
         </div>
