@@ -78,11 +78,8 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({
     const handleWizardSubmit = (data: WizardFormData) => {
         // Map wizard data to existing form structure
         const updatedData = {
-            ...formData,
-            projectType: data.projectType,
-            name: data.name,
-            description: data.description,
-            website: data.website
+            ...formData, // Keep existing fields like teamSize, successDefinition if they exist
+            ...data      // Include all fields from wizard (name, description, projectType, and contextual fields)
         };
 
         setFormData(updatedData);

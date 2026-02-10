@@ -12,6 +12,15 @@ export interface WizardFormData {
     name: string; // Ticker or Project Name
     description: string;
     website?: string; // Optional context
+    // Contextual fields
+    memecoinVibe?: string;
+    memecoinNarrative?: string;
+    defiMechanism?: string;
+    defiRevenue?: string;
+    aiModelType?: string;
+    aiDataMoat?: string;
+    teamSize?: string;
+    successDefinition?: string;
 }
 
 interface IdeaSubmissionWizardProps {
@@ -24,6 +33,7 @@ const STEPS = [
     { id: 'sector', title: 'Select Sector', subtitle: 'What area does your project belong to?' },
     { id: 'details', title: 'Project Identity', subtitle: 'Give it a name or ticker.' },
     { id: 'pitch', title: 'The Pitch', subtitle: 'Describe your vision in detail.' },
+    { id: 'insights', title: 'Strategic Insights', subtitle: 'Add more context for a deeper analysis.' },
     { id: 'review', title: 'Ready to Launch?', subtitle: 'Review your submission.' }
 ];
 
@@ -34,8 +44,41 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
         projectType: initialData?.projectType || null,
         name: initialData?.name || '',
         description: initialData?.description || '',
-        website: initialData?.website || ''
+        website: initialData?.website || '',
+        memecoinVibe: initialData?.memecoinVibe || '',
+        memecoinNarrative: initialData?.memecoinNarrative || '',
+        defiMechanism: initialData?.defiMechanism || '',
+        defiRevenue: initialData?.defiRevenue || '',
+        aiModelType: initialData?.aiModelType || '',
+        aiDataMoat: initialData?.aiDataMoat || '',
+        teamSize: initialData?.teamSize || 'solo',
+        successDefinition: initialData?.successDefinition || ''
     });
+
+    // Use a ref to always have the absolute latest data for validation
+    // This prevents race conditions where handleNext sees stale state
+    const formDataRef = useRef<WizardFormData>(formData);
+    // Update ref whenever state changes from external sources (initialData)
+    useEffect(() => {
+        if (initialData) {
+            const newData = {
+                projectType: initialData.projectType || null,
+                name: initialData.name || '',
+                description: initialData.description || '',
+                website: initialData.website || '',
+                memecoinVibe: initialData.memecoinVibe || '',
+                memecoinNarrative: initialData.memecoinNarrative || '',
+                defiMechanism: initialData.defiMechanism || '',
+                defiRevenue: initialData.defiRevenue || '',
+                aiModelType: initialData.aiModelType || '',
+                aiDataMoat: initialData.aiDataMoat || '',
+                teamSize: initialData.teamSize || 'solo',
+                successDefinition: initialData.successDefinition || ''
+            };
+            formDataRef.current = newData;
+            setFormData(newData);
+        }
+    }, [initialData]);
 
     const wizardRef = useRef<HTMLDivElement>(null);
 
@@ -62,8 +105,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
 
     const handleNext = (forcedData?: WizardFormData) => {
         if (isNavigatingRef.current) return;
+        isNavigatingRef.current = true;
 
-        const dataToValidate = forcedData || formData;
+        const dataToValidate = forcedData || formDataRef.current;
 
         // Clear any pending auto-advance
         if (navigationTimeoutRef.current) {
@@ -79,7 +123,14 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
         if (currentStep < STEPS.length - 1) {
             isNavigatingRef.current = true;
             setDirection(1);
-            setCurrentStep(prev => prev + 1);
+
+            // Skip insights step if no contextual fields for sector
+            let targetStep = currentStep + 1;
+            if (STEPS[targetStep].id === 'insights' && !hasContextualFields(dataToValidate.projectType)) {
+                targetStep += 1;
+            }
+
+            setCurrentStep(targetStep);
 
             // Snappy cooldown for better responsiveness
             setTimeout(() => {
@@ -92,6 +143,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
 
     const handleBack = () => {
         if (isNavigatingRef.current || currentStep === 0) return;
+        isNavigatingRef.current = true;
 
         // Clear any pending auto-advance
         if (navigationTimeoutRef.current) {
@@ -101,12 +153,23 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
 
         isNavigatingRef.current = true;
         setDirection(-1);
-        setCurrentStep(prev => prev - 1);
+
+        // Skip insights step if no contextual fields for sector
+        let targetStep = currentStep - 1;
+        if (STEPS[targetStep].id === 'insights' && !hasContextualFields(formData.projectType)) {
+            targetStep -= 1;
+        }
+
+        setCurrentStep(targetStep);
 
         // Snappy cooldown for better responsiveness
         setTimeout(() => {
             isNavigatingRef.current = false;
         }, 50);
+    };
+
+    const hasContextualFields = (type: ProjectType) => {
+        return ['memecoin', 'defi', 'ai'].includes(type as string);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -146,7 +209,10 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
     }, [currentStep, formData, onSubmit]);
 
     const updateField = (field: keyof WizardFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        // Immediate ref update for synchronous validation in handleNext
+        const updated = { ...formDataRef.current, [field]: value };
+        formDataRef.current = updated;
+        setFormData(updated);
     };
 
     // Calculate progress
@@ -198,17 +264,12 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                 <button
                                     key={option.id}
                                     onClick={() => {
-                                        if (isNavigatingRef.current) return;
-
-                                        // Update state immediately
+                                        // Update state and advance immediately with fresh data
                                         const newType = option.id as ProjectType;
-                                        updateField('projectType', newType);
-
-                                        // Auto-advance with forced data to bypass state race condition
-                                        if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
-                                        navigationTimeoutRef.current = setTimeout(() => {
-                                            handleNext({ ...formData, projectType: newType });
-                                        }, 400);
+                                        const updated = { ...formDataRef.current, projectType: newType };
+                                        formDataRef.current = updated;
+                                        setFormData(updated);
+                                        handleNext(updated);
                                     }}
                                     className={cn(
                                         "group relative p-4 sm:p-5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center text-center gap-2 hover:scale-[1.02] select-none",
@@ -281,7 +342,13 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                             handleNext();
                                         }
                                     }}
-                                    placeholder="Explain your mechanism, unique selling point, or narrative..."
+                                    placeholder={
+                                        formData.projectType === 'memecoin'
+                                            ? "Explain the viral potential, community vibe, and core narrative..."
+                                            : formData.projectType === 'ai'
+                                                ? "Describe the model architecture, data source, and agent behavior..."
+                                                : "Explain your mechanism, unique selling point, or narrative..."
+                                    }
                                     className="w-full h-[300px] bg-white/5 rounded-xl border border-white/10 p-6 text-xl sm:text-2xl font-medium text-white placeholder:text-white/20 resize-none outline-none focus:border-blue-500 focus:bg-white/10 transition-all leading-relaxed"
                                 />
                                 <div className="absolute bottom-6 right-6 flex items-center gap-4 pointer-events-none">
@@ -299,33 +366,162 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                         </div>
                     )}
 
-                    {/* STEP 3: REVIEW */}
+                    {/* STEP 3: STRATEGIC INSIGHTS (CONTEXTUAL) */}
                     {currentStep === 3 && (
+                        <div className="animate-in fade-in slide-in-from-right-8 duration-500 space-y-8 max-w-2xl">
+                            {formData.projectType === 'memecoin' && (
+                                <>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Community Vibe</label>
+                                        <input
+                                            type="text"
+                                            value={formData.memecoinVibe}
+                                            onChange={(e) => updateField('memecoinVibe', e.target.value)}
+                                            onKeyDown={handleKeyDown}
+                                            placeholder="e.g. Cult-like, Degen, Institutional-grade"
+                                            className="w-full bg-transparent text-2xl sm:text-4xl font-bold text-white placeholder:text-white/10 outline-none border-b border-white/10 focus:border-blue-500 pb-2 transition-colors"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Primary Narrative</label>
+                                        <input
+                                            type="text"
+                                            value={formData.memecoinNarrative}
+                                            onChange={(e) => updateField('memecoinNarrative', e.target.value)}
+                                            onKeyDown={handleKeyDown}
+                                            placeholder="e.g. AI-driven, Real World Asset, Joke"
+                                            className="w-full bg-transparent text-2xl sm:text-4xl font-bold text-white placeholder:text-white/10 outline-none border-b border-white/10 focus:border-blue-500 pb-2 transition-colors"
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {formData.projectType === 'defi' && (
+                                <>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Key Mechanism</label>
+                                        <input
+                                            type="text"
+                                            value={formData.defiMechanism}
+                                            onChange={(e) => updateField('defiMechanism', e.target.value)}
+                                            onKeyDown={handleKeyDown}
+                                            placeholder="e.g. Concentrated Liquidity, Lending"
+                                            className="w-full bg-transparent text-2xl sm:text-4xl font-bold text-white placeholder:text-white/10 outline-none border-b border-white/10 focus:border-blue-500 pb-2 transition-colors"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Revenue Model</label>
+                                        <input
+                                            type="text"
+                                            value={formData.defiRevenue}
+                                            onChange={(e) => updateField('defiRevenue', e.target.value)}
+                                            onKeyDown={handleKeyDown}
+                                            placeholder="e.g. Trading fees, Subscription"
+                                            className="w-full bg-transparent text-2xl sm:text-4xl font-bold text-white placeholder:text-white/10 outline-none border-b border-white/10 focus:border-blue-500 pb-2 transition-colors"
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {formData.projectType === 'ai' && (
+                                <>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Model Type</label>
+                                        <input
+                                            type="text"
+                                            value={formData.aiModelType}
+                                            onChange={(e) => updateField('aiModelType', e.target.value)}
+                                            onKeyDown={handleKeyDown}
+                                            placeholder="e.g. LLM-wrapper, Custom Training"
+                                            className="w-full bg-transparent text-2xl sm:text-4xl font-bold text-white placeholder:text-white/10 outline-none border-b border-white/10 focus:border-blue-500 pb-2 transition-colors"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Data Moat</label>
+                                        <input
+                                            type="text"
+                                            value={formData.aiDataMoat}
+                                            onChange={(e) => updateField('aiDataMoat', e.target.value)}
+                                            onKeyDown={handleKeyDown}
+                                            placeholder="e.g. Proprietary dataset, Network effect"
+                                            className="w-full bg-transparent text-2xl sm:text-4xl font-bold text-white placeholder:text-white/10 outline-none border-b border-white/10 focus:border-blue-500 pb-2 transition-colors"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {/* STEP 4: REVIEW */}
+                    {currentStep === 4 && (
                         <div className="animate-in fade-in slide-in-from-right-8 duration-500">
                             <div className="bg-[#0B1221] border border-white/10 p-8 rounded-3xl space-y-8 max-w-2xl">
-                                <div className="space-y-2">
-                                    <div className="text-xs text-white/40 uppercase tracking-widest font-mono">Sector</div>
-                                    <div className="text-xl text-white font-bold flex items-center gap-2">
-                                        {formData.projectType === 'memecoin' && <Zap className="text-yellow-400" size={20} />}
-                                        {formData.projectType === 'defi' && <Globe className="text-blue-400" size={20} />}
-                                        {formData.projectType === 'ai' && <Cpu className="text-purple-400" size={20} />}
-                                        <span className="uppercase">{formData.projectType}</span>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div className="space-y-2">
+                                        <div className="text-xs text-white/40 uppercase tracking-widest font-mono">Sector</div>
+                                        <div className="text-xl text-white font-bold flex items-center gap-2">
+                                            {formData.projectType === 'memecoin' && <Zap className="text-yellow-400" size={20} />}
+                                            {formData.projectType === 'defi' && <Globe className="text-blue-400" size={20} />}
+                                            {formData.projectType === 'ai' && <Cpu className="text-purple-400" size={20} />}
+                                            <span className="uppercase">{formData.projectType}</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="space-y-2">
-                                    <div className="text-xs text-white/40 uppercase tracking-widest font-mono">Identity</div>
-                                    <div className="text-4xl text-white font-black tracking-tight">{formData.name}</div>
+                                    <div className="space-y-2">
+                                        <div className="text-xs text-white/40 uppercase tracking-widest font-mono">Identity</div>
+                                        <div className="text-xl text-white font-bold tracking-tight">{formData.name}</div>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     <div className="text-xs text-white/40 uppercase tracking-widest font-mono">The Pitch</div>
-                                    <div className="text-lg text-white/80 leading-relaxed italic border-l-2 border-white/10 pl-4">
+                                    <div className="text-base text-white/70 leading-relaxed italic border-l-2 border-white/10 pl-4">
                                         "{formData.description}"
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
+                                {hasContextualFields(formData.projectType) && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+                                        {formData.projectType === 'memecoin' && (
+                                            <>
+                                                <div className="space-y-1">
+                                                    <div className="text-[10px] text-white/30 uppercase font-mono">Vibe</div>
+                                                    <div className="text-sm text-white font-medium">{formData.memecoinVibe || 'Not specified'}</div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="text-[10px] text-white/30 uppercase font-mono">Narrative</div>
+                                                    <div className="text-sm text-white font-medium">{formData.memecoinNarrative || 'Not specified'}</div>
+                                                </div>
+                                            </>
+                                        )}
+                                        {formData.projectType === 'defi' && (
+                                            <>
+                                                <div className="space-y-1">
+                                                    <div className="text-[10px] text-white/30 uppercase font-mono">Mechanism</div>
+                                                    <div className="text-sm text-white font-medium">{formData.defiMechanism || 'Not specified'}</div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="text-[10px] text-white/30 uppercase font-mono">Revenue</div>
+                                                    <div className="text-sm text-white font-medium">{formData.defiRevenue || 'Not specified'}</div>
+                                                </div>
+                                            </>
+                                        )}
+                                        {formData.projectType === 'ai' && (
+                                            <>
+                                                <div className="space-y-1">
+                                                    <div className="text-[10px] text-white/30 uppercase font-mono">Model</div>
+                                                    <div className="text-sm text-white font-medium">{formData.aiModelType || 'Not specified'}</div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="text-[10px] text-white/30 uppercase font-mono">Moat</div>
+                                                    <div className="text-sm text-white font-medium">{formData.aiDataMoat || 'Not specified'}</div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="space-y-2 pt-4 border-t border-white/5">
                                     <div className="text-xs text-white/40 uppercase tracking-widest font-mono">Estimated Analysis Time</div>
                                     <div className="text-sm text-emerald-400 font-mono flex items-center gap-2">
                                         <History size={14} />
@@ -350,7 +546,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                             Back
                         </button>
                     )}
-                    {currentStep < 3 ? (
+                    {currentStep < 4 ? (
                         <button
                             onClick={() => handleNext()}
                             disabled={
@@ -360,7 +556,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                             }
                             className="flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"
                         >
-                            {currentStep === 2 ? 'Review' : 'Continue'}
+                            {currentStep === 3 || (currentStep === 2 && !hasContextualFields(formData.projectType)) ? 'Review' : 'Continue'}
                             <CornerDownLeft size={14} className="group-hover:translate-x-1 transition-transform pointer-events-none" />
                         </button>
                     ) : (

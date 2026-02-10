@@ -1,50 +1,1747 @@
 
 > prediktfi-protocol@0.1.0 test
-> vitest run tests/studio.test.tsx
+> vitest run tests/studio.test.tsx --no-color
 
 [33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
 
  RUN  v3.2.4 /Users/thorsrud/prediktfi-protocol-1
 
- ❯ tests/studio.test.tsx (4 tests | 4 failed) 77ms
-   × AI Idea Evaluator Studio > renders the single page form initially 56ms
-     → useToast must be used within ToastProvider
-   × AI Idea Evaluator Studio > shows validation errors when attempting to submit with empty form 8ms
-     → useToast must be used within ToastProvider
-   × AI Idea Evaluator Studio > submits successfully with valid data 6ms
-     → useToast must be used within ToastProvider
-   × AI Idea Evaluator Studio > toggles advanced options correctly 4ms
-     → useToast must be used within ToastProvider
+ ❯ tests/studio.test.tsx (3 tests | 2 failed) 2314ms
+   ✓ AI Idea Evaluator Studio > renders the wizard initially after quota loads 110ms
+   × AI Idea Evaluator Studio > submits successfully with valid data via wizard steps 1140ms
+     → Unable to find an element with the text: /The Pitch/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
-⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mdata-testid[39m=[32m"performance-monitor"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6"[39m
+        [33mstyle[39m=[32m"contain: layout;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic"[39m
+          [36m>[39m
+            [0mStudio [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-blue-500"[39m
+            [36m>[39m
+              [0m.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase"[39m
+          [36m>[39m
+            [0mAdvanced AI Evaluation Protocol for Web3 Assets[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-[400px]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 scroll-mt-32 pt-12"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between mb-12 gap-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full bg-blue-500 transition-all duration-500 ease-out"[39m
+                [33mstyle[39m=[32m"width: 40%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest"[39m
+            [36m>[39m
+              [0mSTEP [0m
+              [0m2[0m
+              [0m / [0m
+              [0m5[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative mt-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-12 text-center sm:text-left space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-3xl sm:text-5xl font-bold text-white tracking-tight"[39m
+              [36m>[39m
+                [0mProject Identity[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-white/50 font-light"[39m
+              [36m>[39m
+                [0mGive it a name or ticker.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative group"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33mautocomplete[39m=[32m"off"[39m
+                    [33mclass[39m=[32m"w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-6 transition-colors font-mono uppercase tracking-tight"[39m
+                    [33mplaceholder[39m=[32m"$TICKER"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"TEST"[39m
+                  [36m/>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded"[39m
+                    [36m>[39m
+                      [0mPress Enter ↵[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"mt-6 text-white/40 flex items-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles text-blue-400"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mCatchy tickers perform 40% better on analysis.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-4 w-full sm:w-auto"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest"[39m
+              [36m>[39m
+                [0mBack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"[39m
+              [36m>[39m
+                [0mContinue[0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-corner-down-left group-hover:translate-x-1 transition-transform pointer-events-none"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 4v7a4 4 0 0 1-4 4H4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 10-5 5 5 5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mTab[0m
+                [36m</span>[39m
+                [0m to navigate[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mEnter[0m
+                [36m</span>[39m
+                [0m to proceed[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33maria-relevant[39m=[32m"additions"[39m
+    [33mclass[39m=[32m"toast-container"[39m
+    [33mid[39m=[32m"toast-portal"[39m
+    [33mstyle[39m=[32m"position: fixed; top: 100px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99999; pointer-events: none;"[39m
+  [36m/>[39m
+[36m</body>[39m
 
- FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > renders the single page form initially
- FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > shows validation errors when attempting to submit with empty form
- FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > submits successfully with valid data
- FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > toggles advanced options correctly
-Error: useToast must be used within ToastProvider
- ❯ Module.useToast app/components/ToastProvider.tsx:43:19
-     41| export function useToast() {
-     42|   const ctx = useContext(ToastContext);
-     43|   if (!ctx) throw new Error("useToast must be used within ToastProvide…
-       |                   ^
-     44|   return ctx;
-     45| }
- ❯ IdeaSubmissionForm app/studio/IdeaSubmissionForm.tsx:447:26
- ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:23863:20
- ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:5529:22
- ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:8897:19
- ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:10522:18
- ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:1522:13
- ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:15140:22
- ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:14956:41
- ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:14936:11
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mdata-testid[39m=[32m"performance-monitor"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6"[39m
+        [33mstyle[39m=[32m"contain: layout;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic"[39m
+          [36m>[39m
+            [0mStudio [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-blue-500"[39m
+            [36m>[39m
+              [0m.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase"[39m
+          [36m>[39m
+            [0mAdvanced AI Evaluation Protocol for Web3 Assets[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-[400px]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 scroll-mt-32 pt-12"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between mb-12 gap-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full bg-blue-500 transition-all duration-500 ease-out"[39m
+                [33mstyle[39m=[32m"width: 40%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest"[39m
+            [36m>[39m
+              [0mSTEP [0m
+              [0m2[0m
+              [0m / [0m
+              [0m5[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative mt-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-12 text-center sm:text-left space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-3xl sm:text-5xl font-bold text-white tracking-tight"[39m
+              [36m>[39m
+                [0mProject Identity[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-white/50 font-light"[39m
+              [36m>[39m
+                [0mGive it a name or ticker.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative group"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33mautocomplete[39m=[32m"off"[39m
+                    [33mclass[39m=[32m"w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-6 transition-colors font-mono uppercase tracking-tight"[39m
+                    [33mplaceholder[39m=[32m"$TICKER"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"TEST"[39m
+                  [36m/>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded"[39m
+                    [36m>[39m
+                      [0mPress Enter ↵[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"mt-6 text-white/40 flex items-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles text-blue-400"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mCatchy tickers perform 40% better on analysis.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-4 w-full sm:w-auto"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest"[39m
+              [36m>[39m
+                [0mBack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"[39m
+              [36m>[39m
+                [0mContinue[0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-corner-down-left group-hover:translate-x-1 transition-transform pointer-events-none"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 4v7a4 4 0 0 1-4 4H4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 10-5 5 5 5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mTab[0m
+                [36m</span>[39m
+                [0m to navigate[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mEnter[0m
+                [36m</span>[39m
+                [0m to proceed[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33maria-relevant[39m=[32m"additions"[39m
+    [33mclass[39m=[32m"toast-container"[39m
+    [33mid[39m=[32m"toast-portal"[39m
+    [33mstyle[39m=[32m"position: fixed; top: 100px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99999; pointer-events: none;"[39m
+  [36m/>[39m
+[36m</body>[39m
+   × AI Idea Evaluator Studio > shows conditional fields based on project type in wizard insights step 1062ms
+     → Unable to find an element with the text: /The Pitch/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mdata-testid[39m=[32m"performance-monitor"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6"[39m
+        [33mstyle[39m=[32m"contain: layout;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic"[39m
+          [36m>[39m
+            [0mStudio [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-blue-500"[39m
+            [36m>[39m
+              [0m.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase"[39m
+          [36m>[39m
+            [0mAdvanced AI Evaluation Protocol for Web3 Assets[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-[400px]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 scroll-mt-32 pt-12"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between mb-12 gap-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full bg-blue-500 transition-all duration-500 ease-out"[39m
+                [33mstyle[39m=[32m"width: 40%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest"[39m
+            [36m>[39m
+              [0mSTEP [0m
+              [0m2[0m
+              [0m / [0m
+              [0m5[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative mt-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-12 text-center sm:text-left space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-3xl sm:text-5xl font-bold text-white tracking-tight"[39m
+              [36m>[39m
+                [0mProject Identity[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-white/50 font-light"[39m
+              [36m>[39m
+                [0mGive it a name or ticker.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative group"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33mautocomplete[39m=[32m"off"[39m
+                    [33mclass[39m=[32m"w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-6 transition-colors font-mono uppercase tracking-tight"[39m
+                    [33mplaceholder[39m=[32m"$TICKER"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"TEST"[39m
+                  [36m/>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded"[39m
+                    [36m>[39m
+                      [0mPress Enter ↵[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"mt-6 text-white/40 flex items-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles text-blue-400"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mCatchy tickers perform 40% better on analysis.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-4 w-full sm:w-auto"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest"[39m
+              [36m>[39m
+                [0mBack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"[39m
+              [36m>[39m
+                [0mContinue[0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-corner-down-left group-hover:translate-x-1 transition-transform pointer-events-none"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 4v7a4 4 0 0 1-4 4H4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 10-5 5 5 5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mTab[0m
+                [36m</span>[39m
+                [0m to navigate[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mEnter[0m
+                [36m</span>[39m
+                [0m to proceed[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33maria-relevant[39m=[32m"additions"[39m
+    [33mclass[39m=[32m"toast-container"[39m
+    [33mid[39m=[32m"toast-portal"[39m
+    [33mstyle[39m=[32m"position: fixed; top: 100px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99999; pointer-events: none;"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mdata-testid[39m=[32m"performance-monitor"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6"[39m
+        [33mstyle[39m=[32m"contain: layout;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic"[39m
+          [36m>[39m
+            [0mStudio [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-blue-500"[39m
+            [36m>[39m
+              [0m.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase"[39m
+          [36m>[39m
+            [0mAdvanced AI Evaluation Protocol for Web3 Assets[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-[400px]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 scroll-mt-32 pt-12"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between mb-12 gap-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full bg-blue-500 transition-all duration-500 ease-out"[39m
+                [33mstyle[39m=[32m"width: 40%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest"[39m
+            [36m>[39m
+              [0mSTEP [0m
+              [0m2[0m
+              [0m / [0m
+              [0m5[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative mt-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-12 text-center sm:text-left space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-3xl sm:text-5xl font-bold text-white tracking-tight"[39m
+              [36m>[39m
+                [0mProject Identity[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-white/50 font-light"[39m
+              [36m>[39m
+                [0mGive it a name or ticker.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative group"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33mautocomplete[39m=[32m"off"[39m
+                    [33mclass[39m=[32m"w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-6 transition-colors font-mono uppercase tracking-tight"[39m
+                    [33mplaceholder[39m=[32m"$TICKER"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"TEST"[39m
+                  [36m/>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded"[39m
+                    [36m>[39m
+                      [0mPress Enter ↵[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"mt-6 text-white/40 flex items-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles text-blue-400"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mCatchy tickers perform 40% better on analysis.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-4 w-full sm:w-auto"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest"[39m
+              [36m>[39m
+                [0mBack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"[39m
+              [36m>[39m
+                [0mContinue[0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-corner-down-left group-hover:translate-x-1 transition-transform pointer-events-none"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 4v7a4 4 0 0 1-4 4H4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 10-5 5 5 5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mTab[0m
+                [36m</span>[39m
+                [0m to navigate[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mEnter[0m
+                [36m</span>[39m
+                [0m to proceed[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33maria-relevant[39m=[32m"additions"[39m
+    [33mclass[39m=[32m"toast-container"[39m
+    [33mid[39m=[32m"toast-portal"[39m
+    [33mstyle[39m=[32m"position: fixed; top: 100px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99999; pointer-events: none;"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > submits successfully with valid data via wizard steps
+TestingLibraryElementError: Unable to find an element with the text: /The Pitch/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mdata-testid[39m=[32m"performance-monitor"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6"[39m
+        [33mstyle[39m=[32m"contain: layout;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic"[39m
+          [36m>[39m
+            [0mStudio [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-blue-500"[39m
+            [36m>[39m
+              [0m.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase"[39m
+          [36m>[39m
+            [0mAdvanced AI Evaluation Protocol for Web3 Assets[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-[400px]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 scroll-mt-32 pt-12"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between mb-12 gap-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full bg-blue-500 transition-all duration-500 ease-out"[39m
+                [33mstyle[39m=[32m"width: 40%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest"[39m
+            [36m>[39m
+              [0mSTEP [0m
+              [0m2[0m
+              [0m / [0m
+              [0m5[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative mt-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-12 text-center sm:text-left space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-3xl sm:text-5xl font-bold text-white tracking-tight"[39m
+              [36m>[39m
+                [0mProject Identity[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-white/50 font-light"[39m
+              [36m>[39m
+                [0mGive it a name or ticker.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative group"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33mautocomplete[39m=[32m"off"[39m
+                    [33mclass[39m=[32m"w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-6 transition-colors font-mono uppercase tracking-tight"[39m
+                    [33mplaceholder[39m=[32m"$TICKER"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"TEST"[39m
+                  [36m/>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded"[39m
+                    [36m>[39m
+                      [0mPress Enter ↵[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"mt-6 text-white/40 flex items-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles text-blue-400"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mCatchy tickers perform 40% better on analysis.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-4 w-full sm:w-auto"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest"[39m
+              [36m>[39m
+                [0mBack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"[39m
+              [36m>[39m
+                [0mContinue[0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-corner-down-left group-hover:translate-x-1 transition-transform pointer-events-none"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 4v7a4 4 0 0 1-4 4H4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 10-5 5 5 5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mTab[0m
+                [36m</span>[39m
+                [0m to navigate[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mEnter[0m
+                [36m</span>[39m
+                [0m to proceed[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33maria-relevant[39m=[32m"additions"[39m
+    [33mclass[39m=[32m"toast-container"[39m
+    [33mid[39m=[32m"toast-portal"[39m
+    [33mstyle[39m=[32m"position: fixed; top: 100px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99999; pointer-events: none;"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mdata-testid[39m=[32m"performance-monitor"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6"[39m
+        [33mstyle[39m=[32m"contain: layout;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic"[39m
+          [36m>[39m
+            [0mStudio [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-blue-500"[39m
+            [36m>[39m
+              [0m.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase"[39m
+          [36m>[39m
+            [0mAdvanced AI Evaluation Protocol for Web3 Assets[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-[400px]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 scroll-mt-32 pt-12"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between mb-12 gap-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full bg-blue-500 transition-all duration-500 ease-out"[39m
+                [33mstyle[39m=[32m"width: 40%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest"[39m
+            [36m>[39m
+              [0mSTEP [0m
+              [0m2[0m
+              [0m / [0m
+              [0m5[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative mt-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-12 text-center sm:text-left space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-3xl sm:text-5xl font-bold text-white tracking-tight"[39m
+              [36m>[39m
+                [0mProject Identity[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-white/50 font-light"[39m
+              [36m>[39m
+                [0mGive it a name or ticker.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative group"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33mautocomplete[39m=[32m"off"[39m
+                    [33mclass[39m=[32m"w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-6 transition-colors font-mono uppercase tracking-tight"[39m
+                    [33mplaceholder[39m=[32m"$TICKER"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"TEST"[39m
+                  [36m/>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded"[39m
+                    [36m>[39m
+                      [0mPress Enter ↵[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"mt-6 text-white/40 flex items-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles text-blue-400"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mCatchy tickers perform 40% better on analysis.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-4 w-full sm:w-auto"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest"[39m
+              [36m>[39m
+                [0mBack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"[39m
+              [36m>[39m
+                [0mContinue[0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-corner-down-left group-hover:translate-x-1 transition-transform pointer-events-none"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 4v7a4 4 0 0 1-4 4H4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 10-5 5 5 5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mTab[0m
+                [36m</span>[39m
+                [0m to navigate[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mEnter[0m
+                [36m</span>[39m
+                [0m to proceed[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33maria-relevant[39m=[32m"additions"[39m
+    [33mclass[39m=[32m"toast-container"[39m
+    [33mid[39m=[32m"toast-portal"[39m
+    [33mstyle[39m=[32m"position: fixed; top: 100px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99999; pointer-events: none;"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/studio.test.tsx:179:22
+    177| 
+    178|         // 3. Step 2: The Pitch
+    179|         await screen.findByText(/The Pitch/i);
+       |                      ^
+    180|         const descInput = await screen.findByPlaceholderText(/Explain|…
+    181|         fireEvent.change(descInput, { target: { value: 'This is a test…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/studio.test.tsx > AI Idea Evaluator Studio > shows conditional fields based on project type in wizard insights step
+TestingLibraryElementError: Unable to find an element with the text: /The Pitch/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mdata-testid[39m=[32m"performance-monitor"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6"[39m
+        [33mstyle[39m=[32m"contain: layout;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic"[39m
+          [36m>[39m
+            [0mStudio [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-blue-500"[39m
+            [36m>[39m
+              [0m.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase"[39m
+          [36m>[39m
+            [0mAdvanced AI Evaluation Protocol for Web3 Assets[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-[400px]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 scroll-mt-32 pt-12"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between mb-12 gap-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full bg-blue-500 transition-all duration-500 ease-out"[39m
+                [33mstyle[39m=[32m"width: 40%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest"[39m
+            [36m>[39m
+              [0mSTEP [0m
+              [0m2[0m
+              [0m / [0m
+              [0m5[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative mt-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-12 text-center sm:text-left space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-3xl sm:text-5xl font-bold text-white tracking-tight"[39m
+              [36m>[39m
+                [0mProject Identity[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-white/50 font-light"[39m
+              [36m>[39m
+                [0mGive it a name or ticker.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative group"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33mautocomplete[39m=[32m"off"[39m
+                    [33mclass[39m=[32m"w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-6 transition-colors font-mono uppercase tracking-tight"[39m
+                    [33mplaceholder[39m=[32m"$TICKER"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"TEST"[39m
+                  [36m/>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded"[39m
+                    [36m>[39m
+                      [0mPress Enter ↵[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"mt-6 text-white/40 flex items-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles text-blue-400"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mCatchy tickers perform 40% better on analysis.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-4 w-full sm:w-auto"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest"[39m
+              [36m>[39m
+                [0mBack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"[39m
+              [36m>[39m
+                [0mContinue[0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-corner-down-left group-hover:translate-x-1 transition-transform pointer-events-none"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 4v7a4 4 0 0 1-4 4H4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 10-5 5 5 5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mTab[0m
+                [36m</span>[39m
+                [0m to navigate[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mEnter[0m
+                [36m</span>[39m
+                [0m to proceed[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33maria-relevant[39m=[32m"additions"[39m
+    [33mclass[39m=[32m"toast-container"[39m
+    [33mid[39m=[32m"toast-portal"[39m
+    [33mstyle[39m=[32m"position: fixed; top: 100px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99999; pointer-events: none;"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mdata-testid[39m=[32m"performance-monitor"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6"[39m
+        [33mstyle[39m=[32m"contain: layout;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic"[39m
+          [36m>[39m
+            [0mStudio [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-blue-500"[39m
+            [36m>[39m
+              [0m.[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-white/50 text-xs sm:text-base max-w-xl font-medium tracking-[0.2em] uppercase"[39m
+          [36m>[39m
+            [0mAdvanced AI Evaluation Protocol for Web3 Assets[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-[400px]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 scroll-mt-32 pt-12"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between mb-12 gap-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full bg-blue-500 transition-all duration-500 ease-out"[39m
+                [33mstyle[39m=[32m"width: 40%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest"[39m
+            [36m>[39m
+              [0mSTEP [0m
+              [0m2[0m
+              [0m / [0m
+              [0m5[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative mt-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-12 text-center sm:text-left space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-3xl sm:text-5xl font-bold text-white tracking-tight"[39m
+              [36m>[39m
+                [0mProject Identity[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-white/50 font-light"[39m
+              [36m>[39m
+                [0mGive it a name or ticker.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative group"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33mautocomplete[39m=[32m"off"[39m
+                    [33mclass[39m=[32m"w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-6 transition-colors font-mono uppercase tracking-tight"[39m
+                    [33mplaceholder[39m=[32m"$TICKER"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"TEST"[39m
+                  [36m/>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded"[39m
+                    [36m>[39m
+                      [0mPress Enter ↵[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"mt-6 text-white/40 flex items-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles text-blue-400"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mCatchy tickers perform 40% better on analysis.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-4 w-full sm:w-auto"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest"[39m
+              [36m>[39m
+                [0mBack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"[39m
+              [36m>[39m
+                [0mContinue[0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-corner-down-left group-hover:translate-x-1 transition-transform pointer-events-none"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 4v7a4 4 0 0 1-4 4H4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 10-5 5 5 5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mTab[0m
+                [36m</span>[39m
+                [0m to navigate[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex items-center gap-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"bg-white/10 px-1.5 py-0.5 rounded text-white/60"[39m
+                [36m>[39m
+                  [0mEnter[0m
+                [36m</span>[39m
+                [0m to proceed[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33maria-relevant[39m=[32m"additions"[39m
+    [33mclass[39m=[32m"toast-container"[39m
+    [33mid[39m=[32m"toast-portal"[39m
+    [33mstyle[39m=[32m"position: fixed; top: 100px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99999; pointer-events: none;"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/studio.test.tsx:214:22
+    212|         fireEvent.change(tickerInput, { target: { value: 'TEST' } });
+    213|         fireEvent.click(screen.getByText('Continue'));
+    214|         await screen.findByText(/The Pitch/i);
+       |                      ^
+    215|         const descInput = await screen.findByPlaceholderText(/Explain|…
+    216|         fireEvent.change(descInput, { target: { value: 'Valid descript…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
 
 
  Test Files  1 failed (1)
-      Tests  4 failed (4)
-   Start at  16:05:04
-   Duration  3.19s (transform 234ms, setup 154ms, collect 580ms, tests 77ms, environment 706ms, prepare 134ms)
+      Tests  2 failed | 1 passed (3)
+   Start at  11:36:26
+   Duration  4.40s (transform 180ms, setup 113ms, collect 380ms, tests 2.31s, environment 460ms, prepare 190ms)
 

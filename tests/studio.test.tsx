@@ -1,6 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
 import StudioPage from '../app/studio/page';
 import ToastProvider from '../app/components/ToastProvider';
@@ -80,13 +80,12 @@ describe('AI Idea Evaluator Studio', () => {
         window.scrollTo = vi.fn();
         window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
-
         // Default mock for Quota calls
         (global.fetch as any).mockImplementation((url: string) => {
             if (url && url.toString().includes('/api/idea-evaluator/quota')) {
                 return Promise.resolve({
                     ok: true,
-                    json: async () => ({ limit: 3, remaining: 3, reset: Date.now() + 86400000 })
+                    json: async () => ({ limit: 3, remaining: 3, resetAt: Date.now() + 86400000 })
                 });
             }
             return Promise.resolve({ ok: true, json: async () => ({}) });
@@ -95,45 +94,51 @@ describe('AI Idea Evaluator Studio', () => {
         window.alert = vi.fn();
     });
 
-    it('renders the single page form initially', async () => {
+    afterEach(() => {
+        cleanup();
+    });
+
+    const waitForWizardReady = async () => {
+        // Wait for quota loading to finish
+        await waitFor(() => {
+            expect(screen.queryByText(/Synchronizing Protocol Quota/i)).not.toBeInTheDocument();
+        }, { timeout: 4000 });
+
+        // Ensure we see Step 0 content
+        await screen.findByText(/Select Sector/i);
+    };
+
+    // Helper to wait for state to settle in tests
+    const settle = () => new Promise(r => setTimeout(r, 50));
+
+    it('renders the wizard initially after quota loads', async () => {
         render(
             <ToastProvider>
                 <StudioPage />
             </ToastProvider>
         );
 
-        // Check for main headers
-        expect(screen.getByText(/What are you building?/i)).toBeInTheDocument();
-        expect(screen.getByText(/The Pitch/i)).toBeInTheDocument();
+        await waitForWizardReady();
 
         // Check for project types
         expect(screen.getByText('Memecoin')).toBeInTheDocument();
-        expect(screen.getByText('DeFi & Utility')).toBeInTheDocument();
+        expect(screen.getByText('DeFi / Utility')).toBeInTheDocument();
         expect(screen.getByText('AI Agent')).toBeInTheDocument();
-
-        // Check for submit button (initially says "Describe Idea" or "Select Sector")
-        expect(await screen.findByText(/Describe Idea|Initiate Protocol/i)).toBeInTheDocument();
     });
 
-
-
-    it('submits successfully with valid data', async () => {
+    it('submits successfully with valid data via wizard steps', async () => {
         // Mock the streaming endpoint
         (global.fetch as any).mockImplementation((url: string) => {
             if (url.includes('/api/idea-evaluator/quota')) {
                 return Promise.resolve({
                     ok: true,
-                    json: async () => ({ limit: 3, remaining: 3, reset: Date.now() + 86400000 })
+                    json: async () => ({ limit: 3, remaining: 3, resetAt: Date.now() + 86400000 })
                 });
             }
             if (url.includes('/api/idea-evaluator/evaluate-stream')) {
                 const mockResult = {
                     overallScore: 85,
-                    summary: {
-                        title: 'Test Idea',
-                        oneLiner: 'A test project',
-                        mainVerdict: 'Good'
-                    },
+                    summary: { title: 'Test Idea', oneLiner: 'A test project', mainVerdict: 'Good' },
                     technical: { feasibilityScore: 80, keyRisks: [], requiredComponents: [], comments: '' },
                     tokenomics: { tokenNeeded: true, designScore: 80, mainIssues: [], suggestions: [] },
                     market: { marketFitScore: 80, targetAudience: [], competitorSignals: [], goToMarketRisks: [] },
@@ -166,45 +171,101 @@ describe('AI Idea Evaluator Studio', () => {
             </ToastProvider>
         );
 
-        // 1. Select Project Type (Memecoin)
-        fireEvent.click(screen.getByText('Memecoin'));
+        await waitForWizardReady();
 
-        // 2. Fill Description
-        const descriptionInput = screen.getByLabelText(/The Pitch/i);
-        fireEvent.change(descriptionInput, { target: { value: 'This is a test memecoin description that is long enough.' } });
+        // 1. Step 0: Select Project Type
+        fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
+        await settle();
 
+        // 2. Step 1: Project Identity
+        await screen.findByText(/Project Identity/i);
+        const tickerInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
+        fireEvent.change(tickerInput, { target: { value: 'TEST' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
 
+        // 3. Step 2: The Pitch
+        await screen.findByText(/The Pitch/i);
+        const descInput = await screen.findByPlaceholderText(/Explain|Describe/i);
+        fireEvent.change(descInput, { target: { value: 'This is a test memecoin description that is long enough.' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
 
-        // 5. Submit
-        const submitBtn = await screen.findByText('Initiate Protocol');
+        // 4. Step 3: Strategic Insights
+        await screen.findByText(/Strategic Insights/i);
+        fireEvent.click(screen.getByText('Review'));
+        await settle();
+
+        // 5. Step 4: Review & Submit
+        await screen.findByText(/Ready to Launch?/i);
+        const submitBtn = await screen.findByRole('button', { name: /Generate Report/i });
         fireEvent.click(submitBtn);
 
-        // 6. Verify Terminal appears (now named "prediktfi — evaluation")
+        // 6. Verify Terminal/Report appears
         await waitFor(() => {
-            expect(screen.getByText(/prediktfi — evaluation/i)).toBeInTheDocument();
-        });
-    });
+            expect(screen.getByText(/Analysis Complete|predikt/i)).toBeInTheDocument();
+        }, { timeout: 5000 });
+    }, 15000);
 
-
-    it('shows conditional fields based on project type', async () => {
+    it('shows memecoin conditional fields in wizard', async () => {
         render(
             <ToastProvider>
                 <StudioPage />
             </ToastProvider>
         );
 
-        // Initially Memecoin is selected by default (or user clicks it)
-        fireEvent.click(screen.getByText('Memecoin'));
-        // Community Vibe should appear
-        await waitFor(() => {
-            expect(screen.getByText('Community Vibe')).toBeInTheDocument();
-        });
+        await waitForWizardReady();
 
-        // Switch to AI Agent
-        fireEvent.click(screen.getByText('AI Agent'));
-        await waitFor(() => {
-            // Community Vibe should disappear
-            expect(screen.queryByText('Community Vibe')).not.toBeInTheDocument();
-        });
+        fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
+        await settle();
+        await screen.findByText(/Project Identity/i);
+        const tickerInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
+        fireEvent.change(tickerInput, { target: { value: 'TEST' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+        await screen.findByText(/The Pitch/i);
+        const descInput = await screen.findByPlaceholderText(/Explain|Describe/i);
+        fireEvent.change(descInput, { target: { value: 'Valid description for testing purposes.' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+
+        // Verify Insights Step
+        await screen.findByText(/Strategic Insights/i);
+        expect(screen.getByText('Community Vibe')).toBeInTheDocument();
+        expect(screen.getByText('Primary Narrative')).toBeInTheDocument();
+    });
+
+    it('shows AI Agent conditional fields in wizard', async () => {
+        render(
+            <ToastProvider>
+                <StudioPage />
+            </ToastProvider>
+        );
+
+        await waitForWizardReady();
+
+        fireEvent.click(screen.getByRole('button', { name: /AI Agent/i }));
+        await settle();
+        await screen.findByText(/Project Identity/i);
+        const aiNameInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
+        fireEvent.change(aiNameInput, { target: { value: 'AI TEST' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+        await screen.findByText(/The Pitch/i);
+        const aiDescInput = await screen.findByPlaceholderText(/Explain|Describe/i);
+        fireEvent.change(aiDescInput, { target: { value: 'Valid AI agent description for testing purposes.' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+
+        // Verify AI Insights Step
+        await screen.findByText(/Strategic Insights/i);
+        expect(screen.queryByText('Community Vibe')).not.toBeInTheDocument();
+        expect(screen.getByText('Model Type')).toBeInTheDocument();
     });
 });
