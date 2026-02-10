@@ -127,6 +127,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
             const trimmedName = dataToValidate.name.trim();
             if (trimmedName.length < 3) {
                 setErrors(prev => ({ ...prev, name: trimmedName.length === 0 ? "Name is required" : "Name must be at least 3 characters" }));
+                isNavigatingRef.current = false;
                 return;
             }
         }
@@ -135,6 +136,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
             const meaningfulLength = getMeaningfulLength(dataToValidate.description);
             if (meaningfulLength < 10) {
                 setErrors(prev => ({ ...prev, description: meaningfulLength === 0 ? "Pitch is required" : "Pitch must be at least 10 non-space characters" }));
+                isNavigatingRef.current = false;
                 return;
             }
         }
@@ -204,7 +206,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
             if (currentStep === 0 && !formData.projectType) return;
 
             if (currentStep === 1) {
-                const trimmedName = formData.name.trim();
+                const trimmedName = formDataRef.current.name.trim();
                 if (trimmedName.length < 3) {
                     setErrors(prev => ({ ...prev, name: trimmedName.length === 0 ? "Name is required" : "Name must be at least 3 characters" }));
                     return;
@@ -362,6 +364,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                     className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-2 transition-colors font-mono uppercase tracking-tight"
                                     autoComplete="off"
                                     aria-describedby={cn(errors.name ? "name-error" : undefined, "name-helper")}
+                                    aria-invalid={!!errors.name}
                                 />
                                 {errors.name && (
                                     <div
@@ -415,6 +418,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                     }
                                     className="w-full h-[300px] bg-white/5 rounded-xl border border-white/10 p-6 text-xl sm:text-2xl font-medium text-white placeholder:text-white/20 resize-none outline-none focus:border-blue-500 focus:bg-white/10 transition-all leading-relaxed"
                                     aria-describedby={cn(errors.description ? "pitch-error" : undefined, "pitch-counter")}
+                                    aria-invalid={!!errors.description}
                                 />
                                 {errors.description && (
                                     <div
@@ -632,11 +636,6 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                     {currentStep < 4 ? (
                         <button
                             onClick={() => handleNext()}
-                            disabled={
-                                (currentStep === 0 && !formData.projectType) ||
-                                (currentStep === 1 && formData.name.trim().length < 3) ||
-                                (currentStep === 2 && formData.description.replace(/\s/g, '').length < 10)
-                            }
                             className="flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"
                         >
                             {currentStep === 3 || (currentStep === 2 && !hasContextualFields(formData.projectType)) ? 'Review' : 'Continue'}
