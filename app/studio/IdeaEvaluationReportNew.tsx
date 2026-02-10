@@ -409,7 +409,7 @@ Get your own evaluation here:`;
                         return (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                                 {/* BEAR CARD */}
-                                <div className="bg-red-950/20 border border-red-500/20 rounded-2xl p-6 relative overflow-hidden group hover:bg-red-950/30 transition-colors">
+                                <div className="bg-[#1a0505] border border-red-900/50 rounded-2xl p-6 relative overflow-hidden group hover:border-red-800 transition-colors">
 
                                     <div className="relative z-10">
                                         <div className="flex items-center justify-between mb-4">
@@ -430,7 +430,7 @@ Get your own evaluation here:`;
                                 </div>
 
                                 {/* BULL CARD */}
-                                <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-6 relative overflow-hidden group hover:bg-emerald-950/30 transition-colors">
+                                <div className="bg-[#021810] border border-emerald-900/50 rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-800 transition-colors">
 
                                     <div className="relative z-10">
                                         <div className="flex items-center justify-between mb-4">
@@ -457,7 +457,7 @@ Get your own evaluation here:`;
 
                 {/* ========== RED FLAG BOX ========== */}
                 {redFlags.length > 0 && (
-                    <div className={`border-2 border-red-500/50 bg-red-950/30 p-4 rounded-xl mb-6 pulse-glow`}>
+                    <div className={`border-2 border-red-900/50 bg-[#1a0505] p-4 rounded-xl mb-6 pulse-glow`}>
                         <div className="flex items-center gap-2 mb-3 text-red-400">
                             <Flag size={16} />
                             <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Critical Warnings</h3>
@@ -481,7 +481,7 @@ Get your own evaluation here:`;
                 {/* RADAR CHART + ACTION PLAN - Side by Side */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
                     {/* RADAR CHART - Own Card - Optimized with containment */}
-                    <div className="border border-white/10 bg-slate-900/80 p-6 rounded-2xl flex flex-col items-center justify-center min-h-[360px]" style={{ contain: 'layout style' }}>
+                    <div className="border border-white/5 bg-[#0B1221] p-6 rounded-2xl flex flex-col items-center justify-center min-h-[360px]" style={{ contain: 'layout style' }}>
                         <div className="flex items-center gap-2 mb-4 text-white/60 border-b border-white/5 pb-3 w-full">
                             <Image src="/images/logo.png" width={16} height={16} alt="Predikt" className="object-contain" />
                             <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Performance Radar</h3>
@@ -490,7 +490,7 @@ Get your own evaluation here:`;
                     </div>
 
                     {/* IMMEDIATE ACTION PLAN */}
-                    <div className="border border-blue-500/30 bg-blue-500/10 p-6 rounded-2xl">
+                    <div className="border border-blue-900/30 bg-[#0f172a] p-6 rounded-2xl">
                         <div className="flex items-center gap-2 mb-4 text-white border-b border-white/10 pb-3">
                             <CheckCircle2 size={18} className="text-blue-400" />
                             <h3 className="font-bold uppercase tracking-[0.2em] text-[10px] text-blue-100">Immediate Action Plan</h3>
@@ -513,8 +513,8 @@ Get your own evaluation here:`;
                     </div>
                 </div>
 
-                {/* MARKET INTELLIGENCE - TABLE VIEW - Reduced transparency */}
-                <div className="border border-blue-500/20 bg-blue-500/10 p-6 rounded-2xl mb-8" style={{ contain: 'layout style' }}>
+                {/* MARKET INTELLIGENCE - TABLE VIEW - Opaque Background */}
+                <div className="border border-blue-900/30 bg-[#0f172a] p-6 rounded-2xl mb-8" style={{ contain: 'layout style' }}>
                     <div className="flex items-center gap-2 mb-5 text-blue-400 border-b border-blue-500/10 pb-3">
                         <Terminal size={18} />
                         <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Market Intelligence</h3>
@@ -594,7 +594,7 @@ Get your own evaluation here:`;
                 {/* THREAT DETECTION + CALIBRATION (2-col grid) */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     {/* THREAT DETECTION */}
-                    <div className="border border-slate-700/50 bg-slate-900/80 p-6 rounded-2xl" style={{ contain: 'layout style' }}>
+                    <div className="border border-slate-800 bg-[#0B1221] p-6 rounded-2xl" style={{ contain: 'layout style' }}>
                         <div className="flex items-center gap-2 mb-4 text-slate-400 border-b border-white/5 pb-3">
                             <AlertTriangle size={18} />
                             <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Threat Detection</h3>
@@ -611,7 +611,7 @@ Get your own evaluation here:`;
 
                     {/* SCORE CALIBRATION AUDIT */}
                     {result.calibrationNotes && result.calibrationNotes.length > 0 && (
-                        <div className="border border-white/5 bg-slate-900/80 p-6 rounded-2xl relative overflow-hidden">
+                        <div className="border border-white/5 bg-[#0B1221] p-6 rounded-2xl relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-600 to-cyan-500 opacity-50" />
                             <div className="flex items-center gap-2 mb-4 text-white/90 border-b border-white/5 pb-3">
                                 <Image src="/images/logo.png" width={18} height={18} alt="Predikt" className="object-contain" />
@@ -831,9 +831,8 @@ Get your own evaluation here:`;
                     </details>
                 )}
 
-                {/* ACTION BUTTONS */}
                 {/* ACTION PANEL - "Next Best Action" */}
-                <div className="mt-12 border border-blue-500/20 bg-blue-500/5 rounded-2xl p-6 md:p-8 animate-in fade-in slide-in-from-bottom-8 duration-700 noprint">
+                <div className="mt-12 border border-blue-900/30 bg-[#0f172a] rounded-2xl p-6 md:p-8 animate-in fade-in slide-in-from-bottom-8 duration-700 noprint">
 
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
@@ -845,7 +844,7 @@ Get your own evaluation here:`;
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                         {/* 1. Share (Primary) */}
-                        <div className="md:col-span-2 p-6 bg-slate-900/80 border border-blue-500/30 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-blue-900/10 relative overflow-hidden">
+                        <div className="md:col-span-2 p-6 bg-[#0B1221] border border-blue-500/30 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-blue-900/10 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
                             <div className="relative z-10 text-center md:text-left">
                                 <h4 className="text-white font-bold mb-1 flex items-center justify-center md:justify-start gap-2">
@@ -891,7 +890,7 @@ Get your own evaluation here:`;
                         {onEdit && (
                             <button
                                 onClick={onEdit}
-                                className="group p-5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-left flex flex-col justify-between h-full min-h-[140px]"
+                                className="group p-5 bg-[#1e293b] border border-white/10 rounded-xl hover:border-white/20 transition-all text-left flex flex-col justify-between h-full min-h-[140px]"
                             >
                                 <div>
                                     <div className="flex items-center justify-between mb-3 text-white/60 group-hover:text-blue-400 transition-colors">
@@ -912,8 +911,8 @@ Get your own evaluation here:`;
                                 onClick={onCommit}
                                 disabled={commitStatus === 'committing' || commitStatus === 'success'}
                                 className={`group p-5 border rounded-xl transition-all text-left flex flex-col justify-between h-full min-h-[140px] relative overflow-hidden ${commitStatus === 'success'
-                                    ? 'bg-emerald-500/10 border-emerald-500/30 cursor-default'
-                                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                    ? 'bg-[#021810] border-emerald-500/30 cursor-default'
+                                    : 'bg-[#1e293b] border-white/10 hover:border-white/20'
                                     }`}
                             >
                                 {commitStatus === 'success' && <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none" />}
@@ -950,7 +949,7 @@ Get your own evaluation here:`;
                         {!onCommit && onStartNew && (
                             <button
                                 onClick={onStartNew}
-                                className="group p-5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-left flex flex-col justify-between h-full min-h-[140px]"
+                                className="group p-5 bg-[#1e293b] border border-white/10 rounded-xl hover:border-white/20 transition-all text-left flex flex-col justify-between h-full min-h-[140px]"
                             >
                                 <div>
                                     <div className="flex items-center justify-between mb-3 text-white/60 group-hover:text-blue-400 transition-colors">

@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { useIsPro } from "../lib/use-plan";
 import { isFeatureEnabled } from "../lib/flags";
 import { useInstantRouter } from "./InstantRouter";
+import Image from "next/image";
 
 // Lazy load the wallet component since it's heavy
 const SimplifiedConnectButton = lazy(() => import("./wallet/SimplifiedConnectButton"));
@@ -394,10 +395,27 @@ export default function Navbar() {
           aria-label={SITE.name}
         >
           {/* Logo Text */}
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-200 via-teal-200 to-cyan-200 bg-clip-text text-transparent leading-tight">
-              Predikt
-            </span>
+          <div className="flex items-center gap-2.5 group/logo">
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 ring-1 ring-white/20 shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-700 group-hover/logo:scale-110 overflow-hidden">
+              <Image
+                src="/images/logo.png"
+                alt="Predikt logo"
+                width={32}
+                height={32}
+                className="absolute inset-0 h-full w-full object-cover scale-[1.3] transition-all duration-1000 group-hover/logo:animate-[spin_1.5s_linear_infinite]"
+              />
+              <div className="absolute inset-0 opacity-0 group-hover/logo:opacity-100 transition-opacity duration-300 pointer-events-none">
+                <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0deg,rgba(59,130,246,0.8)_180deg,transparent_360deg)] animate-[spin_0.8s_linear_infinite]" />
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-2xl font-black tracking-tighter bg-gradient-to-r from-blue-200 via-teal-200 to-cyan-200 bg-clip-text text-transparent leading-none">
+                Predikt
+              </span>
+              <span className="ml-1 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] border border-white/5 bg-white/5 px-1.5 py-0.5 rounded-md">
+                v1
+              </span>
+            </div>
           </div>
         </Link>
 
