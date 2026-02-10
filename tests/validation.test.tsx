@@ -71,7 +71,7 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
         fireEvent.click(screen.getByText('Continue'));
         await settle();
 
-        expect(await screen.findByText(/The Pitch/i)).toBeInTheDocument();
+        expect((await screen.findAllByText(/The Pitch/i)).length).toBeGreaterThan(0);
     });
 
     it('rejects pitch with less than 10 meaningful characters', async () => {
