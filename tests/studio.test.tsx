@@ -178,7 +178,7 @@ describe('AI Idea Evaluator Studio', () => {
         await settle();
 
         // 2. Step 1: Project Identity
-        await screen.findByText(/Project Identity/i);
+        await screen.findAllByText(/Project Identity/i);
         const tickerInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
         fireEvent.change(tickerInput, { target: { value: 'TEST' } });
         await settle();
@@ -186,7 +186,7 @@ describe('AI Idea Evaluator Studio', () => {
         await settle();
 
         // 3. Step 2: The Pitch
-        await screen.findByText(/The Pitch/i);
+        await screen.findAllByText(/The Pitch/i);
         const descInput = await screen.findByPlaceholderText(/Explain|Describe/i);
         fireEvent.change(descInput, { target: { value: 'This is a test memecoin description that is long enough.' } });
         await settle();
@@ -220,13 +220,13 @@ describe('AI Idea Evaluator Studio', () => {
 
         fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
         await settle();
-        await screen.findByText(/Project Identity/i);
+        await screen.findAllByText(/Project Identity/i);
         const tickerInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
         fireEvent.change(tickerInput, { target: { value: 'TEST' } });
         await settle();
         fireEvent.click(screen.getByText('Continue'));
         await settle();
-        await screen.findByText(/The Pitch/i);
+        await screen.findAllByText(/The Pitch/i);
         const descInput = await screen.findByPlaceholderText(/Explain|Describe/i);
         fireEvent.change(descInput, { target: { value: 'Valid description for testing purposes.' } });
         await settle();
@@ -250,13 +250,13 @@ describe('AI Idea Evaluator Studio', () => {
 
         fireEvent.click(screen.getByRole('button', { name: /AI Agent/i }));
         await settle();
-        await screen.findByText(/Project Identity/i);
+        await screen.findAllByText(/Project Identity/i);
         const aiNameInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
         fireEvent.change(aiNameInput, { target: { value: 'AI TEST' } });
         await settle();
         fireEvent.click(screen.getByText('Continue'));
         await settle();
-        await screen.findByText(/The Pitch/i);
+        await screen.findAllByText(/The Pitch/i);
         const aiDescInput = await screen.findByPlaceholderText(/Explain|Describe/i);
         fireEvent.change(aiDescInput, { target: { value: 'Valid AI agent description for testing purposes.' } });
         await settle();
@@ -267,5 +267,36 @@ describe('AI Idea Evaluator Studio', () => {
         await screen.findByText(/Strategic Insights/i);
         expect(screen.queryByText('Community Vibe')).not.toBeInTheDocument();
         expect(screen.getByText('Model Type')).toBeInTheDocument();
+        it('verifies label-based field discovery and accessibility descriptions', async () => {
+            render(<StudioPage />);
+            await settle();
+
+            // 1. Sector Step -> select one to proceed
+            fireEvent.click(screen.getByText('Memecoin'));
+            await settle();
+
+            // 2. Step 1: Label discovery
+            const nameLabel = screen.getByLabelText(/Project Name/i);
+            expect(nameLabel).toHaveAttribute('id', 'project-name');
+
+            // Validation/ARIA check
+            fireEvent.change(nameLabel, { target: { value: 'A' } });
+            fireEvent.click(screen.getByText('Continue'));
+            await settle();
+
+            const nameError = await screen.findByText(/Name must be at least 3 characters/i);
+            expect(nameLabel).toHaveAttribute('aria-describedby', expect.stringContaining('name-error'));
+            expect(nameError).toHaveAttribute('id', 'name-error');
+            expect(nameLabel).toHaveAttribute('aria-invalid', 'true');
+
+            // 3. Step 2: Label discovery
+            fireEvent.change(nameLabel, { target: { value: 'VALID' } });
+            await settle();
+            fireEvent.click(screen.getByText('Continue'));
+            await settle();
+
+            const pitchLabel = screen.getByLabelText(/The Pitch/i);
+            expect(pitchLabel).toHaveAttribute('id', 'project-pitch');
+            expect(pitchLabel).toHaveAttribute('aria-describedby', expect.stringContaining('pitch-counter'));
+        });
     });
-});

@@ -55,6 +55,8 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
         successDefinition: initialData?.successDefinition || ''
     });
 
+    const [errors, setErrors] = useState<{ name?: string; description?: string }>({});
+
     // Use a ref to always have the absolute latest data for validation
     // This prevents race conditions where handleNext sees stale state
     const formDataRef = useRef<WizardFormData>(formData);
@@ -115,10 +117,27 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
             navigationTimeoutRef.current = null;
         }
 
+        // Validation helper
+        const getMeaningfulLength = (text: string) => text.replace(/\s/g, '').length;
+
         // Validation check before proceeding - now uses the most recent data
         if (currentStep === 0 && !dataToValidate.projectType) return;
-        if (currentStep === 1 && !dataToValidate.name.trim()) return;
-        if (currentStep === 2 && dataToValidate.description.length < 10) return;
+
+        if (currentStep === 1) {
+            const trimmedName = dataToValidate.name.trim();
+            if (trimmedName.length < 3) {
+                setErrors(prev => ({ ...prev, name: trimmedName.length === 0 ? "Name is required" : "Name must be at least 3 characters" }));
+                return;
+            }
+        }
+
+        if (currentStep === 2) {
+            const meaningfulLength = getMeaningfulLength(dataToValidate.description);
+            if (meaningfulLength < 10) {
+                setErrors(prev => ({ ...prev, description: meaningfulLength === 0 ? "Pitch is required" : "Pitch must be at least 10 non-space characters" }));
+                return;
+            }
+        }
 
         if (currentStep < STEPS.length - 1) {
             isNavigatingRef.current = true;
@@ -180,9 +199,25 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
             }
 
             // Validation before proceeding
+            const getMeaningfulLength = (text: string) => text.replace(/\s/g, '').length;
+
             if (currentStep === 0 && !formData.projectType) return;
-            if (currentStep === 1 && !formData.name.trim()) return;
-            if (currentStep === 2 && formData.description.length < 10) return;
+
+            if (currentStep === 1) {
+                const trimmedName = formData.name.trim();
+                if (trimmedName.length < 3) {
+                    setErrors(prev => ({ ...prev, name: trimmedName.length === 0 ? "Name is required" : "Name must be at least 3 characters" }));
+                    return;
+                }
+            }
+
+            if (currentStep === 2) {
+                const meaningfulLength = getMeaningfulLength(formData.description);
+                if (meaningfulLength < 10) {
+                    setErrors(prev => ({ ...prev, description: meaningfulLength === 0 ? "Pitch is required" : "Pitch must be at least 10 non-space characters" }));
+                    return;
+                }
+            }
 
             e.preventDefault();
             handleNext();
@@ -213,13 +248,18 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
         const updated = { ...formDataRef.current, [field]: value };
         formDataRef.current = updated;
         setFormData(updated);
+
+        // Clear errors when user types
+        if (errors[field as keyof typeof errors]) {
+            setErrors(prev => ({ ...prev, [field]: undefined }));
+        }
     };
 
     // Calculate progress
     const progress = ((currentStep + 1) / STEPS.length) * 100;
 
     return (
-        <div ref={wizardRef} className="w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 scroll-mt-32 pt-12">
+        <div ref={wizardRef} className="w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 pb-32 sm:pb-0 scroll-mt-32 pt-12">
 
             {/* Progress Bar */}
             {/* Progress & Step Counter Wrapper */}
@@ -304,22 +344,39 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                     {/* STEP 1: NAME / TICKER */}
                     {currentStep === 1 && (
                         <div className="animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl">
-                            <div className="relative group">
+                            <div className="relative group space-y-2">
+                                <label
+                                    htmlFor="project-name"
+                                    className="text-[10px] font-mono text-white/30 uppercase tracking-widest block"
+                                >
+                                    {formData.projectType === 'memecoin' ? "Ticker Symbol" : "Project Name"}
+                                </label>
                                 <input
                                     ref={nameInputRef}
+                                    id="project-name"
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => updateField('name', e.target.value)}
                                     onKeyDown={handleKeyDown}
                                     placeholder={formData.projectType === 'memecoin' ? "$TICKER" : "Project Name"}
-                                    className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-6 transition-colors font-mono uppercase tracking-tight"
+                                    className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-2 transition-colors font-mono uppercase tracking-tight"
                                     autoComplete="off"
+                                    aria-describedby={cn(errors.name ? "name-error" : undefined, "name-helper")}
                                 />
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity">
+                                {errors.name && (
+                                    <div
+                                        id="name-error"
+                                        role="alert"
+                                        className="absolute left-0 -bottom-6 text-sm text-red-400 font-mono animate-in fade-in slide-in-from-top-1 duration-300"
+                                    >
+                                        {errors.name}
+                                    </div>
+                                )}
+                                <div className="absolute right-0 bottom-4 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity">
                                     <span className="text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded">Press Enter ↵</span>
                                 </div>
                             </div>
-                            <p className="mt-6 text-white/40 flex items-center gap-2">
+                            <p id="name-helper" className="mt-8 text-white/40 flex items-center gap-2">
                                 <Sparkles size={16} className="text-blue-400" />
                                 {formData.projectType === 'memecoin'
                                     ? "Catchy tickers perform 40% better on analysis."
@@ -331,9 +388,16 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                     {/* STEP 2: DESCRIPTION / PITCH */}
                     {currentStep === 2 && (
                         <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-                            <div className="relative group">
+                            <div className="relative group space-y-3">
+                                <label
+                                    htmlFor="project-pitch"
+                                    className="text-[10px] font-mono text-white/30 uppercase tracking-widest block"
+                                >
+                                    The Pitch
+                                </label>
                                 <textarea
                                     ref={descInputRef}
+                                    id="project-pitch"
                                     value={formData.description}
                                     onChange={(e) => updateField('description', e.target.value)}
                                     onKeyDown={(e) => {
@@ -350,13 +414,26 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                                 : "Explain your mechanism, unique selling point, or narrative..."
                                     }
                                     className="w-full h-[300px] bg-white/5 rounded-xl border border-white/10 p-6 text-xl sm:text-2xl font-medium text-white placeholder:text-white/20 resize-none outline-none focus:border-blue-500 focus:bg-white/10 transition-all leading-relaxed"
+                                    aria-describedby={cn(errors.description ? "pitch-error" : undefined, "pitch-counter")}
                                 />
+                                {errors.description && (
+                                    <div
+                                        id="pitch-error"
+                                        role="alert"
+                                        className="absolute left-0 -bottom-6 text-sm text-red-400 font-mono animate-in fade-in slide-in-from-top-1 duration-300"
+                                    >
+                                        {errors.description}
+                                    </div>
+                                )}
                                 <div className="absolute bottom-6 right-6 flex items-center gap-4 pointer-events-none">
-                                    <span className={cn(
-                                        "text-xs font-mono transition-colors",
-                                        formData.description.length >= 10 ? "text-emerald-400" : "text-white/30"
-                                    )}>
-                                        {formData.description.length} chars (min 10)
+                                    <span
+                                        id="pitch-counter"
+                                        className={cn(
+                                            "text-xs font-mono transition-colors",
+                                            formData.description.replace(/\s/g, '').length >= 10 ? "text-emerald-400" : "text-white/30"
+                                        )}
+                                    >
+                                        {formData.description.replace(/\s/g, '').length} meaningful chars (min 10)
                                     </span>
                                     <span className="text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded hidden sm:inline-block">
                                         Cmd + Enter to Continue
@@ -372,8 +449,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                             {formData.projectType === 'memecoin' && (
                                 <>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Community Vibe</label>
+                                        <label htmlFor="memecoin-vibe" className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Community Vibe</label>
                                         <input
+                                            id="memecoin-vibe"
                                             type="text"
                                             value={formData.memecoinVibe}
                                             onChange={(e) => updateField('memecoinVibe', e.target.value)}
@@ -383,8 +461,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                         />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Primary Narrative</label>
+                                        <label htmlFor="memecoin-narrative" className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Primary Narrative</label>
                                         <input
+                                            id="memecoin-narrative"
                                             type="text"
                                             value={formData.memecoinNarrative}
                                             onChange={(e) => updateField('memecoinNarrative', e.target.value)}
@@ -399,8 +478,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                             {formData.projectType === 'defi' && (
                                 <>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Key Mechanism</label>
+                                        <label htmlFor="defi-mechanism" className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Key Mechanism</label>
                                         <input
+                                            id="defi-mechanism"
                                             type="text"
                                             value={formData.defiMechanism}
                                             onChange={(e) => updateField('defiMechanism', e.target.value)}
@@ -410,8 +490,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                         />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Revenue Model</label>
+                                        <label htmlFor="defi-revenue" className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Revenue Model</label>
                                         <input
+                                            id="defi-revenue"
                                             type="text"
                                             value={formData.defiRevenue}
                                             onChange={(e) => updateField('defiRevenue', e.target.value)}
@@ -426,8 +507,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                             {formData.projectType === 'ai' && (
                                 <>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Model Type</label>
+                                        <label htmlFor="ai-model-type" className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Model Type</label>
                                         <input
+                                            id="ai-model-type"
                                             type="text"
                                             value={formData.aiModelType}
                                             onChange={(e) => updateField('aiModelType', e.target.value)}
@@ -437,8 +519,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                         />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Data Moat</label>
+                                        <label htmlFor="ai-data-moat" className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Data Moat</label>
                                         <input
+                                            id="ai-data-moat"
                                             type="text"
                                             value={formData.aiDataMoat}
                                             onChange={(e) => updateField('aiDataMoat', e.target.value)}
@@ -551,8 +634,8 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                             onClick={() => handleNext()}
                             disabled={
                                 (currentStep === 0 && !formData.projectType) ||
-                                (currentStep === 1 && !formData.name.trim()) ||
-                                (currentStep === 2 && formData.description.length < 10)
+                                (currentStep === 1 && formData.name.trim().length < 3) ||
+                                (currentStep === 2 && formData.description.replace(/\s/g, '').length < 10)
                             }
                             className="flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"
                         >
