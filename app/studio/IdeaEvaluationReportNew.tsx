@@ -294,9 +294,9 @@ Get your own evaluation here:`;
                     {/* LEFT: VERDICT PANEL (2/3) */}
                     <div className="lg:col-span-2 flex flex-col justify-center">
                         {/* Title */}
-                        <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase mb-2">
+                        <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase mb-2">
                             {result.summary.title} <span className="text-blue-500">.</span>
-                        </h1>
+                        </h2>
                         <p className="text-white/50 text-sm mb-6 max-w-lg leading-relaxed">
                             {result.summary.oneLiner}
                         </p>

@@ -37,30 +37,78 @@ const STEPS = [
     { id: 'review', title: 'Ready to Launch?', subtitle: 'Review your submission.' }
 ];
 
+const SECTOR_OPTIONS = [
+    { id: 'ai', icon: Cpu, label: 'AI Agent', desc: 'LLM & Infra' },
+    { id: 'defi', icon: Globe, label: 'DeFi / Utility', desc: 'Protocol & Yield' },
+    { id: 'memecoin', icon: Zap, label: 'Memecoin', desc: 'Viral & Hype' },
+    { id: 'nft', icon: Palette, label: 'NFT / Art', desc: 'Digital Collectibles' },
+    { id: 'gaming', icon: Gamepad2, label: 'Gaming', desc: 'GameFi & Metaverse' },
+    { id: 'other', icon: MoreHorizontal, label: 'Other', desc: 'Everything Else' },
+] as const;
+
+const STORAGE_KEY = 'predikt_studio_draft';
+
 export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitting }: IdeaSubmissionWizardProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [direction, setDirection] = useState(1); // 1 for forward, -1 for back
-    const [formData, setFormData] = useState<WizardFormData>({
-        projectType: initialData?.projectType || null,
-        name: initialData?.name || '',
-        description: initialData?.description || '',
-        website: initialData?.website || '',
-        memecoinVibe: initialData?.memecoinVibe || '',
-        memecoinNarrative: initialData?.memecoinNarrative || '',
-        defiMechanism: initialData?.defiMechanism || '',
-        defiRevenue: initialData?.defiRevenue || '',
-        aiModelType: initialData?.aiModelType || '',
-        aiDataMoat: initialData?.aiDataMoat || '',
-        teamSize: initialData?.teamSize || 'solo',
-        successDefinition: initialData?.successDefinition || ''
+    const [formData, setFormData] = useState<WizardFormData>(() => {
+        // Initial state from localStorage if available (sync if possible for SSR-safety in browser)
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const { data } = JSON.parse(saved);
+                    return data;
+                } catch (e) { }
+            }
+        }
+        return {
+            projectType: initialData?.projectType || null,
+            name: initialData?.name || '',
+            description: initialData?.description || '',
+            website: initialData?.website || '',
+            memecoinVibe: initialData?.memecoinVibe || '',
+            memecoinNarrative: initialData?.memecoinNarrative || '',
+            defiMechanism: initialData?.defiMechanism || '',
+            defiRevenue: initialData?.defiRevenue || '',
+            aiModelType: initialData?.aiModelType || '',
+            aiDataMoat: initialData?.aiDataMoat || '',
+            teamSize: initialData?.teamSize || 'solo',
+            successDefinition: initialData?.successDefinition || ''
+        };
     });
 
     const [errors, setErrors] = useState<{ name?: string; description?: string }>({});
+    const [showSavedMsg, setShowSavedMsg] = useState(false);
 
-    // Use a ref to always have the absolute latest data for validation
-    // This prevents race conditions where handleNext sees stale state
-    const formDataRef = useRef<WizardFormData>(formData);
+    // Initial hydration effect
+    useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const { data, step } = JSON.parse(saved);
+                if (data) setFormData(prev => ({ ...prev, ...data }));
+                if (step !== undefined) setCurrentStep(step);
+            } catch (e) { }
+        }
+    }, []);
+
+    // Save to localStorage on change
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: formData, step: currentStep }));
+
+        setShowSavedMsg(true);
+        const timer = setTimeout(() => setShowSavedMsg(false), 2000);
+        return () => clearTimeout(timer);
+    }, [formData, currentStep]);
+
     // Update ref whenever state changes from external sources (initialData)
+    // Synchronize the validation ref
+    const formDataRef = useRef<WizardFormData>(formData);
+    useEffect(() => {
+        formDataRef.current = formData;
+    }, [formData]);
+
     useEffect(() => {
         if (initialData) {
             const newData = {
@@ -77,7 +125,6 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                 teamSize: initialData.teamSize || 'solo',
                 successDefinition: initialData.successDefinition || ''
             };
-            formDataRef.current = newData;
             setFormData(newData);
         }
     }, [initialData]);
@@ -121,7 +168,11 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
         const getMeaningfulLength = (text: string) => text.replace(/\s/g, '').length;
 
         // Validation check before proceeding - now uses the most recent data
-        if (currentStep === 0 && !dataToValidate.projectType) return;
+        if (currentStep === 0 && !dataToValidate.projectType) {
+            setErrors({ name: 'Please select a sector' }); // Reuse errors state for general messages
+            isNavigatingRef.current = false;
+            return;
+        }
 
         if (currentStep === 1) {
             const trimmedName = dataToValidate.name.trim();
@@ -158,6 +209,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                 isNavigatingRef.current = false;
             }, 50);
         } else {
+            localStorage.removeItem(STORAGE_KEY);
             onSubmit(formData);
         }
     };
@@ -267,10 +319,8 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
         formDataRef.current = updated;
         setFormData(updated);
 
-        // Clear errors when user types
-        if (errors[field as keyof typeof errors]) {
-            setErrors(prev => ({ ...prev, [field]: undefined }));
-        }
+        // Clear errors when user types or changes selection
+        setErrors(prev => ({ ...prev, [field]: undefined, name: undefined }));
     };
 
     // Calculate progress
@@ -279,17 +329,43 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
     return (
         <div ref={wizardRef} className="w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 pb-32 sm:pb-0 scroll-mt-32 pt-12">
 
-            {/* Progress Bar */}
-            {/* Progress & Step Counter Wrapper */}
-            <div className="flex items-center justify-between mb-12 gap-6">
-                <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative">
-                    <div
-                        className="h-full bg-blue-500 transition-all duration-500 ease-out"
-                        style={{ width: `${progress}%` }}
-                    />
+            {/* Progress Bar & Saved Message */}
+            <div className="flex flex-col mb-12 space-y-4">
+                <div className="flex items-center justify-between gap-6">
+                    <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative">
+                        <div
+                            className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                            style={{ width: `${progress}%` }}
+                        />
+                    </div>
+                    <div className="flex items-center gap-4">
+                        {showSavedMsg && (
+                            <span className="text-[10px] font-mono text-emerald-400/60 uppercase tracking-widest animate-in fade-in duration-300">
+                                Draft Auto-saved
+                            </span>
+                        )}
+                        <div className="text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest">
+                            STEP {currentStep + 1} / {STEPS.length}
+                        </div>
+                    </div>
                 </div>
-                <div className="text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest">
-                    STEP {currentStep + 1} / {STEPS.length}
+
+                {/* Step Indicators - aria-hidden to avoid duplicate text during tests */}
+                <div className="hidden sm:flex justify-between items-start" aria-hidden="true">
+                    {STEPS.map((step, idx) => (
+                        <div
+                            key={step.id}
+                            className={cn(
+                                "flex flex-col gap-1 transition-opacity duration-300",
+                                idx === currentStep ? "opacity-100" : idx < currentStep ? "opacity-40" : "opacity-20"
+                            )}
+                            style={{ width: `${100 / STEPS.length}%` }}
+                        >
+                            <span className="text-[9px] font-mono uppercase tracking-tighter text-white">
+                                {idx + 1}. {step.id === 'sector' ? 'Area' : step.id === 'details' ? 'Name' : step.id === 'pitch' ? 'The Pitch' : step.id === 'insights' ? 'Context' : 'Final'}
+                            </span>
+                        </div>
+                    ))}
                 </div>
             </div>
 
@@ -308,26 +384,22 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                 {/* DYNAMIC STEPS */}
                 <div className="min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10">
 
+                    {/* Error overlay for Step 0 (Sector) */}
+                    {currentStep === 0 && errors.name && (
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-red-500/10 border border-red-500/20 px-4 py-1.5 rounded-full text-[10px] font-mono text-red-400 uppercase tracking-widest animate-in zoom-in duration-300 z-50">
+                            {errors.name}
+                        </div>
+                    )}
+
                     {/* STEP 0: SECTOR SELECTION */}
                     {currentStep === 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 animate-in fade-in slide-in-from-right-8 duration-500">
-                            {[
-                                { id: 'ai', icon: Cpu, label: 'AI Agent', desc: 'LLM & Infra' },
-                                { id: 'defi', icon: Globe, label: 'DeFi / Utility', desc: 'Protocol & Yield' },
-                                { id: 'memecoin', icon: Zap, label: 'Memecoin', desc: 'Viral & Hype' },
-                                { id: 'nft', icon: Palette, label: 'NFT / Art', desc: 'Digital Collectibles' },
-                                { id: 'gaming', icon: Gamepad2, label: 'Gaming', desc: 'GameFi & Metaverse' },
-                                { id: 'other', icon: MoreHorizontal, label: 'Other', desc: 'Everything Else' },
-                            ].map((option) => (
+                            {SECTOR_OPTIONS.map((option) => (
                                 <button
                                     key={option.id}
                                     onClick={() => {
-                                        // Update state and advance immediately with fresh data
-                                        const newType = option.id as ProjectType;
-                                        const updated = { ...formDataRef.current, projectType: newType };
-                                        formDataRef.current = updated;
-                                        setFormData(updated);
-                                        handleNext(updated);
+                                        updateField('projectType', option.id as ProjectType);
+                                        handleNext();
                                     }}
                                     className={cn(
                                         "group relative p-4 sm:p-5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center text-center gap-2 hover:scale-[1.02] select-none",
@@ -639,8 +711,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                     {currentStep > 0 && (
                         <button
                             onClick={handleBack}
-                            className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest"
+                            className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest flex items-center justify-center gap-2"
                         >
+                            <ChevronRight size={14} className="rotate-180" />
                             Back
                         </button>
                     )}

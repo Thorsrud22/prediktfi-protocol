@@ -1,3 +1,4 @@
+import { SITE } from '@/app/config/site'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'edge'
@@ -12,7 +13,7 @@ interface CreatorListItem {
 
 async function getCreators(): Promise<CreatorListItem[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://prediktfi.xyz'
+    const baseUrl = SITE.url
     const response = await fetch(`${baseUrl}/api/public/creators?limit=200`, {
       next: { revalidate: 3600 } // 1 hour cache
     });
@@ -29,7 +30,7 @@ async function getCreators(): Promise<CreatorListItem[]> {
 }
 
 export async function GET() {
-  const baseUrl = 'https://prediktfi.xyz'
+  const baseUrl = SITE.url
   const currentDate = new Date().toISOString()
 
   // Fetch creators for sitemap

@@ -3,8 +3,8 @@ import { Metadata } from "next";
 
 // Merged metadata export
 export const metadata: Metadata = {
-  title: "About",
-  description: "Learn about Predikt - the AI-powered evaluation studio built on Solana.",
+  title: "About • Predikt",
+  description: "Learn about Predikt - the institutional-grade AI evaluation protocol for Web3, DeFi, and Memecoins.",
   alternates: {
     canonical: '/about',
   },

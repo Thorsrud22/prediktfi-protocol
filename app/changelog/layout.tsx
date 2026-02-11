@@ -1,14 +1,14 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Changelog • PrediktFi',
-    description: 'See what\'s new in PrediktFi. Latest updates, improvements, and feature releases.',
+    title: 'Changelog • Predikt',
+    description: "Stay updated with the latest features, improvements, and fixes in Predikt - the AI-powered evaluation protocol.",
     alternates: {
         canonical: '/changelog',
     },
     openGraph: {
-        title: 'Changelog • PrediktFi',
-        description: 'See what\'s new in PrediktFi. Latest updates, improvements, and feature releases.',
+        title: 'Changelog • Predikt',
+        description: "Stay updated with the latest features, improvements, and fixes in Predikt.",
         type: 'website',
     },
 };

@@ -128,7 +128,6 @@ jspm_packages/
 # Tools
 .cursor/
 .gemini/
-.agent/
 .codex/
 .github/skills/
 

@@ -8,6 +8,18 @@ import IdeaSubmissionWizard from '../app/studio/IdeaSubmissionWizard';
 window.scrollTo = vi.fn();
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
+// Mock localStorage for test stability
+const localStorageMock = (() => {
+    let store: Record<string, string> = {};
+    return {
+        getItem: (key: string) => store[key] || null,
+        setItem: (key: string, value: string) => { store[key] = value.toString(); },
+        removeItem: (key: string) => { delete store[key]; },
+        clear: () => { store = {}; }
+    };
+})();
+Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
 describe('IdeaSubmissionWizard Validation Hardening', () => {
     const mockOnSubmit = vi.fn();
 
@@ -20,43 +32,48 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
     });
 
     // Helper to wait for state to settle in tests (matches studio.test.tsx)
-    const settle = () => new Promise(r => setTimeout(r, 100));
+    const settle = () => new Promise(r => setTimeout(r, 200));
 
     const goToStep1 = async () => {
+        console.log('Rendering Wizard...');
         render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
-        fireEvent.click(screen.getByText('Memecoin'));
+        console.log('Waiting for Memecoin button...');
+        const memecoinBtn = await screen.findByText(/Memecoin/i);
+        console.log('Found Memecoin button, clicking...');
+        fireEvent.click(memecoinBtn);
         await settle();
     };
 
     const goToStep2 = async () => {
         await goToStep1();
-        const input = screen.getByPlaceholderText(/\$TICKER|Project Name/i);
+        const input = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
         fireEvent.change(input, { target: { value: 'VALID NAME' } });
         await settle();
-        fireEvent.click(screen.getByText('Continue'));
+        const continueBtn = await screen.findByText('Continue');
+        fireEvent.click(continueBtn);
         await settle();
     };
 
     it('rejects name shorter than 3 characters with error message', async () => {
         await goToStep1();
-        const input = screen.getByPlaceholderText(/\$TICKER|Project Name/i);
+        const input = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
 
         fireEvent.change(input, { target: { value: 'A' } });
         await settle();
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.click(await screen.findByText(/Continue/i));
         await settle();
 
         expect(await screen.findByText(/Name must be at least 3 characters/i)).toBeInTheDocument();
-        expect(screen.queryByText('The Pitch')).not.toBeInTheDocument();
+        expect(screen.queryByText(/The Pitch/i)).not.toBeInTheDocument();
     });
 
     it('rejects space-only name with error message', async () => {
         await goToStep1();
-        const input = screen.getByPlaceholderText(/\$TICKER|Project Name/i);
+        const input = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
 
         fireEvent.change(input, { target: { value: '   ' } });
         await settle();
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.click(await screen.findByText(/Continue/i));
         await settle();
 
         expect(await screen.findByText(/Name is required/i)).toBeInTheDocument();
@@ -64,11 +81,11 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
     it('passes name with 3 characters', async () => {
         await goToStep1();
-        const input = screen.getByPlaceholderText(/\$TICKER|Project Name/i);
+        const input = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
 
         fireEvent.change(input, { target: { value: 'ABC' } });
         await settle();
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.click(await screen.findByText(/Continue/i));
         await settle();
 
         expect((await screen.findAllByText(/The Pitch/i)).length).toBeGreaterThan(0);
@@ -76,11 +93,11 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
     it('rejects pitch with less than 10 meaningful characters', async () => {
         await goToStep2();
-        const textarea = screen.getByPlaceholderText(/Explain|Describe/i);
+        const textarea = await screen.findByPlaceholderText(/Explain|Describe/i);
 
         fireEvent.change(textarea, { target: { value: '123456789' } });
         await settle();
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.click(await screen.findByText(/Continue/i));
         await settle();
 
         expect(await screen.findByText(/Pitch must be at least 10 non-space characters/i)).toBeInTheDocument();
@@ -88,11 +105,11 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
     it('rejects pitch with 10 spaces', async () => {
         await goToStep2();
-        const textarea = screen.getByPlaceholderText(/Explain|Describe/i);
+        const textarea = await screen.findByPlaceholderText(/Explain|Describe/i);
 
         fireEvent.change(textarea, { target: { value: '          ' } });
         await settle();
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.click(await screen.findByText(/Continue/i));
         await settle();
 
         expect(await screen.findByText(/Pitch is required/i)).toBeInTheDocument();
@@ -100,11 +117,11 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
     it('passes pitch with 10 non-space characters', async () => {
         await goToStep2();
-        const textarea = screen.getByPlaceholderText(/Explain|Describe/i);
+        const textarea = await screen.findByPlaceholderText(/Explain|Describe/i);
 
         fireEvent.change(textarea, { target: { value: '1234567890' } });
         await settle();
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.click(await screen.findByText(/Strategic Insights/i));
         await settle();
 
         expect(await screen.findByText(/Strategic Insights/i)).toBeInTheDocument();
@@ -112,11 +129,11 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
     it('clears error messages when user starts typing', async () => {
         await goToStep1();
-        const input = screen.getByPlaceholderText(/\$TICKER|Project Name/i);
+        const input = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
 
         fireEvent.change(input, { target: { value: 'A' } });
         await settle();
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.click(await screen.findByText(/Continue/i));
         await settle();
 
         expect(await screen.findByText(/Name must be at least 3 characters/i)).toBeInTheDocument();

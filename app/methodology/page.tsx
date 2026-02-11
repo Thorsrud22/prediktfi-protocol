@@ -34,34 +34,31 @@ export default function MethodologyPage() {
                             <div className="p-2 bg-blue-500/10 rounded-lg">
                                 <Database className="w-5 h-5 text-blue-400" />
                             </div>
-                            <h2 className="text-xl font-bold text-white">Data Sources</h2>
+                            <h2 className="text-xl font-bold text-white">Data Sources & Provenance</h2>
                         </div>
-                        <p className="text-slate-400 mb-4">
-                            Our evaluator cross-references multiple real-time data sources to ground its analysis:
+                        <p className="text-slate-400 mb-4 text-sm">
+                            We distinguish between <span className="text-emerald-400 font-bold">Deterministic</span> (On-chain facts) and <span className="text-amber-400 font-bold">Probabilistic</span> (API/AI-derived) data.
                         </p>
-                        <ul className="space-y-3 text-slate-300">
-                            <li className="flex items-start gap-3">
-                                <span className="text-blue-400 mt-1">•</span>
+                        <ul className="space-y-4 text-slate-300">
+                            <li className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                <div className="text-xs font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 mt-0.5">D</div>
                                 <div>
-                                    <strong className="text-white">DeFiLlama</strong> — TVL data, protocol rankings, and category comparisons for DeFi projects
+                                    <strong className="text-white block">Solana On-Chain (Deterministic)</strong>
+                                    <span className="text-sm text-slate-400">Direct RPC queries for mint authority, freeze status, and contract owner. This is the "Hard Truth" layer.</span>
                                 </div>
                             </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-blue-400 mt-1">•</span>
+                            <li className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                <div className="text-xs font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 mt-0.5">P</div>
                                 <div>
-                                    <strong className="text-white">DexScreener</strong> — Real-time trading pairs, liquidity depth, and narrative crowdedness for memecoins
+                                    <strong className="text-white block">DeFiLlama & DexScreener (Probabilistic Heuristics)</strong>
+                                    <span className="text-sm text-slate-400">TVL metrics and LP lock statuses. Derived from 3rd-party aggregate data; susceptible to minor indexing delays.</span>
                                 </div>
                             </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-blue-400 mt-1">•</span>
+                            <li className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                <div className="text-xs font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 mt-0.5">P</div>
                                 <div>
-                                    <strong className="text-white">Solana On-Chain</strong> — Live verification of token authority, LP locks, and holder distribution (vs. simulated data)
-                                </div>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-blue-400 mt-1">•</span>
-                                <div>
-                                    <strong className="text-white">Web Search</strong> — Recent news and social signals via Tavily API
+                                    <strong className="text-white block">Web Search & Social (Inference)</strong>
+                                    <span className="text-sm text-slate-400">News context and social narratives via Tavily. Verified against multiple sources but still classified as "Inferred Insight".</span>
                                 </div>
                             </li>
                         </ul>

@@ -141,20 +141,6 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
-        headers: [
-          // CSP is set dynamically in middleware.ts with per-request nonce
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-        ],
-      },
-      {
         source: '/_next/static/:path*',
         headers: [
           {

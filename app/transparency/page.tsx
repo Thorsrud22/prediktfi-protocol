@@ -160,31 +160,69 @@ export default function TransparencyPage() {
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold text-white">Verification Layer</h2>
-                            <p className="text-slate-400 text-sm">Fact-Checking (Verified vs Simulated)</p>
+                            <p className="text-slate-400 text-sm">Distinguishing Hard Facts from Heuristics</p>
                         </div>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-6">
-                        <div className="bg-slate-900/50 border border-white/5 p-6 rounded-2xl hover:bg-slate-800/50 transition-colors">
-                            <CheckCircle2 size={24} className="text-emerald-400 mb-4" />
-                            <h3 className="font-bold text-white mb-2">Mint Authority</h3>
-                            <p className="text-sm text-slate-400 mb-4">
-                                We query the Solana blockchain directly. If <code className="text-white text-xs bg-white/10 px-1 py-0.5 rounded">mintAuthority</code> is not null for a traded token, we flag it as <strong>High Rug Risk</strong>.
-                            </p>
+                    <div className="space-y-10">
+                        {/* Verified On-Chain */}
+                        <div>
+                            <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <Shield size={14} />
+                                Level 1: Verified On-Chain (Deterministic)
+                            </h3>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="bg-slate-900/50 border border-emerald-500/20 p-6 rounded-2xl">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <CheckCircle2 size={24} className="text-emerald-400" />
+                                        <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded uppercase tracking-tighter">On-Chain Fact</span>
+                                    </div>
+                                    <h4 className="font-bold text-white mb-2">Authority Audit</h4>
+                                    <p className="text-sm text-slate-400">
+                                        We query the Solana RPC directly for <code className="text-white text-xs bg-white/10 px-1 py-0.5 rounded">mintAuthority</code> and <code className="text-white text-xs bg-white/10 px-1 py-0.5 rounded">freezeAuthority</code>. These are binary facts: either they exist, or they are revoked.
+                                    </p>
+                                </div>
+                                <div className="bg-slate-900/50 border border-emerald-500/20 p-6 rounded-2xl">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <CheckCircle2 size={24} className="text-emerald-400" />
+                                        <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded uppercase tracking-tighter">On-Chain Fact</span>
+                                    </div>
+                                    <h4 className="font-bold text-white mb-2">Account Ownership</h4>
+                                    <p className="text-sm text-slate-400">
+                                        Verification of token account extensions and program ownership. This data is pulled from the ledger and cannot be faked or "hallucinated" by AI.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="bg-slate-900/50 border border-white/5 p-6 rounded-2xl hover:bg-slate-800/50 transition-colors">
-                            <CheckCircle2 size={24} className="text-emerald-400 mb-4" />
-                            <h3 className="font-bold text-white mb-2">Freeze Authority</h3>
-                            <p className="text-sm text-slate-400 mb-4">
-                                Can the dev freeze your wallet? We check the account extensions on-chain. Ideal state: <span className="text-emerald-400">Revoked</span>.
-                            </p>
-                        </div>
-                        <div className="bg-slate-900/50 border border-white/5 p-6 rounded-2xl hover:bg-slate-800/50 transition-colors">
-                            <CheckCircle2 size={24} className="text-emerald-400 mb-4" />
-                            <h3 className="font-bold text-white mb-2">LP Lock Status</h3>
-                            <p className="text-sm text-slate-400 mb-4">
-                                NOTE: Currently relying on self-reported addresses cross-referenced with Raydium/Pump.fun API patterns.
-                            </p>
+
+                        {/* Probabilistic Heuristics */}
+                        <div>
+                            <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <Brain size={14} />
+                                Level 2: Probabilistic Heuristics (Assumptions)
+                            </h3>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="bg-slate-900/50 border border-amber-500/20 p-6 rounded-2xl">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <Activity size={24} className="text-amber-400" />
+                                        <span className="text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded uppercase tracking-tighter">API Heuristic</span>
+                                    </div>
+                                    <h4 className="font-bold text-white mb-2">LP Lock & Liquidity</h4>
+                                    <p className="text-sm text-slate-400">
+                                        Relying on DexScreener and Raydium API patterns to identify "locked" liquidity. While highly predictive, these are based on 3rd-party indexing and can have small delays or reporting lags.
+                                    </p>
+                                </div>
+                                <div className="bg-slate-900/50 border border-amber-500/20 p-6 rounded-2xl">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <Brain size={24} className="text-amber-400" />
+                                        <span className="text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded uppercase tracking-tighter">AI Inference</span>
+                                    </div>
+                                    <h4 className="font-bold text-white mb-2">Narrative Sincerity</h4>
+                                    <p className="text-sm text-slate-400">
+                                        Our AI analyzes website copy, whitepapers, and social noise. This is <strong>opinionated reasoning</strong> based on LLM training data and specific "contrarian" system prompts.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

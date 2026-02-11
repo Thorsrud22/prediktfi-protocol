@@ -5,7 +5,7 @@ import { InstantLink } from '../InstantLink';
 
 export default function HeroActions() {
     return (
-        <div className="flex flex-col items-center justify-center gap-6 pt-10">
+        <div className="flex flex-col items-center justify-center gap-6 pt-0">
             <div className="flex flex-col sm:flex-row items-center gap-5">
                 <motion.div
                     whileHover={{ scale: 1.05 }}

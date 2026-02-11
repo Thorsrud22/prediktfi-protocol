@@ -11,9 +11,11 @@ export const CSP_POLICY = {
   'default-src': ["'self'"],
   'script-src': [
     "'self'",
-    "'unsafe-inline'", // Required for Next.js in development
+    "'unsafe-inline'", // Fallback for older browsers
     "'unsafe-eval'",   // Required for Next.js in development
-    'https://vercel.live'
+    'https://vercel.live',
+    'https://*.posthog.com',
+    'https://us.i.posthog.com'
   ],
   'style-src': [
     "'self'",
@@ -27,7 +29,9 @@ export const CSP_POLICY = {
     'https://*.dicebear.com',
     'https://api.dicebear.com',
     'https://vercel.com',
-    'https://*.vercel.com'
+    'https://*.vercel.com',
+    'https://*.posthog.com',
+    'https://us.i.posthog.com'
   ],
   'font-src': [
     "'self'",
@@ -38,6 +42,8 @@ export const CSP_POLICY = {
     'https://api.coingecko.com',
     'https://api.coincap.io',
     'https://vercel.live',
+    'https://*.posthog.com',
+    'https://us.i.posthog.com',
     'wss://ws.coincap.io'
   ],
   'frame-src': [
@@ -113,8 +119,8 @@ export const SECURITY_HEADERS = {
   // X-Content-Type-Options
   'X-Content-Type-Options': 'nosniff',
 
-  // X-XSS-Protection
-  'X-XSS-Protection': '1; mode=block',
+  // X-XSS-Protection (Disabled in favor of CSP)
+  'X-XSS-Protection': '0',
 
   // Strict Transport Security (HTTPS only)
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
@@ -128,7 +134,7 @@ export const SECURITY_HEADERS = {
   ].join(', '),
 
   // Cross-Origin Policies
-  'Cross-Origin-Embedder-Policy': 'require-corp',
+  'Cross-Origin-Embedder-Policy': 'credentialless',
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin'
 };
