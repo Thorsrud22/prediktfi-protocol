@@ -62,3 +62,4 @@ export default function AnalysisVisual() {
         </div>
     );
 }
+// Forced update for Vercel build sync

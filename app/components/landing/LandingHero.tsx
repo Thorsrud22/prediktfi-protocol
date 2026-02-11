@@ -134,3 +134,4 @@ export default function LandingHero() {
         </motion.div>
     );
 }
+// Forced update for Vercel build sync
