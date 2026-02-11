@@ -28,7 +28,7 @@ export default function LandingHero() {
                             due diligence
                         </span>
                         <span className="mt-6 text-xl sm:text-3xl md:text-4xl font-bold text-accent tracking-wider relative block">
-                            IN ~2 MINUTES
+                            IN UNDER 2 MINUTES
                         </span>
                     </h1>
                 </div>
@@ -81,7 +81,7 @@ export default function LandingHero() {
                         transition={{ delay: 0.9, duration: 1.0, ease: "easeOut" }}
                         className="mt-4 text-xl sm:text-3xl md:text-4xl font-bold text-accent tracking-wider relative block"
                     >
-                        IN ~2 MINUTES
+                        IN UNDER 2 MINUTES
                     </motion.span>
                 </h1>
             </div>
