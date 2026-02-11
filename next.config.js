@@ -113,7 +113,7 @@ const nextConfig = {
 
   // Enable experimental features for better performance
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false,
     optimizePackageImports: ['lucide-react', '@heroicons/react'],
     // Enable React Server Components optimizations
     serverActions: {
