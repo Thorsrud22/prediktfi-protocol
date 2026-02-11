@@ -33,12 +33,13 @@ const nextConfig = {
     // Universal alias to kill the build error (REMOVED - root cause was splitChunks)
     // config.plugins.push(...)
 
+    // Universal alias to fix wallet adapter issues in both dev and prod
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'react-native': require.resolve('./app/lib/wallet-adapters.dev.ts'),
+    };
+
     if (dev) {
-      // Development optimizations for speed
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'react-native': require.resolve('./app/lib/wallet-adapters.dev.ts'),
-      };
 
       // Faster dev builds - reduce file watching overhead
       config.watchOptions = {
@@ -113,8 +114,8 @@ const nextConfig = {
 
   // Enable experimental features for better performance
   experimental: {
-    optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@heroicons/react'],
+    optimizeCss: false,
+    // optimizePackageImports: ['lucide-react', '@heroicons/react'],
     // Enable React Server Components optimizations
     serverActions: {
       bodySizeLimit: '2mb',
