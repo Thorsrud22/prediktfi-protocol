@@ -111,6 +111,7 @@ export default function StudioPage() {
     setSubmissionData(data);
     setIsAnalyzing(true);
     setError(null);
+    setStreamingThoughts("");
     setStreamingSteps([]);
 
     // Optimistically decrement quota at run start so UI shows reserved count

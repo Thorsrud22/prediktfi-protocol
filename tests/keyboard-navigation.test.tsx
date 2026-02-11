@@ -4,6 +4,8 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
 import IdeaSubmissionWizard from '../app/studio/IdeaSubmissionWizard';
 
+const STORAGE_KEY = 'predikt_studio_draft';
+
 // Mock Lucide icons
 vi.mock('lucide-react', () => ({
     ArrowRight: () => <div data-testid="arrow-right-icon" />,
@@ -27,6 +29,7 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         window.scrollTo = vi.fn();
+        localStorage.clear();
     });
 
     afterEach(() => {
@@ -36,16 +39,103 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
     // Helper to wait for state to settle in tests
     const settle = () => new Promise(r => setTimeout(r, 50));
 
+    const goToIdentityStep = async () => {
+        fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
+        await settle();
+        fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+        await settle();
+        return screen.getByLabelText(/Ticker Symbol|Project Name/i) as HTMLInputElement;
+    };
+
+    it('auto-focuses the name input when entering Project Identity', async () => {
+        render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
+
+        const nameInput = await goToIdentityStep();
+        await waitFor(() => {
+            expect(nameInput).toHaveFocus();
+        });
+    });
+
+    it('restores draft on step 1 and auto-focuses the name input', async () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            data: {
+                projectType: 'memecoin',
+                name: '',
+                description: ''
+            },
+            step: 1
+        }));
+
+        render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
+
+        const nameInput = await screen.findByLabelText(/Ticker Symbol|Project Name/i);
+        await waitFor(() => {
+            expect(nameInput).toHaveFocus();
+        });
+    });
+
+    it('clamps invalid restored draft step to a valid wizard step', async () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            data: {
+                projectType: 'memecoin',
+                name: 'TEST',
+                description: 'This is a valid description'
+            },
+            step: 99
+        }));
+
+        render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/Ready to Launch\?/i)).toBeInTheDocument();
+        });
+        expect(screen.getByText(/STEP 5 \/ 5/i)).toBeInTheDocument();
+    });
+
+    it('writes the first character immediately on the identity input', async () => {
+        render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
+
+        const nameInput = await goToIdentityStep();
+        await waitFor(() => {
+            expect(nameInput).toHaveFocus();
+        });
+        expect(nameInput).toHaveAttribute('placeholder', '$TICKER');
+
+        fireEvent.change(nameInput, { target: { value: 'P' } });
+        expect(nameInput).toHaveValue('P');
+    });
+
+    it('does not render a custom terminal cursor on identity input', async () => {
+        render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
+
+        const nameInput = await goToIdentityStep();
+        await waitFor(() => {
+            expect(nameInput).toHaveFocus();
+        });
+        expect(screen.queryByTestId('name-terminal-cursor')).not.toBeInTheDocument();
+
+        fireEvent.blur(nameInput);
+        await waitFor(() => {
+            expect(screen.queryByTestId('name-terminal-cursor')).not.toBeInTheDocument();
+        });
+
+        fireEvent.focus(nameInput);
+        await waitFor(() => {
+            expect(screen.queryByTestId('name-terminal-cursor')).not.toBeInTheDocument();
+        });
+    });
+
     it('advances from Identity step with Enter', async () => {
         render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
 
-        // Step 0: Select Memecoin to get to Step 1
-        fireEvent.click(screen.getByText('Memecoin'));
-        await settle();
+        const continueBtn = screen.getByRole('button', { name: /Continue/i });
+        expect(continueBtn).toBeDisabled();
 
-        // Step 1: Project Identity
-        expect(screen.getAllByText(/Project Identity/i).length).toBeGreaterThan(0);
-        const nameInput = screen.getByLabelText(/Ticker Symbol/i);
+        // Step 0 -> Step 1
+        const nameInput = await goToIdentityStep();
+        await waitFor(() => {
+            expect(nameInput).toHaveFocus();
+        });
 
         fireEvent.change(nameInput, { target: { value: 'TEST' } });
         fireEvent.keyDown(nameInput, { key: 'Enter', code: 'Enter' });
@@ -59,7 +149,9 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
         render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
 
         // Select sector and name to get to Pitch step
-        fireEvent.click(screen.getByText('Memecoin'));
+        fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
+        await settle();
+        fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
         await settle();
         fireEvent.change(screen.getByLabelText(/Ticker Symbol/i), { target: { value: 'TEST' } });
         fireEvent.keyDown(screen.getByLabelText(/Ticker Symbol/i), { key: 'Enter', code: 'Enter' });
@@ -81,7 +173,9 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
         render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
 
         // Navigate to Pitch step
-        fireEvent.click(screen.getByText('Memecoin'));
+        fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
+        await settle();
+        fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
         await settle();
         fireEvent.change(screen.getByLabelText(/Ticker Symbol/i), { target: { value: 'TEST' } });
         fireEvent.keyDown(screen.getByLabelText(/Ticker Symbol/i), { key: 'Enter', code: 'Enter' });
@@ -105,9 +199,13 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
         // Step 0 hints
         expect(screen.getByText('Click')).toBeInTheDocument();
         expect(screen.getByText('to select')).toBeInTheDocument();
+        expect(screen.getByText('Enter')).toBeInTheDocument();
+        expect(screen.getByText('to continue')).toBeInTheDocument();
 
         // Advance to Step 1
-        fireEvent.click(screen.getByText('Memecoin'));
+        fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
+        await settle();
+        fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
         await settle();
         expect(screen.getByText('Enter')).toBeInTheDocument();
         expect(screen.getByText('to proceed')).toBeInTheDocument();
@@ -118,5 +216,29 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
         await settle();
         expect(screen.getByText('Cmd + Enter')).toBeInTheDocument();
         expect(screen.getByText('to proceed')).toBeInTheDocument();
+    });
+
+    it('clears draft on final-step keyboard submit (Cmd+Enter)', async () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            data: {
+                projectType: 'memecoin',
+                name: 'TEST',
+                description: 'This is a valid description'
+            },
+            step: 4
+        }));
+
+        render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
+
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: /Generate Report/i })).toBeInTheDocument();
+        });
+
+        fireEvent.keyDown(window, { key: 'Enter', code: 'Enter', metaKey: true });
+
+        await waitFor(() => {
+            expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+        });
+        expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
     });
 });

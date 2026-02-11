@@ -47,28 +47,25 @@ export default function PricingPage() {
 
   return (
     <div className="relative isolate min-h-screen text-slate-100 selection:bg-white/20">
-      <div aria-hidden="true" className="fixed inset-0 -z-[5] bg-[#111111] pointer-events-none" />
-
       {/* Header */}
-      <div className="relative z-10 px-6 pt-20 pb-10 text-center sm:pt-24 sm:pb-12">
-        <div className="mb-4 inline-block rounded-full border border-white/20 bg-white/[0.03] px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70">
+      <div className="relative z-10 px-6 pt-20 pb-14 text-center sm:pt-24 sm:pb-16">
+        <div className="mb-4 inline-block rounded-full border border-white/18 bg-white/[0.04] px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
           Transparent Business Model
         </div>
-        <h1 className={`${merriweather.className} mb-4 text-4xl font-bold tracking-tight text-white sm:text-6xl`}>
+        <h1 className={`${merriweather.className} mb-6 text-4xl font-bold tracking-tight text-white sm:mb-8 sm:text-6xl`}>
           Who <span className="text-white/80">Pays?</span>
         </h1>
-        <p className="mx-auto max-w-3xl text-lg font-normal leading-relaxed text-slate-300">
-          We don't sell your data. We sell institutional-grade processing power.
-          <br className="hidden sm:block" />
-          Choose the tier that matches your operational scale.
+        <p className="mx-auto max-w-3xl text-lg font-normal leading-[2.15] tracking-[0.01em] text-slate-300 sm:leading-[2.25]">
+          <span className="block">We don't sell your data. We sell institutional-grade processing power.</span>
+          <span className="mt-4 block sm:mt-5">Choose the tier that matches your operational scale.</span>
         </p>
       </div>
 
       {/* Tiers */}
-      <div className="relative z-20 mx-auto grid max-w-6xl gap-6 px-6 pb-24 md:grid-cols-3">
+      <div className="relative z-20 mx-auto mt-8 grid max-w-6xl gap-6 px-6 pb-20 sm:mt-12 md:grid-cols-3">
 
         {/* FREE / SCOUT */}
-        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/30">
+        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/18 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/26">
 
           <div className="relative z-10 mb-8">
             <h2 className={`${merriweather.className} mb-2 flex items-center gap-2 text-xl font-bold text-white`}>
@@ -77,7 +74,7 @@ export default function PricingPage() {
             </h2>
             <div className="flex items-baseline gap-1">
               <span className="text-4xl font-bold tracking-tight text-white">$0</span>
-              <span className="ml-1 text-sm font-medium text-white/45">/ forever</span>
+              <span className="ml-1 text-sm font-medium text-white/55">/ forever</span>
             </div>
             <p className="mt-4 h-10 text-sm leading-relaxed text-slate-400">
               Essential reconnaissance for early trends.
@@ -91,34 +88,34 @@ export default function PricingPage() {
               'Community Access'
             ].map((feature) => (
               <li key={feature} className="flex items-start gap-3 text-sm text-slate-200">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/45 transition-colors" />
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/55 transition-colors" />
                 {feature}
               </li>
             ))}
           </ul>
           <Link
             href="/studio"
-            className="relative z-10 flex h-14 w-full items-center justify-center rounded-md border border-white/25 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/40 hover:bg-white/[0.03]"
+            className="relative z-10 flex h-14 w-full items-center justify-center rounded-md border border-white/24 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/34 hover:bg-white/[0.03]"
           >
             Start Scouting
           </Link>
         </div>
 
         {/* PRO / FOUNDER */}
-        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/30">
+        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/18 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/26">
           <div className="relative z-10 mb-8">
             <div className="mb-2 flex items-center justify-between">
               <h2 className={`${merriweather.className} flex items-center gap-2 text-xl font-bold text-white`}>
-                <Shield size={18} className="text-white/55" />
+                <Shield size={18} className="text-white/65" />
                 Founder Pro
               </h2>
-              <span className="rounded border border-white/25 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/85">
+              <span className={`${merriweather.className} rounded border border-white/24 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold italic uppercase tracking-widest text-white/95`}>
                 Recommended
               </span>
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-4xl font-bold tracking-tight text-white">$49</span>
-              <span className="ml-1 text-sm font-medium text-white/45">/ month</span>
+              <span className="ml-1 text-sm font-medium text-white/55">/ month</span>
             </div>
             <p className="mt-4 h-10 text-sm leading-relaxed text-slate-300">
               For serious builders needing deep forensics and privacy.
@@ -133,7 +130,7 @@ export default function PricingPage() {
               'PDF Export for Investors'
             ].map((feature) => (
               <li key={feature} className="flex items-start gap-3 text-sm text-slate-100">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/55" />
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/65" />
                 {feature}
               </li>
             ))}
@@ -157,7 +154,7 @@ export default function PricingPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="h-14 w-full cursor-text rounded-md border border-white/20 bg-black/30 px-5 text-sm text-white placeholder:text-white/35 ring-0 transition-colors focus:border-white/45 focus:outline-none"
+                  className="h-14 w-full cursor-text rounded-md border border-white/30 bg-black/35 px-5 text-sm text-white placeholder:text-white/45 ring-0 transition-colors focus:border-white/55 focus:outline-none"
                   disabled={waitlistStep === 'submitting'}
                 />
                 <button
@@ -176,12 +173,12 @@ export default function PricingPage() {
             )}
 
             {waitlistStep === 'success' && (
-              <div className="relative rounded-2xl border border-white/20 bg-black/20 p-8 transition-colors duration-300">
-                <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-white/20">
+              <div className="relative rounded-2xl border border-white/22 bg-black/25 p-8 transition-colors duration-300">
+                <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-white/22">
                   <Check className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="mb-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white">Priority Reserved</h3>
-                <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/40 leading-relaxed">
+                <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/50 leading-relaxed">
                   We will contact you via email
                   <br />
                   when a slot becomes available.
@@ -192,11 +189,11 @@ export default function PricingPage() {
         </div>
 
         {/* VC / INSTITUTIONAL */}
-        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/30">
+        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/18 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/26">
 
           <div className="relative z-10 mb-8">
             <h2 className={`${merriweather.className} mb-2 flex items-center gap-2 text-xl font-bold text-white`}>
-              <Globe size={18} className="text-white/55" />
+              <Globe size={18} className="text-white/65" />
               Institutional
             </h2>
             <div className="flex items-baseline gap-1">
@@ -214,14 +211,14 @@ export default function PricingPage() {
               'Private Slack Channel'
             ].map((feature) => (
               <li key={feature} className="flex items-start gap-3 text-sm text-slate-200">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/45" />
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/55" />
                 {feature}
               </li>
             ))}
           </ul>
           <a
             href="mailto:partners@predikt.fi"
-            className="relative z-10 flex h-14 w-full items-center justify-center rounded-md border border-white/25 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/40 hover:bg-white/[0.03]"
+            className="relative z-10 flex h-14 w-full items-center justify-center rounded-md border border-white/24 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/34 hover:bg-white/[0.03]"
           >
             Contact Sales
           </a>
@@ -230,13 +227,13 @@ export default function PricingPage() {
       </div>
 
       {/* Trust */}
-      <div className="mx-auto max-w-4xl border-t border-white/15 px-6 pt-16 pb-20 text-center">
-        <h4 className="mb-8 text-xs font-semibold uppercase tracking-widest text-slate-500">
+      <div className="mx-auto max-w-4xl border-t border-white/20 px-6 pt-12 pb-16 text-center">
+        <h4 className="mb-8 text-xs font-semibold uppercase tracking-widest text-slate-300">
           Trusted by early adopters from
         </h4>
-        <div className="flex flex-wrap justify-center gap-8 opacity-30 grayscale transition-all duration-500 hover:grayscale-0 md:gap-16">
+        <div className="flex flex-wrap justify-center gap-8 grayscale transition-all duration-500 hover:grayscale-0 md:gap-16">
           {['Solana', 'Ethereum', 'Base', 'Arbitrum'].map(chain => (
-            <span key={chain} className="text-xl font-semibold text-white">{chain}</span>
+            <span key={chain} className="text-xl font-semibold text-white/72">{chain}</span>
           ))}
         </div>
       </div>

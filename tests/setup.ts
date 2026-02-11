@@ -20,10 +20,13 @@ const mockRouter = {
   },
 };
 
+const mockPathname = vi.fn(() => '/');
+const mockSearchParams = vi.fn(() => new URLSearchParams());
+
 vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
-  usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
+  usePathname: mockPathname,
+  useSearchParams: mockSearchParams,
 }));
 
 vi.mock('next/font/google', () => ({

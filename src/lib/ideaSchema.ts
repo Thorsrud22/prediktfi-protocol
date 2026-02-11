@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const PROJECT_TYPES = ['memecoin', 'defi', 'ai', 'nft', 'gaming', 'other'] as const;
+
 /**
  * Validate Solana address format (base58, 32-44 chars)
  */
@@ -10,10 +12,14 @@ function isValidSolanaAddress(address: string): boolean {
 }
 
 export const ideaSubmissionSchema = z.object({
-    description: z.string().min(10, 'Description must be at least 10 characters long'),
-    projectType: z.enum(['memecoin', 'defi', 'ai'], {
+    description: z.string().refine(
+        (value) => value.replace(/\s/g, '').length >= 10,
+        { message: 'Description must be at least 10 non-space characters long' }
+    ),
+    projectType: z.enum(PROJECT_TYPES, {
         errorMap: () => ({ message: 'Please select a project type' }),
     }),
+    name: z.string().optional(),
 
     // Quick Scan Mode: Defaults applied if skipped
     teamSize: z.string().optional().default('solo'),
@@ -69,7 +75,7 @@ export type IdeaSubmission = z.infer<typeof ideaSubmissionSchema>;
 export const copilotSubmissionSchema = z.object({
     text: z.string().min(1, 'Text is required'),
     field: z.string().optional(),
-    projectType: z.enum(['memecoin', 'defi', 'ai']).optional(),
+    projectType: z.enum(PROJECT_TYPES).optional(),
 });
 
 export type CopilotSubmission = z.infer<typeof copilotSubmissionSchema>;
