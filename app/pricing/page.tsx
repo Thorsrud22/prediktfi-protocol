@@ -2,7 +2,13 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Check, ArrowRight, Zap, Shield, Globe, Loader2, Mail } from 'lucide-react'
+import { Merriweather } from 'next/font/google';
+import { Check, Zap, Shield, Globe, Loader2 } from 'lucide-react'
+
+const merriweather = Merriweather({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+});
 
 export default function PricingPage() {
   const [waitlistStep, setWaitlistStep] = useState<'initial' | 'input' | 'submitting' | 'success'>('initial');
@@ -40,17 +46,18 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100 selection:bg-blue-500/30">
+    <div className="relative isolate min-h-screen text-slate-100 selection:bg-white/20">
+      <div aria-hidden="true" className="fixed inset-0 -z-[5] bg-[#111111] pointer-events-none" />
 
       {/* Header */}
-      <div className="relative pt-20 pb-10 sm:pt-24 sm:pb-12 px-6 text-center z-10">
-        <div className="inline-block mb-4 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest">
+      <div className="relative z-10 px-6 pt-20 pb-10 text-center sm:pt-24 sm:pb-12">
+        <div className="mb-4 inline-block rounded-full border border-white/20 bg-white/[0.03] px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70">
           Transparent Business Model
         </div>
-        <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tighter uppercase italic mb-4">
-          Who <span className="text-blue-500">Pays?</span>
+        <h1 className={`${merriweather.className} mb-4 text-4xl font-bold tracking-tight text-white sm:text-6xl`}>
+          Who <span className="text-white/80">Pays?</span>
         </h1>
-        <p className="max-w-3xl mx-auto text-lg text-slate-400 leading-relaxed font-light">
+        <p className="mx-auto max-w-3xl text-lg font-normal leading-relaxed text-slate-300">
           We don't sell your data. We sell institutional-grade processing power.
           <br className="hidden sm:block" />
           Choose the tier that matches your operational scale.
@@ -58,66 +65,66 @@ export default function PricingPage() {
       </div>
 
       {/* Tiers */}
-      <div className="max-w-6xl mx-auto px-6 pb-24 grid md:grid-cols-3 gap-6 relative z-20">
+      <div className="relative z-20 mx-auto grid max-w-6xl gap-6 px-6 pb-24 md:grid-cols-3">
 
         {/* FREE / SCOUT */}
-        <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/5 flex flex-col relative overflow-hidden group cursor-pointer transition-all duration-300">
+        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/30">
 
-          <div className="mb-8 relative z-10">
-            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-              <Zap size={18} className="text-blue-400" />
+          <div className="relative z-10 mb-8">
+            <h2 className={`${merriweather.className} mb-2 flex items-center gap-2 text-xl font-bold text-white`}>
+              <Zap size={18} className="text-white/55" />
               Market Scout
             </h2>
             <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-black text-white tracking-tight">$0</span>
-              <span className="text-sm text-slate-500 font-medium">/ forever</span>
+              <span className="text-4xl font-bold tracking-tight text-white">$0</span>
+              <span className="ml-1 text-sm font-medium text-white/45">/ forever</span>
             </div>
-            <p className="text-sm text-slate-400 mt-4 leading-relaxed h-10">
+            <p className="mt-4 h-10 text-sm leading-relaxed text-slate-400">
               Essential reconnaissance for early trends.
             </p>
           </div>
-          <ul className="space-y-4 mb-8 flex-1 relative z-10">
+          <ul className="relative z-10 mb-8 flex-1 space-y-4">
             {[
               '3 AI Evaluations / Day',
               'Basic Due Diligence',
               'Market Sentiment Analysis',
               'Community Access'
             ].map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm text-slate-300">
-                <Check className="w-4 h-4 text-slate-500 mt-0.5 shrink-0 transition-colors" />
+              <li key={feature} className="flex items-start gap-3 text-sm text-slate-200">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/45 transition-colors" />
                 {feature}
               </li>
             ))}
           </ul>
           <Link
             href="/studio"
-            className="w-full h-14 rounded-md bg-white text-black font-black text-center transition-all duration-300 hover:bg-neutral-100 hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] active:scale-[0.98] uppercase tracking-[0.3em] text-[10px] flex items-center justify-center relative z-10"
+            className="relative z-10 flex h-14 w-full items-center justify-center rounded-md border border-white/25 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/40 hover:bg-white/[0.03]"
           >
             Start Scouting
           </Link>
         </div>
 
         {/* PRO / FOUNDER */}
-        <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/5 flex flex-col relative overflow-hidden group cursor-pointer transition-all duration-300">
-          <div className="mb-8 relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Shield size={18} className="text-blue-400" />
+        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/30">
+          <div className="relative z-10 mb-8">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className={`${merriweather.className} flex items-center gap-2 text-xl font-bold text-white`}>
+                <Shield size={18} className="text-white/55" />
                 Founder Pro
               </h2>
-              <span className="px-2 py-1 rounded bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/50">
+              <span className="rounded border border-white/25 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/85">
                 Recommended
               </span>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-black text-white tracking-tight">$49</span>
-              <span className="text-sm text-slate-500 font-medium">/ month</span>
+              <span className="text-4xl font-bold tracking-tight text-white">$49</span>
+              <span className="ml-1 text-sm font-medium text-white/45">/ month</span>
             </div>
-            <p className="text-sm text-blue-200/60 mt-4 leading-relaxed h-10">
+            <p className="mt-4 h-10 text-sm leading-relaxed text-slate-300">
               For serious builders needing deep forensics and privacy.
             </p>
           </div>
-          <ul className="space-y-4 mb-8 flex-1 relative z-10">
+          <ul className="relative z-10 mb-8 flex-1 space-y-4">
             {[
               'Unlimited Evaluations',
               'Deep Contract Forensics',
@@ -125,8 +132,8 @@ export default function PricingPage() {
               'Priority GPU Queue',
               'PDF Export for Investors'
             ].map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm text-white">
-                <Check className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+              <li key={feature} className="flex items-start gap-3 text-sm text-slate-100">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/55" />
                 {feature}
               </li>
             ))}
@@ -136,7 +143,7 @@ export default function PricingPage() {
             {waitlistStep === 'initial' && (
               <button
                 onClick={() => setWaitlistStep('input')}
-                className="w-full h-14 rounded-md bg-white text-black font-black text-center uppercase tracking-[0.3em] text-[10px] transition-all duration-300 hover:bg-neutral-100 hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] active:scale-[0.98] animate-in fade-in cursor-pointer"
+                className="h-14 w-full cursor-pointer rounded-md bg-white text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-black transition-colors duration-200 hover:bg-neutral-200 active:bg-neutral-300"
               >
                 Notify Me
               </button>
@@ -150,13 +157,13 @@ export default function PricingPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="w-full bg-[#050505] border border-white/10 rounded-md h-14 px-5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/40 transition-all ring-0 outline-none cursor-text"
+                  className="h-14 w-full cursor-text rounded-md border border-white/20 bg-black/30 px-5 text-sm text-white placeholder:text-white/35 ring-0 transition-colors focus:border-white/45 focus:outline-none"
                   disabled={waitlistStep === 'submitting'}
                 />
                 <button
                   type="submit"
                   disabled={waitlistStep === 'submitting'}
-                  className="w-full h-14 rounded-md bg-white text-black font-black text-center uppercase tracking-[0.3em] text-[10px] transition-all duration-300 hover:bg-neutral-100 hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] active:scale-[0.98] disabled:opacity-40 flex items-center justify-center border-none outline-none cursor-pointer"
+                  className="flex h-14 w-full cursor-pointer items-center justify-center rounded-md border-none bg-white text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-black outline-none transition-colors duration-200 hover:bg-neutral-200 active:bg-neutral-300 disabled:opacity-40"
                 >
                   {waitlistStep === 'submitting' ? (
                     <Loader2 className="animate-spin text-black" size={16} />
@@ -169,11 +176,11 @@ export default function PricingPage() {
             )}
 
             {waitlistStep === 'success' && (
-              <div className="relative group p-8 rounded-2xl bg-[#030303] border border-white/5 transition-all duration-500 cursor-pointer">
-                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center mx-auto mb-6">
+              <div className="relative rounded-2xl border border-white/20 bg-black/20 p-8 transition-colors duration-300">
+                <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-white/20">
                   <Check className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-3">Priority Reserved</h3>
+                <h3 className="mb-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-white">Priority Reserved</h3>
                 <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/40 leading-relaxed">
                   We will contact you via email
                   <br />
@@ -185,36 +192,36 @@ export default function PricingPage() {
         </div>
 
         {/* VC / INSTITUTIONAL */}
-        <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/5 flex flex-col relative overflow-hidden group cursor-pointer transition-all duration-300">
+        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/30">
 
-          <div className="mb-8 relative z-10">
-            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-              <Globe size={18} className="text-emerald-400" />
+          <div className="relative z-10 mb-8">
+            <h2 className={`${merriweather.className} mb-2 flex items-center gap-2 text-xl font-bold text-white`}>
+              <Globe size={18} className="text-white/55" />
               Institutional
             </h2>
             <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-black text-white tracking-tight">API</span>
+              <span className="text-4xl font-bold tracking-tight text-white">API</span>
             </div>
-            <p className="text-sm text-slate-400 mt-4 leading-relaxed h-10">
+            <p className="mt-4 h-10 text-sm leading-relaxed text-slate-400">
               High-throughput data for funds and platforms.
             </p>
           </div>
-          <ul className="space-y-4 mb-8 flex-1 relative z-10">
+          <ul className="relative z-10 mb-8 flex-1 space-y-4">
             {[
               'Custom API Rate Limits',
               'White-label Reports',
               'Diligence Automation',
               'Private Slack Channel'
             ].map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm text-slate-300">
-                <Check className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+              <li key={feature} className="flex items-start gap-3 text-sm text-slate-200">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/45" />
                 {feature}
               </li>
             ))}
           </ul>
           <a
             href="mailto:partners@predikt.fi"
-            className="w-full h-14 rounded-md bg-white text-black font-black text-center transition-all duration-300 hover:bg-neutral-100 hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] active:scale-[0.98] uppercase tracking-[0.3em] text-[10px] flex items-center justify-center block relative z-10"
+            className="relative z-10 flex h-14 w-full items-center justify-center rounded-md border border-white/25 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/40 hover:bg-white/[0.03]"
           >
             Contact Sales
           </a>
@@ -223,13 +230,13 @@ export default function PricingPage() {
       </div>
 
       {/* Trust */}
-      <div className="text-center pb-20 px-6 border-t border-white/5 pt-16 max-w-4xl mx-auto">
-        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-8">
+      <div className="mx-auto max-w-4xl border-t border-white/15 px-6 pt-16 pb-20 text-center">
+        <h4 className="mb-8 text-xs font-semibold uppercase tracking-widest text-slate-500">
           Trusted by early adopters from
         </h4>
-        <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-30 grayscale hover:grayscale-0 transition-all duration-500">
+        <div className="flex flex-wrap justify-center gap-8 opacity-30 grayscale transition-all duration-500 hover:grayscale-0 md:gap-16">
           {['Solana', 'Ethereum', 'Base', 'Arbitrum'].map(chain => (
-            <span key={chain} className="text-xl font-black text-white">{chain}</span>
+            <span key={chain} className="text-xl font-semibold text-white">{chain}</span>
           ))}
         </div>
       </div>

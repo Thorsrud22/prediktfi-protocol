@@ -19,6 +19,10 @@ export default defineConfig({
   },
   resolve: {
     alias: [
+      { find: 'langfuse', replacement: path.resolve(__dirname, './tests/mocks/langfuse.ts') },
+      { find: '@google/genai', replacement: path.resolve(__dirname, './tests/mocks/google-genai.ts') },
+      { find: 'posthog-js/react', replacement: path.resolve(__dirname, './tests/mocks/posthog-react.ts') },
+      { find: 'posthog-js', replacement: path.resolve(__dirname, './tests/mocks/posthog.ts') },
       { find: /^@\/lib/, replacement: path.resolve(__dirname, './src/lib') },
       { find: /^@\/app/, replacement: path.resolve(__dirname, './app') },
       { find: '@', replacement: path.resolve(__dirname, './') },

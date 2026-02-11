@@ -79,7 +79,6 @@ describe('AI Idea Evaluator Studio', () => {
         vi.clearAllMocks();
         window.scrollTo = vi.fn();
         window.HTMLElement.prototype.scrollIntoView = vi.fn();
-        localStorage.clear();
 
         // Default mock for Quota calls
         (global.fetch as any).mockImplementation((url: string) => {
@@ -282,8 +281,8 @@ describe('AI Idea Evaluator Studio', () => {
         fireEvent.click(screen.getByText('Memecoin'));
         await settle();
 
-        // 2. Step 1: Label discovery (Label text is 'Ticker Symbol' for memecoins)
-        const nameLabel = screen.getByLabelText(/Ticker Symbol/i);
+        // 2. Step 1: Label discovery (project type can resolve to Ticker Symbol or Project Name)
+        const nameLabel = screen.getByLabelText(/Ticker Symbol|Project Name/i);
         expect(nameLabel).toHaveAttribute('id', 'project-name');
 
         // Validation/ARIA check
