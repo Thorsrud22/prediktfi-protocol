@@ -217,7 +217,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} antialiased min-h-screen bg-transparent text-slate-100 relative`}>
+      <body className={`${inter.variable} antialiased min-h-screen bg-transparent text-slate-100 relative overflow-x-hidden`}>
         <CSPostHogProvider>
           <PostHogPageView />
           <ProgressBarProvider>

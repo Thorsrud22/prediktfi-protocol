@@ -303,14 +303,15 @@ export function Aurora(props: AuroraProps) {
     <div
       ref={ctnDom}
       className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''} `}
-      style={isStatic ? {
-        // Fallback gradient logic: use first, middle, and last color stops
-        background: `linear-gradient(180deg, 
+      style={{
+        // Always provide a fallback gradient that matches the aurora colors
+        background: isStatic ? `linear-gradient(180deg, 
           ${resolvedColorStops[0]} 0%, 
           ${resolvedColorStops[Math.floor(resolvedColorStops.length / 2)]} 50%, 
-          ${resolvedColorStops[resolvedColorStops.length - 1]} 100%)`,
-        opacity: isSubtle ? 0.5 : 0.8, // Slightly lower opacity for static background to blend better
-      } : undefined}
+          ${resolvedColorStops[resolvedColorStops.length - 1]} 100%)` : undefined,
+        opacity: isStatic ? (isSubtle ? 0.5 : 0.8) : undefined,
+        backgroundColor: resolvedColorStops[0] // Absolute fallback color
+      }}
     />
   );
 }
