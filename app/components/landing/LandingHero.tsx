@@ -32,7 +32,7 @@ export default function LandingHero() {
                         </span>
                     </h1>
                 </div>
-                <p className="text-lg md:text-xl text-muted max-w-2xl mx-auto font-medium leading-relaxed">
+                <p className="text-lg md:text-xl text-muted max-w-3xl mx-auto font-medium leading-relaxed">
                     Brutally honest feedback on your project idea with <span className="text-white">live market data</span> and <span className="text-white">expert-level analysis</span>.
                 </p>
                 <HeroActions />
@@ -91,7 +91,7 @@ export default function LandingHero() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.2, duration: 1.2, ease: "easeOut" }}
-                className="text-lg md:text-xl text-muted max-w-2xl mx-auto font-medium leading-relaxed mb-0"
+                className="text-lg md:text-xl text-muted max-w-3xl mx-auto font-medium leading-relaxed mb-0"
             >
                 Brutally honest feedback on your project idea with <span className="text-white">live market data</span> and <span className="text-white">expert-level analysis</span>.
             </motion.p>
