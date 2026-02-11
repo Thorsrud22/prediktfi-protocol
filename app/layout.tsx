@@ -18,6 +18,7 @@ import AuthGuard from "./components/AuthGuard";
 import RoutePreloader from "./components/RoutePreloader";
 import ShellWrapper from "./components/ShellWrapper";
 import Aurora from "./components/ui/Aurora";
+import GlobalBackground from "./components/ui/GlobalBackground";
 
 import ProgressBarProvider from "./components/ProgressBarProvider";
 import { CSPostHogProvider } from "./providers/CSPostHogProvider";
@@ -39,8 +40,8 @@ const isProduction = process.env.NODE_ENV === 'production' && process.env.SOLANA
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://prediktfi.xyz"),
   title: {
-    default: "PrediktFi — AI Evaluation Protocol for Web3",
-    template: "%s | PrediktFi",
+    default: "Predikt — AI Evaluation Protocol for Web3",
+    template: "%s | Predikt",
   },
   description: "Institutional-grade AI evaluation for Web3, DeFi, and Memecoins. Real-time market signals and on-chain security verification.",
   alternates: {
@@ -229,6 +230,7 @@ export default async function RootLayout({
               speed={0.5}
               className="fixed inset-0 -z-10"
             />
+            <GlobalBackground />
 
             <IntentStorageGuard />
             <AuthGuard>
