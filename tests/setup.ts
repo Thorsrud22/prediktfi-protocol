@@ -20,10 +20,23 @@ const mockRouter = {
   },
 };
 
+const mockPathname = vi.fn(() => '/');
+const mockSearchParams = vi.fn(() => new URLSearchParams());
+
 vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
-  usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
+  usePathname: mockPathname,
+  useSearchParams: mockSearchParams,
+}));
+
+vi.mock('next/font/google', () => ({
+  Inter: vi.fn(() => ({
+    className: '',
+    variable: '--font-inter',
+  })),
+  Merriweather: vi.fn(() => ({
+    className: '',
+  })),
 }));
 
 // Mock Solana wallet adapter
@@ -97,3 +110,34 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 vi.mock('@/lib/analytics', () => ({
   trackServer: vi.fn(),
 }));
+
+// Virtual SDK mocks for environments where optional packages are not installed.
+vi.mock('langfuse', () => ({
+  Langfuse: class {
+    trace() {
+      return {
+        generation: () => ({
+          end: vi.fn(),
+        }),
+        update: vi.fn(),
+      };
+    }
+    flushAsync() {
+      return Promise.resolve();
+    }
+  },
+}), { virtual: true });
+
+vi.mock('posthog-js', () => ({
+  default: {
+    init: vi.fn(),
+    capture: vi.fn(),
+  },
+}), { virtual: true });
+
+vi.mock('posthog-js/react', () => ({
+  PostHogProvider: ({ children }: { children: unknown }) => children,
+  usePostHog: () => ({
+    capture: vi.fn(),
+  }),
+}), { virtual: true });

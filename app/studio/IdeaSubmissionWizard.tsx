@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowRight, Check, ChevronRight, Command, CornerDownLeft, Sparkles, Zap, Globe, Cpu, Palette, Gamepad2, MoreHorizontal, History } from 'lucide-react';
 import { cn } from '../lib/utils'; // Correct relative import for test compatibility
 
@@ -88,7 +88,10 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
             try {
                 const { data, step } = JSON.parse(saved);
                 if (data) setFormData(prev => ({ ...prev, ...data }));
-                if (step !== undefined) setCurrentStep(step);
+                if (typeof step === 'number' && Number.isFinite(step)) {
+                    const clampedStep = Math.min(Math.max(Math.trunc(step), 0), STEPS.length - 1);
+                    setCurrentStep(clampedStep);
+                }
             } catch (e) { }
         }
     }, []);
@@ -108,6 +111,11 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
     useEffect(() => {
         formDataRef.current = formData;
     }, [formData]);
+
+    const finalizeSubmission = useCallback((submission?: WizardFormData) => {
+        localStorage.removeItem(STORAGE_KEY);
+        onSubmit(submission || formDataRef.current);
+    }, [onSubmit]);
 
     useEffect(() => {
         if (initialData) {
@@ -133,23 +141,58 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
 
     const nameInputRef = useRef<HTMLInputElement>(null);
     const descInputRef = useRef<HTMLTextAreaElement>(null);
+    const focusRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isNavigatingRef = useRef(false);
 
-    // Auto-focus logic & Scroll to top
+    const clearPendingFocusRetry = () => {
+        if (focusRetryTimeoutRef.current) {
+            clearTimeout(focusRetryTimeoutRef.current);
+            focusRetryTimeoutRef.current = null;
+        }
+    };
+
+    const focusWithRetry = (getElement: () => HTMLInputElement | HTMLTextAreaElement | null, retries = 6) => {
+        clearPendingFocusRetry();
+
+        const tryFocus = (remainingRetries: number) => {
+            const element = getElement();
+            if (!element) {
+                if (remainingRetries > 0) {
+                    focusRetryTimeoutRef.current = setTimeout(() => tryFocus(remainingRetries - 1), 50);
+                }
+                return;
+            }
+
+            element.focus();
+            if (document.activeElement === element || remainingRetries <= 0) {
+                return;
+            }
+
+            focusRetryTimeoutRef.current = setTimeout(() => tryFocus(remainingRetries - 1), 50);
+        };
+
+        tryFocus(retries);
+    };
+
+    // Scroll to top on every step change
     useEffect(() => {
-        // Scroll to the top of the page on every step change for stability
-        // Using instant scroll and minimal delay to prevent "dead zones" during smooth transitions
         setTimeout(() => {
             window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
         }, 10);
+    }, [currentStep]);
 
+    // Auto-focus fields without intentional delay
+    useEffect(() => {
         if (currentStep === 1) {
-            // Slightly longer delay to ensure scroll finishes
-            setTimeout(() => nameInputRef.current?.focus(), 600);
+            focusWithRetry(() => nameInputRef.current);
         } else if (currentStep === 2) {
-            setTimeout(() => descInputRef.current?.focus(), 600);
+            focusWithRetry(() => descInputRef.current);
+        } else {
+            clearPendingFocusRetry();
         }
+
+        return () => clearPendingFocusRetry();
     }, [currentStep]);
 
     const handleNext = (forcedData?: WizardFormData) => {
@@ -209,8 +252,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                 isNavigatingRef.current = false;
             }, 50);
         } else {
-            localStorage.removeItem(STORAGE_KEY);
-            onSubmit(formData);
+            finalizeSubmission(dataToValidate);
         }
     };
 
@@ -285,7 +327,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
             if (currentStep === 4) {
                 // Review step
                 e.preventDefault();
-                onSubmit(formData);
+                finalizeSubmission(formDataRef.current);
                 return;
             }
 
@@ -299,7 +341,8 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                 if (currentStep === STEPS.length - 1) {
-                    onSubmit(formData);
+                    e.preventDefault();
+                    finalizeSubmission(formDataRef.current);
                 } else {
                     // Quick skip logic could go here, but let's stick to standard flow
                     // handleNext(); 
@@ -310,8 +353,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
         return () => {
             window.removeEventListener('keydown', handleGlobalKeyDown);
             if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
+            clearPendingFocusRetry();
         };
-    }, [currentStep, formData, onSubmit]);
+    }, [currentStep, finalizeSubmission]);
 
     const updateField = (field: keyof WizardFormData, value: any) => {
         // Immediate ref update for synchronous validation in handleNext
@@ -325,6 +369,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
 
     // Calculate progress
     const progress = ((currentStep + 1) / STEPS.length) * 100;
+    const namePlaceholder = formData.projectType === 'memecoin' ? "$TICKER" : "Project Name";
 
     return (
         <div ref={wizardRef} className="w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 pb-32 sm:pb-0 scroll-mt-32 pt-12">
@@ -397,20 +442,21 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                             {SECTOR_OPTIONS.map((option) => (
                                 <button
                                     key={option.id}
+                                    type="button"
+                                    aria-pressed={formData.projectType === option.id}
                                     onClick={() => {
                                         updateField('projectType', option.id as ProjectType);
-                                        handleNext();
                                     }}
                                     className={cn(
                                         "group relative p-4 sm:p-5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center text-center gap-2 hover:scale-[1.02] select-none",
                                         formData.projectType === option.id
-                                            ? "bg-blue-600 border-blue-400 shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)]"
-                                            : "bg-[#0B1221] border-white/10 hover:border-white/20 hover:bg-white/5"
+                                            ? "bg-[#0B1221] border-blue-400 shadow-[0_0_0_1px_rgba(59,130,246,0.95),0_0_28px_-8px_rgba(37,99,235,0.85)]"
+                                            : "bg-[#0B1221] border-white/20 hover:border-white/30 hover:bg-white/5"
                                     )}
                                 >
                                     <div className={cn(
                                         "p-3 rounded-full transition-colors",
-                                        formData.projectType === option.id ? "bg-white/20 text-white" : "bg-white/5 text-white/60 group-hover:text-white"
+                                        formData.projectType === option.id ? "bg-blue-500/20 text-white" : "bg-white/5 text-white/60 group-hover:text-white"
                                     )}>
                                         <option.icon size={24} />
                                     </div>
@@ -422,7 +468,9 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                     {/* Selection Indicator */}
                                     <div className={cn(
                                         "absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                        formData.projectType === option.id ? "border-white bg-white text-blue-600 scale-100" : "border-white/10 scale-0 group-hover:scale-90"
+                                        formData.projectType === option.id
+                                            ? "border-white bg-white text-blue-600 scale-100 opacity-100"
+                                            : "opacity-0 scale-0 pointer-events-none"
                                     )}>
                                         <Check size={14} strokeWidth={4} />
                                     </div>
@@ -441,19 +489,21 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                 >
                                     {formData.projectType === 'memecoin' ? "Ticker Symbol" : "Project Name"}
                                 </label>
-                                <input
-                                    ref={nameInputRef}
-                                    id="project-name"
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={(e) => updateField('name', e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    placeholder={formData.projectType === 'memecoin' ? "$TICKER" : "Project Name"}
-                                    className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none py-2 transition-colors font-mono uppercase tracking-tight"
-                                    autoComplete="off"
-                                    aria-describedby={cn(errors.name ? "name-error" : undefined, "name-helper")}
-                                    aria-invalid={!!errors.name}
-                                />
+                                <div className="relative border border-white/10 px-3 sm:px-4 transition-all duration-300 focus-within:border-blue-400 focus-within:shadow-[0_0_0_1px_rgba(59,130,246,0.95),0_0_28px_-8px_rgba(37,99,235,0.85)]">
+                                    <input
+                                        ref={nameInputRef}
+                                        id="project-name"
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={(e) => updateField('name', e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder={namePlaceholder}
+                                        className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none focus-visible:outline-none py-2 transition-colors font-mono uppercase tracking-tight"
+                                        autoComplete="off"
+                                        aria-describedby={cn(errors.name ? "name-error" : undefined, "name-helper")}
+                                        aria-invalid={!!errors.name}
+                                    />
+                                </div>
                                 {errors.name && (
                                     <div
                                         id="name-error"
@@ -707,7 +757,10 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
 
             {/* NAVIGATION CONTROLS (Moved outside dynamic area and given high z-index) */}
             <div className="mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto">
-                <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className={cn(
+                    "flex items-center gap-4 w-full",
+                    currentStep === 0 ? "sm:w-full justify-center" : "sm:w-auto"
+                )}>
                     {currentStep > 0 && (
                         <button
                             onClick={handleBack}
@@ -720,6 +773,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                     {currentStep < 4 ? (
                         <button
                             onClick={() => handleNext()}
+                            disabled={currentStep === 0 && !formData.projectType}
                             className="flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"
                         >
                             {currentStep === 3 || (currentStep === 2 && !hasContextualFields(formData.projectType)) ? 'Review' : 'Continue'}
@@ -741,6 +795,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                 <div className="hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30">
                     <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Tab</span> to navigate</span>
                     {currentStep === 0 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Click</span> to select</span>}
+                    {currentStep === 0 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to continue</span>}
                     {currentStep === 1 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to proceed</span>}
                     {currentStep === 2 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Cmd + Enter</span> to proceed</span>}
                     {currentStep === 3 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to review</span>}

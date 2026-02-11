@@ -1,11 +1,18 @@
+'use client';
+
+import React from "react";
 import { SITE } from "../config/site";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+  const isPricingRoute = pathname === '/pricing' || pathname?.startsWith('/pricing/');
+
   return (
-    <footer className="border-t border-white/5 bg-slate-900/50 text-slate-500 pb-20 sm:pb-0">
+    <footer className={`pb-20 sm:pb-0 ${isPricingRoute ? 'border-t border-white/10 bg-[#0f1012]/92 text-slate-400' : 'border-t border-white/5 bg-slate-900/50 text-slate-500'}`}>
       <div className="mx-auto max-w-[1100px] px-6 py-10">
         {/* Top: Navigation Links */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+        <div className={`flex flex-col md:flex-row items-center justify-between gap-6 text-[10px] font-bold uppercase tracking-[0.2em] ${isPricingRoute ? 'text-slate-300/90' : 'opacity-50'}`}>
           {/* Left: Legal */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 w-full md:w-auto">
             <a href="/legal/terms" className="flex items-center h-full hover:text-white transition-colors">
@@ -26,7 +33,7 @@ export default function Footer() {
           </div>
 
           {/* Right: Studio & Account (Only Desktop) */}
-          <div className="hidden md:flex items-center h-8 gap-8 text-slate-300 opacity-80">
+          <div className={`hidden md:flex items-center h-8 gap-8 text-slate-300 ${isPricingRoute ? 'opacity-95' : 'opacity-80'}`}>
             <a
               href="/studio"
               className="flex items-center h-full gap-2 hover:text-white transition-colors"
@@ -50,8 +57,8 @@ export default function Footer() {
         </div>
 
         {/* Bottom: Copyright & Social */}
-        <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between h-6">
-          <div className="flex items-center text-xs font-medium h-full opacity-30">
+        <div className={`mt-10 pt-8 flex items-center justify-between h-6 ${isPricingRoute ? 'border-t border-white/10' : 'border-t border-white/5'}`}>
+          <div className={`flex items-center text-xs font-medium h-full ${isPricingRoute ? 'opacity-45' : 'opacity-30'}`}>
             © 2026 {SITE.name}
           </div>
 
@@ -60,7 +67,7 @@ export default function Footer() {
               href="https://x.com/PrediktFi"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center text-slate-400 hover:text-white transition-colors h-full"
+              className={`flex items-center transition-colors h-full ${isPricingRoute ? 'text-slate-300 hover:text-white' : 'text-slate-400 hover:text-white'}`}
               aria-label="X"
             >
               <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">

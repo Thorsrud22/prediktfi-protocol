@@ -177,6 +177,8 @@ describe('AI Idea Evaluator Studio', () => {
         // 1. Step 0: Select Project Type
         fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
         await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
 
         // 2. Step 1: Project Identity
         await screen.findAllByText(/Project Identity/i);
@@ -221,6 +223,8 @@ describe('AI Idea Evaluator Studio', () => {
 
         fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
         await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
         await screen.findAllByText(/Project Identity/i);
         const tickerInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
         fireEvent.change(tickerInput, { target: { value: 'TEST' } });
@@ -250,6 +254,8 @@ describe('AI Idea Evaluator Studio', () => {
         await waitForWizardReady();
 
         fireEvent.click(screen.getByRole('button', { name: /AI Agent/i }));
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
         await settle();
         await screen.findAllByText(/Project Identity/i);
         const aiNameInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
@@ -281,9 +287,11 @@ describe('AI Idea Evaluator Studio', () => {
         // 1. Sector Step -> select one to proceed
         fireEvent.click(screen.getByText('Memecoin'));
         await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
 
-        // 2. Step 1: Label discovery (Label text is 'Ticker Symbol' for memecoins)
-        const nameLabel = screen.getByLabelText(/Ticker Symbol/i);
+        // 2. Step 1: Label discovery (project type can resolve to Ticker Symbol or Project Name)
+        const nameLabel = screen.getByLabelText(/Ticker Symbol|Project Name/i);
         expect(nameLabel).toHaveAttribute('id', 'project-name');
 
         // Validation/ARIA check

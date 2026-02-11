@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import React from 'react';
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -17,6 +18,7 @@ const WALLET_ADDRESS_DISPLAY_LENGTH = { start: 4, end: 3 };
 
 export default function AppPillNav() {
   const pathname = usePathname();
+  const isPricingRoute = pathname === '/pricing' || pathname?.startsWith('/pricing/');
   const router = useRouter();
   const { publicKey, disconnect, connect } = useSimplifiedWallet();
   const isPro = useIsPro();
@@ -153,7 +155,10 @@ export default function AppPillNav() {
       >
         {/* Pill Nav - Outer wrapper with ring */}
         <nav
-          className="rounded-full bg-slate-900/95 ring-1 ring-inset ring-white/10 shadow-lg p-1 transition-all duration-300 w-fit mx-auto"
+          className={`mx-auto w-fit rounded-full p-1 ring-1 ring-inset transition-all duration-300 ${isPricingRoute
+            ? 'bg-[#0f1113]/97 ring-white/18 shadow-[0_10px_28px_rgba(0,0,0,0.5)]'
+            : 'bg-slate-900/95 ring-white/10 shadow-lg'
+            }`}
           aria-label="Main navigation"
         >
           {/* Inner wrapper with overflow-hidden to clip animated pill */}
@@ -165,7 +170,10 @@ export default function AppPillNav() {
               <span
                 ref={indicatorRef}
                 aria-hidden
-                className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-sky-500/25 to-cyan-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,.20)] transition-[transform,width,opacity] duration-300 ease-out"
+                className={`pointer-events-none absolute top-1 bottom-1 rounded-full transition-[transform,width,opacity] duration-300 ease-out ${isPricingRoute
+                  ? 'bg-white/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,.12)]'
+                  : 'bg-gradient-to-r from-sky-500/25 to-cyan-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,.20)]'
+                  }`}
                 style={{ width: 0, transform: 'translateX(0)', opacity: 0 }}
               />
               {navItems.map((item) => {
@@ -174,7 +182,7 @@ export default function AppPillNav() {
                   <li key={item.href}>
                     <InstantLink
                       href={item.href}
-                      className={`relative inline-flex h-10 md:h-11 min-w-[100px] items-center justify-center rounded-full px-4 text-sm font-semibold focusing-outline-none focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:-translate-y-px hover:shadow-md uppercase tracking-wide ${active ? 'text-white' : 'text-white/80 hover:text-white'}`}
+                      className={`relative inline-flex h-10 min-w-[100px] items-center justify-center rounded-full px-4 text-sm font-semibold uppercase tracking-wide focus-visible:ring-2 focus-visible:ring-white/20 md:h-11 ${isPricingRoute ? 'transition-colors' : 'transition-all hover:-translate-y-px hover:shadow-md'} ${active ? 'text-white' : isPricingRoute ? 'text-white/75 hover:text-white/95' : 'text-white/80 hover:text-white'}`}
                       aria-current={active ? 'page' : undefined}
                     >
                       <span className="relative z-10 translate-y-[0.5px]">{item.label}</span>
@@ -194,9 +202,13 @@ export default function AppPillNav() {
         <div className="relative">
           <InstantLink
             href="/account"
-            className={`h-10 sm:h-12 w-10 sm:w-12 flex items-center justify-center rounded-full transition-all ${publicKey
-              ? 'bg-white/5 text-slate-200 hover:bg-white/10 ring-1 ring-inset ring-white/10'
-              : 'bg-white/5 text-slate-400 hover:bg-white/10 ring-1 ring-inset ring-white/5'
+            className={`h-10 sm:h-12 w-10 sm:w-12 flex items-center justify-center rounded-full transition-colors ${isPricingRoute
+              ? publicKey
+                ? 'bg-black/30 text-slate-200 hover:bg-black/45 ring-1 ring-inset ring-white/20'
+                : 'bg-black/25 text-slate-300 hover:bg-black/40 ring-1 ring-inset ring-white/15'
+              : publicKey
+                ? 'bg-white/5 text-slate-200 hover:bg-white/10 ring-1 ring-inset ring-white/10'
+                : 'bg-white/5 text-slate-400 hover:bg-white/10 ring-1 ring-inset ring-white/5'
               }`}
             aria-label="Account"
           >
@@ -211,7 +223,7 @@ export default function AppPillNav() {
 
       {/* Mobile Bottom Navigation - Only visible on mobile, hidden on legal pages to prevent overlap */}
       {!pathname?.startsWith('/legal') && (
-        <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-700/50 safe-area-pb">
+        <nav className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-pb ${isPricingRoute ? 'bg-[#111316]/95 border-t border-white/20 backdrop-blur-sm' : 'bg-slate-900 border-t border-slate-700/50'}`}>
           <div className="flex items-center justify-around h-16">
             {navItems.map((item) => {
               const active = pathname === item.href || pathname?.startsWith(item.href + '/');
@@ -219,7 +231,7 @@ export default function AppPillNav() {
                 <InstantLink
                   key={item.href}
                   href={item.href}
-                  className={`flex flex-col items-center justify-center gap-1.5 px-4 py-3 transition-all ${active ? 'text-sky-400 opacity-100' : 'text-slate-300 opacity-60 hover:opacity-100'}`}
+                  className={`flex flex-col items-center justify-center gap-1.5 px-4 py-3 transition-all ${active ? isPricingRoute ? 'text-white opacity-100' : 'text-sky-400 opacity-100' : isPricingRoute ? 'text-slate-300 opacity-70 hover:opacity-100' : 'text-slate-300 opacity-60 hover:opacity-100'}`}
                   aria-current={active ? 'page' : undefined}
                 >
                   {item.href === '/studio' && (

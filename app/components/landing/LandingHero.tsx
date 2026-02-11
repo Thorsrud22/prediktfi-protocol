@@ -35,7 +35,8 @@ export default function LandingHero() {
                 <p className="text-lg md:text-xl text-muted max-w-3xl mx-auto font-medium leading-relaxed">
                     Brutally honest feedback on your project idea with <span className="text-white">live market data</span> and <span className="text-white">expert-level analysis</span>.
                 </p>
-                <HeroActions />
+                {/* Keep link-heavy CTA subtree client-only to avoid hydration attribute drift */}
+                <div className="h-20" aria-hidden="true" />
             </div>
         );
     }

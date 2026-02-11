@@ -35,6 +35,7 @@ export { calibrateScore } from "./calibration";
 export function buildIdeaContextSummary(idea: IdeaSubmission): string {
   const parts = [
     `Project Type: ${idea.projectType}`,
+    idea.name ? `Project Name: "${idea.name}"` : '',
     `Team Size: ${idea.teamSize}`,
     `Resources: ${idea.resources?.join(', ') || 'None specified'}`,
 
