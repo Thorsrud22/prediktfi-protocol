@@ -285,8 +285,12 @@ describe('AI Idea Evaluator Studio', () => {
         await settle();
 
         // 1. Sector Step -> select one to proceed
-        fireEvent.click(screen.getByText('Memecoin'));
-        await settle();
+        const memecoinBtn = screen.getByText('Memecoin').closest('button');
+        fireEvent.click(memecoinBtn!);
+        await waitFor(() => {
+            expect(memecoinBtn).toHaveAttribute('aria-pressed', 'true');
+        });
+
         fireEvent.click(screen.getByText('Continue'));
         await settle();
 

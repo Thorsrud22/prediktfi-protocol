@@ -1,9 +1,62 @@
 @import "tailwindcss";
 
+@theme {
+  /* Fonts */
+  --font-sans: var(--font-inter), sans-serif;
+
+  /* Colors: Series-A FinTech Palette */
+  --color-bg: #0A0F1E;
+  --color-bg-soft: #141B2D;
+
+  --color-surface: rgba(30, 41, 59, 0.5);
+  --color-surface-2: rgba(51, 65, 85, 0.5);
+
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
+
+  --color-text: #F8FAFC;
+  --color-text-muted: #94A3B8;
+
+  --color-accent: #3B82F6;
+  --color-accent-light: #60A5FA;
+  --color-accent-dark: #2563EB;
+  --color-accent-glow: rgba(59, 130, 246, 0.5);
+
+  --color-accent-secondary: #8B5CF6;
+  --color-accent-secondary-light: #A78BFA;
+  --color-accent-secondary-dark: #7C3AED;
+  --color-accent-secondary-glow: rgba(139, 92, 246, 0.5);
+
+  --color-danger: #EF4444;
+  --color-success: #10B981;
+
+  /* Border Radius */
+  --radius-md: var(--radius);
+
+  /* Box Shadows */
+  --shadow-glass-sm: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  --shadow-glass-md: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --shadow-accent-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+
+  /* Animations */
+  --animate-subtle-pulse: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+  }
+}
+
+
 /* Force dark mode globally to prevent hydration issues */
 html {
   color-scheme: dark;
-  background-color: #0A0F1E;
+  background-color: var(--color-bg);
 }
 
 /* Force dark mode classes to always apply */
@@ -12,19 +65,8 @@ html {
 }
 
 :root {
-  /* Core colors */
-  --bg: #0A0F1E;
-  --bg-soft: #141B2D;
-  --text: #F8FAFC;
-  --text-muted: #94A3B8;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.15);
-  --surface: rgba(30, 41, 59, 0.5);
-  --surface-2: rgba(51, 65, 85, 0.5);
-  --accent: #3B82F6;
-  --accent-secondary: #8B5CF6;
-
-
+  /* Ensure variables are available for non-Tailwind usages if any */
+  --radius: 0.5rem;
 }
 
 body {
