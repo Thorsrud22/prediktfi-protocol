@@ -51,26 +51,26 @@ export default function PricingPage() {
     <div className="relative min-h-screen overflow-hidden text-slate-100 selection:bg-white/20">
 
       {/* Header */}
-      <div className="relative z-10 px-6 pt-20 pb-14 text-center sm:pt-24 sm:pb-16">
-        <div className="mb-4 inline-block rounded-full border border-white/18 bg-white/[0.04] px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
+      <div className="relative z-10 px-6 pt-6 pb-2 text-center sm:pt-8 sm:pb-3">
+        <div className="mb-2 inline-block rounded-full border border-white/18 bg-white/[0.04] px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
           Transparent Business Model
         </div>
-        <h1 className={`${merriweather.className} mb-6 text-4xl font-bold tracking-tight text-white sm:mb-8 sm:text-6xl`}>
+        <h1 className={`${merriweather.className} mb-2 text-4xl font-bold tracking-tight text-white sm:mb-3 sm:text-6xl`}>
           Who <span className="text-white/80">Pays?</span>
         </h1>
         <p className="mx-auto max-w-3xl text-lg font-normal leading-[2.15] tracking-[0.01em] text-slate-300 sm:leading-[2.25]">
           <span className="block">We don't sell your data. We sell institutional-grade processing power.</span>
-          <span className="mt-4 block sm:mt-5">Choose the tier that matches your operational scale.</span>
+          <span className="mt-2 block sm:mt-3">Choose the tier that matches your operational scale.</span>
         </p>
       </div>
 
       {/* Tiers */}
-      <div className="relative z-20 mx-auto mt-8 grid max-w-6xl gap-6 px-6 pb-20 sm:mt-12 md:grid-cols-3">
+      <div className="relative z-20 mx-auto mt-2 grid max-w-6xl gap-6 px-6 pb-12 sm:mt-4 md:grid-cols-3">
 
         {/* FREE / SCOUT */}
-        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/18 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/26">
+        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/18 bg-white/[0.02] p-5 transition-colors duration-200 hover:border-white/26">
 
-          <div className="relative z-10 mb-8">
+          <div className="relative z-10 mb-3">
             <h2 className={`${merriweather.className} mb-2 flex items-center gap-2 text-xl font-bold text-white`}>
               <Zap size={18} className="text-white/55" />
               Market Scout
@@ -79,11 +79,11 @@ export default function PricingPage() {
               <span className="text-4xl font-bold tracking-tight text-white">$0</span>
               <span className="ml-1 text-sm font-medium text-white/55">/ forever</span>
             </div>
-            <p className="mt-4 h-10 text-sm leading-relaxed text-slate-400">
+            <p className="mt-2 h-8 text-sm leading-relaxed text-slate-400">
               Essential reconnaissance for early trends.
             </p>
           </div>
-          <ul className="relative z-10 mb-8 flex-1 space-y-4">
+          <ul className="relative z-10 mb-4 flex-1 space-y-2">
             {[
               '3 AI Evaluations / Day',
               'Basic Due Diligence',
@@ -98,15 +98,15 @@ export default function PricingPage() {
           </ul>
           <Link
             href="/studio"
-            className="relative z-10 flex h-14 w-full items-center justify-center rounded-md border border-white/24 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/34 hover:bg-white/[0.03]"
+            className="relative z-10 flex h-12 w-full items-center justify-center rounded-md border border-white/24 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/34 hover:bg-white/[0.03]"
           >
             Start Scouting
           </Link>
         </div>
 
         {/* PRO / FOUNDER */}
-        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/18 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/26">
-          <div className="relative z-10 mb-8">
+        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/18 bg-white/[0.02] p-6 transition-colors duration-200 hover:border-white/26">
+          <div className="relative z-10 mb-4">
             <div className="mb-2 flex items-center justify-between">
               <h2 className={`${merriweather.className} flex items-center gap-2 text-xl font-bold text-white`}>
                 <Shield size={18} className="text-white/65" />
@@ -120,11 +120,11 @@ export default function PricingPage() {
               <span className="text-4xl font-bold tracking-tight text-white">$49</span>
               <span className="ml-1 text-sm font-medium text-white/55">/ month</span>
             </div>
-            <p className="mt-4 h-10 text-sm leading-relaxed text-slate-300">
+            <p className="mt-2 h-8 text-sm leading-relaxed text-slate-300">
               For serious builders needing deep forensics and privacy.
             </p>
           </div>
-          <ul className="relative z-10 mb-8 flex-1 space-y-4">
+          <ul className="relative z-10 mb-4 flex-1 space-y-2.5">
             {[
               'Unlimited Evaluations',
               'Deep Contract Forensics',
@@ -143,7 +143,7 @@ export default function PricingPage() {
             {waitlistStep === 'initial' && (
               <button
                 onClick={() => setWaitlistStep('input')}
-                className="h-14 w-full cursor-pointer rounded-md bg-white text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-black transition-colors duration-200 hover:bg-neutral-200 active:bg-neutral-300"
+                className="h-12 w-full cursor-pointer rounded-md bg-white text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-black transition-colors duration-200 hover:bg-neutral-200 active:bg-neutral-300"
               >
                 Notify Me
               </button>
@@ -157,13 +157,13 @@ export default function PricingPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="h-14 w-full cursor-text rounded-md border border-white/30 bg-black/35 px-5 text-sm text-white placeholder:text-white/45 ring-0 transition-colors focus:border-white/55 focus:outline-none"
+                  className="h-12 w-full cursor-text rounded-md border border-white/30 bg-black/35 px-5 text-sm text-white placeholder:text-white/45 ring-0 transition-colors focus:border-white/55 focus:outline-none"
                   disabled={waitlistStep === 'submitting'}
                 />
                 <button
                   type="submit"
                   disabled={waitlistStep === 'submitting'}
-                  className="flex h-14 w-full cursor-pointer items-center justify-center rounded-md border-none bg-white text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-black outline-none transition-colors duration-200 hover:bg-neutral-200 active:bg-neutral-300 disabled:opacity-40"
+                  className="flex h-12 w-full cursor-pointer items-center justify-center rounded-md border-none bg-white text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-black outline-none transition-colors duration-200 hover:bg-neutral-200 active:bg-neutral-300 disabled:opacity-40"
                 >
                   {waitlistStep === 'submitting' ? (
                     <Loader2 className="animate-spin text-black" size={16} />
@@ -192,9 +192,9 @@ export default function PricingPage() {
         </div>
 
         {/* VC / INSTITUTIONAL */}
-        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/18 bg-white/[0.02] p-8 transition-colors duration-200 hover:border-white/26">
+        <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/18 bg-white/[0.02] p-6 transition-colors duration-200 hover:border-white/26">
 
-          <div className="relative z-10 mb-8">
+          <div className="relative z-10 mb-4">
             <h2 className={`${merriweather.className} mb-2 flex items-center gap-2 text-xl font-bold text-white`}>
               <Globe size={18} className="text-white/65" />
               Institutional
@@ -202,11 +202,11 @@ export default function PricingPage() {
             <div className="flex items-baseline gap-1">
               <span className="text-4xl font-bold tracking-tight text-white">API</span>
             </div>
-            <p className="mt-4 h-10 text-sm leading-relaxed text-slate-400">
+            <p className="mt-3 h-10 text-sm leading-relaxed text-slate-400">
               High-throughput data for funds and platforms.
             </p>
           </div>
-          <ul className="relative z-10 mb-8 flex-1 space-y-4">
+          <ul className="relative z-10 mb-4 flex-1 space-y-2.5">
             {[
               'Custom API Rate Limits',
               'White-label Reports',
@@ -221,7 +221,7 @@ export default function PricingPage() {
           </ul>
           <a
             href="mailto:partners@predikt.fi"
-            className="relative z-10 flex h-14 w-full items-center justify-center rounded-md border border-white/24 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/34 hover:bg-white/[0.03]"
+            className="relative z-10 flex h-12 w-full items-center justify-center rounded-md border border-white/24 bg-transparent text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-colors duration-200 hover:border-white/34 hover:bg-white/[0.03]"
           >
             Contact Sales
           </a>
