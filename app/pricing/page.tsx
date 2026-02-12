@@ -1,8 +1,8 @@
-
 import React from 'react'
 import Link from 'next/link' // Import Link for internal navigation
-import { Check, ArrowRight, Zap, Shield, Globe } from 'lucide-react'
+import { Check, ArrowRight, Zap, Shield, Globe, Lock } from 'lucide-react'
 import { Metadata } from 'next'
+import SubscribeButton from '../components/SubscribeButton'
 
 export const metadata: Metadata = {
   alternates: {
@@ -16,8 +16,8 @@ export default function PricingPage() {
 
       {/* Header */}
       <div className="relative pt-0 pb-6 sm:pt-4 sm:pb-8 px-6 text-center z-10">
-        <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tighter uppercase italic mb-2">
-          Who <span className="text-blue-500">Pays?</span>
+        <h1 className="text-4xl sm:text-6xl font-serif text-white tracking-tight mb-2">
+          Who <span>Pays?</span>
         </h1>
         <p className="max-w-3xl mx-auto text-lg text-slate-400 leading-relaxed font-light">
           We don't sell your data. We sell institutional-grade processing power.
@@ -103,13 +103,14 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-          <a
-            href="mailto:founders@predikt.fi?subject=Notify%20me%20when%20Founder%20Pro%20opens&body=Hi%2C%0A%0APlease%20notify%20me%20when%20Founder%20Pro%20becomes%20available.%0A%0AThanks!"
-            className="w-full py-4 rounded-xl bg-white text-black font-bold text-center uppercase tracking-widest text-xs border border-transparent transition-all block hover:bg-slate-200"
+          <SubscribeButton
+            priceId={process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_FOUNDER || 'price_1Qv...'} // Add this to env later
+            className="w-full py-4 rounded-xl bg-white text-black font-bold text-center uppercase tracking-widest text-xs border border-transparent transition-all block relative z-10 hover:bg-slate-200"
           >
-            Notify Me
-          </a>
-          <p className="text-[10px] text-center mt-3 text-slate-500 uppercase tracking-widest">
+            Get Founder Pro
+          </SubscribeButton>
+          <p className="flex items-center justify-center gap-2 text-[10px] text-center mt-3 text-slate-200 font-medium uppercase tracking-widest">
+            <Lock className="w-3 h-3 text-slate-400" />
             Waitlist full — Opening Q2 2026
           </p>
         </div>
