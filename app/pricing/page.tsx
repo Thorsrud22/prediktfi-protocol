@@ -15,11 +15,8 @@ export default function PricingPage() {
     <div className="min-h-screen text-slate-100 selection:bg-blue-500/30">
 
       {/* Header */}
-      <div className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 px-6 text-center z-10">
-        <div className="inline-block mb-6 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest">
-          Transparent Business Model
-        </div>
-        <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tighter uppercase italic mb-6">
+      <div className="relative pt-0 pb-6 sm:pt-4 sm:pb-8 px-6 text-center z-10">
+        <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tighter uppercase italic mb-2">
           Who <span className="text-blue-500">Pays?</span>
         </h1>
         <p className="max-w-3xl mx-auto text-lg text-slate-400 leading-relaxed font-light">
