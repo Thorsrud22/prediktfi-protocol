@@ -5,7 +5,8 @@
   isolation: isolate;
   pointer-events: none;
   /* Fallback background to prevent flicker during page transitions */
-  background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+  /* Fallback background removed as requested */
+  background: transparent;
 }
 
 .aurora-container canvas {
