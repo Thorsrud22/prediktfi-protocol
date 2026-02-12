@@ -10,7 +10,7 @@ const merriweather = Merriweather({
   weight: ['400', '700'],
 });
 
-import GlobalBackground from '../components/ui/GlobalBackground';
+
 
 export default function PricingPage() {
   const [waitlistStep, setWaitlistStep] = useState<'initial' | 'input' | 'submitting' | 'success'>('initial');
@@ -49,7 +49,7 @@ export default function PricingPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden text-slate-100 selection:bg-white/20">
-      <GlobalBackground />
+
       {/* Header */}
       <div className="relative z-10 px-6 pt-20 pb-14 text-center sm:pt-24 sm:pb-16">
         <div className="mb-4 inline-block rounded-full border border-white/18 bg-white/[0.04] px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">

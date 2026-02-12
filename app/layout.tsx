@@ -18,7 +18,7 @@ import AuthGuard from "./components/AuthGuard";
 import RoutePreloader from "./components/RoutePreloader";
 import ShellWrapper from "./components/ShellWrapper";
 import Aurora from "./components/ui/Aurora";
-import GlobalBackground from "./components/ui/GlobalBackground";
+
 
 import ProgressBarProvider from "./components/ProgressBarProvider";
 import { CSPostHogProvider } from "./providers/CSPostHogProvider";
@@ -230,7 +230,7 @@ export default async function RootLayout({
               speed={0.5}
               className="fixed inset-0 -z-10"
             />
-            <GlobalBackground />
+
 
             <IntentStorageGuard />
             <AuthGuard>
