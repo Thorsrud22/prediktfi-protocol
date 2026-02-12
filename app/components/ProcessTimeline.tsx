@@ -128,7 +128,7 @@ export default function ProcessTimeline() {
                                     {/* Content Side */}
                                     <div className="flex-1 w-full md:w-1/2">
                                         <div className="p-10 rounded-[32px] glass-card hover:bg-white/5 transition-all duration-500 group shadow-xl relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-accent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <div className={`absolute top-0 w-1 h-full bg-gradient-to-b from-accent to-transparent opacity-0 group-hover:opacity-100 transition-opacity ${isEven ? 'left-0' : 'left-0 md:left-auto md:right-0'}`} />
                                             <div className="flex items-center gap-5 mb-5">
                                                 <div className={`p-4 rounded-2xl bg-gradient-to-br ${step.color} shadow-lg shadow-accent/20 group-hover:scale-110 transition-transform duration-500`}>
                                                     <step.icon className="w-6 h-6 text-white" />

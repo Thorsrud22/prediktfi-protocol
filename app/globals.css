@@ -438,6 +438,10 @@ body {
   color: transparent;
 }
 
+.text-shadow-hero {
+  text-shadow: 0px 2px 10px rgba(0, 0, 0, 0.5);
+}
+
 @media (min-width: 1024px) {
   .markets-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -17,7 +17,7 @@ export default function LandingHero() {
             <div className="text-center max-w-5xl mx-auto space-y-3 md:space-y-4 opacity-0" suppressHydrationWarning>
                 {/* Static Server Render (SEO Friendly) */}
                 <div className="space-y-4">
-                    <span className="text-xs sm:text-sm font-bold tracking-widest text-accent-light uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-4">
+                    <span className="text-xs sm:text-sm font-bold tracking-widest text-accent-light uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-4 text-shadow-hero">
                         Stop guessing. Start shipping.
                     </span>
                     <h1 className="flex flex-col items-center justify-center font-black text-white leading-[0.9] uppercase italic">
@@ -55,7 +55,7 @@ export default function LandingHero() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2, duration: 1.0, ease: "easeOut" }}
-                    className="text-xs sm:text-sm font-bold tracking-widest text-accent-light uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-3"
+                    className="text-xs sm:text-sm font-bold tracking-widest text-accent-light uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-3 text-shadow-hero"
                 >
                     Stop guessing. Start shipping.
                 </motion.span>
