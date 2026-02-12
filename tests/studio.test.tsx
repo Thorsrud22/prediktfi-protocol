@@ -291,7 +291,7 @@ describe('AI Idea Evaluator Studio', () => {
         await settle();
 
         // 2. Step 1: Label discovery (project type can resolve to Ticker Symbol or Project Name)
-        const nameLabel = screen.getByLabelText(/Ticker Symbol|Project Name/i);
+        const nameLabel = await screen.findByLabelText(/Ticker Symbol|Project Name/i);
         expect(nameLabel).toHaveAttribute('id', 'project-name');
 
         // Validation/ARIA check
