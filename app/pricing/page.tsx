@@ -109,10 +109,7 @@ export default function PricingPage() {
           >
             Get Founder Pro
           </SubscribeButton>
-          <p className="flex items-center justify-center gap-2 text-[10px] text-center mt-3 text-slate-200 font-medium uppercase tracking-widest">
-            <Lock className="w-3 h-3 text-slate-400" />
-            Waitlist full — Opening Q2 2026
-          </p>
+
         </div>
 
         {/* VC / INSTITUTIONAL */}

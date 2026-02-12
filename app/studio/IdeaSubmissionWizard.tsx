@@ -489,7 +489,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                 >
                                     {formData.projectType === 'memecoin' ? "Ticker Symbol" : "Project Name"}
                                 </label>
-                                <div className="relative border border-white/10 px-3 sm:px-4 transition-all duration-300 focus-within:border-blue-400 focus-within:shadow-[0_0_0_1px_rgba(59,130,246,0.95),0_0_28px_-8px_rgba(37,99,235,0.85)]">
+                                <div className="relative border border-white/10 px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 focus-within:border-blue-400 focus-within:shadow-[0_0_0_1px_rgba(59,130,246,0.95),0_0_28px_-8px_rgba(37,99,235,0.85)]">
                                     <input
                                         ref={nameInputRef}
                                         id="project-name"
@@ -498,7 +498,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                         onChange={(e) => updateField('name', e.target.value)}
                                         onKeyDown={handleKeyDown}
                                         placeholder={namePlaceholder}
-                                        className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none focus-visible:outline-none py-2 transition-colors font-mono uppercase tracking-tight"
+                                        className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none focus-visible:outline-none py-2 transition-colors font-mono uppercase tracking-tight block"
                                         autoComplete="off"
                                         aria-describedby={cn(errors.name ? "name-error" : undefined, "name-helper")}
                                         aria-invalid={!!errors.name}
