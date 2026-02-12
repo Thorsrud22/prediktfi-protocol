@@ -14,17 +14,17 @@ export default function LandingHero() {
 
     if (!isMounted) {
         return (
-            <div className="text-center max-w-5xl mx-auto space-y-3 md:space-y-4 opacity-0" suppressHydrationWarning>
+            <div className="text-center max-w-5xl mx-auto space-y-5 md:space-y-6 opacity-0" suppressHydrationWarning>
                 {/* Static Server Render (SEO Friendly) */}
-                <div className="space-y-4">
+                <div className="space-y-5">
                     <span className="text-xs sm:text-sm font-bold tracking-widest text-accent-light uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-4 text-shadow-hero">
                         Stop guessing. Start shipping.
                     </span>
                     <h1 className="flex flex-col items-center justify-center font-black text-white leading-[0.9] uppercase italic">
-                        <span className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tight bg-gradient-to-b from-white via-white to-slate-400 bg-clip-text text-transparent filter drop-shadow-2xl text-balance">
+                        <span className="px-4 text-[2rem] sm:text-[4.1rem] md:text-[5.4rem] tracking-tight bg-gradient-to-b from-white via-white to-slate-400 bg-clip-text text-transparent filter drop-shadow-2xl text-balance">
                             investor-grade
                         </span>
-                        <span className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tight bg-gradient-to-b from-white via-white to-slate-400 bg-clip-text text-transparent filter drop-shadow-2xl text-balance">
+                        <span className="px-4 text-[2rem] sm:text-[4.1rem] md:text-[5.4rem] tracking-tight bg-gradient-to-b from-white via-white to-slate-400 bg-clip-text text-transparent filter drop-shadow-2xl text-balance">
                             due diligence
                         </span>
                         <span className="mt-6 text-xl sm:text-3xl md:text-4xl font-bold text-accent tracking-wider relative block">
@@ -32,7 +32,7 @@ export default function LandingHero() {
                         </span>
                     </h1>
                 </div>
-                <p className="text-lg md:text-xl text-muted max-w-3xl mx-auto font-medium leading-relaxed">
+                <p className="text-base sm:text-lg md:text-xl text-muted max-w-[52rem] mx-auto font-medium leading-relaxed sm:leading-[1.75]">
                     Brutally honest feedback on your project idea with <span className="text-white">live market data</span> and <span className="text-white">expert-level analysis</span>.
                 </p>
                 {/* Keep link-heavy CTA subtree client-only to avoid hydration attribute drift */}
@@ -46,16 +46,16 @@ export default function LandingHero() {
             initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center max-w-5xl mx-auto space-y-3 md:space-y-4"
+            className="text-center max-w-5xl mx-auto space-y-5 md:space-y-6"
         >
             <AnalysisVisual />
             {/* Main Heading */}
-            <div className="space-y-3">
+            <div className="space-y-5">
                 <motion.span
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2, duration: 1.0, ease: "easeOut" }}
-                    className="text-xs sm:text-sm font-bold tracking-widest text-accent-light uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-3 text-shadow-hero"
+                    className="text-xs sm:text-sm font-bold tracking-widest text-accent-light uppercase bg-accent/10 px-4 py-2 rounded-full inline-block mb-5 text-shadow-hero"
                 >
                     Stop guessing. Start shipping.
                 </motion.span>
@@ -64,7 +64,7 @@ export default function LandingHero() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4, duration: 1.2, ease: "easeOut" }}
-                        className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tight bg-gradient-to-b from-white via-white to-slate-400 bg-clip-text text-transparent filter drop-shadow-2xl text-balance"
+                        className="px-4 text-[2rem] sm:text-[4.1rem] md:text-[5.4rem] tracking-tight bg-gradient-to-b from-white via-white to-slate-400 bg-clip-text text-transparent filter drop-shadow-2xl text-balance"
                     >
                         investor-grade
                     </motion.span>
@@ -72,7 +72,7 @@ export default function LandingHero() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
-                        className="px-4 text-3xl sm:text-7xl md:text-8xl tracking-tight bg-gradient-to-b from-white via-white to-slate-400 bg-clip-text text-transparent filter drop-shadow-2xl text-balance"
+                        className="px-4 text-[2rem] sm:text-[4.1rem] md:text-[5.4rem] tracking-tight bg-gradient-to-b from-white via-white to-slate-400 bg-clip-text text-transparent filter drop-shadow-2xl text-balance"
                     >
                         due diligence
                     </motion.span>
@@ -80,7 +80,7 @@ export default function LandingHero() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.9, duration: 1.0, ease: "easeOut" }}
-                        className="mt-4 text-xl sm:text-3xl md:text-4xl font-bold text-accent tracking-wider relative block"
+                        className="mt-6 text-xl sm:text-3xl md:text-4xl font-bold text-accent tracking-wider relative block"
                     >
                         IN UNDER 2 MINUTES
                     </motion.span>
@@ -92,13 +92,15 @@ export default function LandingHero() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.2, duration: 1.2, ease: "easeOut" }}
-                className="text-lg md:text-xl text-muted max-w-3xl mx-auto font-medium leading-loose tracking-wide mb-0"
+                className="text-base sm:text-lg md:text-xl text-muted max-w-[52rem] mx-auto font-medium leading-relaxed sm:leading-[1.75] tracking-[0.01em] mb-0"
             >
                 Brutally honest feedback on your project idea with <span className="text-white">live market data</span> and <span className="text-white">expert-level analysis</span>.
             </motion.p>
 
             {/* CTA Buttons */}
-            <HeroActions />
+            <div className="pt-2 sm:pt-3">
+                <HeroActions />
+            </div>
 
             {/* Live Activity Mock */}
             <motion.div

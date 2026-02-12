@@ -5,10 +5,9 @@ import { describe, it, expect } from 'vitest';
 import PricingPage from '@/app/pricing/page';
 
 describe('PricingPage', () => {
-    it('renders the "Who Pays?" header', () => {
+    it('renders the "Choose Your Plan" header', () => {
         render(<PricingPage />);
-        expect(screen.getByText('Who')).toBeDefined();
-        expect(screen.getByText('Pays?')).toBeDefined();
+        expect(screen.getByText('Choose Your Plan')).toBeDefined();
     });
 
     it('displays the three pricing tiers', () => {

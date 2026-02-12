@@ -44,6 +44,8 @@ export default function StudioPage() {
 
   // Fetch Quota
   useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchQuota() {
       try {
         // console.log('[Studio] Fetching quota. PublicKey:', publicKey);
@@ -52,6 +54,7 @@ export default function StudioPage() {
         const cacheBuster = `_t=${Date.now()}`;
         const separator = addressParam ? '&' : '?';
         const res = await fetch(`/api/idea-evaluator/quota${addressParam}${separator}${cacheBuster}`, {
+          signal: controller.signal,
           cache: 'no-store',
           headers: {
             'Pragma': 'no-cache',
@@ -61,15 +64,23 @@ export default function StudioPage() {
         if (res.ok) {
           const data = await res.json();
           // console.log('[Studio] Quota received:', data, 'for key:', publicKey);
-          setQuota(data);
+          if (!controller.signal.aborted) {
+            setQuota(data);
+          }
         }
-      } catch (e) {
-        console.error("Failed to fetch quota", e);
+      } catch (e: any) {
+        if (e.name !== 'AbortError') {
+          console.error("Failed to fetch quota", e);
+        }
       } finally {
-        setIsQuotaLoading(false);
+        if (!controller.signal.aborted) {
+          setIsQuotaLoading(false);
+        }
       }
     }
     fetchQuota();
+
+    return () => controller.abort();
   }, [publicKey, quotaRefreshKey]);
 
   // Countdown timer effect - updates every second when quota is 0
@@ -298,8 +309,8 @@ export default function StudioPage() {
     <>
       <PerformanceMonitor />
 
-      <div className="relative pt-8 pb-20 px-4 md:px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-white/10 pb-6" style={{ contain: 'layout' }}>
+      <div className="relative pt-8 pb-10 px-4 md:px-8 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-2 sm:mb-4 border-b border-white/10 pb-4" style={{ contain: 'layout' }}>
           <div>
             <h1 className="text-5xl sm:text-6xl font-black tracking-tighter mb-2 text-white uppercase italic">
               Studio <span className="text-blue-500">.</span>

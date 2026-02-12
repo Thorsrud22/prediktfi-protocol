@@ -51,59 +51,66 @@ const STORAGE_KEY = 'predikt_studio_draft';
 export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitting }: IdeaSubmissionWizardProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [direction, setDirection] = useState(1); // 1 for forward, -1 for back
-    const [formData, setFormData] = useState<WizardFormData>(() => {
-        // Initial state from localStorage if available (sync if possible for SSR-safety in browser)
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try {
-                    const { data } = JSON.parse(saved);
-                    return data;
-                } catch (e) { }
-            }
-        }
-        return {
-            projectType: initialData?.projectType || null,
-            name: initialData?.name || '',
-            description: initialData?.description || '',
-            website: initialData?.website || '',
-            memecoinVibe: initialData?.memecoinVibe || '',
-            memecoinNarrative: initialData?.memecoinNarrative || '',
-            defiMechanism: initialData?.defiMechanism || '',
-            defiRevenue: initialData?.defiRevenue || '',
-            aiModelType: initialData?.aiModelType || '',
-            aiDataMoat: initialData?.aiDataMoat || '',
-            teamSize: initialData?.teamSize || 'solo',
-            successDefinition: initialData?.successDefinition || ''
-        };
+
+    // Initial state strictly from props or empty defaults to match server rendering
+    const [formData, setFormData] = useState<WizardFormData>({
+        projectType: initialData?.projectType || null,
+        name: initialData?.name || '',
+        description: initialData?.description || '',
+        website: initialData?.website || '',
+        memecoinVibe: initialData?.memecoinVibe || '',
+        memecoinNarrative: initialData?.memecoinNarrative || '',
+        defiMechanism: initialData?.defiMechanism || '',
+        defiRevenue: initialData?.defiRevenue || '',
+        aiModelType: initialData?.aiModelType || '',
+        aiDataMoat: initialData?.aiDataMoat || '',
+        teamSize: initialData?.teamSize || 'solo',
+        successDefinition: initialData?.successDefinition || ''
     });
 
     const [errors, setErrors] = useState<{ name?: string; description?: string }>({});
     const [showSavedMsg, setShowSavedMsg] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const submittedRef = useRef(false);
 
-    // Initial hydration effect
+    // Hydrate from localStorage on mount (Client-side only)
     useEffect(() => {
+        setIsLoaded(true);
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
             try {
-                const { data, step } = JSON.parse(saved);
-                if (data) setFormData(prev => ({ ...prev, ...data }));
+                const parsed = JSON.parse(saved);
+                // Handle both old format (direct data) and new format ({ data, step })
+                const data = parsed.data || parsed;
+                const step = parsed.step;
+
+                if (data && typeof data === 'object') {
+                    setFormData(prev => ({ ...prev, ...data }));
+                }
+
                 if (typeof step === 'number' && Number.isFinite(step)) {
                     const clampedStep = Math.min(Math.max(Math.trunc(step), 0), STEPS.length - 1);
                     setCurrentStep(clampedStep);
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.error("Failed to parse saved draft", e);
+            }
         }
     }, []);
 
-    // Save to localStorage on change
+    // Save to localStorage on change - DEBOUNCED
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: formData, step: currentStep }));
+        if (!isLoaded || submittedRef.current) return; // Don't save initial empty state OR after submission
 
-        setShowSavedMsg(true);
-        const timer = setTimeout(() => setShowSavedMsg(false), 2000);
+        const timer = setTimeout(() => {
+            if (submittedRef.current) return; // Double check inside timeout
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: formData, step: currentStep }));
+            setShowSavedMsg(true);
+            setTimeout(() => setShowSavedMsg(false), 2000);
+        }, 500); // 500ms debounce
+
         return () => clearTimeout(timer);
-    }, [formData, currentStep]);
+    }, [formData, currentStep, isLoaded]);
 
     // Update ref whenever state changes from external sources (initialData)
     // Synchronize the validation ref
@@ -113,6 +120,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
     }, [formData]);
 
     const finalizeSubmission = useCallback((submission?: WizardFormData) => {
+        submittedRef.current = true; // Mark as submitted to prevent further auto-saves
         localStorage.removeItem(STORAGE_KEY);
         onSubmit(submission || formDataRef.current);
     }, [onSubmit]);
@@ -372,10 +380,10 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
     const namePlaceholder = formData.projectType === 'memecoin' ? "$TICKER" : "Project Name";
 
     return (
-        <div ref={wizardRef} className="w-full max-w-4xl mx-auto min-h-[500px] flex flex-col relative px-4 sm:px-0 pb-32 sm:pb-0 scroll-mt-32 pt-12">
+        <div ref={wizardRef} className="w-full max-w-4xl mx-auto min-h-[300px] flex flex-col relative px-4 sm:px-0 pb-20 sm:pb-0 scroll-mt-24 pt-0">
 
             {/* Progress Bar & Saved Message */}
-            <div className="flex flex-col mb-12 space-y-4">
+            <div className="flex flex-col mb-6 space-y-4">
                 <div className="flex items-center justify-between gap-6">
                     <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative">
                         <div
@@ -417,17 +425,18 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
             {/* Main Content Area */}
             <div className="relative mt-4">
                 {/* HEADERS */}
-                <div key={currentStep} className="mb-12 text-center sm:text-left space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <h2 className="text-3xl sm:text-5xl font-bold text-white tracking-tight">
+                {/* HEADERS */}
+                <div key={currentStep} className="mb-8 text-center sm:text-left space-y-1 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
                         {STEPS[currentStep].title}
                     </h2>
-                    <p className="text-lg text-white/50 font-light">
+                    <p className="text-base text-white/50 font-light">
                         {STEPS[currentStep].subtitle}
                     </p>
                 </div>
 
                 {/* DYNAMIC STEPS */}
-                <div className="min-h-[350px] sm:min-h-[440px] flex flex-col justify-center relative z-10">
+                <div className="min-h-[300px] sm:min-h-[380px] flex flex-col justify-center relative z-10">
 
                     {/* Error overlay for Step 0 (Sector) */}
                     {currentStep === 0 && errors.name && (
@@ -489,7 +498,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                 >
                                     {formData.projectType === 'memecoin' ? "Ticker Symbol" : "Project Name"}
                                 </label>
-                                <div className="relative border border-white/10 px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 focus-within:border-blue-400 focus-within:shadow-[0_0_0_1px_rgba(59,130,246,0.95),0_0_28px_-8px_rgba(37,99,235,0.85)]">
+                                <div className="relative border border-white/10 px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 focus-within:border-white/20">
                                     <input
                                         ref={nameInputRef}
                                         id="project-name"
@@ -498,7 +507,8 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                                         onChange={(e) => updateField('name', e.target.value)}
                                         onKeyDown={handleKeyDown}
                                         placeholder={namePlaceholder}
-                                        className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none focus-visible:outline-none py-2 transition-colors font-mono uppercase tracking-tight block"
+                                        className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none border-none focus:border-none focus:outline-none focus:ring-0 focus:shadow-none shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-none py-2 transition-colors font-mono uppercase tracking-tight block appearance-none"
+                                        style={{ outline: 'none', boxShadow: 'none' }}
                                         autoComplete="off"
                                         aria-describedby={cn(errors.name ? "name-error" : undefined, "name-helper")}
                                         aria-invalid={!!errors.name}
@@ -756,7 +766,7 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
             </div>
 
             {/* NAVIGATION CONTROLS (Moved outside dynamic area and given high z-index) */}
-            <div className="mt-12 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto">
+            <div className="mt-4 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto">
                 <div className={cn(
                     "flex items-center gap-4 w-full",
                     currentStep === 0 ? "sm:w-full justify-center" : "sm:w-auto"

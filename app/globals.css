@@ -277,7 +277,7 @@ body.wallet-modal-open {
 /* Focus states for accessibility */
 button:focus-visible,
 a:focus-visible,
-input:focus-visible,
+input:not(#project-name):focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid var(--interactive-focus);
@@ -512,7 +512,7 @@ body {
   /* WCAG target size */
 }
 
-:where(a, button, input, select, textarea, [role="button"]):focus-visible {
+:where(a, button, input:not(#project-name), select, textarea, [role="button"]):focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }

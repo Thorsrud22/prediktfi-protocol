@@ -19,7 +19,7 @@ export default function Home() {
     <div className="relative min-h-screen overflow-hidden">
       {/* Hero Section */}
 
-      <div className="relative z-10 flex flex-col items-center pt-32 sm:pt-40 pb-10 sm:pb-12 px-3 sm:px-6">
+      <div className="relative z-10 flex flex-col items-center pt-28 sm:pt-[10.625rem] pb-10 sm:pb-12 px-3 sm:px-6">
         <LandingHero />
       </div>
 
