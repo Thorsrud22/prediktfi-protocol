@@ -18,7 +18,7 @@ const STEPS = [
         title: 'Submit Concept',
         description: 'Initialize the protocol with your ticker or project abstract. Workspace prepares for deep analysis.',
         icon: Lightbulb,
-        color: 'from-accent to-accent-light',
+        color: 'from-black to-gray-900',
         delay: 0
     },
     {
@@ -26,7 +26,7 @@ const STEPS = [
         title: 'Core Extraction',
         description: 'Advanced analysis deconstructs the project—extracting tokenomics, technical debt, and team intent.',
         icon: BrainCircuit,
-        color: 'from-accent-secondary to-accent-secondary-light',
+        color: 'from-black to-gray-900',
         delay: 0.2
     },
     {
@@ -34,7 +34,7 @@ const STEPS = [
         title: 'Market Resonance',
         description: 'Real-time cross-referencing against competitor signals, liquidity depth, and narrative trends.',
         icon: Scale,
-        color: 'from-accent to-accent-secondary',
+        color: 'from-black to-gray-900',
         delay: 0.4
     },
     {
@@ -42,7 +42,7 @@ const STEPS = [
         title: 'Final Verdict',
         description: 'Generate a 0-100 institutional score and a comprehensive risk report with actionable intelligence.',
         icon: FileText,
-        color: 'from-white/20 to-white/5',
+        color: 'from-black to-gray-900',
         delay: 0.6
     }
 ];
