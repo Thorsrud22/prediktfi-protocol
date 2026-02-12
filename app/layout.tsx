@@ -17,7 +17,7 @@ import IntentStorageGuard from "./components/IntentStorageGuard";
 import AuthGuard from "./components/AuthGuard";
 import RoutePreloader from "./components/RoutePreloader";
 import ShellWrapper from "./components/ShellWrapper";
-import Aurora from "./components/ui/Aurora";
+import Script from "next/script";
 
 
 import ProgressBarProvider from "./components/ProgressBarProvider";
@@ -223,13 +223,6 @@ export default async function RootLayout({
           <ProgressBarProvider>
             {/* Persistent Aurora background - stays across route changes */}
             {/* Persistent Aurora background - stays across route changes */}
-            <Aurora
-              colorStops={['#1e293b', '#60A5FA', '#3B82F6']} // Lighter base (slate-800) and brighter blues (blue-400, blue-500)
-              amplitude={1.2}
-              blend={0.6}
-              speed={0.5}
-              className="fixed inset-0 -z-10"
-            />
 
 
             <IntentStorageGuard />
