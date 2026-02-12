@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { usePathname } from 'next/navigation';
 import PersistentLogo from './PersistentLogo';
 
@@ -10,9 +9,16 @@ interface ShellWrapperProps {
     footer: React.ReactNode;
 }
 
+function getCookie(name: string) {
+    if (typeof document === 'undefined') return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift();
+    return null;
+}
+
 export default function ShellWrapper({ children, navbar, footer }: ShellWrapperProps) {
     const pathname = usePathname();
-    const isPricingRoute = pathname === '/pricing' || pathname.startsWith('/pricing/');
 
 
     // We now allow full navigation for everyone (Public Beta)
@@ -22,12 +28,6 @@ export default function ShellWrapper({ children, navbar, footer }: ShellWrapperP
 
     return (
         <>
-            {isPricingRoute && (
-                <div
-                    aria-hidden="true"
-                    className="pointer-events-none fixed inset-0 -z-[8] bg-[#0f1012]/93"
-                />
-            )}
             <PersistentLogo />
             {navbar}
             <main className="flex min-h-screen flex-col pt-24">
@@ -37,3 +37,4 @@ export default function ShellWrapper({ children, navbar, footer }: ShellWrapperP
         </>
     );
 }
+
