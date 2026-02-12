@@ -71,11 +71,8 @@ export default function PricingPage() {
         </div>
 
         {/* PRO / FOUNDER */}
-        <div className="p-8 rounded-3xl bg-gradient-to-b from-blue-900/20 to-slate-900 border border-blue-500/50 flex flex-col relative overflow-hidden shadow-2xl shadow-blue-900/20 transform md:-translate-y-4 hover:shadow-blue-500/20 transition-all duration-500">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500"></div>
-          <div className="absolute top-0 right-0 p-4 opacity-30">
-            <div className="w-32 h-32 bg-blue-500/20 blur-3xl rounded-full"></div>
-          </div>
+        <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/5 flex flex-col relative overflow-hidden group hover:border-blue-400/30 transition-all duration-500">
+          <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
           <div className="mb-8 relative z-10">
             <div className="flex items-center justify-between mb-2">
@@ -83,7 +80,7 @@ export default function PricingPage() {
                 <Shield size={18} className="text-blue-400" />
                 Founder Pro
               </h3>
-              <span className="px-2 py-1 rounded bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/50">
+              <span className="px-2 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest">
                 Recommended
               </span>
             </div>
@@ -111,7 +108,7 @@ export default function PricingPage() {
           </ul>
           <a
             href="mailto:founders@predikt.fi?subject=Notify%20me%20when%20Founder%20Pro%20opens&body=Hi%2C%0A%0APlease%20notify%20me%20when%20Founder%20Pro%20becomes%20available.%0A%0AThanks!"
-            className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-center uppercase tracking-widest text-xs border border-transparent transition-all block shadow-lg shadow-blue-600/20"
+            className="w-full py-4 rounded-xl bg-white text-black font-bold text-center uppercase tracking-widest text-xs border border-transparent transition-all block hover:bg-slate-200"
           >
             Notify Me
           </a>
