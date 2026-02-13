@@ -47,6 +47,9 @@ export async function searchWeb(
     const searchDepth = options?.searchDepth ?? "basic";
 
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
         const response = await fetch("https://api.tavily.com/search", {
             method: "POST",
             headers: {
@@ -60,7 +63,9 @@ export async function searchWeb(
                 include_domains: options?.includeDomains,
                 exclude_domains: options?.excludeDomains,
             }),
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             const errorText = await response.text();

@@ -104,36 +104,39 @@ export async function evaluateWithCommittee(
     // --- Step 2a: The Agents (Parallel) ---
     options?.onProgress?.("kicking off Committee Debate (Bull vs Bear)...");
 
-    // Bear Agent (Cheap Model)
-    const bearTask = openai().chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-            { role: "system", content: PERMABEAR_SYSTEM_PROMPT },
-            { role: "user", content: baseUserContent }
-        ],
-        response_format: { type: "json_object" }
-    });
+    // Helper for timeout-wrapped OpenAI call
+    const callAgent = async (model: string, sysPrompt: string, userPrompt: string, timeoutMs: number) => {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    // Bull Agent (Cheap Model)
-    const bullTask = openai().chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-            { role: "system", content: PERMABULL_SYSTEM_PROMPT },
-            { role: "user", content: baseUserContent }
-        ],
-        response_format: { type: "json_object" }
-    });
+            const response = await openai().chat.completions.create({
+                model,
+                messages: [
+                    { role: "system", content: sysPrompt },
+                    { role: "user", content: userPrompt }
+                ],
+                response_format: { type: "json_object" }
+            }, { signal: controller.signal });
 
-    const [bearRaw, bullRaw] = await Promise.all([bearTask, bullTask]);
+            clearTimeout(timeout);
+            return JSON.parse(response.choices[0].message.content || "{}");
+        } catch (error) {
+            console.warn(`Agent (${model}) failed or timed out:`, error);
+            return {}; // Return empty object on failure to allow flow to continue
+        }
+    };
 
-    const bearOutput = JSON.parse(bearRaw.choices[0].message.content || "{}");
-    const bullOutput = JSON.parse(bullRaw.choices[0].message.content || "{}");
+    const [bearOutput, bullOutput] = await Promise.all([
+        callAgent("gpt-4o-mini", PERMABEAR_SYSTEM_PROMPT, baseUserContent, 15000),
+        callAgent("gpt-4o-mini", PERMABULL_SYSTEM_PROMPT, baseUserContent, 15000)
+    ]);
 
-    options?.onProgress?.(`Debate Concluded. Bear: "${bearOutput.bearAnalysis?.verdict}", Bull: "${bullOutput.bullAnalysis?.verdict}"`);
+    options?.onProgress?.(`Debate Concluded. Bear: "${bearOutput.bearAnalysis?.verdict || 'N/A'}", Bull: "${bullOutput.bullAnalysis?.verdict || 'N/A'}"`);
 
     if (options?.onThought) {
-        options.onThought(`[BEAR] "${bearOutput.bearAnalysis?.roast || 'No comment'}"\n`);
-        options.onThought(`[BULL] "${bullOutput.bullAnalysis?.pitch || 'No comment'}"\n`);
+        options.onThought(`[BEAR] "${bearOutput.bearAnalysis?.roast || 'Analysis unavailable'}"\n`);
+        options.onThought(`[BULL] "${bullOutput.bullAnalysis?.pitch || 'Analysis unavailable'}"\n`);
     }
 
     // --- Step 2b: The Judge (Flagship Model) ---
@@ -156,16 +159,38 @@ export async function evaluateWithCommittee(
   `;
 
     // Judge uses GPT-5.2 (or environment default for flagship)
-    const judgeModel = process.env.EVAL_MODEL === 'gpt-5.2' ? 'gpt-5.2' : 'gpt-4o';
+    // Fallback logic implemented here
+    let judgeResponse;
+    const primaryJudgeModel = process.env.EVAL_MODEL === 'gpt-5.2' ? 'gpt-5.2' : 'gpt-4o';
 
-    const judgeResponse = await openai().chat.completions.create({
-        model: judgeModel,
-        messages: [
-            { role: "system", content: JUDGE_SYSTEM_PROMPT },
-            { role: "user", content: judgeContent }
-        ],
-        response_format: { type: "json_object" }
-    });
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 25000); // 25s limit for main judge
+
+        judgeResponse = await openai().chat.completions.create({
+            model: primaryJudgeModel,
+            messages: [
+                { role: "system", content: JUDGE_SYSTEM_PROMPT },
+                { role: "user", content: judgeContent }
+            ],
+            response_format: { type: "json_object" }
+        }, { signal: controller.signal });
+
+        clearTimeout(timeout);
+    } catch (error) {
+        console.warn(`Primary Judge (${primaryJudgeModel}) failed/timed out. Falling back to mini.`);
+        options?.onProgress?.("⚠️ High traffic. Switching to backup judge...");
+
+        // Fallback to fast model
+        judgeResponse = await openai().chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                { role: "system", content: JUDGE_SYSTEM_PROMPT },
+                { role: "user", content: judgeContent }
+            ],
+            response_format: { type: "json_object" }
+        });
+    }
 
     options?.onProgress?.("Final Verdict Reached.");
 

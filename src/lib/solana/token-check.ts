@@ -49,8 +49,13 @@ export async function verifyTokenSecurity(tokenAddress: string): Promise<TokenSe
         const connection = new Connection(RPC_ENDPOINT, "confirmed");
         const mintPubkey = new PublicKey(tokenAddress);
 
-        // 2. Fetch Mint Info
-        const mintInfo = await getMint(connection, mintPubkey);
+        // 2. Fetch Mint Info with Timeout
+        const mintInfo = await Promise.race([
+            getMint(connection, mintPubkey),
+            new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error("Token check timed out")), 5000)
+            )
+        ]);
 
         // 3. Check Authorities
         const hasMintAuth = mintInfo.mintAuthority !== null;
