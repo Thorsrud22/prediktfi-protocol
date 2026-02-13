@@ -326,7 +326,13 @@ ${dexScreenerContext}
             params.reasoning_effort = reasoningEffort;
         }
 
-        const response = await openai().chat.completions.create(params);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+        const response = await openai().chat.completions.create(params, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
         // 4. Parse Response
         let responseContent: string | null = null;
