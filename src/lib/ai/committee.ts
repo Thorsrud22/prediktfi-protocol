@@ -64,8 +64,7 @@ function buildClaimsSummary(claims: EvidenceClaim[]): string {
     .slice(0, 16)
     .map(
       (claim, i) =>
-        `${i + 1}. [${claim.claimType}] ${claim.support || "uncorroborated"} | ids=${
-          claim.evidenceIds.join(",") || "none"
+        `${i + 1}. [${claim.claimType}] ${claim.support || "uncorroborated"} | ids=${claim.evidenceIds.join(",") || "none"
         } | ${claim.text}`
     )
     .join("\n");
@@ -119,9 +118,8 @@ export async function evaluateWithCommittee(
     if (!tokenCheckRaw.valid) {
       verificationContext = `Token Check: FAILED (${tokenCheckRaw.error})`;
     } else {
-      verificationContext = `Token Check: MINT=${tokenCheckRaw.mintAuthority ? "ACTIVE" : "REVOKED"}, FREEZE=${
-        tokenCheckRaw.freezeAuthority ? "ACTIVE" : "REVOKED"
-      }, LP=${tokenCheckRaw.isLiquidityLocked ? "LOCKED" : "UNLOCKED"}`;
+      verificationContext = `Token Check: MINT=${tokenCheckRaw.mintAuthority ? "ACTIVE" : "REVOKED"}, FREEZE=${tokenCheckRaw.freezeAuthority ? "ACTIVE" : "REVOKED"
+        }, LP=${tokenCheckRaw.isLiquidityLocked ? "LOCKED" : "UNLOCKED"}`;
     }
   } else if (detectLaunchedStatus(input)) {
     verificationContext = "INTELLIGENCE GAP: Claims live, no CA provided.";
@@ -199,8 +197,8 @@ ${JSON.stringify(input, null, 2)}
   options?.onProgress?.("Kicking off committee debate (Bull vs Bear)...");
 
   const [bearResult, bullResult] = await Promise.all([
-    callAgent<BearAnalysis>(modelMap.bear, PERMABEAR_SYSTEM_PROMPT, baseUserContent, 15000),
-    callAgent<BullAnalysis>(modelMap.bull, PERMABULL_SYSTEM_PROMPT, baseUserContent, 15000),
+    callAgent<BearAnalysis>(modelMap.bear, PERMABEAR_SYSTEM_PROMPT, baseUserContent, 25000),
+    callAgent<BullAnalysis>(modelMap.bull, PERMABULL_SYSTEM_PROMPT, baseUserContent, 25000),
   ]);
 
   const bearOutput = bearResult.output;
@@ -208,8 +206,7 @@ ${JSON.stringify(input, null, 2)}
   const agentFailures = (bearResult.failed ? 1 : 0) + (bullResult.failed ? 1 : 0);
 
   options?.onProgress?.(
-    `Debate concluded. Bear: "${bearOutput.bearAnalysis?.verdict || "N/A"}", Bull: "${
-      bullOutput.bullAnalysis?.verdict || "N/A"
+    `Debate concluded. Bear: "${bearOutput.bearAnalysis?.verdict || "N/A"}", Bull: "${bullOutput.bullAnalysis?.verdict || "N/A"
     }"`
   );
 
@@ -248,7 +245,7 @@ ${JSON_OUTPUT_SCHEMA}
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    const timeout = setTimeout(() => controller.abort(), 60000);
 
     judgeResponse = await openai().chat.completions.create(
       {
@@ -301,16 +298,13 @@ ${JSON_OUTPUT_SCHEMA}
     result.technical.comments = "";
   }
 
-  result.technical.comments += `\n\n[COMMITTEE LOG]\nBear Verdict: ${
-    bearOutput.bearAnalysis?.verdict
-  } ("${bearOutput.bearAnalysis?.roast}")\nBull Verdict: ${
-    bullOutput.bullAnalysis?.verdict
-  } ("${bullOutput.bullAnalysis?.pitch}")`;
+  result.technical.comments += `\n\n[COMMITTEE LOG]\nBear Verdict: ${bearOutput.bearAnalysis?.verdict
+    } ("${bearOutput.bearAnalysis?.roast}")\nBull Verdict: ${bullOutput.bullAnalysis?.verdict
+    } ("${bullOutput.bullAnalysis?.pitch}")`;
 
   if (verifierOutcome.status !== "pass") {
-    result.technical.comments += `\n[VERIFIER] ${verifierOutcome.status.toUpperCase()} - ${
-      verifierOutcome.issues[0] || "No details"
-    }`;
+    result.technical.comments += `\n[VERIFIER] ${verifierOutcome.status.toUpperCase()} - ${verifierOutcome.issues[0] || "No details"
+      }`;
   }
 
   result = calibrateScore({
@@ -375,8 +369,7 @@ ${JSON_OUTPUT_SCHEMA}
   }
   if (verifierOutcome.status !== "pass") {
     result.calibrationNotes.push(
-      `Reliability: Verifier ${verifierOutcome.status}. ${
-        verifierOutcome.issues[0] || "Quality checks identified issues."
+      `Reliability: Verifier ${verifierOutcome.status}. ${verifierOutcome.issues[0] || "Quality checks identified issues."
       }`
     );
   }
