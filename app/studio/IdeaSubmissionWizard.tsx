@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowRight, Check, ChevronRight, Command, CornerDownLeft, Sparkles, Zap, Globe, Cpu, Palette, Gamepad2, MoreHorizontal, History } from 'lucide-react';
 import { cn } from '../lib/utils'; // Correct relative import for test compatibility
 import {
+    normalizeIdeaProjectType,
     type IdeaProjectType,
     getCategoryContextualFields,
     getMissingContextualFields
@@ -102,7 +103,8 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                 const step = parsed.step;
 
                 if (data && typeof data === 'object') {
-                    setFormData(prev => ({ ...prev, ...data }));
+                    const normalizedType = normalizeIdeaProjectType((data as Partial<WizardFormData>).projectType as any);
+                    setFormData(prev => ({ ...prev, ...data, projectType: normalizedType }));
                 }
 
                 if (typeof step === 'number' && Number.isFinite(step)) {

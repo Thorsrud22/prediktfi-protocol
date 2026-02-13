@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildCategoryPreflightSteps,
   getMissingContextualFields,
+  normalizeIdeaProjectType,
   sanitizeReasoningStepsForCategory,
 } from "@/lib/ideaCategories";
 
@@ -41,5 +42,12 @@ describe("ideaCategories", () => {
     expect(steps.length).toBeGreaterThanOrEqual(3);
     expect(steps.join(" ").toLowerCase()).not.toContain("rug risk");
     expect(steps.join(" ").toLowerCase()).not.toContain("liquidity lock");
+  });
+
+  it("falls back safely for non-string projectType values", () => {
+    expect(normalizeIdeaProjectType(undefined)).toBe("other");
+    expect(normalizeIdeaProjectType(null)).toBe("other");
+    expect(normalizeIdeaProjectType({ bad: "value" } as any)).toBe("other");
+    expect(normalizeIdeaProjectType("AI")).toBe("ai");
   });
 });

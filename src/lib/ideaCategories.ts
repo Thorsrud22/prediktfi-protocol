@@ -274,7 +274,7 @@ function isAiTokenomicsOnlyStep(step: string): boolean {
 }
 
 export function normalizeIdeaProjectType(projectType: string | null | undefined): IdeaProjectType {
-  if (!projectType) return DEFAULT_CATEGORY;
+  if (typeof projectType !== "string" || !projectType) return DEFAULT_CATEGORY;
   const lowered = projectType.toLowerCase();
   return (IDEA_PROJECT_TYPES as readonly string[]).includes(lowered)
     ? (lowered as IdeaProjectType)
