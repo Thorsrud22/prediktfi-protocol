@@ -123,6 +123,8 @@ export async function evaluateWithCommittee(
             return JSON.parse(response.choices[0].message.content || "{}");
         } catch (error) {
             console.warn(`Agent (${model}) failed or timed out:`, error);
+            const errMsg = error instanceof Error ? error.message : String(error);
+            options?.onThought?.(`[ERROR] Agent ${model} failed: ${errMsg}\n`);
             return {}; // Return empty object on failure to allow flow to continue
         }
     };
@@ -178,18 +180,27 @@ export async function evaluateWithCommittee(
 
         clearTimeout(timeout);
     } catch (error) {
-        console.warn(`Primary Judge (${primaryJudgeModel}) failed/timed out. Falling back to mini.`);
+        const errMsg = error instanceof Error ? error.message : String(error);
+        console.warn(`Primary Judge (${primaryJudgeModel}) failed/timed out: ${errMsg}`);
+        options?.onThought?.(`[ERROR] Primary Judge failed: ${errMsg}\n`);
         options?.onProgress?.("⚠️ High traffic. Switching to backup judge...");
 
-        // Fallback to fast model
-        judgeResponse = await openai().chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: JUDGE_SYSTEM_PROMPT },
-                { role: "user", content: judgeContent }
-            ],
-            response_format: { type: "json_object" }
-        });
+        try {
+            // Fallback to fast model
+            judgeResponse = await openai().chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "system", content: JUDGE_SYSTEM_PROMPT },
+                    { role: "user", content: judgeContent }
+                ],
+                response_format: { type: "json_object" }
+            });
+        } catch (fallbackError) {
+            const fallbackMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+            options?.onThought?.(`[ERROR] Backup Judge also failed: ${fallbackMsg}\n`);
+            // Rethrow to let the main handler catch it and end the stream
+            throw fallbackError;
+        }
     }
 
     options?.onProgress?.("Final Verdict Reached.");
