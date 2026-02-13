@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { IDEA_PROJECT_TYPES } from '@/lib/ideaCategories';
 
-const PROJECT_TYPES = ['memecoin', 'defi', 'ai', 'nft', 'gaming', 'other'] as const;
+const PROJECT_TYPES = IDEA_PROJECT_TYPES;
 
 /**
  * Validate Solana address format (base58, 32-44 chars)
@@ -53,6 +54,18 @@ export const ideaSubmissionSchema = z.object({
     // AI
     aiModelType: z.string().optional(),
     aiDataMoat: z.string().optional(),
+
+    // NFT
+    nftUtility: z.string().optional(),
+    nftCollectorHook: z.string().optional(),
+
+    // Gaming
+    gamingCoreLoop: z.string().optional(),
+    gamingEconomyModel: z.string().optional(),
+
+    // Other
+    otherTargetUser: z.string().optional(),
+    otherDifferentiation: z.string().optional(),
 
     // --- Phase 2: Adaptive Execution & Goals ---
     // Instead of generic resources array, we might want specific boolean flags or sub-arrays

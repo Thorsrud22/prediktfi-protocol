@@ -62,6 +62,18 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({
         name: '',
         description: '',
         website: '',
+        memecoinVibe: '',
+        memecoinNarrative: '',
+        defiMechanism: '',
+        defiRevenue: '',
+        aiModelType: '',
+        aiDataMoat: '',
+        nftUtility: '',
+        nftCollectorHook: '',
+        gamingCoreLoop: '',
+        gamingEconomyModel: '',
+        otherTargetUser: '',
+        otherDifferentiation: '',
         teamSize: 'solo',
         successDefinition: ''
     });
@@ -113,7 +125,19 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({
                 name: formData.name,
                 description: formData.description,
                 website: formData.website,
-                projectType: formData.projectType as any
+                projectType: formData.projectType as any,
+                memecoinVibe: formData.memecoinVibe,
+                memecoinNarrative: formData.memecoinNarrative,
+                defiMechanism: formData.defiMechanism,
+                defiRevenue: formData.defiRevenue,
+                aiModelType: formData.aiModelType,
+                aiDataMoat: formData.aiDataMoat,
+                nftUtility: formData.nftUtility,
+                nftCollectorHook: formData.nftCollectorHook,
+                gamingCoreLoop: formData.gamingCoreLoop,
+                gamingEconomyModel: formData.gamingEconomyModel,
+                otherTargetUser: formData.otherTargetUser,
+                otherDifferentiation: formData.otherDifferentiation
             }}
             isSubmitting={isSubmitting}
         />

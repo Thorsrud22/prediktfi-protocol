@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
 import { checkRateLimit, incrementEvalCount, getClientIdentifier } from "@/app/lib/ratelimit";
+import { categoryNeedsMarketSnapshot } from "@/lib/ideaCategories";
+import type { MarketSnapshot } from "@/lib/market/types";
 
 // Vercel Serverless Function Config
 export const maxDuration = 60; // Max duration for Hobby (10s is default, can go up to 60)
@@ -37,8 +39,11 @@ export async function POST(request: NextRequest) {
         // ---------------------------
 
 
-        // Fetch market context (latencies handled by internal cache/timeout)
-        const marketSnapshot = await getMarketSnapshot();
+        // Category-aware market context fetch
+        let marketSnapshot: MarketSnapshot | undefined;
+        if (categoryNeedsMarketSnapshot(parsed.data.projectType)) {
+            marketSnapshot = await getMarketSnapshot();
+        }
 
         // Use new Investment Committee Protocol
         const { evaluateWithCommittee } = await import("@/lib/ai/committee");

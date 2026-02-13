@@ -23,6 +23,10 @@ import {
   extractDataFreshness,
 } from "@/lib/ai/trust-metrics";
 import { runEvaluationVerifier } from "@/lib/ai/verifier";
+import {
+  getCategoryCommitteeIntelStep,
+  sanitizeReasoningStepsForCategory,
+} from "@/lib/ideaCategories";
 
 interface BearAnalysis {
   bearAnalysis?: {
@@ -93,7 +97,7 @@ export async function evaluateWithCommittee(
   const contextSummary = buildIdeaContextSummary(input);
   const normalizedCategory = input.projectType.toLowerCase();
 
-  options?.onProgress?.("Gathering intel (Market, On-Chain, Competitors)...");
+  options?.onProgress?.(getCategoryCommitteeIntelStep(input.projectType));
 
   const tokenCheckPromise = input.tokenAddress
     ? verifyTokenSecurity(input.tokenAddress).catch((err) => ({ valid: false, error: String(err) } as any))
@@ -313,6 +317,7 @@ ${JSON_OUTPUT_SCHEMA}
     rawResult: result,
     ideaSubmission: input,
   });
+  result.reasoningSteps = sanitizeReasoningStepsForCategory(input.projectType, result.reasoningSteps);
 
   if (referenceProjects.length > 0) {
     const mappedCompetitors = referenceProjects.map((project) => ({

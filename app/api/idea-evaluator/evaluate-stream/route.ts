@@ -9,13 +9,12 @@ import { NextRequest } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
 import { getMarketSnapshot } from "@/lib/market/snapshot";
 import { checkRateLimit, incrementEvalCount, getClientIdentifier } from "@/app/lib/ratelimit";
+import { buildCategoryPreflightSteps, categoryNeedsMarketSnapshot } from "@/lib/ideaCategories";
+import type { MarketSnapshot } from "@/lib/market/types";
 
 // Vercel Serverless Function Config
 export const maxDuration = 300; // Max duration (5 minutes)
 export const runtime = 'nodejs'; // Ensure Node.js runtime
-
-// Reasoning step templates based on project type
-
 
 export async function POST(request: NextRequest) {
     try {
@@ -63,10 +62,16 @@ export async function POST(request: NextRequest) {
                     return;
                 }
 
-                // 1. Fetch Market Data
-                await sendEvent("step", { step: "Connecting to market data feeds..." });
-                const marketSnapshot = await getMarketSnapshot();
-                await sendEvent("step", { step: `Market snapshot: SOL $${marketSnapshot.solPriceUsd?.toLocaleString() || 'N/A'}` });
+                // 1. Category-aware preflight + optional market context
+                let marketSnapshot: MarketSnapshot | undefined;
+                if (categoryNeedsMarketSnapshot(parsed.data.projectType)) {
+                    marketSnapshot = await getMarketSnapshot();
+                }
+
+                const preflightSteps = buildCategoryPreflightSteps(parsed.data.projectType, marketSnapshot);
+                for (const step of preflightSteps) {
+                    await sendEvent("step", { step });
+                }
 
                 // 2. AI Inference with real-time committee debate
                 const { evaluateWithCommittee } = await import("@/lib/ai/committee");

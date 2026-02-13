@@ -10,12 +10,20 @@
 import { IdeaEvaluationResult } from "@/lib/ideaEvaluationTypes";
 import { IdeaSubmission } from "@/lib/ideaSchema";
 import { MarketSnapshot } from "@/lib/market/types";
+import { getCategoryContextualFields, getMissingContextualFields } from "@/lib/ideaCategories";
 
 export interface ScoreCalibrationContext {
     rawResult: IdeaEvaluationResult;
     projectType: string;
     market?: MarketSnapshot;
     ideaSubmission?: IdeaSubmission;
+}
+
+function pushUnique(values: string[], next: string): void {
+    const normalized = next.trim().toLowerCase();
+    if (!values.some((value) => value.trim().toLowerCase() === normalized)) {
+        values.push(next);
+    }
 }
 
 /**
@@ -29,6 +37,16 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
     const { rawResult, projectType, ideaSubmission } = context;
     const newResult = JSON.parse(JSON.stringify(rawResult)) as IdeaEvaluationResult;
     const calibrationNotes: string[] = newResult.calibrationNotes || [];
+    if (!newResult.recommendations) {
+        newResult.recommendations = {
+            mustFixBeforeBuild: [],
+            recommendedPivots: [],
+            niceToHaveLater: []
+        };
+    }
+    if (!newResult.recommendations.mustFixBeforeBuild) {
+        newResult.recommendations.mustFixBeforeBuild = [];
+    }
 
     // Rule 1: Cap hype / meme ideas
     const lowerSummary = (newResult.summary.oneLiner + " " + newResult.summary.mainVerdict).toLowerCase();
@@ -288,6 +306,38 @@ export function calibrateScore(context: ScoreCalibrationContext): IdeaEvaluation
         if (newResult.overallScore >= 50 && newResult.overallScore < 70 && newResult.launchReadinessScore! >= 80) {
             newResult.overallScore += 5;
             calibrationNotes.push("Overall: plus points for exceptional launch readiness.");
+        }
+    }
+
+    // Rule 4.5: Soft-required contextual fields (non-blocking quality penalties)
+    if (ideaSubmission) {
+        const contextualFields = getCategoryContextualFields(projectType);
+        const hasContextualPayloadKeys = contextualFields.some((field) =>
+            Object.prototype.hasOwnProperty.call(ideaSubmission, field.key)
+        );
+        const missingContextualFields = hasContextualPayloadKeys
+            ? getMissingContextualFields(projectType, ideaSubmission)
+            : [];
+        if (missingContextualFields.length > 0) {
+            const overallPenalty = Math.min(6, missingContextualFields.length * 2);
+            newResult.overallScore = Math.max(0, newResult.overallScore - overallPenalty);
+
+            if (typeof newResult.launchReadinessScore === 'number') {
+                const launchPenalty = Math.min(10, missingContextualFields.length * 4);
+                newResult.launchReadinessScore = Math.max(0, newResult.launchReadinessScore - launchPenalty);
+            }
+
+            const missingLabels = missingContextualFields.map((field) => field.label).join(', ');
+            calibrationNotes.push(
+                `Context quality: minus points for missing category inputs (${missingLabels}). Soft-required only; submission still allowed.`
+            );
+
+            for (const field of missingContextualFields) {
+                pushUnique(
+                    newResult.recommendations.mustFixBeforeBuild,
+                    `Add a concrete "${field.label}" input to improve evaluation confidence.`
+                );
+            }
         }
     }
 

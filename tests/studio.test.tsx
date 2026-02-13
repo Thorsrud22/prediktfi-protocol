@@ -276,6 +276,84 @@ describe('AI Idea Evaluator Studio', () => {
         expect(screen.getByText('Model Type')).toBeInTheDocument();
     });
 
+    it.each([
+        { sector: /NFT \/ Art/i, fieldOne: 'Utility Layer', fieldTwo: 'Collector Hook' },
+        { sector: /Gaming/i, fieldOne: 'Core Gameplay Loop', fieldTwo: 'Economy Model' },
+        { sector: /Other/i, fieldOne: 'Target User', fieldTwo: 'Differentiation' },
+    ])('shows category-specific fields for $sector in Strategic Insights', async ({ sector, fieldOne, fieldTwo }) => {
+        render(
+            <ToastProvider>
+                <StudioPage />
+            </ToastProvider>
+        );
+
+        await waitForWizardReady();
+
+        fireEvent.click(screen.getByRole('button', { name: sector }));
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+
+        const nameInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
+        fireEvent.change(nameInput, { target: { value: 'CATEGORY TEST' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+
+        const descInput = await screen.findByPlaceholderText(/Explain|Describe/i);
+        fireEvent.change(descInput, { target: { value: 'Valid category description for contextual field testing.' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+
+        await screen.findByText(/Strategic Insights/i);
+        expect(screen.getByText(fieldOne)).toBeInTheDocument();
+        expect(screen.getByText(fieldTwo)).toBeInTheDocument();
+    });
+
+    it('shows soft-required context warning on review and still allows submit', async () => {
+        render(
+            <ToastProvider>
+                <StudioPage />
+            </ToastProvider>
+        );
+
+        await waitForWizardReady();
+
+        fireEvent.click(screen.getByRole('button', { name: /AI Agent/i }));
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+
+        const aiNameInput = await screen.findByPlaceholderText(/\$TICKER|Project Name/i);
+        fireEvent.change(aiNameInput, { target: { value: 'AI WARN TEST' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+
+        const aiDescInput = await screen.findByPlaceholderText(/Explain|Describe/i);
+        fireEvent.change(aiDescInput, { target: { value: 'Valid AI description with empty contextual fields to trigger warning.' } });
+        await settle();
+        fireEvent.click(screen.getByText('Continue'));
+        await settle();
+
+        // Keep contextual fields empty, proceed to review
+        fireEvent.click(screen.getByText('Review'));
+        await settle();
+
+        await screen.findByText(/Ready to Launch\?/i);
+        expect(screen.getByText(/Context Quality Warning/i)).toBeInTheDocument();
+        expect(screen.getByText(/missing category-specific inputs will reduce confidence and report quality/i)).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /Generate Report/i }));
+        await waitFor(() => {
+            expect((global.fetch as any)).toHaveBeenCalledWith(
+                '/api/idea-evaluator/evaluate-stream',
+                expect.objectContaining({ method: 'POST' })
+            );
+        });
+    });
+
     it('verifies label-based field discovery and accessibility descriptions', async () => {
         render(
             <ToastProvider>

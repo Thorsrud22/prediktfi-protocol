@@ -46,6 +46,12 @@ export function buildIdeaContextSummary(idea: IdeaSubmission): string {
     idea.defiMechanism ? `DeFi Mechanism: "${idea.defiMechanism}"` : '',
     idea.aiModelType ? `AI Model Strategy: "${idea.aiModelType}"` : '',
     idea.aiDataMoat ? `AI Data Moat: "${idea.aiDataMoat}"` : '',
+    idea.nftUtility ? `NFT Utility Layer: "${idea.nftUtility}"` : '',
+    idea.nftCollectorHook ? `NFT Collector Hook: "${idea.nftCollectorHook}"` : '',
+    idea.gamingCoreLoop ? `Gaming Core Loop: "${idea.gamingCoreLoop}"` : '',
+    idea.gamingEconomyModel ? `Gaming Economy Model: "${idea.gamingEconomyModel}"` : '',
+    idea.otherTargetUser ? `Target User: "${idea.otherTargetUser}"` : '',
+    idea.otherDifferentiation ? `Differentiation: "${idea.otherDifferentiation}"` : '',
 
     // Checklists
     idea.memecoinLaunchPreparation?.length ? `Memecoin Prep: ${idea.memecoinLaunchPreparation.join(', ')}` : '',
