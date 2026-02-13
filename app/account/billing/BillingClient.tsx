@@ -26,6 +26,11 @@ export default function BillingClient() {
 
   useEffect(() => {
     fetchSubscription();
+    // Only fetch payments if we have a robust way to know user is logged in
+    // For now, we'll rely on the API response handling, but we can prevent the call 
+    // if we add a wallet context check here later.
+    // However, looking at the code, we don't have wallet content here yet.
+    // Let's modify fetchPayments to handle 401 silently.
     fetchPayments();
   }, []);
 
@@ -42,6 +47,11 @@ export default function BillingClient() {
   const fetchPayments = async () => {
     try {
       const response = await fetch('/api/billing/payments');
+      if (response.status === 401) {
+        // User not logged in, just set empty payments silently
+        setPayments([]);
+        return;
+      }
       const data = await response.json();
       setPayments(data.payments || []);
     } catch (error) {

@@ -108,28 +108,38 @@ export function Aurora(props: AuroraProps) {
 
   const ctnDom = useRef<HTMLDivElement>(null);
 
-  // State for static mode (reduced motion or forced)
-  const [isStatic, setIsStatic] = React.useState(forceStatic);
+  // Null means "environment not resolved yet" (first paint / hydration window).
+  const [shouldAnimate, setShouldAnimate] = React.useState<boolean | null>(null);
 
+  // 1. Handle Environment Detection (Client-side only)
   useEffect(() => {
-    // Check for reduced motion preference
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    const handleChange = () => {
-      setIsStatic(forceStatic || mediaQuery.matches);
+    const checkRequirements = () => {
+      const isMobile = window.innerWidth < 768;
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const shouldRunWebGL = !forceStatic && !isMobile && !prefersReducedMotion;
+      setShouldAnimate(shouldRunWebGL);
     };
 
     // Initial check
-    handleChange();
+    checkRequirements();
 
-    // Listen for changes
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    // Listeners
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handleResize = () => checkRequirements();
+    const handleMotionChange = () => checkRequirements();
+
+    window.addEventListener('resize', handleResize);
+    mediaQuery.addEventListener('change', handleMotionChange);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      mediaQuery.removeEventListener('change', handleMotionChange);
+    };
   }, [forceStatic]);
 
+  // 2. WebGL Logic (Only runs if shouldAnimate is explicitly true)
   useEffect(() => {
-    // If static mode is active, skip WebGL initialization
-    if (isStatic) return;
+    if (shouldAnimate !== true) return;
 
     const ctn = ctnDom.current;
     if (!ctn) return;
@@ -138,14 +148,15 @@ export function Aurora(props: AuroraProps) {
     let idleId: number | null = null;
     let animationFrameId: number | null = null;
 
+    // ... Copy exact WebGL logic from previous version, just wrapped in this effect ...
     const startAurora = () => {
       const renderer = new Renderer({
         alpha: true,
         premultipliedAlpha: true,
         antialias: false,
-        powerPreference: 'high-performance', // optimize for speed
+        powerPreference: 'high-performance',
         depth: false,
-        dpr: Math.min(window.devicePixelRatio, 1.2), // Reduced from 1.5 to 1.2 for better performance
+        dpr: Math.min(window.devicePixelRatio, 1.2),
       });
       const gl = renderer.gl;
       gl.clearColor(0, 0, 0, 0);
@@ -181,11 +192,15 @@ export function Aurora(props: AuroraProps) {
       const mesh = new Mesh(gl, { geometry, program });
       ctn.appendChild(gl.canvas);
 
-      // Force canvas to fill container via CSS
       gl.canvas.style.display = 'block';
       gl.canvas.style.width = '100%';
       gl.canvas.style.height = '100%';
       gl.canvas.style.willChange = 'transform';
+
+      // Ensure canvas is absolute positioned to overlay the gradient fallback
+      gl.canvas.style.position = 'absolute';
+      gl.canvas.style.top = '0';
+      gl.canvas.style.left = '0';
 
       let lastStopsKey = '';
       const updateColorStops = (stops: string[]) => {
@@ -202,7 +217,6 @@ export function Aurora(props: AuroraProps) {
         if (!ctn) return;
         const width = ctn.offsetWidth;
         const height = ctn.offsetHeight;
-
         renderer.setSize(width, height);
         program.uniforms.uResolution.value = [width, height];
       };
@@ -217,38 +231,28 @@ export function Aurora(props: AuroraProps) {
       let lastTime = performance.now();
       let frameCount = 0;
 
-      // Scroll pause handler - stop rendering while scrolling for smooth performance
       const handleScroll = () => {
         isScrolling = true;
         if (scrollTimeout) clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
           isScrolling = false;
-        }, 150); // Resume 150ms after scroll stops
+        }, 150);
       };
 
       window.addEventListener('scroll', handleScroll, { passive: true });
 
       const update = (t: number) => {
         animationFrameId = requestAnimationFrame(update);
-
-        // Skip rendering when not visible or during scroll
         if (!isVisible || isScrolling) return;
-
-        // Throttle to ~20fps (render every 3rd frame) to free up main thread
         frameCount++;
         if (frameCount % 3 !== 0) return;
 
-        // Calculate delta time
         const now = performance.now();
-        let dt = (now - lastTime) * 0.001; // seconds
+        let dt = (now - lastTime) * 0.001;
         lastTime = now;
-
-        // Cap dt to prevent large jumps when resuming from pause (e.g. scroll)
         if (dt > 0.05) dt = 0.05;
 
-        // Wrap time to avoid float precision loss (lag) over time
-        // 1000 is arbitrary large number, period of sine is 2PI
-        timeAccumulator += dt * (propsRef.current.speed ?? effectiveSpeed) * 0.1; // Reduced from 0.15 to 0.1 for smoother flow
+        timeAccumulator += dt * (propsRef.current.speed ?? effectiveSpeed) * 0.1;
         if (timeAccumulator > 10000) timeAccumulator -= 10000;
 
         program.uniforms.uTime.value = timeAccumulator;
@@ -261,7 +265,6 @@ export function Aurora(props: AuroraProps) {
 
       animationFrameId = requestAnimationFrame(update);
 
-      // Intersection Observer to pause when off-screen
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           isVisible = entry.isIntersecting;
@@ -276,8 +279,12 @@ export function Aurora(props: AuroraProps) {
         window.removeEventListener('resize', resize);
         window.removeEventListener('scroll', handleScroll);
         observer.disconnect();
-        if (ctn && gl.canvas.parentNode === ctn) {
-          ctn.removeChild(gl.canvas);
+        if (ctn && gl.canvas && gl.canvas.parentNode === ctn) {
+          try {
+            ctn.removeChild(gl.canvas);
+          } catch (e) {
+            // Ignore if child already removed
+          }
         }
         gl.getExtension('WEBGL_lose_context')?.loseContext();
       };
@@ -288,7 +295,6 @@ export function Aurora(props: AuroraProps) {
       cancelIdleCallback?: (handle: number) => void;
     };
 
-    // Force immediate start
     startAurora();
 
     return () => {
@@ -297,20 +303,43 @@ export function Aurora(props: AuroraProps) {
       }
       cleanup?.();
     };
-  }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed, isStatic]);
+  }, [blend, resolvedColorStops, effectiveAmplitude, effectiveSpeed, shouldAnimate]);
+
+  // Neutral boot style to avoid bright blue flash before we know mobile/desktop mode.
+  const bootStyle: React.CSSProperties = {
+    backgroundColor: '#050913',
+    backgroundImage: 'linear-gradient(180deg, #04070f 0%, #050913 55%, #070e1d 100%)',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: 'cover',
+  };
+
+  // Static fallback for mobile / reduced motion.
+  // Keep this visually close to desktop Aurora so hard refresh does not look flat.
+  const staticStyle = {
+    backgroundColor: '#050913',
+    backgroundImage: `
+      radial-gradient(120% 85% at 50% -10%, ${resolvedColorStops[1]}40 0%, transparent 58%),
+      radial-gradient(90% 70% at 90% 20%, ${resolvedColorStops[2]}30 0%, transparent 62%),
+      radial-gradient(90% 70% at 10% 18%, ${resolvedColorStops[0]}2b 0%, transparent 64%),
+      linear-gradient(180deg, #04070f 0%, #050913 45%, #070e1d 100%)
+    `,
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: 'cover',
+    filter: isSubtle ? 'saturate(0.9) brightness(0.9)' : 'saturate(1.05) brightness(1)',
+  } as React.CSSProperties;
+
+  const resolvedStyle =
+    shouldAnimate === null
+      ? bootStyle
+      : shouldAnimate
+        ? undefined
+        : staticStyle;
 
   return (
     <div
       ref={ctnDom}
       className={`aurora-container ${isSubtle ? 'aurora-subtle' : ''} ${props.className || ''} `}
-      style={isStatic ? {
-        // Fallback gradient logic: use first, middle, and last color stops
-        background: `linear-gradient(180deg, 
-          ${resolvedColorStops[0]} 0%, 
-          ${resolvedColorStops[Math.floor(resolvedColorStops.length / 2)]} 50%, 
-          ${resolvedColorStops[resolvedColorStops.length - 1]} 100%)`,
-        opacity: isSubtle ? 0.5 : 0.8, // Slightly lower opacity for static background to blend better
-      } : undefined}
+      style={resolvedStyle}
     />
   );
 }

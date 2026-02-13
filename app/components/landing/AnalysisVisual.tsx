@@ -18,13 +18,20 @@ export default function AnalysisVisual() {
 
             {/* Floating Data Points */}
             <div className="absolute inset-0">
-                {[...Array(6)].map((_, i) => (
+                {[
+                    { left: '20%', top: '25%', duration: 4.5, delay: 0.2 },
+                    { left: '75%', top: '30%', duration: 3.2, delay: 1.5 },
+                    { left: '45%', top: '55%', duration: 3.8, delay: 0.8 },
+                    { left: '25%', top: '75%', duration: 4.2, delay: 1.8 },
+                    { left: '65%', top: '65%', duration: 3.5, delay: 0.5 },
+                    { left: '50%', top: '35%', duration: 4.8, delay: 1.2 },
+                ].map((point, i) => (
                     <motion.div
                         key={i}
                         className="absolute w-1 h-1 bg-accent/40 rounded-full"
                         style={{
-                            left: `${15 + Math.random() * 70}%`,
-                            top: `${20 + Math.random() * 60}%`,
+                            left: point.left,
+                            top: point.top,
                         }}
                         animate={{
                             y: [0, -20, 0],
@@ -32,9 +39,9 @@ export default function AnalysisVisual() {
                             scale: [0, 1.5, 0],
                         }}
                         transition={{
-                            duration: 3 + Math.random() * 2,
+                            duration: point.duration,
                             repeat: Infinity,
-                            delay: Math.random() * 2,
+                            delay: point.delay,
                             ease: "easeInOut",
                         }}
                     />

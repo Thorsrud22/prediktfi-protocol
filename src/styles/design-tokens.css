@@ -115,7 +115,7 @@
 
 /* Prevent theme flicker - keeping text color but allowing transparent bg for Aurora */
 html {
-  background-color: transparent !important;
+  background-color: #000000 !important;
   color: var(--text-primary) !important;
 }
 
