@@ -1,3 +1,5 @@
+import { EvidenceClaim, EvidencePack } from "@/lib/ai/evidenceTypes";
+
 export type IdeaEvaluationResult = {
   overallScore: number;
 
@@ -99,4 +101,26 @@ export type IdeaEvaluationResult = {
 
   projectType?: string;
   confidenceLevel?: 'low' | 'medium' | 'high';
+  meta?: {
+    confidenceLevel?: 'low' | 'medium' | 'high';
+    confidenceReasons?: string[];
+    debateDisagreementIndex?: number;
+    evidenceCoverage?: number;
+    modelRoute?: {
+      bear: string;
+      bull: string;
+      competitive: string;
+      judge: string;
+      judgeFallback: string;
+      verifier: string;
+      fallbackUsed: boolean;
+    };
+    fallbackUsed?: boolean;
+    verifierStatus?: 'pass' | 'soft_fail' | 'hard_fail' | 'error';
+    verifierIssues?: string[];
+    dataFreshness?: string | null;
+  };
+  evidence?: EvidencePack & {
+    claims?: EvidenceClaim[];
+  };
 };

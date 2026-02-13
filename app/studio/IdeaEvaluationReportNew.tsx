@@ -227,6 +227,37 @@ Get your own evaluation here:`;
         return stats;
     }, [result]);
 
+    const evidenceCoveragePct = React.useMemo(() => {
+        const rawCoverage = result.meta?.evidenceCoverage;
+        if (typeof rawCoverage === 'number') {
+            return Math.round(rawCoverage * 100);
+        }
+
+        const factualClaims = (result.evidence?.claims || []).filter(claim => claim.claimType === 'fact');
+        if (factualClaims.length === 0) return 0;
+        const corroborated = factualClaims.filter(claim => (claim.evidenceIds || []).length > 0);
+        return Math.round((corroborated.length / factualClaims.length) * 100);
+    }, [result]);
+
+    const claimEvidenceRows = React.useMemo(() => {
+        const evidenceItems = result.evidence?.evidence || [];
+        const evidenceById = new Map(evidenceItems.map(item => [item.id, item]));
+        const claims = result.evidence?.claims || [];
+
+        return claims.slice(0, 8).map((claim, idx) => ({
+            id: `${idx}-${claim.text.slice(0, 10)}`,
+            claim,
+            evidence: (claim.evidenceIds || [])
+                .map(id => evidenceById.get(id))
+                .filter((item): item is NonNullable<typeof item> => !!item)
+                .slice(0, 2)
+        }));
+    }, [result]);
+
+    const modelRoute = result.meta?.modelRoute;
+    const trustDataFreshness = result.meta?.dataFreshness || result.evidence?.generatedAt || null;
+    const confidenceReasons = result.meta?.confidenceReasons || [];
+
     const getScoreColor = (score: number) => {
         if (score >= 60) return 'text-emerald-400';
         if (score >= 30) return 'text-amber-400';
@@ -277,6 +308,11 @@ Get your own evaluation here:`;
                         <span className="text-[10px] text-white/60 font-bold uppercase tracking-[0.2em]">Analysis Complete</span>
                     </div>
                     <div className="flex items-center gap-4">
+                        {result.meta?.fallbackUsed && (
+                            <span className="text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300">
+                                Backup Judge Used
+                            </span>
+                        )}
                         <span className="text-xs text-white/50 font-mono hidden sm:block">{new Date().toISOString().split('T')[0]}</span>
                         <button
                             onClick={handleDownloadPDF}
@@ -395,6 +431,87 @@ Get your own evaluation here:`;
                     <div className="flex flex-col items-center justify-center">
                         <RiskGauge score={riskScore} size={200} />
                     </div>
+                </div>
+
+                {/* ========== TRUST PANEL ========== */}
+                <div className="border border-emerald-900/40 bg-[#071a13] p-6 rounded-2xl mb-8">
+                    <div className="flex items-center gap-2 mb-4 text-emerald-300 border-b border-emerald-500/10 pb-3">
+                        <Shield size={18} />
+                        <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Why Trust This Evaluation</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                        <div className="bg-black/20 border border-white/5 rounded-xl p-3">
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Evidence Coverage</div>
+                            <div className="text-sm font-bold text-emerald-300">{evidenceCoveragePct}%</div>
+                        </div>
+                        <div className="bg-black/20 border border-white/5 rounded-xl p-3">
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Confidence</div>
+                            <div className={`text-sm font-bold uppercase ${result.meta?.confidenceLevel === 'high'
+                                ? 'text-emerald-300'
+                                : result.meta?.confidenceLevel === 'medium'
+                                    ? 'text-amber-300'
+                                    : 'text-red-300'
+                                }`}>
+                                {result.meta?.confidenceLevel || result.confidenceLevel || 'unknown'}
+                            </div>
+                        </div>
+                        <div className="bg-black/20 border border-white/5 rounded-xl p-3">
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Debate Tension</div>
+                            <div className="text-sm font-bold text-white">
+                                {typeof result.meta?.debateDisagreementIndex === 'number'
+                                    ? `${result.meta?.debateDisagreementIndex}/100`
+                                    : 'N/A'}
+                            </div>
+                        </div>
+                        <div className="bg-black/20 border border-white/5 rounded-xl p-3">
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Verifier</div>
+                            <div className={`text-sm font-bold uppercase ${result.meta?.verifierStatus === 'pass'
+                                ? 'text-emerald-300'
+                                : result.meta?.verifierStatus === 'soft_fail'
+                                    ? 'text-amber-300'
+                                    : result.meta?.verifierStatus === 'hard_fail'
+                                        ? 'text-red-300'
+                                        : 'text-white/70'
+                                }`}>
+                                {result.meta?.verifierStatus || 'n/a'}
+                            </div>
+                        </div>
+                        <div className="bg-black/20 border border-white/5 rounded-xl p-3">
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Data Freshness</div>
+                            <div className="text-sm font-bold text-white">
+                                {trustDataFreshness ? new Date(trustDataFreshness).toISOString().replace('T', ' ').slice(0, 16) : 'N/A'}
+                            </div>
+                        </div>
+                    </div>
+
+                    {modelRoute && (
+                        <div className="mb-4">
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-2">Model Route</div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-[10px] font-mono">
+                                <div className="bg-black/20 rounded px-2 py-1 text-white/70">Bear: {modelRoute.bear}</div>
+                                <div className="bg-black/20 rounded px-2 py-1 text-white/70">Bull: {modelRoute.bull}</div>
+                                <div className="bg-black/20 rounded px-2 py-1 text-white/70">Scout: {modelRoute.competitive}</div>
+                                <div className="bg-black/20 rounded px-2 py-1 text-white/70">Judge: {modelRoute.judge}</div>
+                                <div className="bg-black/20 rounded px-2 py-1 text-white/70">Backup: {modelRoute.judgeFallback}</div>
+                                <div className="bg-black/20 rounded px-2 py-1 text-white/70">Verifier: {modelRoute.verifier}</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {confidenceReasons.length > 0 && (
+                        <div>
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-2">Reliability Notes</div>
+                            <ul className="space-y-1">
+                                {confidenceReasons.slice(0, 4).map((reason, idx) => (
+                                    <li key={idx} className="text-xs text-emerald-100/80 flex gap-2">
+                                        <span className="text-emerald-400">•</span>
+                                        <span>{reason}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
 
                 {/* ========== INVESTMENT COMMITTEE DEBATE ========== */}
@@ -590,6 +707,52 @@ Get your own evaluation here:`;
                         }
                     })()}
                 </div>
+
+                {/* CLAIMS & EVIDENCE TABLE */}
+                {claimEvidenceRows.length > 0 && (
+                    <div className="border border-emerald-900/30 bg-[#0b1a14] p-6 rounded-2xl mb-8">
+                        <div className="flex items-center gap-2 mb-5 text-emerald-300 border-b border-emerald-500/10 pb-3">
+                            <Terminal size={18} />
+                            <h3 className="font-bold uppercase tracking-[0.2em] text-[10px]">Claims & Evidence</h3>
+                        </div>
+
+                        <div className="space-y-3">
+                            {claimEvidenceRows.map((row, idx) => (
+                                <div key={row.id} className="border border-white/5 bg-black/20 rounded-xl p-4">
+                                    <div className="flex items-start justify-between gap-3 mb-2">
+                                        <p className="text-sm text-white/90 leading-relaxed">{row.claim.text}</p>
+                                        <span className={`text-[9px] uppercase tracking-widest px-2 py-1 rounded border ${row.claim.support === 'corroborated'
+                                            ? 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10'
+                                            : 'text-amber-300 border-amber-500/40 bg-amber-500/10'
+                                            }`}>
+                                            {row.claim.support || 'uncorroborated'}
+                                        </span>
+                                    </div>
+
+                                    <div className="text-[10px] text-white/40 mb-2">
+                                        Claim #{idx + 1} • Type: {row.claim.claimType}
+                                    </div>
+
+                                    {row.evidence.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {row.evidence.map((item, evidenceIndex) => (
+                                                <div key={`${item.id}-${evidenceIndex}`} className="text-xs text-emerald-100/80 bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-3">
+                                                    <div className="font-mono text-[10px] text-emerald-300 mb-1">{item.id} • {item.source}</div>
+                                                    <div className="text-white/80">{item.title}</div>
+                                                    <div className="text-white/50 mt-1">{item.snippet}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-xs text-amber-300/80 bg-amber-500/10 border border-amber-500/20 rounded-lg p-2">
+                                            No supporting evidence IDs were attached to this claim.
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* THREAT DETECTION + CALIBRATION (2-col grid) */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

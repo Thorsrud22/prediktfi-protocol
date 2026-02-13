@@ -1,3 +1,5 @@
+import { EvidenceClaim, EvidencePack } from "@/lib/ai/evidenceTypes";
+
 export interface CompetitiveMemo {
     // Core Fields
     /**
@@ -31,6 +33,11 @@ export interface CompetitiveMemo {
      */
     evaluatorNotes: string;
 
+    /**
+     * Key claims the scout is making. Facts should include supporting evidence IDs.
+     */
+    claims: EvidenceClaim[];
+
     // Category Specific Hints (Optional/Nullable)
     memecoin?: {
         narrativeLabel: string;
@@ -62,5 +69,5 @@ export interface ReferenceProject {
 }
 
 export type CompetitiveMemoResult =
-    | { status: 'ok'; memo: CompetitiveMemo }
+    | { status: 'ok'; memo: CompetitiveMemo; evidencePack: EvidencePack }
     | { status: 'not_available'; reason: string };

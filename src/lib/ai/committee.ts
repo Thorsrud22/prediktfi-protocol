@@ -2,238 +2,384 @@ import { IdeaSubmission } from "@/lib/ideaSchema";
 import { IdeaEvaluationResult } from "@/lib/ideaEvaluationTypes";
 import { openai } from "@/lib/openaiClient";
 import { MarketSnapshot } from "@/lib/market/types";
+import { EvidenceClaim, EvidencePack } from "@/lib/ai/evidenceTypes";
 import {
-    PERMABEAR_SYSTEM_PROMPT,
-    PERMABULL_SYSTEM_PROMPT,
-    JUDGE_SYSTEM_PROMPT,
-    JSON_OUTPUT_SCHEMA
+  PERMABEAR_SYSTEM_PROMPT,
+  PERMABULL_SYSTEM_PROMPT,
+  JUDGE_SYSTEM_PROMPT,
+  JSON_OUTPUT_SCHEMA,
 } from "./prompts";
-import { buildIdeaContextSummary, detectLaunchedStatus } from "./evaluator"; // Re-use helpers
+import { buildIdeaContextSummary, detectLaunchedStatus } from "./evaluator";
 import { parseEvaluationResponse } from "./parser";
 import { calibrateScore } from "./calibration";
 import { verifyTokenSecurity } from "@/lib/solana/token-check";
 import { fetchCompetitiveMemo } from "@/lib/market/competitive";
+import { getEvaluationModelMap } from "@/lib/ai/model-routing";
+import {
+  buildModelRouteMeta,
+  computeDebateDisagreementIndex,
+  computeEvidenceCoverage,
+  deriveConfidence,
+  extractDataFreshness,
+} from "@/lib/ai/trust-metrics";
+import { runEvaluationVerifier } from "@/lib/ai/verifier";
 
-// Types for intermediate agent outputs
 interface BearAnalysis {
-    bearAnalysis: {
-        fatalFlaws: string[];
-        riskScore: number;
-        verdict: "KILL" | "AVOID" | "SHORT";
-        roast: string;
-    }
+  bearAnalysis?: {
+    fatalFlaws?: string[];
+    riskScore?: number;
+    verdict?: "KILL" | "AVOID" | "SHORT";
+    roast?: string;
+  };
 }
 
 interface BullAnalysis {
-    bullAnalysis: {
-        alphaSignals: string[];
-        upsideScore: number;
-        verdict: "ALL IN" | "APE" | "LONG";
-        pitch: string;
-    }
+  bullAnalysis?: {
+    alphaSignals?: string[];
+    upsideScore?: number;
+    verdict?: "ALL IN" | "APE" | "LONG";
+    pitch?: string;
+  };
 }
 
 export type ProgressCallback = (step: string) => void;
 export type ThoughtCallback = (thought: string) => void;
 
-/**
- * Evaluates an idea using the "Investment Committee" protocol (Bull/Bear/Judge).
- */
+interface AgentCallResult<T = Record<string, unknown>> {
+  output: T;
+  failed: boolean;
+}
+
+function buildFallbackEvidencePack(unavailableSources: string[] = []): EvidencePack {
+  return {
+    evidence: [],
+    unavailableSources,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+function buildClaimsSummary(claims: EvidenceClaim[]): string {
+  if (claims.length === 0) return "No competitive claims were generated.";
+  return claims
+    .slice(0, 16)
+    .map(
+      (claim, i) =>
+        `${i + 1}. [${claim.claimType}] ${claim.support || "uncorroborated"} | ids=${
+          claim.evidenceIds.join(",") || "none"
+        } | ${claim.text}`
+    )
+    .join("\n");
+}
+
+function buildEvidenceSummary(evidencePack: EvidencePack): string {
+  if (evidencePack.evidence.length === 0) return "No external evidence available.";
+  return evidencePack.evidence
+    .slice(0, 28)
+    .map(
+      (item) =>
+        `- ${item.id} [${item.source}/${item.reliabilityTier}] ${item.title}${item.url ? ` (${item.url})` : ""}`
+    )
+    .join("\n");
+}
+
 export async function evaluateWithCommittee(
-    input: IdeaSubmission,
-    options?: {
-        market?: MarketSnapshot;
-        onProgress?: ProgressCallback;
-        onThought?: ThoughtCallback;
-    }
+  input: IdeaSubmission,
+  options?: {
+    market?: MarketSnapshot;
+    onProgress?: ProgressCallback;
+    onThought?: ThoughtCallback;
+  }
 ): Promise<IdeaEvaluationResult> {
-    const contextSummary = buildIdeaContextSummary(input);
+  const modelMap = getEvaluationModelMap();
+  const contextSummary = buildIdeaContextSummary(input);
+  const normalizedCategory = input.projectType.toLowerCase();
 
-    // 1. Parallel Data Fetching (Same as legacy evaluator)
-    options?.onProgress?.("Gathering intel (Market, On-Chain, Competitors)...");
+  options?.onProgress?.("Gathering intel (Market, On-Chain, Competitors)...");
 
-    const normalizedCategory = input.projectType.toLowerCase();
+  const tokenCheckPromise = input.tokenAddress
+    ? verifyTokenSecurity(input.tokenAddress).catch((err) => ({ valid: false, error: String(err) } as any))
+    : Promise.resolve(null);
 
-    // Launch market checks
-    const tokenCheckPromise = input.tokenAddress
-        ? verifyTokenSecurity(input.tokenAddress).catch(err => ({ valid: false, error: String(err) } as any))
-        : Promise.resolve(null);
+  const competitiveMemoPromise = ["memecoin", "defi", "ai"].includes(normalizedCategory)
+    ? fetchCompetitiveMemo(input, normalizedCategory).catch((err) => ({ status: "error", error: err } as any))
+    : Promise.resolve(null);
 
-    const competitiveMemoPromise = ['memecoin', 'defi', 'ai'].includes(normalizedCategory)
-        ? fetchCompetitiveMemo(input, normalizedCategory).catch(err => ({ status: 'error', error: err } as any))
-        : Promise.resolve(null);
+  const [tokenCheckRaw, competitiveMemoResult] = await Promise.all([
+    tokenCheckPromise,
+    competitiveMemoPromise,
+  ]);
 
-    const [tokenCheckRaw, competitiveMemoResult] = await Promise.all([tokenCheckPromise, competitiveMemoPromise]);
+  let marketContext = "";
+  if (options?.market && options.market.source !== "fallback") {
+    marketContext = `Market Data:\n${JSON.stringify(options.market, null, 2)}`;
+  }
 
-    // Construct Context Strings (Reuse logic from evaluator.ts)
-    let marketContext = "";
-    if (options?.market && options.market.source !== 'fallback') {
-        marketContext = `Market Data:\n${JSON.stringify(options.market, null, 2)}`;
+  let verificationContext = "";
+  if (tokenCheckRaw) {
+    if (!tokenCheckRaw.valid) {
+      verificationContext = `Token Check: FAILED (${tokenCheckRaw.error})`;
+    } else {
+      verificationContext = `Token Check: MINT=${tokenCheckRaw.mintAuthority ? "ACTIVE" : "REVOKED"}, FREEZE=${
+        tokenCheckRaw.freezeAuthority ? "ACTIVE" : "REVOKED"
+      }, LP=${tokenCheckRaw.isLiquidityLocked ? "LOCKED" : "UNLOCKED"}`;
     }
+  } else if (detectLaunchedStatus(input)) {
+    verificationContext = "INTELLIGENCE GAP: Claims live, no CA provided.";
+  }
 
-    let verificationContext = "";
-    if (tokenCheckRaw) {
-        if (!tokenCheckRaw.valid) {
-            verificationContext = `Token Check: FAILED (${tokenCheckRaw.error})`;
-        } else {
-            verificationContext = `Token Check: MINT=${tokenCheckRaw.mintAuthority ? 'ACTIVE' : 'REVOKED'}, FREEZE=${tokenCheckRaw.freezeAuthority ? 'ACTIVE' : 'REVOKED'}, LP=${tokenCheckRaw.isLiquidityLocked ? 'LOCKED' : 'UNLOCKED'}`;
-        }
-    } else if (detectLaunchedStatus(input)) {
-        verificationContext = "INTELLIGENCE GAP: Claims live, no CA provided.";
-    }
-
-    let competitiveContext = "";
-    let referenceProjects: any[] = [];
-    if (competitiveMemoResult?.status === 'ok') {
-        competitiveContext = `Competitors: ${competitiveMemoResult.memo.shortLandscapeSummary}`;
-        referenceProjects = competitiveMemoResult.memo.referenceProjects || [];
-    }
-
-    // 2. The Committee Process
-    const baseUserContent = `
-  Input Data:
-  ${contextSummary}
-  ${marketContext}
-  ${verificationContext}
-  ${competitiveContext}
-  
-  Idea:
-  ${JSON.stringify(input, null, 2)}
-  `;
-
-    // --- Step 2a: The Agents (Parallel) ---
-    options?.onProgress?.("kicking off Committee Debate (Bull vs Bear)...");
-
-    // Helper for timeout-wrapped OpenAI call
-    const callAgent = async (model: string, sysPrompt: string, userPrompt: string, timeoutMs: number) => {
-        try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-            const response = await openai().chat.completions.create({
-                model,
-                messages: [
-                    { role: "system", content: sysPrompt },
-                    { role: "user", content: userPrompt }
-                ],
-                response_format: { type: "json_object" }
-            }, { signal: controller.signal });
-
-            clearTimeout(timeout);
-            return JSON.parse(response.choices[0].message.content || "{}");
-        } catch (error) {
-            console.warn(`Agent (${model}) failed or timed out:`, error);
-            const errMsg = error instanceof Error ? error.message : String(error);
-            options?.onThought?.(`[ERROR] Agent ${model} failed: ${errMsg}\n`);
-            return {}; // Return empty object on failure to allow flow to continue
-        }
+  let competitiveContext = "";
+  let referenceProjects: {
+    name: string;
+    metrics?: {
+      marketCap?: string;
+      tvl?: string;
+      dailyUsers?: string;
+      funding?: string;
+      revenue?: string;
     };
+  }[] = [];
+  let evidencePack: EvidencePack = buildFallbackEvidencePack(
+    ["memecoin", "defi", "ai"].includes(normalizedCategory) ? ["competitive"] : []
+  );
+  let competitiveClaims: EvidenceClaim[] = [];
 
-    const [bearOutput, bullOutput] = await Promise.all([
-        callAgent("gpt-4o-mini", PERMABEAR_SYSTEM_PROMPT, baseUserContent, 15000),
-        callAgent("gpt-4o-mini", PERMABULL_SYSTEM_PROMPT, baseUserContent, 15000)
-    ]);
+  if (competitiveMemoResult?.status === "ok") {
+    competitiveContext = `Competitors: ${competitiveMemoResult.memo.shortLandscapeSummary}`;
+    referenceProjects = competitiveMemoResult.memo.referenceProjects || [];
+    evidencePack = competitiveMemoResult.evidencePack || buildFallbackEvidencePack();
+    competitiveClaims = competitiveMemoResult.memo.claims || [];
+  } else if (["memecoin", "defi", "ai"].includes(normalizedCategory)) {
+    evidencePack = buildFallbackEvidencePack(["competitive"]);
+  }
 
-    options?.onProgress?.(`Debate Concluded. Bear: "${bearOutput.bearAnalysis?.verdict || 'N/A'}", Bull: "${bullOutput.bullAnalysis?.verdict || 'N/A'}"`);
+  const baseUserContent = `
+Input Data:
+${contextSummary}
+${marketContext}
+${verificationContext}
+${competitiveContext}
 
-    if (options?.onThought) {
-        options.onThought(`[BEAR] "${bearOutput.bearAnalysis?.roast || 'Analysis unavailable'}"\n`);
-        options.onThought(`[BULL] "${bullOutput.bullAnalysis?.pitch || 'Analysis unavailable'}"\n`);
+Idea:
+${JSON.stringify(input, null, 2)}
+`;
+
+  const callAgent = async <T extends object>(
+    model: string,
+    sysPrompt: string,
+    userPrompt: string,
+    timeoutMs: number
+  ): Promise<AgentCallResult<T>> => {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+      const response = await openai().chat.completions.create(
+        {
+          model,
+          messages: [
+            { role: "system", content: sysPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+        },
+        { signal: controller.signal }
+      );
+
+      clearTimeout(timeout);
+      const parsed = JSON.parse(response.choices[0]?.message?.content || "{}") as T;
+      return { output: parsed, failed: false };
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`Agent (${model}) failed or timed out:`, errMsg);
+      options?.onThought?.(`[ERROR] Agent ${model} failed: ${errMsg}\n`);
+      return { output: {} as T, failed: true };
     }
+  };
 
-    // --- Step 2b: The Judge (Flagship Model) ---
-    options?.onProgress?.("The Judge is deliberating...");
+  options?.onProgress?.("Kicking off committee debate (Bull vs Bear)...");
 
-    const judgeContent = `
-  ${baseUserContent}
+  const [bearResult, bullResult] = await Promise.all([
+    callAgent<BearAnalysis>(modelMap.bear, PERMABEAR_SYSTEM_PROMPT, baseUserContent, 15000),
+    callAgent<BullAnalysis>(modelMap.bull, PERMABULL_SYSTEM_PROMPT, baseUserContent, 15000),
+  ]);
 
-  --- COMMITTEE REPORTS ---
-  
-  THE BEAR REPORT (Risks):
-  ${JSON.stringify(bearOutput, null, 2)}
+  const bearOutput = bearResult.output;
+  const bullOutput = bullResult.output;
+  const agentFailures = (bearResult.failed ? 1 : 0) + (bullResult.failed ? 1 : 0);
 
-  THE BULL REPORT (Upside):
-  ${JSON.stringify(bullOutput, null, 2)}
+  options?.onProgress?.(
+    `Debate concluded. Bear: "${bearOutput.bearAnalysis?.verdict || "N/A"}", Bull: "${
+      bullOutput.bullAnalysis?.verdict || "N/A"
+    }"`
+  );
 
-  --- INSTRUCTION ---
-  Synthesize a final decision based on these reports and the JSON Schema.
-  ${JSON_OUTPUT_SCHEMA}
-  `;
+  options?.onThought?.(`[BEAR] "${bearOutput.bearAnalysis?.roast || "Analysis unavailable"}"\n`);
+  options?.onThought?.(`[BULL] "${bullOutput.bullAnalysis?.pitch || "Analysis unavailable"}"\n`);
 
-    // Judge uses GPT-5.2 (or environment default for flagship)
-    // Fallback logic implemented here
-    let judgeResponse;
-    const primaryJudgeModel = process.env.EVAL_MODEL === 'gpt-5.2' ? 'gpt-5.2' : 'gpt-4o';
+  options?.onProgress?.("The Judge is deliberating...");
+
+  const judgeContent = `
+${baseUserContent}
+
+--- COMMITTEE REPORTS ---
+THE BEAR REPORT (Risks):
+${JSON.stringify(bearOutput, null, 2)}
+
+THE BULL REPORT (Upside):
+${JSON.stringify(bullOutput, null, 2)}
+
+--- EVIDENCE PACK ---
+${buildEvidenceSummary(evidencePack)}
+
+Unavailable sources:
+${(evidencePack.unavailableSources || []).join(", ") || "none"}
+
+Competitive claims:
+${buildClaimsSummary(competitiveClaims)}
+
+--- INSTRUCTION ---
+Synthesize a final decision based on these reports and JSON schema.
+If any claim is uncorroborated, treat it as tentative.
+${JSON_OUTPUT_SCHEMA}
+`;
+
+  let judgeResponse: any;
+  let fallbackUsed = false;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+
+    judgeResponse = await openai().chat.completions.create(
+      {
+        model: modelMap.judge,
+        messages: [
+          { role: "system", content: JUDGE_SYSTEM_PROMPT },
+          { role: "user", content: judgeContent },
+        ],
+        response_format: { type: "json_object" },
+      },
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeout);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.warn(`Primary Judge (${modelMap.judge}) failed/timed out: ${errMsg}`);
+    options?.onThought?.(`[ERROR] Primary Judge failed: ${errMsg}\n`);
+    options?.onProgress?.("High traffic. Switching to backup judge...");
+    fallbackUsed = true;
 
     try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 25000); // 25s limit for main judge
-
-        judgeResponse = await openai().chat.completions.create({
-            model: primaryJudgeModel,
-            messages: [
-                { role: "system", content: JUDGE_SYSTEM_PROMPT },
-                { role: "user", content: judgeContent }
-            ],
-            response_format: { type: "json_object" }
-        }, { signal: controller.signal });
-
-        clearTimeout(timeout);
-    } catch (error) {
-        const errMsg = error instanceof Error ? error.message : String(error);
-        console.warn(`Primary Judge (${primaryJudgeModel}) failed/timed out: ${errMsg}`);
-        options?.onThought?.(`[ERROR] Primary Judge failed: ${errMsg}\n`);
-        options?.onProgress?.("⚠️ High traffic. Switching to backup judge...");
-
-        try {
-            // Fallback to fast model
-            judgeResponse = await openai().chat.completions.create({
-                model: "gpt-4o-mini",
-                messages: [
-                    { role: "system", content: JUDGE_SYSTEM_PROMPT },
-                    { role: "user", content: judgeContent }
-                ],
-                response_format: { type: "json_object" }
-            });
-        } catch (fallbackError) {
-            const fallbackMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
-            options?.onThought?.(`[ERROR] Backup Judge also failed: ${fallbackMsg}\n`);
-            // Rethrow to let the main handler catch it and end the stream
-            throw fallbackError;
-        }
+      judgeResponse = await openai().chat.completions.create({
+        model: modelMap.judgeFallback,
+        messages: [
+          { role: "system", content: JUDGE_SYSTEM_PROMPT },
+          { role: "user", content: judgeContent },
+        ],
+        response_format: { type: "json_object" },
+      });
+    } catch (fallbackError) {
+      const fallbackMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+      options?.onThought?.(`[ERROR] Backup Judge also failed: ${fallbackMsg}\n`);
+      throw fallbackError;
     }
+  }
 
-    options?.onProgress?.("Final Verdict Reached.");
+  options?.onProgress?.("Final verdict reached.");
 
-    // 3. Post-Processing (Calibration)
-    let result = parseEvaluationResponse(judgeResponse);
+  let result = parseEvaluationResponse(judgeResponse);
+  const verifierOutcome = await runEvaluationVerifier({
+    draftResult: result,
+    evidencePack,
+    claims: competitiveClaims,
+    model: modelMap.verifier,
+  });
+  result = verifierOutcome.result;
 
-    // Inject Committee Data into the result (for UI display if needed)
-    // We can attach it to "technical.comments" or a new field if we extend the type
-    // For now, let's append it to the technical comments so user sees it
-    result.technical.comments += `\n\n[COMMITTEE LOG]\nBear Verdict: ${bearOutput.bearAnalysis?.verdict} ("${bearOutput.bearAnalysis?.roast}")\nBull Verdict: ${bullOutput.bullAnalysis?.verdict} ("${bullOutput.bullAnalysis?.pitch}")`;
+  if (!result.technical.comments) {
+    result.technical.comments = "";
+  }
 
-    // Run standard calibration
-    result = calibrateScore({
-        projectType: input.projectType,
-        market: options?.market,
-        rawResult: result,
-        ideaSubmission: input
-    });
+  result.technical.comments += `\n\n[COMMITTEE LOG]\nBear Verdict: ${
+    bearOutput.bearAnalysis?.verdict
+  } ("${bearOutput.bearAnalysis?.roast}")\nBull Verdict: ${
+    bullOutput.bullAnalysis?.verdict
+  } ("${bullOutput.bullAnalysis?.pitch}")`;
 
-    // Merge Competitors (Same as legacy)
-    if (referenceProjects.length > 0) {
-        const mappedCompetitors = referenceProjects.map(p => ({
-            name: p.name,
-            metrics: p.metrics || {}
-        }));
-        const existingNames = new Set((result.market?.competitors || []).map(c => c.name.toLowerCase()));
-        const uniqueNewCompetitors = mappedCompetitors.filter(c => !existingNames.has(c.name.toLowerCase()));
-        result.market = {
-            ...result.market,
-            competitors: [...(result.market?.competitors || []), ...uniqueNewCompetitors]
-        };
-    }
+  if (verifierOutcome.status !== "pass") {
+    result.technical.comments += `\n[VERIFIER] ${verifierOutcome.status.toUpperCase()} - ${
+      verifierOutcome.issues[0] || "No details"
+    }`;
+  }
 
-    return result;
+  result = calibrateScore({
+    projectType: input.projectType,
+    market: options?.market,
+    rawResult: result,
+    ideaSubmission: input,
+  });
+
+  if (referenceProjects.length > 0) {
+    const mappedCompetitors = referenceProjects.map((project) => ({
+      name: project.name,
+      metrics: project.metrics || {},
+    }));
+
+    const existingNames = new Set((result.market?.competitors || []).map((c) => c.name.toLowerCase()));
+    const uniqueNewCompetitors = mappedCompetitors.filter((c) => !existingNames.has(c.name.toLowerCase()));
+    result.market = {
+      ...result.market,
+      competitors: [...(result.market?.competitors || []), ...uniqueNewCompetitors],
+    };
+  }
+
+  const debateDisagreementIndex = computeDebateDisagreementIndex(bearOutput, bullOutput);
+  const evidenceCoverage = computeEvidenceCoverage(competitiveClaims);
+  const competitiveCategorySupported = ["memecoin", "defi", "ai"].includes(normalizedCategory);
+  const tavilyAvailable = !competitiveCategorySupported || evidencePack.evidence.some((item) => item.source === "tavily");
+  const defillamaAvailable = evidencePack.evidence.some((item) => item.source === "defillama");
+  const defillamaRequired = normalizedCategory === "defi";
+  const externalDataAvailable = !competitiveCategorySupported || evidencePack.evidence.length > 0;
+  const confidence = deriveConfidence({
+    evidenceCoverage,
+    verifierStatus: verifierOutcome.status,
+    fallbackUsed,
+    externalDataAvailable,
+    tavilyAvailable,
+    defillamaRequired,
+    defillamaAvailable,
+    agentFailures,
+  });
+
+  result.confidenceLevel = confidence.level;
+  result.meta = {
+    confidenceLevel: confidence.level,
+    confidenceReasons: confidence.reasons,
+    debateDisagreementIndex,
+    evidenceCoverage,
+    modelRoute: buildModelRouteMeta(modelMap, fallbackUsed),
+    fallbackUsed,
+    verifierStatus: verifierOutcome.status,
+    verifierIssues: verifierOutcome.issues,
+    dataFreshness: extractDataFreshness(evidencePack),
+  };
+  result.evidence = {
+    ...evidencePack,
+    claims: competitiveClaims,
+  };
+
+  if (!result.calibrationNotes) result.calibrationNotes = [];
+  if (fallbackUsed) {
+    result.calibrationNotes.push("Reliability: Backup judge model used due primary timeout/failure.");
+  }
+  if (verifierOutcome.status !== "pass") {
+    result.calibrationNotes.push(
+      `Reliability: Verifier ${verifierOutcome.status}. ${
+        verifierOutcome.issues[0] || "Quality checks identified issues."
+      }`
+    );
+  }
+
+  return result;
 }
