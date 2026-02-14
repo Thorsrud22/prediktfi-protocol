@@ -14,19 +14,31 @@ interface RadarChartProps {
 }
 
 export default function RadarChart({ data, width = 300, height = 300, className = '' }: RadarChartProps) {
+    if (data.length < 3) {
+        return (
+            <div className={`relative flex items-center justify-center ${className}`}>
+                <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                    Radar chart requires at least 3 data points
+                </div>
+            </div>
+        );
+    }
+
     const padding = 40;
     const centerX = width / 2;
     const centerY = height / 2;
     const radius = Math.min(centerX, centerY) - padding;
     const sides = data.length;
     const angleStep = (Math.PI * 2) / sides;
+    const ariaLabel = `Radar chart showing ${data.map(item => `${item.label}: ${item.value}`).join(', ')}`;
 
     // Calculate points for the polygon - direct calculation (no memoization for stability)
     const points = data.map((item, i) => {
         const angle = i * angleStep - Math.PI / 2; // Start from top (-90 deg)
-        // Clamp value to min 5% to prevent chart from collapsing, max 100% to keep in bounds
-        const safeValue = Math.max(Math.min(item.value, item.fullMark), 5);
-        const normalizedValue = safeValue / item.fullMark;
+        // Clamp value to min 5% of fullMark to prevent chart collapse, max fullMark to keep in bounds
+        const fullMark = item.fullMark > 0 ? item.fullMark : 100;
+        const safeValue = Math.max(Math.min(item.value, fullMark), fullMark * 0.05);
+        const normalizedValue = safeValue / fullMark;
 
         const x = centerX + radius * normalizedValue * Math.cos(angle);
         const y = centerY + radius * normalizedValue * Math.sin(angle);
@@ -48,7 +60,14 @@ export default function RadarChart({ data, width = 300, height = 300, className 
 
     return (
         <div className={`relative flex items-center justify-center ${className}`}>
-            <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+            <svg
+                width="100%"
+                height="100%"
+                viewBox={`0 0 ${width} ${height}`}
+                className="overflow-visible"
+                role="img"
+                aria-label={ariaLabel}
+            >
                 {/* Background Grid */}
                 {gridPolygons.map((pointsStr, i) => (
                     <polygon
@@ -88,7 +107,7 @@ export default function RadarChart({ data, width = 300, height = 300, className 
 
                 {/* Data Points */}
                 {points.map((p, i) => (
-                    <g key={i} className="group/point cursor-pointer" transform="translate(0,0)">
+                    <g key={i} className="group/point cursor-pointer">
                         <circle
                             cx={p.x}
                             cy={p.y}

@@ -6,6 +6,42 @@ import { validateSignature, createSafeETag, sanitizeForDisplay } from '../../../
 
 export const runtime = 'edge';
 
+interface OGInsightData {
+  question?: string;
+  prob?: number;
+  model?: string;
+}
+
+function normalizeInsightPayload(payload: any): OGInsightData {
+  const source = payload?.insight ?? payload;
+  if (!source || typeof source !== 'object') {
+    return {};
+  }
+
+  const prob =
+    typeof source.prob === 'number'
+      ? source.prob
+      : typeof source.p === 'number'
+        ? source.p
+        : undefined;
+
+  return {
+    question:
+      typeof source.question === 'string'
+        ? source.question
+        : typeof source.canonical === 'string'
+          ? source.canonical
+          : undefined,
+    prob,
+    model:
+      typeof source.model === 'string'
+        ? source.model
+        : typeof source.rationale === 'string'
+          ? source.rationale
+          : undefined,
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Apply rate limiting for OG endpoint
@@ -40,20 +76,34 @@ export async function GET(request: NextRequest) {
     
     try {
       const baseUrl = request.url.includes('localhost') ? 'http://localhost:3000' : 'https://predikt.fi';
-      const response = await fetch(`${baseUrl}/api/insights?sig=${encodeURIComponent(sigValidation.sanitized!)}`, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'PrediktFi-OG/1.0',
-        },
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (response.ok) {
+      const encodedSig = encodeURIComponent(sigValidation.sanitized!);
+      const lookupUrls = [
+        `${baseUrl}/api/insight?id=${encodedSig}`,
+        `${baseUrl}/api/insights?sig=${encodedSig}`, // Legacy fallback
+      ];
+
+      for (const lookupUrl of lookupUrls) {
+        const response = await fetch(lookupUrl, {
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'PrediktFi-OG/1.0',
+          },
+        });
+
+        if (!response.ok) {
+          continue;
+        }
+
         const data = await response.json();
-        insight = data.insight;
-        verified = true;
+        const normalized = normalizeInsightPayload(data);
+        if (normalized.question || typeof normalized.prob === 'number' || normalized.model) {
+          insight = normalized;
+          verified = true;
+          break;
+        }
       }
+
+      clearTimeout(timeoutId);
     } catch (error) {
       clearTimeout(timeoutId);
       console.error('Failed to fetch insight:', error);

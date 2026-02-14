@@ -1,39 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowRight, Check, ChevronRight, Command, CornerDownLeft, Sparkles, Zap, Globe, Cpu, Palette, Gamepad2, MoreHorizontal, History } from 'lucide-react';
-import { cn } from '../lib/utils'; // Correct relative import for test compatibility
-import {
-    normalizeIdeaProjectType,
-    type IdeaProjectType,
-    getCategoryContextualFields,
-    getMissingContextualFields
-} from '@/lib/ideaCategories';
+import React, { useEffect } from 'react';
+import { useWizardState } from './wizard/hooks/useWizardState';
+import { useWizardNavigation } from './wizard/hooks/useWizardNavigation';
+import { useWizardPersistence } from './wizard/hooks/useWizardPersistence';
+import { useFocusManagement } from './wizard/hooks/useFocusManagement';
+import { WIZARD_CONSTANTS, STEPS } from './wizard/constants';
+import { WizardFormData } from './wizard/types';
 
-// Types for form data
-export type ProjectType = IdeaProjectType | null;
-
-export interface WizardFormData {
-    projectType: ProjectType;
-    name: string; // Ticker or Project Name
-    description: string;
-    website?: string; // Optional context
-    // Contextual fields
-    memecoinVibe?: string;
-    memecoinNarrative?: string;
-    defiMechanism?: string;
-    defiRevenue?: string;
-    aiModelType?: string;
-    aiDataMoat?: string;
-    nftUtility?: string;
-    nftCollectorHook?: string;
-    gamingCoreLoop?: string;
-    gamingEconomyModel?: string;
-    otherTargetUser?: string;
-    otherDifferentiation?: string;
-    teamSize?: string;
-    successDefinition?: string;
-}
+// Components
+import { WizardProgress } from './wizard/components/WizardProgress';
+import { WizardNavigation } from './wizard/components/WizardNavigation';
+import { SectorStep } from './wizard/steps/SectorStep';
+import { IdentityStep } from './wizard/steps/IdentityStep';
+import { PitchStep } from './wizard/steps/PitchStep';
+import { ContextStep } from './wizard/steps/ContextStep';
+import { ReviewStep } from './wizard/steps/ReviewStep';
 
 interface IdeaSubmissionWizardProps {
     onSubmit: (data: WizardFormData) => void;
@@ -41,300 +23,81 @@ interface IdeaSubmissionWizardProps {
     isSubmitting?: boolean;
 }
 
-const STEPS = [
-    { id: 'sector', title: 'Select Sector', subtitle: 'What area does your project belong to?' },
-    { id: 'details', title: 'Project Identity', subtitle: 'Give it a name or ticker.' },
-    { id: 'pitch', title: 'The Pitch', subtitle: 'Describe your vision in detail.' },
-    { id: 'insights', title: 'Strategic Insights', subtitle: 'Add more context for a deeper analysis.' },
-    { id: 'review', title: 'Ready to Launch?', subtitle: 'Review your submission.' }
-];
-
-const SECTOR_OPTIONS = [
-    { id: 'ai', icon: Cpu, label: 'AI Agent', desc: 'LLM & Infra' },
-    { id: 'defi', icon: Globe, label: 'DeFi / Utility', desc: 'Protocol & Yield' },
-    { id: 'memecoin', icon: Zap, label: 'Memecoin', desc: 'Viral & Hype' },
-    { id: 'nft', icon: Palette, label: 'NFT / Art', desc: 'Digital Collectibles' },
-    { id: 'gaming', icon: Gamepad2, label: 'Gaming', desc: 'GameFi & Metaverse' },
-    { id: 'other', icon: MoreHorizontal, label: 'Other', desc: 'Everything Else' },
-] as const;
-
-const STORAGE_KEY = 'predikt_studio_draft';
+// Validations helper should be at module scope
+const getMeaningfulLength = (text: string) => text.replace(/\s/g, '').length;
 
 export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitting }: IdeaSubmissionWizardProps) {
-    const [currentStep, setCurrentStep] = useState(0);
-    const [direction, setDirection] = useState(1); // 1 for forward, -1 for back
+    // 1. Logic Hooks
+    const {
+        formData,
+        formDataRef, // Needed for global keydown listener
+        errors,
+        setErrors,
+        updateField,
+        setFormData
+    } = useWizardState(initialData);
 
-    // Initial state strictly from props or empty defaults to match server rendering
-    const [formData, setFormData] = useState<WizardFormData>({
-        projectType: initialData?.projectType || null,
-        name: initialData?.name || '',
-        description: initialData?.description || '',
-        website: initialData?.website || '',
-        memecoinVibe: initialData?.memecoinVibe || '',
-        memecoinNarrative: initialData?.memecoinNarrative || '',
-        defiMechanism: initialData?.defiMechanism || '',
-        defiRevenue: initialData?.defiRevenue || '',
-        aiModelType: initialData?.aiModelType || '',
-        aiDataMoat: initialData?.aiDataMoat || '',
-        nftUtility: initialData?.nftUtility || '',
-        nftCollectorHook: initialData?.nftCollectorHook || '',
-        gamingCoreLoop: initialData?.gamingCoreLoop || '',
-        gamingEconomyModel: initialData?.gamingEconomyModel || '',
-        otherTargetUser: initialData?.otherTargetUser || '',
-        otherDifferentiation: initialData?.otherDifferentiation || '',
-        teamSize: initialData?.teamSize || 'solo',
-        successDefinition: initialData?.successDefinition || ''
-    });
+    const {
+        currentStep,
+        setCurrentStep,
+        handleNext: navigateNext,
+        handleBack
+    } = useWizardNavigation(formData.projectType);
 
-    const [errors, setErrors] = useState<{ name?: string; description?: string }>({});
-    const [showSavedMsg, setShowSavedMsg] = useState(false);
-    const [isLoaded, setIsLoaded] = useState(false);
-    const submittedRef = useRef(false);
+    const {
+        isLoaded,
+        showSavedMsg,
+        clearStorage
+    } = useWizardPersistence(formData, currentStep, setFormData, setCurrentStep);
 
-    // Hydrate from localStorage on mount (Client-side only)
-    useEffect(() => {
-        setIsLoaded(true);
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                // Handle both old format (direct data) and new format ({ data, step })
-                const data = parsed.data || parsed;
-                const step = parsed.step;
+    const { nameInputRef, descInputRef } = useFocusManagement(currentStep);
 
-                if (data && typeof data === 'object') {
-                    const normalizedType = normalizeIdeaProjectType((data as Partial<WizardFormData>).projectType as any);
-                    setFormData(prev => ({ ...prev, ...data, projectType: normalizedType }));
-                }
-
-                if (typeof step === 'number' && Number.isFinite(step)) {
-                    const clampedStep = Math.min(Math.max(Math.trunc(step), 0), STEPS.length - 1);
-                    setCurrentStep(clampedStep);
-                }
-            } catch (e) {
-                console.error("Failed to parse saved draft", e);
-            }
-        }
-    }, []);
-
-    // Save to localStorage on change - DEBOUNCED
-    useEffect(() => {
-        if (!isLoaded || submittedRef.current) return; // Don't save initial empty state OR after submission
-
-        const timer = setTimeout(() => {
-            if (submittedRef.current) return; // Double check inside timeout
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: formData, step: currentStep }));
-            setShowSavedMsg(true);
-            setTimeout(() => setShowSavedMsg(false), 2000);
-        }, 500); // 500ms debounce
-
-        return () => clearTimeout(timer);
-    }, [formData, currentStep, isLoaded]);
-
-    // Update ref whenever state changes from external sources (initialData)
-    // Synchronize the validation ref
-    const formDataRef = useRef<WizardFormData>(formData);
-    useEffect(() => {
-        formDataRef.current = formData;
-    }, [formData]);
-
-    const finalizeSubmission = useCallback((submission?: WizardFormData) => {
-        submittedRef.current = true; // Mark as submitted to prevent further auto-saves
-        localStorage.removeItem(STORAGE_KEY);
+    // 2. Submission Logic
+    const finalizeSubmission = (submission?: WizardFormData) => {
+        clearStorage();
         onSubmit(submission || formDataRef.current);
-    }, [onSubmit]);
-
-    useEffect(() => {
-        if (initialData) {
-            const newData = {
-                projectType: initialData.projectType || null,
-                name: initialData.name || '',
-                description: initialData.description || '',
-                website: initialData.website || '',
-                memecoinVibe: initialData.memecoinVibe || '',
-                memecoinNarrative: initialData.memecoinNarrative || '',
-                defiMechanism: initialData.defiMechanism || '',
-                defiRevenue: initialData.defiRevenue || '',
-                aiModelType: initialData.aiModelType || '',
-                aiDataMoat: initialData.aiDataMoat || '',
-                nftUtility: initialData.nftUtility || '',
-                nftCollectorHook: initialData.nftCollectorHook || '',
-                gamingCoreLoop: initialData.gamingCoreLoop || '',
-                gamingEconomyModel: initialData.gamingEconomyModel || '',
-                otherTargetUser: initialData.otherTargetUser || '',
-                otherDifferentiation: initialData.otherDifferentiation || '',
-                teamSize: initialData.teamSize || 'solo',
-                successDefinition: initialData.successDefinition || ''
-            };
-            setFormData(newData);
-        }
-    }, [initialData]);
-
-    const wizardRef = useRef<HTMLDivElement>(null);
-
-    const nameInputRef = useRef<HTMLInputElement>(null);
-    const descInputRef = useRef<HTMLTextAreaElement>(null);
-    const focusRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const isNavigatingRef = useRef(false);
-
-    const clearPendingFocusRetry = () => {
-        if (focusRetryTimeoutRef.current) {
-            clearTimeout(focusRetryTimeoutRef.current);
-            focusRetryTimeoutRef.current = null;
-        }
     };
 
-    const focusWithRetry = (getElement: () => HTMLInputElement | HTMLTextAreaElement | null, retries = 6) => {
-        clearPendingFocusRetry();
+    // 3. Validation & Navigation Wrapper
+    const handleNext = () => {
+        const dataToValidate = formDataRef.current; // Use latest ref for synchronous validation
 
-        const tryFocus = (remainingRetries: number) => {
-            const element = getElement();
-            if (!element) {
-                if (remainingRetries > 0) {
-                    focusRetryTimeoutRef.current = setTimeout(() => tryFocus(remainingRetries - 1), 50);
-                }
-                return;
-            }
-
-            element.focus();
-            if (document.activeElement === element || remainingRetries <= 0) {
-                return;
-            }
-
-            focusRetryTimeoutRef.current = setTimeout(() => tryFocus(remainingRetries - 1), 50);
-        };
-
-        tryFocus(retries);
-    };
-
-    // Scroll to top on every step change
-    useEffect(() => {
-        setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-        }, 10);
-    }, [currentStep]);
-
-    // Auto-focus fields without intentional delay
-    useEffect(() => {
-        if (currentStep === 1) {
-            focusWithRetry(() => nameInputRef.current);
-        } else if (currentStep === 2) {
-            focusWithRetry(() => descInputRef.current);
-        } else {
-            clearPendingFocusRetry();
-        }
-
-        return () => clearPendingFocusRetry();
-    }, [currentStep]);
-
-    const handleNext = (forcedData?: WizardFormData) => {
-        if (isNavigatingRef.current) return;
-        isNavigatingRef.current = true;
-
-        const dataToValidate = forcedData || formDataRef.current;
-
-        // Clear any pending auto-advance
-        if (navigationTimeoutRef.current) {
-            clearTimeout(navigationTimeoutRef.current);
-            navigationTimeoutRef.current = null;
-        }
-
-        // Validation helper
-        const getMeaningfulLength = (text: string) => text.replace(/\s/g, '').length;
-
-        // Validation check before proceeding - now uses the most recent data
         if (currentStep === 0 && !dataToValidate.projectType) {
-            setErrors({ name: 'Please select a sector' }); // Reuse errors state for general messages
-            isNavigatingRef.current = false;
+            setErrors({ name: 'Please select a sector' });
             return;
         }
 
         if (currentStep === 1) {
             const trimmedName = dataToValidate.name.trim();
-            if (trimmedName.length < 3) {
-                setErrors(prev => ({ ...prev, name: trimmedName.length === 0 ? "Name is required" : "Name must be at least 3 characters" }));
-                isNavigatingRef.current = false;
+            if (trimmedName.length < WIZARD_CONSTANTS.MIN_NAME_LENGTH) {
+                setErrors({ name: trimmedName.length === 0 ? "Name is required" : `Name must be at least ${WIZARD_CONSTANTS.MIN_NAME_LENGTH} characters` });
                 return;
             }
         }
 
         if (currentStep === 2) {
             const meaningfulLength = getMeaningfulLength(dataToValidate.description);
-            if (meaningfulLength < 10) {
-                setErrors(prev => ({ ...prev, description: meaningfulLength === 0 ? "Pitch is required" : "Pitch must be at least 10 non-space characters" }));
-                isNavigatingRef.current = false;
+            if (meaningfulLength < WIZARD_CONSTANTS.MIN_PITCH_CHARS) {
+                setErrors({ description: meaningfulLength === 0 ? "Pitch is required" : `Pitch must be at least ${WIZARD_CONSTANTS.MIN_PITCH_CHARS} non-space characters` });
                 return;
             }
         }
 
         if (currentStep < STEPS.length - 1) {
-            isNavigatingRef.current = true;
-            setDirection(1);
-
-            // Skip insights step if no contextual fields for sector
-            let targetStep = currentStep + 1;
-            if (STEPS[targetStep].id === 'insights' && !hasContextualFields(dataToValidate.projectType)) {
-                targetStep += 1;
-            }
-
-            setCurrentStep(targetStep);
-
-            // Snappy cooldown for better responsiveness
-            setTimeout(() => {
-                isNavigatingRef.current = false;
-            }, 50);
+            navigateNext();
         } else {
             finalizeSubmission(dataToValidate);
         }
     };
 
-    const handleBack = () => {
-        if (isNavigatingRef.current || currentStep === 0) return;
-        isNavigatingRef.current = true;
-
-        // Clear any pending auto-advance
-        if (navigationTimeoutRef.current) {
-            clearTimeout(navigationTimeoutRef.current);
-            navigationTimeoutRef.current = null;
-        }
-
-        isNavigatingRef.current = true;
-        setDirection(-1);
-
-        // Skip insights step if no contextual fields for sector
-        let targetStep = currentStep - 1;
-        if (STEPS[targetStep].id === 'insights' && !hasContextualFields(formData.projectType)) {
-            targetStep -= 1;
-        }
-
-        setCurrentStep(targetStep);
-
-        // Snappy cooldown for better responsiveness
-        setTimeout(() => {
-            isNavigatingRef.current = false;
-        }, 50);
-    };
-
-    const hasContextualFields = (type: ProjectType) => {
-        return getCategoryContextualFields(type).length > 0;
-    };
-
-    const contextualFields = getCategoryContextualFields(formData.projectType);
-    const missingContextualFields = formData.projectType
-        ? getMissingContextualFields(formData.projectType, formData)
-        : [];
-
+    // 4. Keyboard Handlers
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        // Validation before proceeding
-        const getMeaningfulLength = (text: string) => text.replace(/\s/g, '').length;
-
         // Command/Control + Enter logic for Step 2 (Multiline)
         if (currentStep === 2 && (e.metaKey || e.ctrlKey) && e.key === 'Enter') {
             e.preventDefault();
             const meaningfulLength = getMeaningfulLength(formData.description);
-            if (meaningfulLength < 10) {
-                setErrors(prev => ({ ...prev, description: meaningfulLength === 0 ? "Pitch is required" : "Pitch must be at least 10 non-space characters" }));
+            if (meaningfulLength < WIZARD_CONSTANTS.MIN_PITCH_CHARS) {
+                setErrors({ description: meaningfulLength === 0 ? "Pitch is required" : `Pitch must be at least ${WIZARD_CONSTANTS.MIN_PITCH_CHARS} non-space characters` });
                 return;
             }
             handleNext();
@@ -348,114 +111,75 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                 return;
             }
 
-            if (currentStep === 0 && !formData.projectType) return;
-
-            if (currentStep === 1) {
-                const trimmedName = formDataRef.current.name.trim();
-                if (trimmedName.length < 3) {
-                    setErrors(prev => ({ ...prev, name: trimmedName.length === 0 ? "Name is required" : "Name must be at least 3 characters" }));
-                    return;
-                }
-            }
-
-            if (currentStep === 3) {
-                // Strategic insights don't have hard validation yet, but we allow Enter to proceed
-            }
-
-            if (currentStep === 4) {
-                // Review step
-                e.preventDefault();
-                finalizeSubmission(formDataRef.current);
-                return;
-            }
-
             e.preventDefault();
             handleNext();
         }
     };
 
-    // Command + Enter to submit from anywhere (power user feature)
+    // Global Keydown for Power User "Cmd+Enter" Submit anywhere
     useEffect(() => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                 if (currentStep === STEPS.length - 1) {
                     e.preventDefault();
                     finalizeSubmission(formDataRef.current);
-                } else {
-                    // Quick skip logic could go here, but let's stick to standard flow
-                    // handleNext(); 
                 }
             }
         };
         window.addEventListener('keydown', handleGlobalKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleGlobalKeyDown);
-            if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
-            clearPendingFocusRetry();
-        };
-    }, [currentStep, finalizeSubmission]);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [currentStep]); // finalSubmission is stable if defined outside, but better to depend on minimal set
 
-    const updateField = (field: keyof WizardFormData, value: any) => {
-        // Immediate ref update for synchronous validation in handleNext
-        const updated = { ...formDataRef.current, [field]: value };
-        formDataRef.current = updated;
-        setFormData(updated);
+    // 5. Render Step Content
+    if (!isLoaded) return null; // Avoid hydration mismatch
 
-        // Clear errors when user types or changes selection
-        setErrors(prev => ({ ...prev, [field]: undefined, name: undefined }));
+    const renderStep = () => {
+        switch (currentStep) {
+            case 0:
+                return <SectorStep formData={formData} updateField={updateField} errors={errors} />;
+            case 1:
+                return (
+                    <IdentityStep
+                        ref={nameInputRef}
+                        formData={formData}
+                        updateField={updateField}
+                        errors={errors}
+                        onKeyDown={handleKeyDown}
+                    />
+                );
+            case 2:
+                return (
+                    <PitchStep
+                        ref={descInputRef}
+                        formData={formData}
+                        updateField={updateField}
+                        errors={errors}
+                        onKeyDown={handleKeyDown}
+                    />
+                );
+            case 3:
+                return (
+                    <ContextStep
+                        formData={formData}
+                        updateField={updateField}
+                        onKeyDown={handleKeyDown}
+                    />
+                );
+            case 4:
+                return <ReviewStep formData={formData} />;
+            default:
+                return null;
+        }
     };
 
-    // Calculate progress
-    const progress = ((currentStep + 1) / STEPS.length) * 100;
-    const namePlaceholder = formData.projectType === 'memecoin' ? "$TICKER" : "Project Name";
+    const canGoNext = !(currentStep === 0 && !formData.projectType);
 
     return (
-        <div ref={wizardRef} className="w-full max-w-4xl mx-auto min-h-[300px] flex flex-col relative px-4 sm:px-0 pb-20 sm:pb-0 scroll-mt-24 pt-0">
+        <div className="w-full max-w-4xl mx-auto min-h-[300px] flex flex-col relative px-4 sm:px-0 pb-20 sm:pb-0 scroll-mt-24 pt-0">
+            <WizardProgress currentStep={currentStep} showSavedMsg={showSavedMsg} />
 
-            {/* Progress Bar & Saved Message */}
-            <div className="flex flex-col mb-6 space-y-4">
-                <div className="flex items-center justify-between gap-6">
-                    <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden relative">
-                        <div
-                            className="h-full bg-blue-500 transition-all duration-500 ease-out"
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {showSavedMsg && (
-                            <span className="text-[10px] font-mono text-emerald-400/60 uppercase tracking-widest animate-in fade-in duration-300">
-                                Draft Auto-saved
-                            </span>
-                        )}
-                        <div className="text-[10px] font-mono text-white/30 whitespace-nowrap tracking-widest">
-                            STEP {currentStep + 1} / {STEPS.length}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Step Indicators - aria-hidden to avoid duplicate text during tests */}
-                <div className="hidden sm:flex justify-between items-start" aria-hidden="true">
-                    {STEPS.map((step, idx) => (
-                        <div
-                            key={step.id}
-                            className={cn(
-                                "flex flex-col gap-1 transition-opacity duration-300",
-                                idx === currentStep ? "opacity-100" : idx < currentStep ? "opacity-40" : "opacity-20"
-                            )}
-                            style={{ width: `${100 / STEPS.length}%` }}
-                        >
-                            <span className="text-[9px] font-mono uppercase tracking-tighter text-white">
-                                {idx + 1}. {step.id === 'sector' ? 'Area' : step.id === 'details' ? 'Name' : step.id === 'pitch' ? 'The Pitch' : step.id === 'insights' ? 'Context' : 'Final'}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Main Content Area */}
             <div className="relative mt-4">
-                {/* HEADERS */}
-                {/* HEADERS */}
+                {/* Headers */}
                 <div key={currentStep} className="mb-8 text-center sm:text-left space-y-1 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
                         {STEPS[currentStep].title}
@@ -465,300 +189,20 @@ export default function IdeaSubmissionWizard({ onSubmit, initialData, isSubmitti
                     </p>
                 </div>
 
-                {/* DYNAMIC STEPS */}
+                {/* Step Content */}
                 <div className="min-h-[300px] sm:min-h-[380px] flex flex-col justify-center relative z-10">
-
-                    {/* Error overlay for Step 0 (Sector) */}
-                    {currentStep === 0 && errors.name && (
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-red-500/10 border border-red-500/20 px-4 py-1.5 rounded-full text-[10px] font-mono text-red-400 uppercase tracking-widest animate-in zoom-in duration-300 z-50">
-                            {errors.name}
-                        </div>
-                    )}
-
-                    {/* STEP 0: SECTOR SELECTION */}
-                    {currentStep === 0 && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 animate-in fade-in slide-in-from-right-8 duration-500">
-                            {SECTOR_OPTIONS.map((option) => (
-                                <button
-                                    key={option.id}
-                                    type="button"
-                                    aria-pressed={formData.projectType === option.id}
-                                    onClick={() => {
-                                        updateField('projectType', option.id as ProjectType);
-                                    }}
-                                    className={cn(
-                                        "group relative p-4 sm:p-5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center text-center gap-2 hover:scale-[1.02] select-none",
-                                        formData.projectType === option.id
-                                            ? "bg-[#0B1221] border-blue-400 shadow-[0_0_0_1px_rgba(59,130,246,0.95),0_0_28px_-8px_rgba(37,99,235,0.85)]"
-                                            : "bg-[#0B1221] border-white/20 hover:border-white/30 hover:bg-white/5"
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "p-3 rounded-full transition-colors",
-                                        formData.projectType === option.id ? "bg-blue-500/20 text-white" : "bg-white/5 text-white/60 group-hover:text-white"
-                                    )}>
-                                        <option.icon size={24} />
-                                    </div>
-                                    <div className="min-h-[44px] flex flex-col justify-center">
-                                        <h3 className="text-base sm:text-lg font-bold text-white leading-tight">{option.label}</h3>
-                                        <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">{option.desc}</p>
-                                    </div>
-
-                                    {/* Selection Indicator */}
-                                    <div className={cn(
-                                        "absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                        formData.projectType === option.id
-                                            ? "border-white bg-white text-blue-600 scale-100 opacity-100"
-                                            : "opacity-0 scale-0 pointer-events-none"
-                                    )}>
-                                        <Check size={14} strokeWidth={4} />
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* STEP 1: NAME / TICKER */}
-                    {currentStep === 1 && (
-                        <div className="animate-in fade-in slide-in-from-right-8 duration-500 max-w-2xl">
-                            <div className="relative group space-y-2">
-                                <label
-                                    htmlFor="project-name"
-                                    className="text-[10px] font-mono text-white/30 uppercase tracking-widest block"
-                                >
-                                    {formData.projectType === 'memecoin' ? "Ticker Symbol" : "Project Name"}
-                                </label>
-                                <div className="relative border border-white/10 px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 focus-within:border-white/20">
-                                    <input
-                                        ref={nameInputRef}
-                                        id="project-name"
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => updateField('name', e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder={namePlaceholder}
-                                        className="w-full bg-transparent text-4xl sm:text-6xl font-bold text-white placeholder:text-white/10 outline-none border-none focus:border-none focus:outline-none focus:ring-0 focus:shadow-none shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-none py-2 transition-colors font-mono uppercase tracking-tight block appearance-none"
-                                        style={{ outline: 'none', boxShadow: 'none' }}
-                                        autoComplete="off"
-                                        aria-describedby={cn(errors.name ? "name-error" : undefined, "name-helper")}
-                                        aria-invalid={!!errors.name}
-                                    />
-                                </div>
-                                {errors.name && (
-                                    <div
-                                        id="name-error"
-                                        role="alert"
-                                        className="absolute left-0 -bottom-6 text-sm text-red-400 font-mono animate-in fade-in slide-in-from-top-1 duration-300"
-                                    >
-                                        {errors.name}
-                                    </div>
-                                )}
-                                <div className="absolute right-0 bottom-4 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity">
-                                    <span className="text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded">Enter ↵</span>
-                                </div>
-                            </div>
-                            <p id="name-helper" className="mt-8 text-white/40 flex items-center gap-2">
-                                <Sparkles size={16} className="text-blue-400" />
-                                {formData.projectType === 'memecoin'
-                                    ? "Catchy tickers perform 40% better on analysis."
-                                    : "Short, memorable names resonate best with VCs."}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* STEP 2: DESCRIPTION / PITCH */}
-                    {currentStep === 2 && (
-                        <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-                            <div className="relative group space-y-3">
-                                <label
-                                    htmlFor="project-pitch"
-                                    className="text-[10px] font-mono text-white/30 uppercase tracking-widest block"
-                                >
-                                    The Pitch
-                                </label>
-                                <textarea
-                                    ref={descInputRef}
-                                    id="project-pitch"
-                                    value={formData.description}
-                                    onChange={(e) => updateField('description', e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    placeholder={
-                                        formData.projectType === 'memecoin'
-                                            ? "Explain the viral potential, community vibe, and core narrative..."
-                                            : formData.projectType === 'ai'
-                                                ? "Describe the model architecture, data source, and agent behavior..."
-                                                : "Explain your mechanism, unique selling point, or narrative..."
-                                    }
-                                    className="w-full h-[300px] bg-white/5 rounded-xl border border-white/10 p-6 text-xl sm:text-2xl font-medium text-white placeholder:text-white/20 resize-none outline-none focus:border-blue-500 focus:bg-white/10 transition-all leading-relaxed"
-                                    aria-describedby={cn(errors.description ? "pitch-error" : undefined, "pitch-counter")}
-                                    aria-invalid={!!errors.description}
-                                />
-                                {errors.description && (
-                                    <div
-                                        id="pitch-error"
-                                        role="alert"
-                                        className="absolute left-0 -bottom-6 text-sm text-red-400 font-mono animate-in fade-in slide-in-from-top-1 duration-300"
-                                    >
-                                        {errors.description}
-                                    </div>
-                                )}
-                                <div className="absolute bottom-6 right-6 flex items-center gap-4 pointer-events-none">
-                                    <span
-                                        id="pitch-counter"
-                                        className={cn(
-                                            "text-xs font-mono transition-colors",
-                                            formData.description.replace(/\s/g, '').length >= 10 ? "text-emerald-400" : "text-white/30"
-                                        )}
-                                    >
-                                        {formData.description.replace(/\s/g, '').length} meaningful chars (min 10)
-                                    </span>
-                                    <span className="text-xs font-mono text-white/40 bg-white/5 px-2 py-1 rounded hidden sm:inline-block">
-                                        Cmd + Enter ↵
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* STEP 3: STRATEGIC INSIGHTS (CONTEXTUAL) */}
-                    {currentStep === 3 && (
-                        <div className="animate-in fade-in slide-in-from-right-8 duration-500 space-y-8 max-w-2xl">
-                            {contextualFields.map((field) => (
-                                <div key={field.key} className="space-y-3">
-                                    <label htmlFor={`context-${field.key}`} className="text-[10px] font-mono text-white/30 uppercase tracking-widest">
-                                        {field.label}
-                                    </label>
-                                    <input
-                                        id={`context-${field.key}`}
-                                        type="text"
-                                        value={formData[field.key] || ''}
-                                        onChange={(e) => updateField(field.key as keyof WizardFormData, e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder={field.placeholder}
-                                        className="w-full bg-transparent text-2xl sm:text-4xl font-bold text-white placeholder:text-white/10 outline-none border-b border-white/10 focus:border-blue-500 pb-2 transition-colors"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* STEP 4: REVIEW */}
-                    {currentStep === 4 && (
-                        <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-                            <div className="bg-[#0B1221] border border-white/10 p-8 rounded-3xl space-y-8 max-w-2xl">
-                                <div className="grid grid-cols-2 gap-8">
-                                    <div className="space-y-2">
-                                        <div className="text-xs text-white/40 uppercase tracking-widest font-mono">Sector</div>
-                                        <div className="text-xl text-white font-bold flex items-center gap-2">
-                                            {formData.projectType === 'memecoin' && <Zap className="text-yellow-400" size={20} />}
-                                            {formData.projectType === 'defi' && <Globe className="text-blue-400" size={20} />}
-                                            {formData.projectType === 'ai' && <Cpu className="text-purple-400" size={20} />}
-                                            {formData.projectType === 'nft' && <Palette className="text-pink-400" size={20} />}
-                                            {formData.projectType === 'gaming' && <Gamepad2 className="text-emerald-400" size={20} />}
-                                            {formData.projectType === 'other' && <MoreHorizontal className="text-slate-300" size={20} />}
-                                            <span className="uppercase">{formData.projectType}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="text-xs text-white/40 uppercase tracking-widest font-mono">Identity</div>
-                                        <div className="text-xl text-white font-bold tracking-tight">{formData.name}</div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <div className="text-xs text-white/40 uppercase tracking-widest font-mono">The Pitch</div>
-                                    <div className="text-base text-white/70 leading-relaxed italic border-l-2 border-white/10 pl-4">
-                                        "{formData.description}"
-                                    </div>
-                                </div>
-
-                                {hasContextualFields(formData.projectType) && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-white/5">
-                                        {contextualFields.map((field) => (
-                                            <div key={`review-${field.key}`} className="space-y-1">
-                                                <div className="text-[10px] text-white/30 uppercase font-mono">{field.reviewLabel}</div>
-                                                <div className="text-sm text-white font-medium">{formData[field.key] || 'Not specified'}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {missingContextualFields.length > 0 && (
-                                    <div className="border border-amber-500/30 bg-amber-500/10 rounded-xl p-4">
-                                        <div className="text-[10px] font-mono uppercase tracking-widest text-amber-300 mb-2">
-                                            Context Quality Warning
-                                        </div>
-                                        <p className="text-xs text-amber-100/90 leading-relaxed">
-                                            You can still submit this evaluation, but missing category-specific inputs will reduce confidence and report quality.
-                                        </p>
-                                        <p className="text-[11px] text-amber-200/80 mt-3 font-mono">
-                                            Missing: {missingContextualFields.map((field) => field.label).join(', ')}
-                                        </p>
-                                    </div>
-                                )}
-
-                                <div className="space-y-2 pt-4 border-t border-white/5">
-                                    <div className="text-xs text-white/40 uppercase tracking-widest font-mono">Estimated Analysis Time</div>
-                                    <div className="text-sm text-emerald-400 font-mono flex items-center gap-2">
-                                        <History size={14} />
-                                        {formData.projectType === 'memecoin' ? '~30 Seconds' : '~2 Minutes'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
+                    {renderStep()}
                 </div>
             </div>
 
-            {/* NAVIGATION CONTROLS (Moved outside dynamic area and given high z-index) */}
-            <div className="mt-4 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300 relative z-[110] pointer-events-auto">
-                <div className={cn(
-                    "flex items-center gap-4 w-full",
-                    currentStep === 0 ? "sm:w-full justify-center" : "sm:w-auto"
-                )}>
-                    {currentStep > 0 && (
-                        <button
-                            onClick={handleBack}
-                            className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-mono uppercase text-xs tracking-widest flex items-center justify-center gap-2"
-                        >
-                            <ChevronRight size={14} className="rotate-180" />
-                            Back
-                        </button>
-                    )}
-                    {currentStep < 4 ? (
-                        <button
-                            onClick={() => handleNext()}
-                            disabled={currentStep === 0 && !formData.projectType}
-                            className="flex-1 sm:flex-none group px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest relative z-[111] cursor-pointer pointer-events-auto select-none"
-                        >
-                            {currentStep === 3 || (currentStep === 2 && !hasContextualFields(formData.projectType)) ? 'Review' : 'Continue'}
-                            <CornerDownLeft size={14} className="group-hover:translate-x-1 transition-transform pointer-events-none" />
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => handleNext()}
-                            disabled={isSubmitting}
-                            className="flex-1 sm:flex-none px-10 py-4 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-3 disabled:opacity-50 hover:bg-gray-200 transition-all font-mono uppercase text-xs tracking-widest shadow-lg shadow-white/5 relative z-[111] pointer-events-auto select-none"
-                        >
-                            <Sparkles size={16} className="pointer-events-none" />
-                            {isSubmitting ? 'Analyzing...' : 'Generate Report'}
-                            <ArrowRight size={16} className="pointer-events-none" />
-                        </button>
-                    )}
-                </div>
-
-                <div className="hidden sm:flex items-center gap-4 ml-auto text-xs font-mono text-white/30">
-                    <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Tab</span> to navigate</span>
-                    {currentStep === 0 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Click</span> to select</span>}
-                    {currentStep === 0 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to continue</span>}
-                    {currentStep === 1 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to proceed</span>}
-                    {currentStep === 2 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Cmd + Enter</span> to proceed</span>}
-                    {currentStep === 3 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to review</span>}
-                    {currentStep === 4 && <span className="flex items-center gap-1"><span className="bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</span> to launch</span>}
-                </div>
-            </div>
+            <WizardNavigation
+                currentStep={currentStep}
+                projectType={formData.projectType}
+                isSubmitting={!!isSubmitting} // Ensure boolean
+                onNext={handleNext}
+                onBack={handleBack}
+                canGoNext={canGoNext}
+            />
         </div>
     );
 }

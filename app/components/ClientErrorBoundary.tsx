@@ -7,15 +7,49 @@ interface ErrorBoundaryState {
   error?: Error;
 }
 
-interface ClientErrorBoundaryProps {
+export interface ErrorBoundaryFallbackRenderArgs {
+  error?: Error;
+  resetErrorBoundary: () => void;
+}
+
+export interface ClientErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
+  fallbackRender?: (args: ErrorBoundaryFallbackRenderArgs) => React.ReactNode;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  onReset?: () => void;
+  resetKeys?: ReadonlyArray<unknown>;
+}
+
+function hasArrayChanged(
+  prev: ReadonlyArray<unknown> | undefined,
+  next: ReadonlyArray<unknown> | undefined,
+): boolean {
+  if (prev === next) return false;
+  if (!prev || !next) return prev !== next;
+  if (prev.length !== next.length) return true;
+
+  for (let index = 0; index < prev.length; index += 1) {
+    if (!Object.is(prev[index], next[index])) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 class ClientErrorBoundary extends React.Component<ClientErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ClientErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
+  }
+
+  componentDidUpdate(prevProps: ClientErrorBoundaryProps) {
+    if (!this.state.hasError) return;
+
+    if (hasArrayChanged(prevProps.resetKeys, this.props.resetKeys)) {
+      this.resetErrorBoundary();
+    }
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
@@ -26,10 +60,23 @@ class ClientErrorBoundary extends React.Component<ClientErrorBoundaryProps, Erro
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log the error to console
     console.error("ClientErrorBoundary caught an error:", error, errorInfo);
+    this.props.onError?.(error, errorInfo);
+  }
+
+  resetErrorBoundary = () => {
+    this.setState({ hasError: false, error: undefined });
+    this.props.onReset?.();
   }
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallbackRender) {
+        return this.props.fallbackRender({
+          error: this.state.error,
+          resetErrorBoundary: this.resetErrorBoundary,
+        });
+      }
+
       if (this.props.fallback) {
         return this.props.fallback;
       }
@@ -46,14 +93,22 @@ class ClientErrorBoundary extends React.Component<ClientErrorBoundaryProps, Erro
               Something went wrong
             </h1>
             <p className="text-slate-300 text-center mb-4">
-              An unexpected error occurred. Please refresh the page to try again.
+              An unexpected error occurred. Try again, or refresh the page if the issue persists.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-            >
-              Refresh Page
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={this.resetErrorBoundary}
+                className="w-full bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-white/10 hover:bg-white/15 text-slate-200 font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                Refresh Page
+              </button>
+            </div>
           </div>
         </div>
       );

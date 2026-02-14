@@ -9,6 +9,15 @@ export interface ValidationResult {
   error?: string;
 }
 
+const MAX_HANDLE_LENGTH = 64;
+const MIN_SOLANA_SIGNATURE_LENGTH = 43;
+const MAX_SOLANA_SIGNATURE_LENGTH = 88;
+const MAX_URL_PARAM_LENGTH = 1000;
+const DEFAULT_DISPLAY_MAX_LENGTH = 100;
+const ELLIPSIS_LENGTH = 3;
+const SAFE_ETAG_PATTERN = /[^a-zA-Z0-9._-]/g;
+const SOLANA_BASE58_PATTERN = /^[1-9A-HJ-NP-Za-km-z]+$/;
+
 /**
  * Validates and sanitizes creator handles
  * Allows: letters, numbers, dots, underscores, hyphens
@@ -41,10 +50,10 @@ export function validateCreatorHandle(handle: string): ValidationResult {
     };
   }
 
-  if (decodedHandle.length > 64) {
+  if (decodedHandle.length > MAX_HANDLE_LENGTH) {
     return {
       isValid: false,
-      error: 'Handle cannot exceed 64 characters'
+      error: `Handle cannot exceed ${MAX_HANDLE_LENGTH} characters`
     };
   }
 
@@ -93,20 +102,18 @@ export function validateSignature(sig: string): ValidationResult {
     };
   }
 
-  // Check length (base64 encoded signatures are typically 88 characters)
-  if (sig.length < 32 || sig.length > 128) {
+  // Solana transaction signatures are base58 and typically 43-88 chars.
+  if (sig.length < MIN_SOLANA_SIGNATURE_LENGTH || sig.length > MAX_SOLANA_SIGNATURE_LENGTH) {
     return {
       isValid: false,
-      error: 'Invalid signature length'
+      error: `Invalid signature length. Expected ${MIN_SOLANA_SIGNATURE_LENGTH}-${MAX_SOLANA_SIGNATURE_LENGTH} characters`
     };
   }
 
-  // Check for valid base64 characters
-  const base64Pattern = /^[A-Za-z0-9+/=]+$/;
-  if (!base64Pattern.test(sig)) {
+  if (!SOLANA_BASE58_PATTERN.test(sig)) {
     return {
       isValid: false,
-      error: 'Invalid signature format. Only base64 characters allowed'
+      error: 'Invalid signature format. Expected Solana base58 signature'
     };
   }
 
@@ -140,7 +147,7 @@ export function validateUrlParameter(param: string, paramName: string): Validati
   }
 
   // Check for null bytes and other dangerous characters
-  if (decodedParam.includes('\0') || decodedParam.includes('\u0000')) {
+  if (decodedParam.includes('\0')) {
     return {
       isValid: false,
       error: `Invalid characters detected in ${paramName}`
@@ -148,10 +155,10 @@ export function validateUrlParameter(param: string, paramName: string): Validati
   }
 
   // Check length limits
-  if (decodedParam.length > 1000) {
+  if (decodedParam.length > MAX_URL_PARAM_LENGTH) {
     return {
       isValid: false,
-      error: `${paramName} exceeds maximum length of 1000 characters`
+      error: `${paramName} exceeds maximum length of ${MAX_URL_PARAM_LENGTH} characters`
     };
   }
 
@@ -165,7 +172,7 @@ export function validateUrlParameter(param: string, paramName: string): Validati
  * Sanitizes text for display in OG images
  * Removes dangerous characters and limits length
  */
-export function sanitizeForDisplay(text: string, maxLength: number = 100): string {
+export function sanitizeForDisplay(text: string, maxLength: number = DEFAULT_DISPLAY_MAX_LENGTH): string {
   if (!text || typeof text !== 'string') {
     return '';
   }
@@ -181,7 +188,7 @@ export function sanitizeForDisplay(text: string, maxLength: number = 100): strin
   
   // Limit length
   if (sanitized.length > maxLength) {
-    sanitized = sanitized.substring(0, maxLength - 3) + '...';
+    sanitized = sanitized.substring(0, maxLength - ELLIPSIS_LENGTH) + '...';
   }
   
   return sanitized;
@@ -192,13 +199,10 @@ export function sanitizeForDisplay(text: string, maxLength: number = 100): strin
  * Ensures ETags are valid and don't contain problematic characters
  */
 export function createSafeETag(input: string, prefix: string = ''): string {
-  if (!input) {
-    return `"${prefix}unknown"`;
-  }
-
-  // Remove problematic characters for ETags
-  const safeInput = input.replace(/[^a-zA-Z0-9._-]/g, '');
-  const etag = prefix ? `${prefix}-${safeInput}` : safeInput;
+  const safePrefix = prefix.replace(SAFE_ETAG_PATTERN, '');
+  const safeInput = (input || '').replace(SAFE_ETAG_PATTERN, '');
+  const value = safeInput || 'unknown';
+  const etag = safePrefix ? `${safePrefix}-${value}` : value;
   
   return `"${etag}"`;
 }

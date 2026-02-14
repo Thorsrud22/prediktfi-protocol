@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { z } from 'zod';
 import { useToast } from '../components/ToastProvider';
 import { getQuota as getUsageQuota, bumpQuota as incrementUsage } from '../lib/quota';
 import ReasoningTerminal, { ReasoningStep } from './ReasoningTerminal';
-import IdeaSubmissionWizard, { WizardFormData } from './IdeaSubmissionWizard';
+import IdeaSubmissionWizard from './IdeaSubmissionWizard';
+import { WizardFormData } from './wizard/types';
 import {
     Rocket,
     Target,
@@ -101,6 +102,25 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({
         onSubmit(updatedData);
     };
 
+    const wizardInitialData = useMemo(() => ({
+        name: formData.name,
+        description: formData.description,
+        website: formData.website,
+        projectType: formData.projectType as any,
+        memecoinVibe: formData.memecoinVibe,
+        memecoinNarrative: formData.memecoinNarrative,
+        defiMechanism: formData.defiMechanism,
+        defiRevenue: formData.defiRevenue,
+        aiModelType: formData.aiModelType,
+        aiDataMoat: formData.aiDataMoat,
+        nftUtility: formData.nftUtility,
+        nftCollectorHook: formData.nftCollectorHook,
+        gamingCoreLoop: formData.gamingCoreLoop,
+        gamingEconomyModel: formData.gamingEconomyModel,
+        otherTargetUser: formData.otherTargetUser,
+        otherDifferentiation: formData.otherDifferentiation
+    }), [formData]);
+
     // Render Logic
     // If submitting or if we have error/results shown by parent via props
     // Note: Parent handles the "Result" view (IdeaEvaluationReport), so we only show Terminal if submitting or error
@@ -121,24 +141,7 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({
     return (
         <IdeaSubmissionWizard
             onSubmit={handleWizardSubmit}
-            initialData={{
-                name: formData.name,
-                description: formData.description,
-                website: formData.website,
-                projectType: formData.projectType as any,
-                memecoinVibe: formData.memecoinVibe,
-                memecoinNarrative: formData.memecoinNarrative,
-                defiMechanism: formData.defiMechanism,
-                defiRevenue: formData.defiRevenue,
-                aiModelType: formData.aiModelType,
-                aiDataMoat: formData.aiDataMoat,
-                nftUtility: formData.nftUtility,
-                nftCollectorHook: formData.nftCollectorHook,
-                gamingCoreLoop: formData.gamingCoreLoop,
-                gamingEconomyModel: formData.gamingEconomyModel,
-                otherTargetUser: formData.otherTargetUser,
-                otherDifferentiation: formData.otherDifferentiation
-            }}
+            initialData={wizardInitialData}
             isSubmitting={isSubmitting}
         />
     );

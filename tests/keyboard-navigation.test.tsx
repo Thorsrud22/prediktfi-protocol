@@ -218,6 +218,29 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
         expect(screen.getByText('to proceed')).toBeInTheDocument();
     });
 
+    it('keeps selected sector when rerendered with unchanged initialData values', async () => {
+        const { rerender } = render(
+            <IdeaSubmissionWizard
+                onSubmit={mockOnSubmit}
+                initialData={{ projectType: null, name: '', description: '' }}
+            />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /AI Agent/i }));
+        await settle();
+        expect(screen.getByRole('button', { name: /AI Agent/i })).toHaveAttribute('aria-pressed', 'true');
+
+        rerender(
+            <IdeaSubmissionWizard
+                onSubmit={mockOnSubmit}
+                initialData={{ projectType: null, name: '', description: '' }}
+            />
+        );
+
+        await settle();
+        expect(screen.getByRole('button', { name: /AI Agent/i })).toHaveAttribute('aria-pressed', 'true');
+    });
+
     it('clears draft on final-step keyboard submit (Cmd+Enter)', async () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
             data: {
