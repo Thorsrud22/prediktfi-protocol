@@ -50,10 +50,9 @@ export function useWizardState(initialData?: Partial<WizardFormData>) {
 
         // Clear errors for this field
         setErrors(prev => {
-            if (!prev[field] && !prev.name) return prev; // Optimization
+            if (!prev[field]) return prev; // Optimization
             const next = { ...prev };
             delete next[field];
-            if (field === 'projectType' || field === 'name') delete next.name; // specialized clearing
             return next;
         });
     }, []);

@@ -19,6 +19,22 @@ export const STEPS = [
     { id: 'review', title: 'Ready to Launch?', subtitle: 'Review your submission.' }
 ] as const;
 
+export type StepId = (typeof STEPS)[number]['id'];
+
+function stepIndex(id: StepId): number {
+    const idx = STEPS.findIndex((step) => step.id === id);
+    if (idx === -1) throw new Error(`Unknown step: ${id}`);
+    return idx;
+}
+
+export const STEP_INDEX = {
+    SECTOR: stepIndex('sector'),
+    DETAILS: stepIndex('details'),
+    PITCH: stepIndex('pitch'),
+    INSIGHTS: stepIndex('insights'),
+    REVIEW: stepIndex('review'),
+} as const;
+
 export const SECTOR_OPTIONS = [
     { id: 'ai', icon: Cpu, label: 'AI Agent', desc: 'LLM & Infra' },
     { id: 'defi', icon: Globe, label: 'DeFi / Utility', desc: 'Protocol & Yield' },

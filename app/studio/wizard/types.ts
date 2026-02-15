@@ -25,6 +25,7 @@ export interface WizardFormData {
 }
 
 export interface WizardErrors {
+    projectType?: string;
     name?: string;
     description?: string;
     [key: string]: string | undefined;

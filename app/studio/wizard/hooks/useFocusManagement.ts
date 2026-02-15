@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { WIZARD_CONSTANTS } from '../constants';
+import { WIZARD_CONSTANTS, STEP_INDEX } from '../constants';
 
 export function useFocusManagement(currentStep: number) {
     const focusRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -48,9 +48,9 @@ export function useFocusManagement(currentStep: number) {
         }, WIZARD_CONSTANTS.SCROLL_DELAY_MS);
 
         // Focus
-        if (currentStep === 1) {
+        if (currentStep === STEP_INDEX.DETAILS) {
             focusWithRetry(() => nameInputRef.current);
-        } else if (currentStep === 2) {
+        } else if (currentStep === STEP_INDEX.PITCH) {
             focusWithRetry(() => descInputRef.current);
         } else {
             clearPendingFocusRetry();
