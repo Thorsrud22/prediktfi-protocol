@@ -57,12 +57,12 @@ export const IdentityStep = forwardRef<HTMLInputElement, IdentityStepProps>(
                         </span>
                     </div>
                 </div>
-                <p id="name-helper" className="mt-8 text-white/40 flex items-center gap-2">
+                <div id="name-helper" className="mt-8 text-white/40 flex items-center gap-2">
                     <Sparkles size={16} className="text-blue-400" />
                     {formData.projectType === 'memecoin'
                         ? "Catchy tickers tend to perform better in our analysis."
                         : "Short, memorable names resonate best with VCs."}
-                </p>
+                </div>
             </div>
         );
     }

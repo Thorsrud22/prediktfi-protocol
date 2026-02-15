@@ -110,7 +110,7 @@ describe('AI Idea Evaluator Studio', () => {
     };
 
     // Helper to wait for state to settle in tests
-    const settle = () => new Promise(r => setTimeout(r, 50));
+    const settle = () => new Promise(r => setTimeout(r, 75));
 
     it('renders the wizard initially after quota loads', async () => {
         render(
@@ -240,8 +240,8 @@ describe('AI Idea Evaluator Studio', () => {
 
         // Verify Insights Step
         await screen.findByText(/Strategic Insights/i);
-        expect(screen.getByText('Community Vibe')).toBeInTheDocument();
-        expect(screen.getByText('Primary Narrative')).toBeInTheDocument();
+        expect(await screen.findByLabelText('Community Vibe')).toBeInTheDocument();
+        expect(await screen.findByLabelText('Primary Narrative')).toBeInTheDocument();
     });
 
     it('shows AI Agent conditional fields in wizard', async () => {
@@ -272,8 +272,8 @@ describe('AI Idea Evaluator Studio', () => {
 
         // Verify AI Insights Step
         await screen.findByText(/Strategic Insights/i);
-        expect(screen.queryByText('Community Vibe')).not.toBeInTheDocument();
-        expect(screen.getByText('Model Type')).toBeInTheDocument();
+        expect(screen.queryByLabelText('Community Vibe')).not.toBeInTheDocument();
+        expect(await screen.findByLabelText('Model Type')).toBeInTheDocument();
     });
 
     it.each([
@@ -307,8 +307,8 @@ describe('AI Idea Evaluator Studio', () => {
         await settle();
 
         await screen.findByText(/Strategic Insights/i);
-        expect(screen.getByText(fieldOne)).toBeInTheDocument();
-        expect(screen.getByText(fieldTwo)).toBeInTheDocument();
+        expect(await screen.findByLabelText(fieldOne)).toBeInTheDocument();
+        expect(await screen.findByLabelText(fieldTwo)).toBeInTheDocument();
     });
 
     it('shows soft-required context warning on review and still allows submit', async () => {
@@ -338,12 +338,13 @@ describe('AI Idea Evaluator Studio', () => {
         await settle();
 
         // Keep contextual fields empty, proceed to review
-        fireEvent.click(screen.getByText('Review'));
+        fireEvent.click(screen.getByRole('button', { name: /Continue to review step/i }));
         await settle();
 
         await screen.findByText(/Ready to Launch\?/i);
-        expect(screen.getByText(/Context Quality Warning/i)).toBeInTheDocument();
-        expect(screen.getByText(/missing category-specific inputs will reduce confidence and report quality/i)).toBeInTheDocument();
+        await screen.findByText(/Sector/i);
+        expect(await screen.findByText(/Context Quality Warning/i)).toBeInTheDocument();
+        expect(await screen.findByText(/missing category-specific inputs will reduce confidence and report quality/i)).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: /Generate Report/i }));
         await waitFor(() => {
@@ -360,7 +361,7 @@ describe('AI Idea Evaluator Studio', () => {
                 <StudioPage />
             </ToastProvider>
         );
-        await settle();
+        await waitForWizardReady();
 
         // 1. Sector Step -> select one to proceed
         const memecoinBtn = screen.getByRole('button', { name: /Memecoin/i });
@@ -369,7 +370,7 @@ describe('AI Idea Evaluator Studio', () => {
             expect(memecoinBtn).toHaveAttribute('aria-pressed', 'true');
         });
 
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.click(screen.getByRole('button', { name: /Continue to next step/i }));
         await settle();
 
         // 2. Step 1: Label discovery (project type can resolve to Ticker Symbol or Project Name)
@@ -378,10 +379,10 @@ describe('AI Idea Evaluator Studio', () => {
 
         // Validation/ARIA check
         fireEvent.change(nameLabel, { target: { value: 'A' } });
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.keyDown(nameLabel, { key: 'Enter', code: 'Enter' });
         await settle();
 
-        const nameError = await screen.findByText(/Name must be at least 3 characters/i);
+        await screen.findByText(/Name must be at least 3 characters/i);
         await waitFor(() => {
             expect(nameLabel).toHaveAttribute('aria-describedby', expect.stringContaining('name-error'));
             expect(nameLabel).toHaveAttribute('aria-invalid', 'true');
@@ -390,10 +391,10 @@ describe('AI Idea Evaluator Studio', () => {
         // 3. Step 2: Label discovery
         fireEvent.change(nameLabel, { target: { value: 'VALID' } });
         await settle();
-        fireEvent.click(screen.getByText('Continue'));
+        fireEvent.click(screen.getByRole('button', { name: /Continue to next step/i }));
         await settle();
 
-        const pitchLabel = screen.getByLabelText(/The Pitch/i);
+        const pitchLabel = await screen.findByLabelText(/The Pitch/i);
         expect(pitchLabel).toHaveAttribute('id', 'project-pitch');
         expect(pitchLabel).toHaveAttribute('aria-describedby', expect.stringContaining('pitch-counter'));
     });

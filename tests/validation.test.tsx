@@ -33,17 +33,17 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
     });
 
     // Helper to wait for state to settle in tests (matches studio.test.tsx)
-    const settle = () => new Promise(r => setTimeout(r, 200));
+    const settle = () => new Promise(r => setTimeout(r, 100));
 
     const goToStep1 = async () => {
-        console.log('Rendering Wizard...');
         render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
-        console.log('Waiting for Memecoin button...');
         const memecoinBtn = await screen.findByText(/Memecoin/i);
-        console.log('Found Memecoin button, clicking...');
         fireEvent.click(memecoinBtn);
         await settle();
         const continueBtn = await screen.findByRole('button', { name: /Continue/i });
+        await waitFor(() => {
+            expect(continueBtn).toBeEnabled();
+        });
         fireEvent.click(continueBtn);
         await settle();
     };
@@ -64,7 +64,7 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
         fireEvent.change(input, { target: { value: 'A' } });
         await settle();
-        fireEvent.click(await screen.findByRole('button', { name: /Continue/i }));
+        fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
         await settle();
 
         expect(await screen.findByText(/Name must be at least 3 characters/i)).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
         fireEvent.change(input, { target: { value: '   ' } });
         await settle();
-        fireEvent.click(await screen.findByRole('button', { name: /Continue/i }));
+        fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
         await settle();
 
         expect(await screen.findByText(/Name is required/i)).toBeInTheDocument();
@@ -101,7 +101,7 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
         fireEvent.change(textarea, { target: { value: '123456789' } });
         await settle();
-        fireEvent.click(await screen.findByRole('button', { name: /Continue/i }));
+        fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter', metaKey: true });
         await settle();
 
         expect(await screen.findByText(/Pitch must be at least 10 non-space characters/i)).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
         fireEvent.change(textarea, { target: { value: '          ' } });
         await settle();
-        fireEvent.click(await screen.findByRole('button', { name: /Continue/i }));
+        fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter', metaKey: true });
         await settle();
 
         expect(await screen.findByText(/Pitch is required/i)).toBeInTheDocument();
@@ -137,7 +137,7 @@ describe('IdeaSubmissionWizard Validation Hardening', () => {
 
         fireEvent.change(input, { target: { value: 'A' } });
         await settle();
-        fireEvent.click(await screen.findByRole('button', { name: /Continue/i }));
+        fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
         await settle();
 
         expect(await screen.findByText(/Name must be at least 3 characters/i)).toBeInTheDocument();

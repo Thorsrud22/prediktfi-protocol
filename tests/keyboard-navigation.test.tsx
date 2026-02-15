@@ -8,19 +8,19 @@ const STORAGE_KEY = 'predikt_studio_draft';
 
 // Mock Lucide icons
 vi.mock('lucide-react', () => ({
-    ArrowRight: () => <div data-testid="arrow-right-icon" />,
-    Check: () => <div data-testid="check-icon" />,
-    ChevronRight: () => <div data-testid="chevron-right-icon" />,
-    Command: () => <div data-testid="command-icon" />,
-    CornerDownLeft: () => <div data-testid="corner-down-left-icon" />,
-    Sparkles: () => <div data-testid="sparkles-icon" />,
-    Zap: () => <div data-testid="zap-icon" />,
-    Globe: () => <div data-testid="globe-icon" />,
-    Cpu: () => <div data-testid="cpu-icon" />,
-    Palette: () => <div data-testid="palette-icon" />,
-    Gamepad2: () => <div data-testid="gamepad2-icon" />,
-    MoreHorizontal: () => <div data-testid="more-horizontal-icon" />,
-    History: () => <div data-testid="history-icon" />,
+    ArrowRight: () => <svg data-testid="arrow-right-icon" />,
+    Check: () => <svg data-testid="check-icon" />,
+    ChevronRight: () => <svg data-testid="chevron-right-icon" />,
+    Command: () => <svg data-testid="command-icon" />,
+    CornerDownLeft: () => <svg data-testid="corner-down-left-icon" />,
+    Sparkles: () => <svg data-testid="sparkles-icon" />,
+    Zap: () => <svg data-testid="zap-icon" />,
+    Globe: () => <svg data-testid="globe-icon" />,
+    Cpu: () => <svg data-testid="cpu-icon" />,
+    Palette: () => <svg data-testid="palette-icon" />,
+    Gamepad2: () => <svg data-testid="gamepad2-icon" />,
+    MoreHorizontal: () => <svg data-testid="more-horizontal-icon" />,
+    History: () => <svg data-testid="history-icon" />,
 }));
 
 describe('IdeaSubmissionWizard Keyboard Navigation', () => {
@@ -37,14 +37,22 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
     });
 
     // Helper to wait for state to settle in tests
-    const settle = () => new Promise(r => setTimeout(r, 50));
+    const settle = () => new Promise(r => setTimeout(r, 75));
 
     const goToIdentityStep = async () => {
         fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
         await settle();
         fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
         await settle();
-        return screen.getByLabelText(/Ticker Symbol|Project Name/i) as HTMLInputElement;
+        return await screen.findByLabelText(/Ticker Symbol|Project Name/i) as HTMLInputElement;
+    };
+
+    const goToPitchStep = async () => {
+        const nameInput = await goToIdentityStep();
+        fireEvent.change(nameInput, { target: { value: 'TEST' } });
+        fireEvent.keyDown(nameInput, { key: 'Enter', code: 'Enter' });
+        await settle();
+        return await screen.findByLabelText(/The Pitch/i) as HTMLTextAreaElement;
     };
 
     it('auto-focuses the name input when entering Project Identity', async () => {
@@ -148,18 +156,7 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
     it('does NOT advance from Pitch step with Enter (adds newline instead)', async () => {
         render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
 
-        // Select sector and name to get to Pitch step
-        fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
-        await settle();
-        fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-        await settle();
-        fireEvent.change(screen.getByLabelText(/Ticker Symbol/i), { target: { value: 'TEST' } });
-        fireEvent.keyDown(screen.getByLabelText(/Ticker Symbol/i), { key: 'Enter', code: 'Enter' });
-        await settle();
-
-        // Step 2: The Pitch
-        expect(screen.getAllByText(/The Pitch/i).length).toBeGreaterThan(0);
-        const pitchInput = screen.getByLabelText(/The Pitch/i);
+        const pitchInput = await goToPitchStep();
 
         fireEvent.change(pitchInput, { target: { value: 'This is a test description.' } });
         fireEvent.keyDown(pitchInput, { key: 'Enter', code: 'Enter' });
@@ -172,17 +169,7 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
     it('advances from Pitch step with Cmd+Enter', async () => {
         render(<IdeaSubmissionWizard onSubmit={mockOnSubmit} />);
 
-        // Navigate to Pitch step
-        fireEvent.click(screen.getByRole('button', { name: /Memecoin/i }));
-        await settle();
-        fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-        await settle();
-        fireEvent.change(screen.getByLabelText(/Ticker Symbol/i), { target: { value: 'TEST' } });
-        fireEvent.keyDown(screen.getByLabelText(/Ticker Symbol/i), { key: 'Enter', code: 'Enter' });
-        await settle();
-
-        // Step 2: The Pitch
-        const pitchInput = screen.getByLabelText(/The Pitch/i);
+        const pitchInput = await goToPitchStep();
         fireEvent.change(pitchInput, { target: { value: 'This is a test description that is valid.' } });
 
         // Cmd+Enter
@@ -207,14 +194,16 @@ describe('IdeaSubmissionWizard Keyboard Navigation', () => {
         await settle();
         fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
         await settle();
+        await screen.findByLabelText(/Ticker Symbol|Project Name/i);
         expect(screen.getByText('Enter')).toBeInTheDocument();
         expect(screen.getByText('to proceed')).toBeInTheDocument();
 
         // Advance to Step 2
-        fireEvent.change(screen.getByLabelText(/Ticker Symbol/i), { target: { value: 'TEST' } });
-        fireEvent.keyDown(screen.getByLabelText(/Ticker Symbol/i), { key: 'Enter', code: 'Enter' });
+        const nameInput = screen.getByLabelText(/Ticker Symbol|Project Name/i);
+        fireEvent.change(nameInput, { target: { value: 'TEST' } });
+        fireEvent.keyDown(nameInput, { key: 'Enter', code: 'Enter' });
         await settle();
-        expect(screen.getByText('Cmd + Enter')).toBeInTheDocument();
+        expect(screen.getByText('Cmd/Ctrl + Enter')).toBeInTheDocument();
         expect(screen.getByText('to proceed')).toBeInTheDocument();
     });
 
