@@ -6,6 +6,26 @@
  */
 
 import { IdeaEvaluationResult } from "@/lib/ideaEvaluationTypes";
+import { extractStructuredOutput } from "@/lib/ai/structured-output";
+
+function resolveStructuredAnalysisText(
+    result: IdeaEvaluationResult,
+    responseContent: string | object | undefined
+): string {
+    if (typeof result.structuredAnalysis === "string" && result.structuredAnalysis.trim()) {
+        return result.structuredAnalysis;
+    }
+
+    if (typeof responseContent === "string" && responseContent.includes("## ")) {
+        return responseContent;
+    }
+
+    if (typeof result.technical?.comments === "string" && result.technical.comments.includes("## ")) {
+        return result.technical.comments;
+    }
+
+    return "";
+}
 
 /**
  * Parses the OpenAI API response into an IdeaEvaluationResult.
@@ -59,6 +79,27 @@ export function parseEvaluationResponse(response: unknown): IdeaEvaluationResult
     // Validate required fields
     validateEvaluationResult(result);
 
+    const structuredText = resolveStructuredAnalysisText(result, responseContent);
+    const structured = extractStructuredOutput(structuredText);
+    result.meta = result.meta || {};
+    result.meta.structuredOutputParsed = structured.parsed;
+    result.meta.structuredOutputWarnings = structured.warnings;
+
+    if (structured.parsed) {
+        if (Object.keys(structured.subScores).length > 0) {
+            result.subScores = structured.subScores;
+        }
+        if (structured.compositionFormula) {
+            result.compositionFormula = structured.compositionFormula;
+        }
+        if (structured.confidenceLevel) {
+            result.modelConfidenceLevel = structured.confidenceLevel;
+        }
+        if (structured.groundingCitations.length > 0) {
+            result.groundingCitations = structured.groundingCitations;
+        }
+    }
+
     return result;
 }
 
@@ -104,4 +145,67 @@ export function validateEvaluationResult(result: IdeaEvaluationResult): void {
         niceToHaveLater: []
     };
     result.reasoningSteps = result.reasoningSteps || [];
+}
+
+export interface ExtractedClaim {
+    text: string;
+    section: string;
+    type: 'numerical' | 'comparative' | 'existence';
+    value?: number;
+    unit?: string;
+    checkable: boolean;
+}
+
+const NUMERICAL_PATTERNS: RegExp[] = [
+    /\$\s*([\d,.]+)\s*(billion|million|trillion|B|M|T)\b/gi,
+    /([\d,.]+)\s*%/g,
+    /([\d,.]+)\s*(users|wallets|transactions|tvl|holders|protocols)/gi,
+    /(?:ranked?\s*#?\s*|top\s+)([\d]+)/gi,
+];
+
+function splitSentences(text: string): string[] {
+    const matches = text.match(/[^.!?]+[.!?]+/g);
+    if (matches && matches.length > 0) return matches;
+    return [text];
+}
+
+export function extractNumericalClaims(
+    sections: Record<string, string>
+): ExtractedClaim[] {
+    const claims: ExtractedClaim[] = [];
+
+    for (const [sectionName, text] of Object.entries(sections)) {
+        if (typeof text !== 'string' || !text.trim()) continue;
+        const sentences = splitSentences(text);
+
+        for (const sentence of sentences) {
+            let matched = false;
+            for (const pattern of NUMERICAL_PATTERNS) {
+                pattern.lastIndex = 0;
+                const match = pattern.exec(sentence);
+                if (!match) continue;
+
+                const rawValue = match[1];
+                const parsedValue = typeof rawValue === 'string'
+                    ? Number.parseFloat(rawValue.replace(/,/g, ''))
+                    : Number.NaN;
+                if (Number.isNaN(parsedValue)) continue;
+
+                claims.push({
+                    text: sentence.trim(),
+                    section: sectionName,
+                    type: 'numerical',
+                    value: parsedValue,
+                    unit: match[2] ?? '%',
+                    checkable: true,
+                });
+                matched = true;
+                break;
+            }
+
+            if (matched) continue;
+        }
+    }
+
+    return claims;
 }

@@ -4,6 +4,9 @@
  * Contains all LLM prompts used in the evaluation system.
  * Separated from evaluator.ts for better maintainability.
  */
+import type { DataFreshnessSignal } from "@/lib/ai/trust-metrics";
+import { buildScoringRubricPrompt } from "@/lib/ai/scoring-rubric";
+import type { ProjectDomain } from "@/lib/ai/domain-classifier";
 
 /**
  * Phase 1: Streaming Analysis Prompt
@@ -32,6 +35,67 @@ Format each thought as a single line starting with the category:
 [VERDICT] Forming final assessment...
 
 Be direct. Be critical. Think like an investor.`;
+
+export function groundingStalenessNote(freshness: DataFreshnessSignal): string {
+  if (freshness.staleSourceCount === 0) return "";
+
+  const staleDetails = freshness.details
+    .filter((detail) => detail.stalenessHours > detail.ttlHours)
+    .map(
+      (detail) =>
+        `- ${detail.source}: last refreshed ${Math.round(detail.stalenessHours)}h ago (expected freshness: ${detail.ttlHours}h)`
+    )
+    .join("\n");
+
+  return `
+⚠️ DATA FRESHNESS WARNING:
+${freshness.staleSourceCount} of ${freshness.totalSourceCount} data sources are beyond their expected freshness window.
+${staleDetails}
+Treat specific figures from stale sources as approximate. Do not present stale data with false precision.
+`;
+}
+
+export function committeeScoringRubric(
+  projectType?: string,
+  classifiedDomain?: ProjectDomain
+): string {
+  return buildScoringRubricPrompt(projectType, classifiedDomain);
+}
+
+export const COMMITTEE_STRUCTURED_ANALYSIS_TEMPLATE = `## EVIDENCE
+- [MARKET_SNAPSHOT] <decision-relevant fact>
+- [TOKEN_SECURITY] <decision-relevant fact or "no data">
+- [COMPETITIVE_MEMO] <decision-relevant fact or "no data">
+
+## MARKET OPPORTUNITY
+- Evidence: <citations from EVIDENCE>
+- Reasoning: <how evidence supports your assessment>
+- Uncertainty: <what missing data could change this>
+- Sub-score: X/10
+
+## TECHNICAL FEASIBILITY
+- Evidence: ...
+- Reasoning: ...
+- Uncertainty: ...
+- Sub-score: X/10
+
+## COMPETITIVE MOAT
+- Evidence: ...
+- Reasoning: ...
+- Uncertainty: ...
+- Sub-score: X/10
+
+## EXECUTION READINESS
+- Evidence: ...
+- Reasoning: ...
+- Uncertainty: ...
+- Sub-score: X/10
+
+## OVERALL
+- Composition: (0.30 × market) + (0.25 × technical) + (0.25 × moat) + (0.20 × execution)
+- Final score: X/10
+- Confidence: HIGH | MEDIUM | LOW
+- Top risk to thesis: <single biggest failure mode>`;
 
 export const WEB3_EVALUATION_GUIDE = `
 When evaluating Web3, crypto and AI projects, you MUST always think about:
@@ -283,7 +347,8 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
   },
   "launchReadinessScore": <number 0-100>,
   "launchReadinessLabel": "low" | "medium" | "high",
-  "launchReadinessSignals": ["<signal1>", "<signal2>"]
+  "launchReadinessSignals": ["<signal1>", "<signal2>"],
+  "structuredAnalysis": "<optional markdown block with ## section headers for evidence, sub-scores, and composition math>"
 }`;
 
 /**
@@ -335,6 +400,9 @@ INSTRUCTIONS:
 3. If the tech is a wrapper, call it a "Zero Moat Wrapper".
 4. If the token is useless, call it "Ponzi flywheels".
 5. Use short, punchy, aggressive language.
+6. Use the provided scoring rubric anchors; avoid vibes-based scoring.
+7. Follow an evidence -> reasoning -> uncertainty -> sub-score chain in structuredAnalysis.
+8. Use the grounding section tags exactly when citing evidence: [MARKET_SNAPSHOT], [TOKEN_SECURITY], [COMPETITIVE_MEMO].
 
 OUTPUT FORMAT:
 Return a JSON object:
@@ -343,9 +411,19 @@ Return a JSON object:
     "fatalFlaws": ["<flaw1>", "<flaw2>", "<flaw3>"],
     "riskScore": <number 0-100, where 100 is EXTREME RISK>,
     "verdict": "KILL" | "AVOID" | "SHORT",
-    "roast": "<a 2-sentence savage takedown of the idea>"
+    "roast": "<a 2-sentence savage takedown of the idea>",
+    "structuredCase": "<markdown string using section headers below>"
+  },
+  "roleScores": {
+    "marketOpportunity": <number 0-10>,
+    "technicalFeasibility": <number 0-10>,
+    "competitiveMoat": <number 0-10>,
+    "executionReadiness": <number 0-10>
   }
 }
+
+Required section header format for structuredCase:
+${COMMITTEE_STRUCTURED_ANALYSIS_TEMPLATE}
 `;
 
 export const PERMABULL_SYSTEM_PROMPT = `
@@ -358,6 +436,9 @@ INSTRUCTIONS:
 3. If the idea is crazy, call it "Visionary".
 4. If the market is crowded, call it "Proven Demand".
 5. Use energetic, conviction-heavy language.
+6. Use the provided scoring rubric anchors; avoid vibes-based scoring.
+7. Follow an evidence -> reasoning -> uncertainty -> sub-score chain in structuredAnalysis.
+8. Use the grounding section tags exactly when citing evidence: [MARKET_SNAPSHOT], [TOKEN_SECURITY], [COMPETITIVE_MEMO].
 
 OUTPUT FORMAT:
 Return a JSON object:
@@ -366,9 +447,19 @@ Return a JSON object:
     "alphaSignals": ["<signal1>", "<signal2>", "<signal3>"],
     "upsideScore": <number 0-100, where 100 is UNICORN POTENTIAL>,
     "verdict": "ALL IN" | "APE" | "LONG",
-    "pitch": "<a 2-sentence elevator pitch selling this to the partners>"
+    "pitch": "<a 2-sentence elevator pitch selling this to the partners>",
+    "structuredCase": "<markdown string using section headers below>"
+  },
+  "roleScores": {
+    "marketOpportunity": <number 0-10>,
+    "technicalFeasibility": <number 0-10>,
+    "competitiveMoat": <number 0-10>,
+    "executionReadiness": <number 0-10>
   }
 }
+
+Required section header format for structuredCase:
+${COMMITTEE_STRUCTURED_ANALYSIS_TEMPLATE}
 `;
 
 export const JUDGE_SYSTEM_PROMPT = `
@@ -390,6 +481,8 @@ INSTRUCTIONS:
 4. **CRITICAL:** If the Bear identified a "Fatal Flaw" (e.g. Regulatory, Scam, Impossible Tech), you MUST weight that heavily.
 5. Any claim marked "uncorroborated" must be treated as tentative; do not state it as certain fact.
 6. If evidence is missing, explicitly mention uncertainty and reduce confidence in recommendations.
+7. Use the provided scoring rubric anchors to validate and calibrate committee scores while synthesizing, not to ignore committee context.
+8. You must include a structuredAnalysis markdown block with explicit section headers and score composition math.
 
 OUTPUT FORMAT:
 You must output the standard 'IdeaEvaluationResult' JSON structure exactly as defined in the 'JSON_OUTPUT_SCHEMA'.
@@ -397,4 +490,10 @@ However, in the 'reasoningSteps' array, you must explicitly mention the committe
 - "Reviewing Bear Case: <key_risk>..."
 - "Reviewing Bull Case: <key_alpha>..."
 - "Synthesizing final verdict..."
+
+Also include an additional field:
+- "structuredAnalysis": "<markdown string using the required headers below>"
+
+Required section header format:
+${COMMITTEE_STRUCTURED_ANALYSIS_TEMPLATE}
 `;

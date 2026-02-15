@@ -1,9 +1,11 @@
 import { IdeaSubmission } from "@/lib/ideaSchema";
 import { IdeaEvaluationResult } from "@/lib/ideaEvaluationTypes";
 import { openai } from "@/lib/openaiClient";
-import { MarketSnapshot } from "@/lib/market/types";
+import { GroundingEnvelope, MarketSnapshot } from "@/lib/market/types";
 import { EvidenceClaim, EvidencePack } from "@/lib/ai/evidenceTypes";
 import {
+  groundingStalenessNote,
+  committeeScoringRubric,
   PERMABEAR_SYSTEM_PROMPT,
   PERMABULL_SYSTEM_PROMPT,
   JUDGE_SYSTEM_PROMPT,
@@ -12,21 +14,33 @@ import {
 import { buildIdeaContextSummary, detectLaunchedStatus } from "./evaluator";
 import { parseEvaluationResponse } from "./parser";
 import { calibrateScore } from "./calibration";
-import { verifyTokenSecurity } from "@/lib/solana/token-check";
+import { TokenSecurityCheck } from "@/lib/solana/token-check";
+import { verifyTokenSecurityEnvelope } from "@/lib/solana/token-check";
 import { fetchCompetitiveMemo } from "@/lib/market/competitive";
 import { getEvaluationModelMap } from "@/lib/ai/model-routing";
 import {
   buildModelRouteMeta,
+  computeCommitteeDisagreement,
+  computeDataFreshness,
   computeDebateDisagreementIndex,
   computeEvidenceCoverage,
+  computeWeightedCommitteeScore,
   deriveConfidence,
   extractDataFreshness,
 } from "@/lib/ai/trust-metrics";
 import { runEvaluationVerifier } from "@/lib/ai/verifier";
 import {
+  buildVerificationLogEntry,
+  emitVerificationLog,
+  type FailedCheckRecord,
+} from "@/lib/ai/verification-log";
+import {
   getCategoryCommitteeIntelStep,
   sanitizeReasoningStepsForCategory,
 } from "@/lib/ideaCategories";
+import { estimatePromptTokens, formatGroundingForPrompt } from "@/lib/ai/grounding-formatter";
+import { buildRoleSpecializationBlock } from "@/lib/ai/agent-roles";
+import { classifyDomain } from "@/lib/ai/domain-classifier";
 
 interface BearAnalysis {
   bearAnalysis?: {
@@ -34,6 +48,13 @@ interface BearAnalysis {
     riskScore?: number;
     verdict?: "KILL" | "AVOID" | "SHORT";
     roast?: string;
+    structuredCase?: string;
+  };
+  roleScores?: {
+    marketOpportunity?: number;
+    technicalFeasibility?: number;
+    competitiveMoat?: number;
+    executionReadiness?: number;
   };
 }
 
@@ -43,6 +64,13 @@ interface BullAnalysis {
     upsideScore?: number;
     verdict?: "ALL IN" | "APE" | "LONG";
     pitch?: string;
+    structuredCase?: string;
+  };
+  roleScores?: {
+    marketOpportunity?: number;
+    technicalFeasibility?: number;
+    competitiveMoat?: number;
+    executionReadiness?: number;
   };
 }
 
@@ -85,10 +113,68 @@ function buildEvidenceSummary(evidencePack: EvidencePack): string {
     .join("\n");
 }
 
+function isGroundingEnvelope<T>(value: unknown): value is GroundingEnvelope<T> {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<GroundingEnvelope<T>>;
+  return (
+    typeof candidate.fetchedAt === "string" &&
+    typeof candidate.source === "string" &&
+    typeof candidate.ttlHours === "number" &&
+    typeof candidate.stalenessHours === "number" &&
+    typeof candidate.isStale === "boolean" &&
+    "data" in candidate
+  );
+}
+
+function inferSeverityFromWarning(warning: string): FailedCheckRecord["severity"] {
+  const lower = warning.toLowerCase();
+  if (lower.includes("fatal")) return "fatal";
+  if (lower.includes("minor")) return "minor";
+  if (lower.includes("cosmetic")) return "cosmetic";
+  return "major";
+}
+
+function extractCheckIdFromWarning(warning: string): string {
+  const match = warning.match(/^([^:]+):/);
+  if (match) {
+    return match[1].trim().toLowerCase().replace(/\s+/g, "_");
+  }
+  return "unknown_check";
+}
+
+function normalizeDimensionKey(rawKey: string): string {
+  const cleaned = rawKey
+    .replace(/[^a-zA-Z0-9 ]/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .trim()
+    .toLowerCase();
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return "unknown";
+  return tokens
+    .map((token, index) =>
+      index === 0 ? token : `${token.charAt(0).toUpperCase()}${token.slice(1)}`
+    )
+    .join("");
+}
+
+function addDimensionScore(
+  bucket: Record<string, number[]>,
+  key: string,
+  value: unknown
+): void {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return;
+  const normalized = normalizeDimensionKey(key);
+  if (!bucket[normalized]) bucket[normalized] = [];
+  bucket[normalized].push(Math.max(0, Math.min(10, numeric)));
+}
+
 export async function evaluateWithCommittee(
   input: IdeaSubmission,
   options?: {
+    evaluationId?: string;
     market?: MarketSnapshot;
+    marketGrounding?: GroundingEnvelope<MarketSnapshot>;
     onProgress?: ProgressCallback;
     onThought?: ThoughtCallback;
   }
@@ -96,21 +182,33 @@ export async function evaluateWithCommittee(
   const modelMap = getEvaluationModelMap();
   const contextSummary = buildIdeaContextSummary(input);
   const normalizedCategory = input.projectType.toLowerCase();
+  const domainClassification = classifyDomain(
+    `${input.description || ""}\n${contextSummary}`,
+    input.projectType
+  );
+  const classifiedDomain = domainClassification.domain;
 
   options?.onProgress?.(getCategoryCommitteeIntelStep(input.projectType));
 
   const tokenCheckPromise = input.tokenAddress
-    ? verifyTokenSecurity(input.tokenAddress).catch((err) => ({ valid: false, error: String(err) } as any))
-    : Promise.resolve(null);
+    ? verifyTokenSecurityEnvelope(input.tokenAddress).catch((err) => {
+      console.warn("Token security envelope fetch failed:", err);
+      return null;
+    })
+    : Promise.resolve<GroundingEnvelope<TokenSecurityCheck> | null>(null);
 
   const competitiveMemoPromise = ["memecoin", "defi", "ai"].includes(normalizedCategory)
-    ? fetchCompetitiveMemo(input, normalizedCategory).catch((err) => ({ status: "error", error: err } as any))
-    : Promise.resolve(null);
+    ? fetchCompetitiveMemo(input, normalizedCategory).catch((err) => {
+      console.warn("Competitive memo fetch failed:", err);
+      return null;
+    })
+    : Promise.resolve<Awaited<ReturnType<typeof fetchCompetitiveMemo>> | null>(null);
 
   const [tokenCheckRaw, competitiveMemoResult] = await Promise.all([
     tokenCheckPromise,
     competitiveMemoPromise,
   ]);
+  const tokenCheck = isGroundingEnvelope(tokenCheckRaw) ? tokenCheckRaw.data : tokenCheckRaw;
 
   let marketContext = "";
   if (options?.market && options.market.source !== "fallback") {
@@ -118,12 +216,12 @@ export async function evaluateWithCommittee(
   }
 
   let verificationContext = "";
-  if (tokenCheckRaw) {
-    if (!tokenCheckRaw.valid) {
-      verificationContext = `Token Check: FAILED (${tokenCheckRaw.error})`;
+  if (tokenCheck) {
+    if (!tokenCheck.valid) {
+      verificationContext = `Token Check: FAILED (${tokenCheck.error})`;
     } else {
-      verificationContext = `Token Check: MINT=${tokenCheckRaw.mintAuthority ? "ACTIVE" : "REVOKED"}, FREEZE=${tokenCheckRaw.freezeAuthority ? "ACTIVE" : "REVOKED"
-        }, LP=${tokenCheckRaw.isLiquidityLocked ? "LOCKED" : "UNLOCKED"}`;
+      verificationContext = `Token Check: MINT=${tokenCheck.mintAuthority ? "ACTIVE" : "REVOKED"}, FREEZE=${tokenCheck.freezeAuthority ? "ACTIVE" : "REVOKED"
+        }, LP=${tokenCheck.isLiquidityLocked ? "LOCKED" : "UNLOCKED"}`;
     }
   } else if (detectLaunchedStatus(input)) {
     verificationContext = "INTELLIGENCE GAP: Claims live, no CA provided.";
@@ -154,16 +252,54 @@ export async function evaluateWithCommittee(
     evidencePack = buildFallbackEvidencePack(["competitive"]);
   }
 
+  const freshnessEnvelopes: GroundingEnvelope<unknown>[] = [];
+  if (options?.marketGrounding && isGroundingEnvelope(options.marketGrounding)) {
+    freshnessEnvelopes.push(options.marketGrounding);
+  }
+  if (isGroundingEnvelope(tokenCheckRaw)) {
+    freshnessEnvelopes.push(tokenCheckRaw);
+  }
+  if (competitiveMemoResult?.status === "ok" && isGroundingEnvelope(competitiveMemoResult.grounding)) {
+    freshnessEnvelopes.push(competitiveMemoResult.grounding);
+  }
+  const freshness = computeDataFreshness(freshnessEnvelopes);
+  const stalenessNote = groundingStalenessNote(freshness);
+  const scoringRubric = committeeScoringRubric(input.projectType, classifiedDomain);
+  const formattedGroundingBrief = formatGroundingForPrompt({
+    market: options?.market,
+    marketGrounding: options?.marketGrounding || null,
+    tokenGrounding: isGroundingEnvelope(tokenCheckRaw) ? tokenCheckRaw : null,
+    competitiveResult: competitiveMemoResult,
+    maxTokens: 800,
+  });
+
   const baseUserContent = `
 Input Data:
 ${contextSummary}
 ${marketContext}
 ${verificationContext}
 ${competitiveContext}
+${stalenessNote}
+Domain classification: ${classifiedDomain} (confidence: ${domainClassification.confidence}; signals: ${domainClassification.matchedSignals.join(", ") || "none"})
+
+--- SCORING RUBRIC ---
+${scoringRubric}
+
+--- STRUCTURED GROUNDING BRIEF ---
+${formattedGroundingBrief}
 
 Idea:
 ${JSON.stringify(input, null, 2)}
 `;
+  const promptContextTokens = estimatePromptTokens(baseUserContent);
+  if (promptContextTokens > 3000) {
+    options?.onThought?.(
+      `[WARN] Prompt context is ${promptContextTokens} tokens before committee debate; consider trimming rubric/grounding payload.\n`
+    );
+  }
+  const bearRoleBlock = buildRoleSpecializationBlock("bear", input.projectType, classifiedDomain);
+  const bullRoleBlock = buildRoleSpecializationBlock("bull", input.projectType, classifiedDomain);
+  const judgeRoleBlock = buildRoleSpecializationBlock("judge", input.projectType, classifiedDomain);
 
   const callAgent = async <T extends object>(
     model: string,
@@ -201,8 +337,18 @@ ${JSON.stringify(input, null, 2)}
   options?.onProgress?.("Kicking off committee debate (Bull vs Bear)...");
 
   const [bearResult, bullResult] = await Promise.all([
-    callAgent<BearAnalysis>(modelMap.bear, PERMABEAR_SYSTEM_PROMPT, baseUserContent, 25000),
-    callAgent<BullAnalysis>(modelMap.bull, PERMABULL_SYSTEM_PROMPT, baseUserContent, 25000),
+    callAgent<BearAnalysis>(
+      modelMap.bear,
+      PERMABEAR_SYSTEM_PROMPT,
+      `${baseUserContent}\n\n--- ROLE BRIEF ---\n${bearRoleBlock}`,
+      25000
+    ),
+    callAgent<BullAnalysis>(
+      modelMap.bull,
+      PERMABULL_SYSTEM_PROMPT,
+      `${baseUserContent}\n\n--- ROLE BRIEF ---\n${bullRoleBlock}`,
+      25000
+    ),
   ]);
 
   const bearOutput = bearResult.output;
@@ -241,10 +387,12 @@ ${buildClaimsSummary(competitiveClaims)}
 --- INSTRUCTION ---
 Synthesize a final decision based on these reports and JSON schema.
 If any claim is uncorroborated, treat it as tentative.
+Apply this role brief during synthesis:
+${judgeRoleBlock}
 ${JSON_OUTPUT_SCHEMA}
 `;
 
-  let judgeResponse: any;
+  let judgeResponse: unknown;
   let fallbackUsed = false;
 
   try {
@@ -290,13 +438,90 @@ ${JSON_OUTPUT_SCHEMA}
   options?.onProgress?.("Final verdict reached.");
 
   let result = parseEvaluationResponse(judgeResponse);
+  const weightedScore = computeWeightedCommitteeScore({
+    bearRiskScore: bearOutput.bearAnalysis?.riskScore,
+    bullUpsideScore: bullOutput.bullAnalysis?.upsideScore,
+    judgeScore: result.overallScore,
+  });
+  const judgeRawScoreBeforeWeighting = result.overallScore;
+  result.overallScore = weightedScore.weightedScore;
+
+  const perDimensionScores: Record<string, number[]> = {};
+  for (const [dimension, value] of Object.entries(bearOutput.roleScores || {})) {
+    addDimensionScore(perDimensionScores, dimension, value);
+  }
+  for (const [dimension, value] of Object.entries(bullOutput.roleScores || {})) {
+    addDimensionScore(perDimensionScores, dimension, value);
+  }
+  for (const [dimension, value] of Object.entries(result.subScores || {})) {
+    addDimensionScore(perDimensionScores, dimension, value?.score);
+  }
+
+  const committeeDisagreement = computeCommitteeDisagreement({
+    overallScores: {
+      bear: weightedScore.inputs.bear,
+      bull: weightedScore.inputs.bull,
+      judge: weightedScore.inputs.judge,
+    },
+    perDimensionScores,
+    sigmaThreshold: 2.0,
+  });
+
+  const structuredWarnings = result.meta?.structuredOutputWarnings || [];
+  const verificationStart = performance.now();
+  const groundingPayload: Record<string, unknown> = {
+    market: options?.market || null,
+    tokenSecurity: tokenCheck || null,
+    competitiveMemo: competitiveMemoResult?.status === "ok" ? competitiveMemoResult.memo : null,
+    evidence: {
+      count: evidencePack.evidence.length,
+      unavailableSources: evidencePack.unavailableSources || [],
+    },
+  };
   const verifierOutcome = await runEvaluationVerifier({
     draftResult: result,
     evidencePack,
     claims: competitiveClaims,
-    model: modelMap.verifier,
+    groundingData: groundingPayload,
+    maxRepairs: 2,
   });
+  const verificationDurationMs = performance.now() - verificationStart;
   result = verifierOutcome.result;
+  if (verifierOutcome.qualityWarnings && verifierOutcome.qualityWarnings.length > 0) {
+    result.qualityWarnings = verifierOutcome.qualityWarnings;
+  }
+
+  const failedChecks: FailedCheckRecord[] = (verifierOutcome.qualityWarnings || []).map(
+    (warning) => ({
+      checkId: extractCheckIdFromWarning(warning),
+      severity: inferSeverityFromWarning(warning),
+      detail: warning,
+      repairAttempted: (verifierOutcome.repairsUsed || 0) > 0,
+      repairSucceeded: false,
+    })
+  );
+  const structuredParseRecords: FailedCheckRecord[] = structuredWarnings.map((warning) => ({
+    checkId: "structured_output_parse",
+    severity: "minor",
+    detail: warning,
+    repairAttempted: false,
+    repairSucceeded: false,
+  }));
+
+  const evaluationId =
+    options?.evaluationId ||
+    `eval_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const verificationLogEntry = buildVerificationLogEntry({
+    evaluationId,
+    checksRun: verifierOutcome.checksRun || 0,
+    checksFailed: verifierOutcome.checksFailed || 0,
+    repairsUsed: verifierOutcome.repairsUsed || 0,
+    fatalFailure: verifierOutcome.fatalFailure || false,
+    qualityWarnings: verifierOutcome.qualityWarnings || [],
+    failedChecks: [...failedChecks, ...structuredParseRecords],
+    durationMs: verificationDurationMs,
+  });
+  emitVerificationLog(verificationLogEntry);
 
   if (!result.technical.comments) {
     result.technical.comments = "";
@@ -340,6 +565,9 @@ ${JSON_OUTPUT_SCHEMA}
   const defillamaAvailable = evidencePack.evidence.some((item) => item.source === "defillama");
   const defillamaRequired = normalizedCategory === "defi";
   const externalDataAvailable = !competitiveCategorySupported || evidencePack.evidence.length > 0;
+  const latestGroundingTimestamp =
+    freshnessEnvelopes.map((envelope) => envelope.fetchedAt).sort().pop() ||
+    extractDataFreshness(evidencePack);
   const confidence = deriveConfidence({
     evidenceCoverage,
     verifierStatus: verifierOutcome.status,
@@ -349,9 +577,23 @@ ${JSON_OUTPUT_SCHEMA}
     defillamaRequired,
     defillamaAvailable,
     agentFailures,
+    dataFreshness: freshness,
+    claimVerification: verifierOutcome.claimVerification
+      ? {
+        totalClaims: verifierOutcome.claimVerification.totalClaims,
+        groundingRate: verifierOutcome.claimVerification.groundingRate,
+        contradictedClaims: verifierOutcome.claimVerification.contradictedClaims,
+      }
+      : undefined,
+    committeeDisagreement: {
+      overallScoreStdDev: committeeDisagreement.overallScoreStdDev,
+      highDisagreementFlag: committeeDisagreement.highDisagreementFlag,
+      topDisagreementDimension: committeeDisagreement.topDisagreementDimension,
+    },
   });
 
   result.confidenceLevel = confidence.level;
+  result.classifiedDomain = classifiedDomain;
   result.meta = {
     confidenceLevel: confidence.level,
     confidenceReasons: confidence.reasons,
@@ -361,7 +603,22 @@ ${JSON_OUTPUT_SCHEMA}
     fallbackUsed,
     verifierStatus: verifierOutcome.status,
     verifierIssues: verifierOutcome.issues,
-    dataFreshness: extractDataFreshness(evidencePack),
+    verifierChecksRun: verifierOutcome.checksRun,
+    verifierChecksFailed: verifierOutcome.checksFailed,
+    verifierRepairsUsed: verifierOutcome.repairsUsed,
+    dataFreshness: latestGroundingTimestamp || null,
+    freshness,
+    claimVerification: verifierOutcome.claimVerification,
+    structuredOutputParsed: result.meta?.structuredOutputParsed,
+    structuredOutputWarnings: structuredWarnings,
+    promptContextTokens,
+    weightedScore: weightedScore.weightedScore,
+    weightedScoreInputs: weightedScore.inputs,
+    weightedScoreWeights: weightedScore.weightsUsed,
+    committeeDisagreement,
+    classifiedDomain,
+    domainClassificationConfidence: domainClassification.confidence,
+    domainClassificationSignals: domainClassification.matchedSignals,
   };
   result.evidence = {
     ...evidencePack,
@@ -369,6 +626,15 @@ ${JSON_OUTPUT_SCHEMA}
   };
 
   if (!result.calibrationNotes) result.calibrationNotes = [];
+  result.calibrationNotes.push(
+    `Committee weighting applied (bear=${weightedScore.weightsUsed.bear ?? 0}, bull=${weightedScore.weightsUsed.bull ?? 0}, judge=${weightedScore.weightsUsed.judge ?? 0}). Judge raw score: ${judgeRawScoreBeforeWeighting}. Weighted score: ${weightedScore.weightedScore}.`
+  );
+  if (committeeDisagreement.highDisagreementFlag) {
+    result.calibrationNotes.push(`Committee disagreement: ${committeeDisagreement.disagreementNote}`);
+  }
+  result.calibrationNotes.push(
+    `Domain routing: ${classifiedDomain} (${domainClassification.confidence} confidence).`
+  );
   if (fallbackUsed) {
     result.calibrationNotes.push("Reliability: Backup judge model used due primary timeout/failure.");
   }

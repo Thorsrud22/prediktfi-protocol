@@ -7,10 +7,10 @@
 
 import { NextRequest } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
-import { getMarketSnapshot } from "@/lib/market/snapshot";
+import { getMarketSnapshotEnvelope } from "@/lib/market/snapshot";
 import { checkRateLimit, incrementEvalCount, getClientIdentifier } from "@/app/lib/ratelimit";
 import { buildCategoryPreflightSteps, categoryNeedsMarketSnapshot } from "@/lib/ideaCategories";
-import type { MarketSnapshot } from "@/lib/market/types";
+import type { GroundingEnvelope, MarketSnapshot } from "@/lib/market/types";
 
 // Vercel Serverless Function Config
 export const maxDuration = 300; // Max duration (5 minutes)
@@ -64,8 +64,10 @@ export async function POST(request: NextRequest) {
 
                 // 1. Category-aware preflight + optional market context
                 let marketSnapshot: MarketSnapshot | undefined;
+                let marketGrounding: GroundingEnvelope<MarketSnapshot> | undefined;
                 if (categoryNeedsMarketSnapshot(parsed.data.projectType)) {
-                    marketSnapshot = await getMarketSnapshot();
+                    marketGrounding = await getMarketSnapshotEnvelope();
+                    marketSnapshot = marketGrounding.data;
                 }
 
                 const preflightSteps = buildCategoryPreflightSteps(parsed.data.projectType, marketSnapshot);
@@ -75,8 +77,11 @@ export async function POST(request: NextRequest) {
 
                 // 2. AI Inference with real-time committee debate
                 const { evaluateWithCommittee } = await import("@/lib/ai/committee");
+                const evaluationId = `eval_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
                 const res = await evaluateWithCommittee(parsed.data, {
+                    evaluationId,
                     market: marketSnapshot,
+                    marketGrounding,
                     onProgress: async (step) => {
                         await sendEvent("step", { step });
                     },
@@ -84,6 +89,15 @@ export async function POST(request: NextRequest) {
                         await sendEvent("thought", { thought });
                     }
                 });
+
+                if (res.meta?.verifierStatus === 'hard_fail') {
+                    await sendEvent("error", {
+                        error: "Evaluation failed quality checks",
+                        details: res.meta?.verifierIssues || [],
+                    });
+                    await writer.close();
+                    return;
+                }
 
                 // 3. Complete - Increment usage counter for accurate quota display
                 await incrementEvalCount(identifier, rateLimitPlan as 'idea_eval_ip' | 'idea_eval_wallet');

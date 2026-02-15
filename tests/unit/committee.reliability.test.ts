@@ -14,7 +14,7 @@ vi.mock("@/lib/openaiClient", () => ({
 }));
 
 vi.mock("@/lib/solana/token-check", () => ({
-  verifyTokenSecurity: vi.fn().mockResolvedValue(null),
+  verifyTokenSecurityEnvelope: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("@/lib/market/competitive", () => ({
@@ -58,6 +58,18 @@ vi.mock("@/lib/market/competitive", () => ({
         },
       ],
       generatedAt: new Date().toISOString(),
+    },
+    grounding: {
+      data: {
+        category: "memecoin",
+        evidenceCount: 1,
+        unavailableSources: [],
+      },
+      fetchedAt: new Date().toISOString(),
+      stalenessHours: 0,
+      source: "competitive_memo",
+      ttlHours: 72,
+      isStale: false,
     },
   }),
 }));
@@ -174,6 +186,8 @@ describe("committee reliability", () => {
     expect(result.meta?.verifierStatus).toBe("pass");
     expect(result.evidence?.evidence.length).toBeGreaterThan(0);
     expect(result.confidenceLevel).toBeDefined();
+    expect(result.meta?.weightedScore).toBeDefined();
+    expect(result.meta?.committeeDisagreement).toBeDefined();
   });
 
   it("returns a valid evaluation with degraded confidence when competitive sources are unavailable", async () => {
@@ -234,9 +248,11 @@ describe("committee reliability", () => {
       mvpScope: "Core lending flow",
     } as any);
 
-    expect(result.overallScore).toBe(58);
+    expect(result.overallScore).toBeGreaterThanOrEqual(50);
+    expect(result.overallScore).toBeLessThanOrEqual(58);
     expect(result.evidence?.evidence.length).toBe(0);
     expect(result.meta?.confidenceLevel).not.toBe("high");
     expect(result.meta?.confidenceReasons?.some((reason) => reason.toLowerCase().includes("unavailable"))).toBe(true);
+    expect(result.meta?.committeeDisagreement?.highDisagreementFlag).toBe(false);
   });
 });

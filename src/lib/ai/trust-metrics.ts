@@ -1,5 +1,7 @@
 import { EvidenceClaim, EvidencePack } from "@/lib/ai/evidenceTypes";
+import { COMMITTEE_WEIGHT_CONFIG } from "@/lib/ai/agent-roles";
 import { EvaluationModelMap } from "@/lib/ai/model-routing";
+import { GroundingEnvelope } from "@/lib/market/types";
 
 type BearVerdict = "KILL" | "AVOID" | "SHORT";
 type BullVerdict = "ALL IN" | "APE" | "LONG";
@@ -53,6 +55,140 @@ export function computeDebateDisagreementIndex(
   return clamp(0, Math.round(riskUpsideTension * 0.6 + verdictTension * 0.4), 100);
 }
 
+function computeVariance(values: number[]): number {
+  if (values.length === 0) return 0;
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  return values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+}
+
+function normalizeScore100(value: unknown): number | null {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return clamp(0, numeric, 100);
+}
+
+export interface CommitteeScoreInputs {
+  bearRiskScore?: number;
+  bullUpsideScore?: number;
+  judgeScore?: number;
+}
+
+export interface CommitteeWeightedScore {
+  weightedScore: number;
+  inputs: {
+    bear?: number;
+    bull?: number;
+    judge?: number;
+  };
+  weightsUsed: {
+    bear?: number;
+    bull?: number;
+    judge?: number;
+  };
+}
+
+export function computeWeightedCommitteeScore(
+  inputs: CommitteeScoreInputs
+): CommitteeWeightedScore {
+  const judgeScore = normalizeScore100(inputs.judgeScore);
+  const bullScore = normalizeScore100(inputs.bullUpsideScore);
+  const normalizedBearRisk = normalizeScore100(inputs.bearRiskScore);
+  const bearScore = normalizedBearRisk === null ? null : 100 - normalizedBearRisk;
+
+  const weightedParts: Array<{ score: number; weight: number; key: "bear" | "bull" | "judge" }> = [];
+  if (bearScore !== null) weightedParts.push({ key: "bear", score: bearScore, weight: COMMITTEE_WEIGHT_CONFIG.bear });
+  if (bullScore !== null) weightedParts.push({ key: "bull", score: bullScore, weight: COMMITTEE_WEIGHT_CONFIG.bull });
+  if (judgeScore !== null) weightedParts.push({ key: "judge", score: judgeScore, weight: COMMITTEE_WEIGHT_CONFIG.judge });
+
+  const totalWeight = weightedParts.reduce((sum, part) => sum + part.weight, 0);
+  const fallback = judgeScore ?? bullScore ?? bearScore ?? 50;
+  const weightedScore =
+    totalWeight > 0
+      ? weightedParts.reduce((sum, part) => sum + part.score * part.weight, 0) / totalWeight
+      : fallback;
+
+  const weightsUsed: CommitteeWeightedScore["weightsUsed"] = {};
+  for (const part of weightedParts) {
+    weightsUsed[part.key] = part.weight;
+  }
+
+  return {
+    weightedScore: Math.round(clamp(0, weightedScore, 100) * 10) / 10,
+    inputs: {
+      bear: bearScore ?? undefined,
+      bull: bullScore ?? undefined,
+      judge: judgeScore ?? undefined,
+    },
+    weightsUsed,
+  };
+}
+
+export interface CommitteeDisagreementInputs {
+  overallScores: {
+    bear?: number;
+    bull?: number;
+    judge?: number;
+  };
+  perDimensionScores?: Record<string, number[]>;
+  sigmaThreshold?: number;
+}
+
+export interface CommitteeDisagreementMetrics {
+  overallScoreVariance: number;
+  overallScoreStdDev: number;
+  highDisagreementFlag: boolean;
+  dimensionalDisagreement: Record<string, number>;
+  topDisagreementDimension: string | null;
+  comparedAgents: number;
+  disagreementNote: string;
+}
+
+export function computeCommitteeDisagreement(
+  inputs: CommitteeDisagreementInputs
+): CommitteeDisagreementMetrics {
+  const sigmaThreshold = inputs.sigmaThreshold ?? 2.0;
+  const overallValues10Scale = [inputs.overallScores.bear, inputs.overallScores.bull, inputs.overallScores.judge]
+    .map((value) => normalizeScore100(value))
+    .filter((value): value is number => value !== null)
+    .map((value) => value / 10);
+
+  const variance = computeVariance(overallValues10Scale);
+  const stdDev = Math.sqrt(variance);
+  const highDisagreementFlag = stdDev > sigmaThreshold;
+
+  const dimensionalDisagreement: Record<string, number> = {};
+  if (inputs.perDimensionScores) {
+    for (const [dimension, values] of Object.entries(inputs.perDimensionScores)) {
+      const normalizedValues = values
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value))
+        .map((value) => clamp(0, value, 10));
+      if (normalizedValues.length < 2) continue;
+      const spread = Math.max(...normalizedValues) - Math.min(...normalizedValues);
+      dimensionalDisagreement[dimension] = Math.round(spread * 100) / 100;
+    }
+  }
+
+  const topDisagreementEntry = Object.entries(dimensionalDisagreement).sort(
+    (left, right) => right[1] - left[1]
+  )[0];
+  const topDisagreementDimension = topDisagreementEntry?.[0] || null;
+
+  const disagreementNote = topDisagreementDimension
+    ? `Agents disagreed most on ${topDisagreementDimension} (spread: ${topDisagreementEntry[1].toFixed(2)}). Overall score sigma: ${stdDev.toFixed(2)}.`
+    : `Overall score sigma: ${stdDev.toFixed(2)} across ${overallValues10Scale.length} agent score(s).`;
+
+  return {
+    overallScoreVariance: Math.round(variance * 1000) / 1000,
+    overallScoreStdDev: Math.round(stdDev * 1000) / 1000,
+    highDisagreementFlag,
+    dimensionalDisagreement,
+    topDisagreementDimension,
+    comparedAgents: overallValues10Scale.length,
+    disagreementNote,
+  };
+}
+
 export function computeEvidenceCoverage(claims: EvidenceClaim[]): number {
   const factualClaims = claims.filter((claim) => claim.claimType === "fact");
   if (factualClaims.length === 0) return 0;
@@ -72,12 +208,83 @@ export interface ConfidenceInputs {
   defillamaRequired: boolean;
   defillamaAvailable: boolean;
   agentFailures: number;
+  dataFreshness?: DataFreshnessSignal;
+  claimVerification?: {
+    totalClaims: number;
+    groundingRate: number;
+    contradictedClaims: number;
+  };
+  committeeDisagreement?: {
+    overallScoreStdDev: number;
+    highDisagreementFlag: boolean;
+    topDisagreementDimension?: string | null;
+  };
 }
 
 export interface ConfidenceResult {
   score: number;
   level: ConfidenceLevel;
   reasons: string[];
+}
+
+export interface DataFreshnessSignal {
+  overallFreshness: number;
+  staleSourceCount: number;
+  totalSourceCount: number;
+  worstSource: { source: string; stalenessHours: number } | null;
+  details: Array<{
+    source: string;
+    stalenessHours: number;
+    ttlHours: number;
+    freshnessScore: number;
+  }>;
+}
+
+export function computeDataFreshness(
+  envelopes: GroundingEnvelope<unknown>[]
+): DataFreshnessSignal {
+  if (envelopes.length === 0) {
+    return {
+      overallFreshness: 0.3,
+      staleSourceCount: 0,
+      totalSourceCount: 0,
+      worstSource: null,
+      details: [],
+    };
+  }
+
+  const details = envelopes.map((envelope) => {
+    const ttl = envelope.ttlHours > 0 ? envelope.ttlHours : 1;
+    const ratio = envelope.stalenessHours / ttl;
+    const freshnessScore = Math.max(0.3, 1 - 0.5 * ratio);
+    return {
+      source: envelope.source,
+      stalenessHours: envelope.stalenessHours,
+      ttlHours: ttl,
+      freshnessScore,
+    };
+  });
+
+  const staleSourceCount = envelopes.filter((envelope) => envelope.isStale).length;
+  const worst = details.reduce<typeof details[number] | null>(
+    (currentWorst, detail) =>
+      !currentWorst || detail.freshnessScore < currentWorst.freshnessScore
+        ? detail
+        : currentWorst,
+    null
+  );
+
+  const avgFreshness =
+    details.reduce((sum, detail) => sum + detail.freshnessScore, 0) / details.length;
+  const overallFreshness = Math.round((0.6 * avgFreshness + 0.4 * (worst?.freshnessScore ?? avgFreshness)) * 1000) / 1000;
+
+  return {
+    overallFreshness,
+    staleSourceCount,
+    totalSourceCount: envelopes.length,
+    worstSource: worst ? { source: worst.source, stalenessHours: worst.stalenessHours } : null,
+    details,
+  };
 }
 
 export function deriveConfidence(inputs: ConfidenceInputs): ConfidenceResult {
@@ -133,6 +340,46 @@ export function deriveConfidence(inputs: ConfidenceInputs): ConfidenceResult {
     const penalty = Math.min(inputs.agentFailures * 5, 15);
     score -= penalty;
     reasons.push(`One or more scout agents failed (${inputs.agentFailures}).`);
+  }
+
+  if (inputs.dataFreshness) {
+    const freshness = inputs.dataFreshness.overallFreshness;
+    score *= 0.4 + 0.6 * freshness;
+    if (inputs.dataFreshness.staleSourceCount > 0) {
+      reasons.push(
+        `Data freshness degraded: ${inputs.dataFreshness.staleSourceCount}/${inputs.dataFreshness.totalSourceCount} source(s) stale.`
+      );
+    } else {
+      reasons.push("Grounding data is fresh.");
+    }
+  }
+
+  if (inputs.claimVerification && inputs.claimVerification.totalClaims > 0) {
+    const contradictionPenalty = inputs.claimVerification.contradictedClaims * 10;
+    const groundingBonus = Math.round(inputs.claimVerification.groundingRate * 10);
+    score = score + groundingBonus - contradictionPenalty;
+
+    if (inputs.claimVerification.contradictedClaims > 0) {
+      reasons.push(
+        `${inputs.claimVerification.contradictedClaims} numerical claim(s) contradicted grounding data.`
+      );
+    } else if (inputs.claimVerification.groundingRate >= 0.6) {
+      reasons.push("Most numerical claims align with available grounding data.");
+    }
+  }
+
+  if (inputs.committeeDisagreement) {
+    if (inputs.committeeDisagreement.highDisagreementFlag) {
+      score *= 0.85;
+      const topDimension = inputs.committeeDisagreement.topDisagreementDimension;
+      reasons.push(
+        topDimension
+          ? `Confidence penalized due high committee disagreement on ${topDimension}.`
+          : "Confidence penalized due high committee disagreement."
+      );
+    } else {
+      reasons.push("Committee disagreement within expected bounds.");
+    }
   }
 
   score = clamp(0, score, 100);

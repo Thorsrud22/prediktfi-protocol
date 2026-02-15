@@ -1,6 +1,7 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import { getMint } from "@solana/spl-token";
 import { BirdeyeMarketService } from "@/lib/market/birdeye";
+import { GroundingEnvelope, wrapGrounding } from "@/lib/market/types";
 
 export interface TokenSecurityCheck {
     valid: boolean;           // true only if successfully verified on-chain
@@ -30,11 +31,12 @@ export function isValidSolanaAddress(address: string): boolean {
     return /^[1-9A-HJ-NP-Za-km-z]+$/.test(address);
 }
 
-export async function verifyTokenSecurity(tokenAddress: string): Promise<TokenSecurityCheck> {
+export async function verifyTokenSecurityEnvelope(tokenAddress: string): Promise<GroundingEnvelope<TokenSecurityCheck>> {
+    const fetchedAt = new Date();
     // Early validation - reject obviously invalid addresses
     if (!isValidSolanaAddress(tokenAddress)) {
         console.warn("[TokenCheck] Invalid address format:", tokenAddress);
-        return {
+        const invalid: TokenSecurityCheck = {
             valid: false,
             mintAuthority: false,
             freezeAuthority: false,
@@ -43,6 +45,7 @@ export async function verifyTokenSecurity(tokenAddress: string): Promise<TokenSe
             isPumpFun: false,
             error: "Invalid Solana address format"
         };
+        return wrapGrounding(invalid, "onchain_rpc", fetchedAt, 1);
     }
 
     try {
@@ -89,11 +92,11 @@ export async function verifyTokenSecurity(tokenAddress: string): Promise<TokenSe
             console.warn("[TokenCheck] Birdeye augmentation skipped (non-blocking)", err);
         }
 
-        return result;
+        return wrapGrounding(result, "onchain_rpc", fetchedAt, 1);
 
     } catch (error) {
         console.error("Token verification failed:", error);
-        return {
+        const failed: TokenSecurityCheck = {
             valid: false,
             mintAuthority: false,
             freezeAuthority: false,
@@ -102,5 +105,11 @@ export async function verifyTokenSecurity(tokenAddress: string): Promise<TokenSe
             isPumpFun: false,
             error: "Token not found or network error"
         };
+        return wrapGrounding(failed, "onchain_rpc", fetchedAt, 1);
     }
+}
+
+export async function verifyTokenSecurity(tokenAddress: string): Promise<TokenSecurityCheck> {
+    const envelope = await verifyTokenSecurityEnvelope(tokenAddress);
+    return envelope.data;
 }

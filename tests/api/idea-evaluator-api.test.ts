@@ -43,6 +43,11 @@ vi.mock('@/lib/openaiClient', () => ({
     getOpenAIClient: () => mockOpenai
 }));
 
+const mockEvaluateWithCommittee = vi.fn();
+vi.mock('@/lib/ai/committee', () => ({
+    evaluateWithCommittee: mockEvaluateWithCommittee
+}));
+
 // Keep original mock for other imports if needed
 vi.mock('../../src/lib/ai/evaluator', async (importOriginal) => {
     // Return same mock
@@ -61,17 +66,26 @@ vi.mock('../../src/lib/ai/evaluator', async (importOriginal) => {
 
 // Mock market snapshot
 vi.mock('../../src/lib/market/snapshot', () => ({
-    getMarketSnapshot: vi.fn().mockResolvedValue({
-        timestamp: new Date().toISOString(),
-        solPriceUsd: 150,
-        btcDominance: 50,
-        source: 'mock'
+    getMarketSnapshotEnvelope: vi.fn().mockResolvedValue({
+        data: {
+            timestamp: new Date().toISOString(),
+            solPriceUsd: 150,
+            btcDominance: 50,
+            source: 'mock'
+        },
+        fetchedAt: new Date().toISOString(),
+        stalenessHours: 0,
+        source: 'market_snapshot_api',
+        ttlHours: 72,
+        isStale: false
     })
 }));
 
 // Mock rate limit
 vi.mock('../../app/lib/ratelimit', () => ({
-    checkRateLimit: vi.fn().mockResolvedValue(null)
+    checkRateLimit: vi.fn().mockResolvedValue(null),
+    incrementEvalCount: vi.fn().mockResolvedValue(undefined),
+    getClientIdentifier: vi.fn().mockReturnValue('test-client'),
 }));
 
 // Helper to create a NextRequest with JSON body
@@ -123,6 +137,45 @@ describe('/api/idea-evaluator/evaluate', () => {
         expect(res.status).toBe(400);
         expect(data).toHaveProperty('error');
         expect(data).toHaveProperty('issues');
+    });
+
+    it('returns 422 when verifier reports fatal failure', async () => {
+        mockEvaluateWithCommittee.mockResolvedValueOnce({
+            overallScore: 42,
+            summary: { title: "x", oneLiner: "x", mainVerdict: "x" },
+            technical: { feasibilityScore: 40, keyRisks: [], requiredComponents: [], comments: "x" },
+            tokenomics: { tokenNeeded: true, designScore: 40, mainIssues: [], suggestions: [] },
+            market: { marketFitScore: 40, targetAudience: [], competitorSignals: [], goToMarketRisks: [] },
+            execution: {
+                complexityLevel: "medium",
+                founderReadinessFlags: [],
+                estimatedTimeline: "x",
+                executionRiskScore: 50,
+                executionRiskLabel: "medium",
+                executionSignals: [],
+            },
+            recommendations: { mustFixBeforeBuild: [], recommendedPivots: [], niceToHaveLater: [] },
+            meta: {
+                verifierStatus: "hard_fail",
+                verifierIssues: ["Score outside valid range"],
+            }
+        });
+
+        const validPayload = {
+            description: "A decentralized prediction market with a clear launch plan and user segment.",
+            projectType: "memecoin",
+            teamSize: "team_2_5",
+            resources: ["developers", "budget"],
+            successDefinition: "Reach 10k users in 3 months",
+            responseStyle: "balanced"
+        };
+
+        const req = createJsonRequest(validPayload);
+        const res = await POST(req);
+        const data = await res.json();
+
+        expect(res.status).toBe(422);
+        expect(data.error).toContain('quality checks');
     });
 });
 

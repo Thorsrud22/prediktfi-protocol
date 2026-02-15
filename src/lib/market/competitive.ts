@@ -7,6 +7,7 @@ import { BirdeyeMarketService } from "@/lib/market/birdeye";
 import { getTopCoinsByCategory } from "@/lib/coingecko";
 import { openai } from "@/lib/openaiClient";
 import { searchCompetitors } from "@/lib/tavilyClient";
+import { wrapGrounding } from "@/lib/market/types";
 import { CompetitiveMemo, CompetitiveMemoResult, ReferenceProject } from "./competitiveTypes";
 
 const COMPETITIVE_SYSTEM_PROMPT = `You are a Competitive Intelligence Scout for specialized crypto/tech sectors.
@@ -266,6 +267,7 @@ export async function fetchCompetitiveMemo(
   idea: IdeaSubmission,
   normalizedCategory: string
 ): Promise<CompetitiveMemoResult> {
+  const fetchedAt = new Date();
   const supported = ["memecoin", "defi", "ai"];
   if (!supported.includes(normalizedCategory)) {
     return {
@@ -513,7 +515,21 @@ ${dexScreenerContext}
     }
 
     memo.claims = normalizeCompetitiveClaims((memo as any).claims, evidencePack, memo.referenceProjects || []);
-    return { status: "ok", memo, evidencePack };
+    return {
+      status: "ok",
+      memo,
+      evidencePack,
+      grounding: wrapGrounding(
+        {
+          category: normalizedCategory,
+          evidenceCount: evidencePack.evidence.length,
+          unavailableSources: evidencePack.unavailableSources || [],
+        },
+        "competitive_memo",
+        fetchedAt,
+        72
+      ),
+    };
   } catch (error) {
     console.error("Error fetching competitive memo:", error);
     return {

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ideaSubmissionSchema } from "@/lib/ideaSchema";
-import { getMarketSnapshot } from "@/lib/market/snapshot";
+import { getMarketSnapshotEnvelope } from "@/lib/market/snapshot";
 import { checkRateLimit, incrementEvalCount, getClientIdentifier } from "@/app/lib/ratelimit";
 import { categoryNeedsMarketSnapshot } from "@/lib/ideaCategories";
-import type { MarketSnapshot } from "@/lib/market/types";
+import type { GroundingEnvelope, MarketSnapshot } from "@/lib/market/types";
 
 // Vercel Serverless Function Config
 export const maxDuration = 60; // Max duration for Hobby (10s is default, can go up to 60)
@@ -41,13 +41,30 @@ export async function POST(request: NextRequest) {
 
         // Category-aware market context fetch
         let marketSnapshot: MarketSnapshot | undefined;
+        let marketGrounding: GroundingEnvelope<MarketSnapshot> | undefined;
         if (categoryNeedsMarketSnapshot(parsed.data.projectType)) {
-            marketSnapshot = await getMarketSnapshot();
+            marketGrounding = await getMarketSnapshotEnvelope();
+            marketSnapshot = marketGrounding.data;
         }
 
         // Use new Investment Committee Protocol
         const { evaluateWithCommittee } = await import("@/lib/ai/committee");
-        const result = await evaluateWithCommittee(parsed.data, { market: marketSnapshot });
+        const evaluationId = `eval_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+        const result = await evaluateWithCommittee(parsed.data, {
+            evaluationId,
+            market: marketSnapshot,
+            marketGrounding,
+        });
+
+        if (result.meta?.verifierStatus === 'hard_fail') {
+            return NextResponse.json(
+                {
+                    error: 'Evaluation failed quality checks',
+                    details: result.meta?.verifierIssues || [],
+                },
+                { status: 422 }
+            );
+        }
 
         // Increment evaluation count for daily quota tracking
         await incrementEvalCount(identifier, rateLimitPlan as 'idea_eval_ip' | 'idea_eval_wallet');

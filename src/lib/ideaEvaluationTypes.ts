@@ -1,4 +1,12 @@
 import { EvidenceClaim, EvidencePack } from "@/lib/ai/evidenceTypes";
+import type { ProjectDomain, DomainConfidence } from "@/lib/ai/domain-classifier";
+
+export interface StructuredSubScore {
+  score: number;
+  evidence: string[];
+  reasoning: string;
+  uncertainty: string;
+}
 
 export type IdeaEvaluationResult = {
   overallScore: number;
@@ -98,9 +106,16 @@ export type IdeaEvaluationResult = {
   launchReadinessScore?: number;
   launchReadinessLabel?: 'low' | 'medium' | 'high';
   launchReadinessSignals?: string[];
+  structuredAnalysis?: string;
+  subScores?: Record<string, StructuredSubScore>;
+  compositionFormula?: string;
+  groundingCitations?: string[];
+  modelConfidenceLevel?: 'HIGH' | 'MEDIUM' | 'LOW';
 
   projectType?: string;
+  classifiedDomain?: ProjectDomain;
   confidenceLevel?: 'low' | 'medium' | 'high';
+  qualityWarnings?: string[];
   meta?: {
     confidenceLevel?: 'low' | 'medium' | 'high';
     confidenceReasons?: string[];
@@ -118,7 +133,67 @@ export type IdeaEvaluationResult = {
     fallbackUsed?: boolean;
     verifierStatus?: 'pass' | 'soft_fail' | 'hard_fail' | 'error';
     verifierIssues?: string[];
+    verifierChecksRun?: number;
+    verifierChecksFailed?: number;
+    verifierRepairsUsed?: number;
     dataFreshness?: string | null;
+    freshness?: {
+      overallFreshness: number;
+      staleSourceCount: number;
+      totalSourceCount: number;
+      worstSource: { source: string; stalenessHours: number } | null;
+      details: Array<{
+        source: string;
+        stalenessHours: number;
+        ttlHours: number;
+        freshnessScore: number;
+      }>;
+    };
+    claimVerification?: {
+      totalClaims: number;
+      groundedClaims: number;
+      ungroundedClaims: number;
+      contradictedClaims: number;
+      groundingRate: number;
+      contradictions: Array<{
+        claim: {
+          text: string;
+          section: string;
+          type: 'numerical' | 'comparative' | 'existence';
+          value?: number;
+          unit?: string;
+          checkable: boolean;
+        };
+        groundingValue: number;
+        discrepancy: string;
+      }>;
+    };
+    structuredOutputParsed?: boolean;
+    structuredOutputWarnings?: string[];
+    promptContextTokens?: number;
+    weightedScore?: number;
+    weightedScoreInputs?: {
+      bear?: number;
+      bull?: number;
+      judge?: number;
+    };
+    weightedScoreWeights?: {
+      bear?: number;
+      bull?: number;
+      judge?: number;
+    };
+    committeeDisagreement?: {
+      overallScoreVariance: number;
+      overallScoreStdDev: number;
+      highDisagreementFlag: boolean;
+      dimensionalDisagreement: Record<string, number>;
+      topDisagreementDimension: string | null;
+      comparedAgents: number;
+      disagreementNote: string;
+    };
+    classifiedDomain?: ProjectDomain;
+    domainClassificationConfidence?: DomainConfidence;
+    domainClassificationSignals?: string[];
   };
   evidence?: EvidencePack & {
     claims?: EvidenceClaim[];

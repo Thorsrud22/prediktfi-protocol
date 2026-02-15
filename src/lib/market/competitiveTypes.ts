@@ -1,4 +1,5 @@
 import { EvidenceClaim, EvidencePack } from "@/lib/ai/evidenceTypes";
+import { GroundingEnvelope } from "@/lib/market/types";
 
 export interface CompetitiveMemo {
     // Core Fields
@@ -69,5 +70,14 @@ export interface ReferenceProject {
 }
 
 export type CompetitiveMemoResult =
-    | { status: 'ok'; memo: CompetitiveMemo; evidencePack: EvidencePack }
+    | {
+        status: 'ok';
+        memo: CompetitiveMemo;
+        evidencePack: EvidencePack;
+        grounding: GroundingEnvelope<{
+            category: string;
+            evidenceCount: number;
+            unavailableSources: string[];
+        }>;
+    }
     | { status: 'not_available'; reason: string };
