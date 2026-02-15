@@ -30,6 +30,9 @@
   --color-danger: #EF4444;
   --color-success: #10B981;
 
+  /* Landing */
+  --spacing-hero-top: 10.625rem;
+
   /* Border Radius */
   --radius-md: var(--radius);
 

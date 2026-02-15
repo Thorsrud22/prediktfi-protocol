@@ -18,6 +18,7 @@ import AuthGuard from "./components/AuthGuard";
 import RoutePreloader from "./components/RoutePreloader";
 import ShellWrapper from "./components/ShellWrapper";
 import Aurora from "./components/ui/Aurora";
+import AnalysisVisual from "./components/landing/AnalysisVisual";
 
 
 import ProgressBarProvider from "./components/ProgressBarProvider";
@@ -230,6 +231,9 @@ export default async function RootLayout({
               speed={0.5}
               className="fixed inset-0 -z-10"
             />
+            <div className="fixed inset-0 -z-[5] pointer-events-none">
+              <AnalysisVisual />
+            </div>
 
 
             <IntentStorageGuard />

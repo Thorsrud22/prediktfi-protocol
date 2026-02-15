@@ -9,10 +9,23 @@ export interface ChangelogEntry {
     }[];
 }
 
-export const changelogData: ChangelogEntry[] = [
+export const changelogData = [
+    {
+        version: "1.14.0",
+        date: "2026-02-14",
+        title: "Studio Architecture Upgrade & Reliability Hardening",
+        description: "A major two-day release focused on evaluation quality, studio maintainability, and production reliability.",
+        changes: [
+            { category: 'feature', text: 'Studio Wizard Refactor: Rebuilt submission flow into modular step components and dedicated state/navigation/persistence hooks.' },
+            { category: 'feature', text: 'Trust + Accuracy Pipeline: Integrated evidence-backed committee evaluation with routing/verifier support for stronger final verdict quality.' },
+            { category: 'improvement', text: 'Report UX Overhaul: Expanded institutional report surfaces including committee debate context, evidence visibility, and risk/trust sections.' },
+            { category: 'fix', text: 'Evaluation API Improvements: Upgraded sync + streaming evaluation paths with category-aware preflight behavior and tighter runtime flow.' },
+            { category: 'fix', text: 'Reliability Hardening: Shipped critical fixes to chart accessibility/guards, URL validation edge cases, and client performance instrumentation accuracy.' }
+        ]
+    },
     {
         version: "1.13.0",
-        date: "Feb 08, 2026",
+        date: "2026-02-08",
         title: "The Committee Update & AI Verification",
         description: "Major architectural upgrade to the evaluation engine, introducing Multi-Agent Verdicts and universal security scanning for AI agents.",
         changes: [
@@ -25,7 +38,7 @@ export const changelogData: ChangelogEntry[] = [
     },
     {
         version: "1.12.0",
-        date: "Feb 06, 2026",
+        date: "2026-02-06",
         title: "Security, Trust & UX Enhancements",
         description: "Significant improvements to the authentication experience, security messaging, and first-time user flow.",
         changes: [
@@ -40,7 +53,7 @@ export const changelogData: ChangelogEntry[] = [
     },
     {
         version: "1.11.0",
-        date: "Feb 05, 2026",
+        date: "2026-02-05",
         title: "Studio Polish & Security Hardening",
         description: "A significant polish to the Studio workflow, focusing on clarity, trust, mobile usability, and security hardening.",
         changes: [
@@ -55,7 +68,7 @@ export const changelogData: ChangelogEntry[] = [
     },
     {
         version: "1.10.0",
-        date: "Feb 04, 2026",
+        date: "2026-02-04",
         title: "SEO, CMS & UX Hardening",
         description: "Comprehensive update focusing on SEO correctness, legal compliance, accessibility, and sharing capabilities.",
         changes: [
@@ -69,9 +82,10 @@ export const changelogData: ChangelogEntry[] = [
             { category: 'improvement', text: 'Hardened Content Security Policy (CSP) for production.' }
         ]
     },
+    // Versions 1.8.0-1.9.0 were internal-only releases and are intentionally omitted.
     {
         version: "1.7.0",
-        date: "Feb 01, 2026",
+        date: "2026-02-01",
         title: "Market Intelligence & Security Hardening",
         description: "Major improvements to market data accuracy, security hardening, and grading logic.",
         changes: [
@@ -84,7 +98,7 @@ export const changelogData: ChangelogEntry[] = [
     },
     {
         version: "1.6.0",
-        date: "Jan 26, 2026",
+        date: "2026-01-26",
         title: "Visual Overhaul & Performance",
         description: "A complete refresh of the PrediktFi interface with improved performance and a cleaner aesthetic.",
         changes: [
@@ -95,4 +109,4 @@ export const changelogData: ChangelogEntry[] = [
             { category: 'security', text: 'Enhanced headers for better protection against XSS attacks.' }
         ]
     }
-];
+] satisfies ChangelogEntry[];

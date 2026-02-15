@@ -12,14 +12,14 @@ export interface ButtonProps
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", loading, children, disabled, ...props }, ref) => {
-    const baseClasses = "inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    const baseClasses = "inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-[var(--radius-md)]";
     
     const variants = {
-      primary: "bg-gradient-to-r from-blue-500 to-teal-600 text-white hover:opacity-90 hover:transform hover:-translate-y-0.5 focus-visible:ring-[var(--interactive-focus)] shadow-lg hover:shadow-xl rounded-[var(--radius-md)] font-semibold",
-      secondary: "bg-[var(--background-secondary)] border border-[var(--border-primary)] text-[var(--text-primary)] hover:bg-[var(--background-tertiary)] focus-visible:ring-[var(--interactive-focus)] rounded-[var(--radius-md)]",
-      ghost: "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--background-secondary)] focus-visible:ring-[var(--interactive-focus)] rounded-[var(--radius-md)]",
-      danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 rounded-[var(--radius-md)]",
-      outline: "border border-[var(--border-primary)] text-[var(--text-primary)] hover:bg-[var(--background-secondary)] focus-visible:ring-[var(--interactive-focus)] rounded-[var(--radius-md)] bg-transparent"
+      primary: "bg-gradient-to-r from-[var(--interactive-primary)] to-[var(--interactive-hover)] text-white hover:opacity-90 hover:-translate-y-0.5 focus-visible:ring-[var(--interactive-focus)] shadow-lg hover:shadow-xl font-semibold",
+      secondary: "bg-[var(--background-secondary)] border border-[var(--border-primary)] text-[var(--text-primary)] hover:bg-[var(--background-tertiary)] focus-visible:ring-[var(--interactive-focus)]",
+      ghost: "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--background-secondary)] focus-visible:ring-[var(--interactive-focus)]",
+      danger: "bg-[var(--color-danger)] text-white hover:opacity-90 focus-visible:ring-[var(--interactive-focus)]",
+      outline: "border border-[var(--border-primary)] text-[var(--text-primary)] hover:bg-[var(--background-secondary)] focus-visible:ring-[var(--interactive-focus)] bg-transparent"
     };
 
     const sizes = {
@@ -37,6 +37,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         ref={ref}
+        aria-busy={loading || undefined}
         disabled={disabled || loading}
         {...props}
       >

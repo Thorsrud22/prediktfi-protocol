@@ -1,6 +1,6 @@
 import ProcessTimeline from '../components/ProcessTimeline';
 import LandingHero from '../components/landing/LandingHero';
-import { Metadata } from 'next'
+import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Predikt — AI Evaluation Protocol for Web3',
@@ -8,22 +8,21 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
-}
+};
 
 export default function Home() {
   return (
     <main className="relative min-h-screen overflow-hidden">
-      {/* Hero Section */}
-
       <section
         aria-label="Hero"
-        className="relative z-10 flex flex-col items-center pt-28 sm:pt-[10.625rem] pb-10 sm:pb-12 px-3 sm:px-6"
+        className="relative z-10 flex flex-col items-center pt-28 sm:pt-hero-top pb-10 sm:pb-12 px-3 sm:px-6"
       >
         <LandingHero />
       </section>
 
-      {/* Process Timeline */}
-      <ProcessTimeline />
+      <section aria-label="Process" className="relative z-10">
+        <ProcessTimeline />
+      </section>
     </main>
   );
 }

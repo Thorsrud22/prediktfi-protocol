@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 /**
  * Performance monitoring utilities for tracking page loads and API calls
  */
 
-interface PerformanceMetric {
+export interface PerformanceMetric {
   name: string;
   duration: number;
   timestamp: number;
@@ -16,10 +16,44 @@ interface PerformanceMetric {
   metadata?: Record<string, unknown>;
 }
 
+export interface PerformanceReport {
+  totalMetrics: number;
+  recentMetrics: number;
+  slowOperations: number;
+  averages: {
+    pageLoad: number;
+    apiCalls: number;
+    componentRender: number;
+  };
+  webVitals: {
+    lcp: number;
+    fid: number;
+    cls: number;
+  };
+}
+
+interface PerformanceEventTimingEntry extends PerformanceEntry {
+  processingStart: number;
+}
+
+interface LayoutShiftEntry extends PerformanceEntry {
+  value: number;
+  hadRecentInput: boolean;
+}
+
+interface PerformanceTimer {
+  end: (status?: PerformanceMetric['status'], url?: string) => number;
+}
+
+const PAGE_LOAD_METRIC_PREFIX = 'Page Load: ';
+
 class PerformanceMonitor {
   private metrics: PerformanceMetric[] = [];
   private readonly maxMetrics = 100; // Keep last 100 metrics
   private readonly slowThreshold = 1000; // 1 second threshold for "slow"
+  private readonly observers: PerformanceObserver[] = [];
+  private clsValue = 0;
+  private isDestroyed = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -28,6 +62,10 @@ class PerformanceMonitor {
   }
 
   private initializeWebVitals() {
+    if (this.observers.length > 0) {
+      return;
+    }
+
     // Monitor Core Web Vitals
     if ('PerformanceObserver' in window) {
       try {
@@ -44,52 +82,72 @@ class PerformanceMonitor {
           }
         });
         lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+        this.observers.push(lcpObserver);
 
         // First Input Delay
         const fidObserver = new PerformanceObserver(list => {
           for (const entry of list.getEntries()) {
+            const eventTimingEntry = entry as PerformanceEventTimingEntry;
+            const fidValue =
+              typeof eventTimingEntry.processingStart === 'number'
+                ? eventTimingEntry.processingStart - entry.startTime
+                : 0;
+
             this.recordMetric({
               name: 'FID',
-              duration: (entry as PerformanceEntry & { processingStart?: number }).processingStart ? ((entry as PerformanceEntry & { processingStart: number }).processingStart - entry.startTime) : 0,
+              duration: fidValue,
               timestamp: Date.now(),
               type: 'page-load',
-              metadata: { value: (entry as PerformanceEntry & { processingStart?: number }).processingStart ? ((entry as PerformanceEntry & { processingStart: number }).processingStart - entry.startTime) : 0 },
+              metadata: { value: fidValue },
             });
           }
         });
         fidObserver.observe({ entryTypes: ['first-input'] });
+        this.observers.push(fidObserver);
 
         // Cumulative Layout Shift
         const clsObserver = new PerformanceObserver(list => {
-          let clsValue = 0;
           for (const entry of list.getEntries()) {
-            if (!(entry as PerformanceEntry & { hadRecentInput?: boolean }).hadRecentInput) {
-              clsValue += (entry as PerformanceEntry & { value?: number }).value || 0;
+            const layoutShiftEntry = entry as LayoutShiftEntry;
+            if (!layoutShiftEntry.hadRecentInput) {
+              this.clsValue += layoutShiftEntry.value || 0;
             }
           }
-          if (clsValue > 0) {
+
+          if (this.clsValue > 0) {
             this.recordMetric({
               name: 'CLS',
-              duration: clsValue,
+              duration: this.clsValue,
               timestamp: Date.now(),
               type: 'page-load',
-              metadata: { value: clsValue },
+              metadata: { value: this.clsValue },
             });
           }
         });
         clsObserver.observe({ entryTypes: ['layout-shift'] });
+        this.observers.push(clsObserver);
       } catch (error) {
         console.warn('Performance monitoring setup failed:', error);
       }
     }
   }
 
+  destroy() {
+    this.observers.forEach(observer => observer.disconnect());
+    this.observers.length = 0;
+    this.isDestroyed = true;
+  }
+
   recordMetric(metric: PerformanceMetric) {
+    if (this.isDestroyed) {
+      return;
+    }
+
     this.metrics.push(metric);
 
     // Keep only the most recent metrics
     if (this.metrics.length > this.maxMetrics) {
-      this.metrics = this.metrics.slice(-this.maxMetrics);
+      this.metrics.splice(0, this.metrics.length - this.maxMetrics);
     }
 
     // Log slow operations in development
@@ -102,11 +160,17 @@ class PerformanceMonitor {
     name: string,
     type: PerformanceMetric['type'] = 'component-render',
     metadata?: Record<string, unknown>,
-  ) {
+  ): PerformanceTimer {
     const startTime = performance.now();
+    let ended = false;
 
     return {
       end: (status: PerformanceMetric['status'] = 'success', url?: string) => {
+        if (ended || this.isDestroyed) {
+          return 0;
+        }
+
+        ended = true;
         const duration = performance.now() - startTime;
         this.recordMetric({
           name,
@@ -141,12 +205,14 @@ class PerformanceMonitor {
   }
 
   trackPageLoad(pageName: string) {
-    const timer = this.startTimer(`Page: ${pageName}`, 'page-load');
+    const timer = this.startTimer(`${PAGE_LOAD_METRIC_PREFIX}${pageName}`, 'page-load');
 
-    // Track when page is fully loaded
+    // Track when page is fully loaded or, for SPA transitions, on next paint frame.
     if (typeof window !== 'undefined') {
       if (document.readyState === 'complete') {
-        timer.end('success');
+        window.requestAnimationFrame(() => {
+          timer.end('success');
+        });
       } else {
         window.addEventListener('load', () => timer.end('success'), { once: true });
       }
@@ -175,27 +241,55 @@ class PerformanceMonitor {
     return total / relevant.length;
   }
 
-  getPerformanceReport() {
+  private getLatestByName(name: string) {
+    for (let i = this.metrics.length - 1; i >= 0; i -= 1) {
+      if (this.metrics[i].name === name) {
+        return this.metrics[i].duration;
+      }
+    }
+    return 0;
+  }
+
+  private getAverageDurationByType(type: PerformanceMetric['type']) {
+    const metricsByType = this.getMetricsByType(type);
+    if (metricsByType.length === 0) {
+      return 0;
+    }
+
+    const total = metricsByType.reduce((sum, metric) => sum + metric.duration, 0);
+    return total / metricsByType.length;
+  }
+
+  private getPageLoadAverage() {
+    const pageLoadMetrics = this.metrics.filter(metric =>
+      metric.name.startsWith(PAGE_LOAD_METRIC_PREFIX),
+    );
+
+    if (pageLoadMetrics.length === 0) {
+      return 0;
+    }
+
+    const total = pageLoadMetrics.reduce((sum, metric) => sum + metric.duration, 0);
+    return total / pageLoadMetrics.length;
+  }
+
+  getPerformanceReport(): PerformanceReport {
     const now = Date.now();
     const last5Minutes = this.metrics.filter(metric => now - metric.timestamp < 5 * 60 * 1000);
 
-    const report = {
+    const report: PerformanceReport = {
       totalMetrics: this.metrics.length,
       recentMetrics: last5Minutes.length,
       slowOperations: this.getSlowMetrics().length,
       averages: {
-        pageLoad: this.getAverageByName('Page Load'),
-        apiCalls:
-          this.getMetricsByType('api-call').reduce((sum, m) => sum + m.duration, 0) /
-          Math.max(1, this.getMetricsByType('api-call').length),
-        componentRender:
-          this.getMetricsByType('component-render').reduce((sum, m) => sum + m.duration, 0) /
-          Math.max(1, this.getMetricsByType('component-render').length),
+        pageLoad: this.getPageLoadAverage(),
+        apiCalls: this.getAverageDurationByType('api-call'),
+        componentRender: this.getAverageDurationByType('component-render'),
       },
       webVitals: {
-        lcp: this.getAverageByName('LCP'),
-        fid: this.getAverageByName('FID'),
-        cls: this.getAverageByName('CLS'),
+        lcp: this.getLatestByName('LCP'),
+        fid: this.getLatestByName('FID'),
+        cls: this.getLatestByName('CLS'),
       },
     };
 
@@ -207,8 +301,28 @@ class PerformanceMonitor {
   }
 }
 
+declare global {
+  interface Window {
+    __prediktPerformanceMonitor?: PerformanceMonitor;
+  }
+}
+
+function createPerformanceMonitor(): PerformanceMonitor {
+  if (typeof window === 'undefined') {
+    return new PerformanceMonitor();
+  }
+
+  if (!window.__prediktPerformanceMonitor) {
+    const monitor = new PerformanceMonitor();
+    window.__prediktPerformanceMonitor = monitor;
+    window.addEventListener('beforeunload', () => monitor.destroy(), { once: true });
+  }
+
+  return window.__prediktPerformanceMonitor;
+}
+
 // Global instance
-export const performanceMonitor = new PerformanceMonitor();
+export const performanceMonitor = createPerformanceMonitor();
 
 // Utility functions for easy use
 export function trackPageLoad(pageName: string) {
@@ -236,15 +350,26 @@ export function getPerformanceReport() {
 }
 
 // React hook for component performance tracking
-export function usePerformanceTracking(componentName: string, _dependencies: unknown[] = []) {
-  if (typeof window !== 'undefined') {
-    const timer = performanceMonitor.startTimer(`Render: ${componentName}`, 'component-render');
+export function usePerformanceTracking(componentName: string, dependencies: unknown[] = []) {
+  const timerRef = useRef<PerformanceTimer | null>(null);
 
-    // Track render time
-    setTimeout(() => {
+  useEffect(() => {
+    const timer = performanceMonitor.startTimer(`Render: ${componentName}`, 'component-render');
+    timerRef.current = timer;
+
+    const frameId = window.requestAnimationFrame(() => {
       timer.end('success');
-    }, 0);
-  }
+      if (timerRef.current === timer) {
+        timerRef.current = null;
+      }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      timerRef.current?.end('timeout');
+      timerRef.current = null;
+    };
+  }, [componentName, ...dependencies]);
 }
 
 // HOC for automatic performance tracking

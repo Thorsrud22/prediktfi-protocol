@@ -3,7 +3,23 @@
 import React, { useState } from 'react';
 import { changelogData, type ChangelogEntry } from './data';
 import { Info, ChevronDown, ChevronUp } from 'lucide-react';
-import Link from 'next/link';
+
+const changelogDateFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+    timeZone: 'UTC',
+});
+
+const formatReleaseDate = (date: string) => {
+    const [year, month, day] = date.split('-').map(Number);
+
+    if (!year || !month || !day) {
+        return date;
+    }
+
+    return changelogDateFormatter.format(new Date(Date.UTC(year, month - 1, day)));
+};
 
 // Group changes by category for the accordion view
 const groupChanges = (changes: ChangelogEntry['changes']) => {
@@ -59,7 +75,7 @@ export default function ChangelogPage() {
                 </div>
 
                 {/* Header Row (Table-style) */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 pb-4 border-b border-white/5 mb-8">
+                <div className="hidden md:grid md:grid-cols-4 gap-8 md:gap-12 pb-4 border-b border-white/5 mb-8">
                     <div className="md:col-span-1">
                         <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Version</span>
                     </div>
@@ -95,7 +111,7 @@ function ChangelogItem({ entry }: { entry: ChangelogEntry }) {
             <div className="md:col-span-1">
                 <div className="sticky top-24">
                     <h2 className="text-lg font-bold text-white mb-0.5">{entry.version}</h2>
-                    <p className="text-sm text-slate-500">{entry.date}</p>
+                    <p className="text-sm text-slate-500">{formatReleaseDate(entry.date)}</p>
                 </div>
             </div>
 
@@ -110,7 +126,8 @@ function ChangelogItem({ entry }: { entry: ChangelogEntry }) {
                     <div className="space-y-px mt-auto">
                         {categories.map((category) => (
                             <CategoryAccordion
-                                key={category}
+                                key={`${entry.version}-${category}`}
+                                accordionId={`${entry.version}-${category}`.toLowerCase().replace(/[^a-z0-9-]/g, '-')}
                                 title={category}
                                 items={grouped[category]}
                             />
@@ -122,13 +139,27 @@ function ChangelogItem({ entry }: { entry: ChangelogEntry }) {
     );
 }
 
-function CategoryAccordion({ title, items }: { title: string, items: ChangelogEntry['changes'] }) {
+function CategoryAccordion({
+    accordionId,
+    title,
+    items
+}: {
+    accordionId: string;
+    title: string;
+    items: ChangelogEntry['changes'];
+}) {
     const [isOpen, setIsOpen] = useState(false);
+    const headerId = `changelog-accordion-header-${accordionId}`;
+    const panelId = `changelog-accordion-panel-${accordionId}`;
 
     return (
         <div className="border-t border-white/[0.05] first:border-t-0">
             <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
+                aria-expanded={isOpen}
+                aria-controls={panelId}
+                id={headerId}
                 className="w-full flex items-center justify-between py-4 hover:bg-white/[0.02] transition-colors text-left group"
             >
                 <span className="text-sm font-medium text-slate-400 group-hover:text-slate-200 transition-colors">
@@ -142,7 +173,12 @@ function CategoryAccordion({ title, items }: { title: string, items: ChangelogEn
             </button>
 
             {isOpen && (
-                <div className="pb-6 animate-in slide-in-from-top-2 duration-200">
+                <div
+                    id={panelId}
+                    role="region"
+                    aria-labelledby={headerId}
+                    className="pb-6 animate-in slide-in-from-top-2 duration-200"
+                >
                     <ul className="space-y-3 pl-2">
                         {items.map((item, idx) => (
                             <li key={idx} className="text-sm text-slate-400 flex items-start gap-3">
