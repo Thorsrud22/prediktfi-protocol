@@ -13,22 +13,31 @@ export function ContextStep({ formData, updateField, onKeyDown }: ContextStepPro
 
     return (
         <div className="animate-in fade-in slide-in-from-right-8 duration-500 space-y-8 max-w-2xl">
-            {contextualFields.map((field) => (
+            {contextualFields.map((field, index) => {
+                const inputId = `context-${field.key}`;
+                const hintId = `context-hint-${field.key}`;
+
+                return (
                 <div key={field.key} className="space-y-3">
-                    <label htmlFor={`context-${field.key}`} className="text-[10px] font-mono text-white/30 uppercase tracking-widest">
+                    <label htmlFor={inputId} className="text-xs font-mono text-white/60 uppercase tracking-wider">
                         {field.label}
                     </label>
                     <input
-                        id={`context-${field.key}`}
+                        id={inputId}
                         type="text"
                         value={formData[field.key] || ''}
-                        onChange={(e) => updateField(field.key as keyof WizardFormData, e.target.value)}
+                        onChange={(e) => updateField(field.key, e.target.value)}
                         onKeyDown={onKeyDown}
                         placeholder={field.placeholder}
-                        className="w-full bg-transparent text-2xl sm:text-4xl font-bold text-white placeholder:text-white/10 outline-none border-b border-white/10 focus:border-blue-500 pb-2 transition-colors"
+                        autoFocus={index === 0}
+                        aria-describedby={hintId}
+                        className="w-full bg-transparent text-2xl sm:text-4xl font-bold text-white placeholder:text-white/25 outline-none border-b border-white/10 focus:border-blue-500 pb-2 transition-colors"
                     />
+                    <p id={hintId} className="text-xs text-white/40">
+                        {field.placeholder}
+                    </p>
                 </div>
-            ))}
+            )})}
         </div>
     );
 }

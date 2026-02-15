@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { SCORE_THRESHOLDS, SCORE_LABELS, LIMITS } from './report/constants';
 import { useReportData } from './report/hooks/useReportData';
 import { Header } from './report/components/Header';
 import { VerdictPanel } from './report/components/VerdictPanel';
@@ -19,45 +17,32 @@ import { SecurityChecks } from './report/components/SecurityChecks';
 import { AiReasoning } from './report/components/AiReasoning';
 import { ReportSectionErrorBoundary } from './report/components/ReportSectionErrorBoundary';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
-import {
-    TriangleAlert as AlertTriangle,
-    Terminal,
-    Shield,
-    CircleCheck as CheckCircle2,
-    ArrowLeft,
-    Sparkles,
-} from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useToast } from '../components/ToastProvider';
 
 const KeyStatsBar = dynamic(() => import('../components/charts/KeyStatsBar'), {
     loading: () => <div className="w-full h-12 bg-white/5 animate-pulse rounded-lg" />,
     ssr: false
 });
-import { useSimplifiedWallet } from '../components/wallet/SimplifiedWalletProvider';
-import { printElement } from '../utils/print';
-
-
-
-
 
 interface IdeaEvaluationReportProps {
     result: IdeaEvaluationResult;
     onEdit?: () => void;
     onStartNew?: () => void;
-    ownerAddress?: string;
-    isExample?: boolean;
     evalId?: string | null;
     onCommit?: () => void;
     commitStatus?: 'idle' | 'committing' | 'success' | 'error';
 }
 
-
-
-export default function IdeaEvaluationReport({ result, onEdit, onStartNew, ownerAddress, isExample, evalId, onCommit, commitStatus = 'idle' }: IdeaEvaluationReportProps) {
-    const { publicKey } = useSimplifiedWallet();
-
+export default function IdeaEvaluationReport({
+    result,
+    onEdit,
+    onStartNew,
+    evalId,
+    onCommit,
+    commitStatus = 'idle',
+}: IdeaEvaluationReportProps) {
     const {
         chartData,
         riskScore,
@@ -68,52 +53,8 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
         committeeDebate
     } = useReportData(result);
 
-
-
-    // Check ownership
-    const isOwner = useMemo(() => {
-        if (isExample) return false; // Examples are never owned by viewer in the sense of editing/generating
-        if (!ownerAddress) return true; // Legacy/Local reports might not have owner, assume allowed or handle elsewhere?
-        // Actually, if it's public link, best to default false if not verified.
-        // But for "Studio" use (parent passes no ownerAddress?), we assume owner.
-        // Let's assume if ownerAddress is provided, we MUST match.
-        if (publicKey === ownerAddress) return true;
-        return false;
-    }, [publicKey, ownerAddress, isExample]);
-
-
-
-
-
-
-
-
-    const getScoreColor = (score: number) => {
-        if (score >= SCORE_THRESHOLDS.GOOD) return 'text-emerald-400';
-        if (score >= SCORE_THRESHOLDS.PASS) return 'text-amber-400';
-        return 'text-red-400';
-    };
-
-    const getScoreLabel = (score: number) => {
-        if (score >= SCORE_THRESHOLDS.STRONG) return SCORE_LABELS.STRONG;
-        if (score >= SCORE_THRESHOLDS.WATCHLIST) return SCORE_LABELS.WATCHLIST;
-        return SCORE_LABELS.PASS;
-    };
-
-    const getScoreBadgeClass = (score: number) => {
-        if (score >= SCORE_THRESHOLDS.STRONG) return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-        if (score >= SCORE_THRESHOLDS.WATCHLIST) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-        return 'bg-red-500/20 text-red-400 border-red-500/30';
-    };
-
-
-
-
-
     return (
         <div className="w-full max-w-5xl mx-auto font-sans text-sm leading-relaxed">
-            {/* Styles moved to global CSS */}
-
             <div id="printable-report" className="bg-slate-900 border border-white/5 p-6 md:p-8 relative overflow-visible rounded-3xl shadow-2xl text-white flex flex-col">
 
                 {/* ========== STICKY HEADER BAR ========== */}
@@ -183,7 +124,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
                 <AiReasoning reasoningSteps={result.reasoningSteps} />
 
                 {/* ACTION PANEL - "Next Best Action" */}
-                <div className="mt-12 border border-blue-900/30 bg-[#0f172a] rounded-2xl p-6 md:p-8 animate-in fade-in slide-in-from-bottom-8 duration-700 noprint">
+                <div className="mt-12 border border-blue-900/30 bg-slate-900 rounded-2xl p-6 md:p-8 animate-in fade-in slide-in-from-bottom-8 duration-700 noprint">
 
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
@@ -201,8 +142,7 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
                         onStartNew={onStartNew}
                     />
 
-                    {/* Footer for Start New if not visible in grid */}
-                    {onStartNew && onCommit && (
+                    {onStartNew && (
                         <div className="mt-6 text-center border-t border-white/5 pt-4">
                             <button
                                 onClick={onStartNew}
@@ -215,6 +155,6 @@ export default function IdeaEvaluationReport({ result, onEdit, onStartNew, owner
                 </div>
 
             </div>
-        </div >
+        </div>
     );
 }

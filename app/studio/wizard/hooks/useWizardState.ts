@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { WizardFormData, WizardErrors, ProjectType } from '../types';
+import { WizardFormData, WizardErrors } from '../types';
 import { normalizeIdeaProjectType } from '@/lib/ideaCategories';
 
-const toInitialProjectType = (projectType: WizardFormData['projectType'] | undefined): ProjectType => {
-    if (!projectType) return null;
-    return normalizeIdeaProjectType(projectType as any);
+const toInitialProjectType = (projectType: WizardFormData['projectType'] | undefined): WizardFormData['projectType'] => {
+    if (typeof projectType !== 'string' || !projectType) return null;
+    return normalizeIdeaProjectType(projectType);
 };
 
 const buildWizardFormData = (initialData?: Partial<WizardFormData>): WizardFormData => ({
@@ -57,12 +57,16 @@ export function useWizardState(initialData?: Partial<WizardFormData>) {
         });
     }, []);
 
-    const resetFormData = useCallback((data?: Partial<WizardFormData>) => {
+    const hydrateForm = useCallback((data?: Partial<WizardFormData>) => {
         const newData = buildWizardFormData(data);
         setFormData(newData);
         formDataRef.current = newData;
         setErrors({});
     }, []);
+
+    const resetFormData = useCallback((data?: Partial<WizardFormData>) => {
+        hydrateForm(data);
+    }, [hydrateForm]);
 
     return {
         formData,
@@ -70,7 +74,7 @@ export function useWizardState(initialData?: Partial<WizardFormData>) {
         errors,
         setErrors,
         updateField,
-        setFormData,
+        hydrateForm,
         resetFormData
     };
 }

@@ -8,6 +8,7 @@ import { useWizardPersistence } from './wizard/hooks/useWizardPersistence';
 import { useFocusManagement } from './wizard/hooks/useFocusManagement';
 import { WIZARD_CONSTANTS, STEPS, STEP_INDEX } from './wizard/constants';
 import { WizardErrors, WizardFormData } from './wizard/types';
+import { getCategoryContextualFields } from '@/lib/ideaCategories';
 
 import { WizardProgress } from './wizard/components/WizardProgress';
 import { WizardNavigation } from './wizard/components/WizardNavigation';
@@ -87,7 +88,7 @@ export default function IdeaSubmissionWizard({
         errors,
         setErrors,
         updateField,
-        setFormData,
+        hydrateForm,
     } = useWizardState(initialData);
 
     const {
@@ -101,7 +102,7 @@ export default function IdeaSubmissionWizard({
         isLoaded,
         showSavedMsg,
         clearStorage,
-    } = useWizardPersistence(formData, currentStep, setFormData, setCurrentStep);
+    } = useWizardPersistence(formData, currentStep, hydrateForm, setCurrentStep);
 
     const { nameInputRef, descInputRef } = useFocusManagement(currentStep);
 
@@ -109,6 +110,15 @@ export default function IdeaSubmissionWizard({
         () => getStepValidity(currentStep, formData).valid,
         [currentStep, formData]
     );
+    const hasContextualFields = useMemo(
+        () => getCategoryContextualFields(formData.projectType).length > 0,
+        [formData.projectType]
+    );
+    const nextLabel: 'Continue' | 'Review' = useMemo(() => (
+        currentStep === STEP_INDEX.INSIGHTS || (currentStep === STEP_INDEX.PITCH && !hasContextualFields)
+            ? 'Review'
+            : 'Continue'
+    ), [currentStep, hasContextualFields]);
 
     const finalizeSubmission = useCallback(
         (submission?: WizardFormData) => {
@@ -271,11 +281,11 @@ export default function IdeaSubmissionWizard({
 
             <WizardNavigation
                 currentStep={currentStep}
-                projectType={formData.projectType}
                 isSubmitting={isSubmitting}
                 onNext={handleNext}
                 onBack={handleBackWithDirection}
                 canGoNext={canGoNext}
+                nextLabel={nextLabel}
             />
         </div>
     );

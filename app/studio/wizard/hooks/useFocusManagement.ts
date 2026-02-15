@@ -2,8 +2,8 @@ import { useRef, useEffect, useCallback } from 'react';
 import { WIZARD_CONSTANTS, STEP_INDEX } from '../constants';
 
 export function useFocusManagement(currentStep: number) {
-    const focusRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const focusRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Refs for the inputs we want to focus
     const nameInputRef = useRef<HTMLInputElement>(null);
@@ -24,6 +24,8 @@ export function useFocusManagement(currentStep: number) {
             if (!element) {
                 if (remainingRetries > 0) {
                     focusRetryTimeoutRef.current = setTimeout(() => tryFocus(remainingRetries - 1), WIZARD_CONSTANTS.FOCUS_RETRY_DELAY_MS);
+                } else if (process.env.NODE_ENV === 'development') {
+                    console.warn('[useFocusManagement] Focus retries exhausted - target element never appeared in DOM.');
                 }
                 return;
             }
@@ -39,15 +41,14 @@ export function useFocusManagement(currentStep: number) {
         tryFocus(retries);
     }, [clearPendingFocusRetry]);
 
-    // Scroll and Focus logic
     useEffect(() => {
-        // Scroll to top
         if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+        // Brief delay allows step-transition animations to settle before scrolling,
+        // preventing scroll-position conflicts with in-progress layout shifts.
         scrollTimeoutRef.current = setTimeout(() => {
             window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
         }, WIZARD_CONSTANTS.SCROLL_DELAY_MS);
 
-        // Focus
         if (currentStep === STEP_INDEX.DETAILS) {
             focusWithRetry(() => nameInputRef.current);
         } else if (currentStep === STEP_INDEX.PITCH) {

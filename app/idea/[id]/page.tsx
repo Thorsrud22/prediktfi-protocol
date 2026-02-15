@@ -43,7 +43,7 @@ export async function generateMetadata(
             const tokenScore = result.projectType === 'ai' ? '50' : (result.tokenomics?.designScore || '50');
             ogUrl.searchParams.set('token', tokenScore.toString());
         }
-    } catch (e) {
+    } catch (_e) {
         // Ignore JSON parse errors for metadata
     }
 
@@ -126,7 +126,6 @@ export default async function IdeaPage({ params }: Props) {
                 <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <IdeaEvaluationReport
                         result={result}
-                        ownerAddress={idea.wallet?.address}
                         evalId={idea.id}
                     />
                 </div>

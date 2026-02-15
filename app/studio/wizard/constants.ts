@@ -36,10 +36,10 @@ export const STEP_INDEX = {
 } as const;
 
 export const SECTOR_OPTIONS = [
-    { id: 'ai', icon: Cpu, label: 'AI Agent', desc: 'LLM & Infra' },
-    { id: 'defi', icon: Globe, label: 'DeFi / Utility', desc: 'Protocol & Yield' },
-    { id: 'memecoin', icon: Zap, label: 'Memecoin', desc: 'Viral & Hype' },
-    { id: 'nft', icon: Palette, label: 'NFT / Art', desc: 'Digital Collectibles' },
-    { id: 'gaming', icon: Gamepad2, label: 'Gaming', desc: 'GameFi & Metaverse' },
-    { id: 'other', icon: MoreHorizontal, label: 'Other', desc: 'Everything Else' },
+    { id: 'ai', icon: Cpu, label: 'AI Agent', desc: 'LLM & Infra', colorClass: 'text-purple-400' },
+    { id: 'defi', icon: Globe, label: 'DeFi / Utility', desc: 'Protocol & Yield', colorClass: 'text-blue-400' },
+    { id: 'memecoin', icon: Zap, label: 'Memecoin', desc: 'Viral & Hype', colorClass: 'text-yellow-400' },
+    { id: 'nft', icon: Palette, label: 'NFT / Art', desc: 'Digital Collectibles', colorClass: 'text-pink-400' },
+    { id: 'gaming', icon: Gamepad2, label: 'Gaming', desc: 'GameFi & Metaverse', colorClass: 'text-emerald-400' },
+    { id: 'other', icon: MoreHorizontal, label: 'Other', desc: 'Everything Else', colorClass: 'text-slate-300' },
 ] as const;

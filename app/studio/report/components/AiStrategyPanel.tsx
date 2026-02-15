@@ -15,8 +15,8 @@ interface AiStrategyPanelProps {
 
 export function AiStrategyPanel({ aiStrategy }: AiStrategyPanelProps) {
     return (
-        <div data-testid="ai-strategy-panel" className="border border-purple-900/30 bg-[#1a1025] p-6 rounded-2xl mb-8">
-            <div className="flex items-center gap-2 mb-5 text-purple-300 border-b border-purple-500/10 pb-3">
+        <div data-testid="ai-strategy-panel" className="border border-blue-900/30 bg-slate-900 p-6 rounded-2xl mb-8">
+            <div className="flex items-center gap-2 mb-5 text-blue-300 border-b border-blue-500/10 pb-3">
                 <Sparkles size={18} />
                 <h3 className="font-bold uppercase tracking-[0.2em] text-xs">AI Strategy Deep Dive</h3>
             </div>
