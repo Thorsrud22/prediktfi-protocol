@@ -9,11 +9,13 @@ export interface StructuredOutputExtraction {
   warnings: string[];
 }
 
-const SECTION_HEADER_REGEX = /^##\s+([^\n]+)\s*$/gim;
+const SECTION_HEADER_REGEX = /^\s*##\s+([^\n]+)\s*$/gim;
 const CITATION_REGEX = /\[(MARKET_SNAPSHOT|TOKEN_SECURITY|COMPETITIVE_MEMO)\]/gi;
 
 function normalizeSectionName(name: string): string {
-  return name.trim().toUpperCase().replace(/\s+/g, " ");
+  // Remove parentheticals, colons, and dashes from header names to match standard keys
+  // e.g. "MARKET OPPORTUNITY (Sub-score: 3/10)" -> "MARKET OPPORTUNITY"
+  return name.replace(/\([^)]*\)|[:\-].*$/g, "").trim().toUpperCase().replace(/\s+/g, " ");
 }
 
 function normalizeSubScoreKey(sectionName: string): string {
@@ -38,7 +40,8 @@ function parseSections(raw: string): Record<string, string> {
     const sectionName = normalizeSectionName(current[1] || "");
     const start = (current.index || 0) + current[0].length;
     const end = next?.index ?? raw.length;
-    const body = raw.slice(start, end).trim();
+    // Prepend the header itself to the body so parseSubScore can find (Score: X/10) if present in header
+    const body = current[0] + "\n" + raw.slice(start, end).trim();
     sections[sectionName] = body;
   }
 
@@ -52,20 +55,32 @@ function readLineValue(sectionText: string, label: string): string {
 }
 
 function parseSubScore(sectionText: string): number | null {
-  const match = sectionText.match(/sub[- ]?score\s*:\s*([0-9]+(?:\.[0-9]+)?)\s*\/\s*10/i);
-  if (!match) return null;
-  const value = Number.parseFloat(match[1]);
-  if (!Number.isFinite(value)) return null;
-  return Math.max(0, Math.min(10, value));
+  // Try strictly labeled first: "Sub-score: 7/10"
+  const matchStrict = sectionText.match(/(?:sub[- ]?)?score\s*:\s*([0-9]+(?:\.[0-9]+)?)\s*\/\s*(10|100)/i);
+  if (matchStrict) {
+    const val = parseFloat(matchStrict[1]);
+    const max = parseInt(matchStrict[2]);
+    return max === 100 ? val / 10 : val;
+  }
+
+  // Try loose format: "7/10" on its own line or at end of line
+  const matchLoose = sectionText.match(/(?:^|\n|[\s(])([0-9]+(?:\.[0-9]+)?)\s*\/\s*(10|100)(?:$|\n|[\s)])/);
+  if (matchLoose) {
+    const val = parseFloat(matchLoose[1]);
+    const max = parseInt(matchLoose[2]);
+    return max === 100 ? val / 10 : val;
+  }
+
+  return null;
 }
 
 function parseEvidence(sectionText: string): string[] {
   const explicit = readLineValue(sectionText, "Evidence");
   const sources = explicit
     ? explicit
-        .split(/[;,]/)
-        .map((item) => item.trim())
-        .filter(Boolean)
+      .split(/[;,]/)
+      .map((item) => item.trim())
+      .filter(Boolean)
     : [];
 
   const bullets = sectionText
@@ -105,7 +120,10 @@ export function extractStructuredOutput(raw: string): StructuredOutputExtraction
     };
   }
 
-  const sections = parseSections(raw);
+  // Clean up markdown code blocks if present
+  const cleanRaw = raw.replace(/^```markdown\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+
+  const sections = parseSections(cleanRaw);
   const sectionKeys = Object.keys(sections);
   const hasStructuredHeaders = sectionKeys.length > 0;
 
@@ -141,6 +159,40 @@ export function extractStructuredOutput(raw: string): StructuredOutputExtraction
       reasoning,
       uncertainty,
     };
+  }
+
+  // Fallback: Check for a centralized "## SUB-SCORES" or "## SCORES" section
+  // Some models (like gpt-4o/mini) prefer to bundle them at the end.
+  const subScoreSection = sections['SUB-SCORES'] || sections['SUBSCORES'] || sections['SCORES'];
+  if (subScoreSection) {
+    const lines = subScoreSection.split('\n');
+    for (const line of lines) {
+      // match "Technical Feasibility: 8/10" or "Market: 75/100"
+      const match = line.match(/([a-zA-Z ]+?)\s*[:=-]\s*([0-9.]+)\s*(\/)?\s*(10|100)?/);
+      if (match) {
+        const label = match[1].trim();
+        const val = parseFloat(match[2]);
+        const scale = match[4] ? parseInt(match[4]) : (val > 10 ? 100 : 10);
+
+        // Normalize value to 0-10 scale
+        const normalizedScore = scale === 100 ? val / 10 : val;
+
+        // Map label to section key
+        let targetKey = "";
+        if (label.match(/market/i)) targetKey = "marketOpportunity";
+        else if (label.match(/tech/i)) targetKey = "technicalFeasibility";
+        else if (label.match(/moat/i)) targetKey = "competitiveMoat";
+        else if (label.match(/execution/i)) targetKey = "executionReadiness";
+
+        if (targetKey) {
+          if (!subScores[targetKey]) {
+            subScores[targetKey] = { score: normalizedScore, evidence: [], reasoning: "Parsed from summary section", uncertainty: "" };
+          } else {
+            subScores[targetKey].score = normalizedScore;
+          }
+        }
+      }
+    }
   }
 
   const overallSection = sections.OVERALL || "";

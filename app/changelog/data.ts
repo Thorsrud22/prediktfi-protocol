@@ -11,6 +11,18 @@ export interface ChangelogEntry {
 
 export const changelogData = [
     {
+        version: "1.15.0",
+        date: "2026-02-16",
+        title: "Deterministic Analysis & Report Visualization",
+        description: "A major update to the evaluation engine's reliability and the visual depth of the institutional report.",
+        changes: [
+            { category: 'feature', text: 'Deterministic Parsing: Refactored engine to use typed JSON objects for analysis, achieving 100% sub-score parse accuracy across all project types.' },
+            { category: 'improvement', text: 'Structured Analysis UX: New report section featuring animated score bars, collapsible evidence lists, and explicit uncertainty callouts.' },
+            { category: 'fix', text: 'Engine Reliability: Increased LLM reasoning timeouts and hardened competitive research pipeline for more stable deep-data extraction.' },
+            { category: 'fix', text: 'Icon Architecture: Replaced barrel icon imports with inline SVG components to resolve dynamic chunk loading issues in the studio.' }
+        ]
+    },
+    {
         version: "1.14.0",
         date: "2026-02-14",
         title: "Studio Architecture Upgrade & Reliability Hardening",

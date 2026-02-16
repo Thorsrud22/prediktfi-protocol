@@ -35,3 +35,35 @@ export const getScoreBadgeClass = (score: number) => {
     if (score >= SCORE_THRESHOLDS.WATCHLIST) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
     return 'bg-red-500/20 text-red-400 border-red-500/30';
 };
+
+/**
+ * Score color helper for the 0-10 scale used by structuredAnalysisData dimensions.
+ * Mirrors getScoreColor() thresholds but mapped to a 10-point range.
+ */
+export function getScoreColor10(score: number): {
+    text: string;
+    bg: string;
+    border: string;
+    label: string;
+} {
+    if (score >= 7)
+        return {
+            text: 'text-emerald-400',
+            bg: 'bg-emerald-500',
+            border: 'border-emerald-500/30',
+            label: 'Strong',
+        };
+    if (score >= 4)
+        return {
+            text: 'text-amber-400',
+            bg: 'bg-amber-500',
+            border: 'border-amber-500/30',
+            label: 'Mixed',
+        };
+    return {
+        text: 'text-red-400',
+        bg: 'bg-red-500',
+        border: 'border-red-500/30',
+        label: 'Weak',
+    };
+}

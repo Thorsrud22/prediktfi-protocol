@@ -147,7 +147,12 @@ RESPONSE STYLE INSTRUCTIONS (CRITICAL):
   - Call out "vaporware", "parasitic marketing", "narrative without substance", "exit scam waiting to happen".
   - Provide survive probabilities (e.g., "30-day survival probability: 5% (if lucky)").
   - Make it HURT. We want the founder to feel the weight of their lack of moat or strategy.
-  - Structure: Start with a savage headline, followed by a blunt "Fatal Flaw" segment, then "Comparable Failures", then "Survival Probability".
+  - Make it HURT. We want the founder to feel the weight of their lack of moat or strategy.
+  - CONTENT GUIDE:
+    - Use 'MARKET OPPORTUNITY' to explain why the market doesn't exist.
+    - Use 'TECHNICAL FEASIBILITY' to roast the vaporware.
+    - Use 'OVERALL' for the savage summary.
+  - DO NOT change the markdown section headers. Keep them standard.
 
 - IF 'Response Style' IS 'analytical':
   - Be thorough, objective, and deeply technical.
@@ -270,6 +275,14 @@ CRITICAL: For AI projects, do NOT include tokenomics-related reasoning steps lik
 export const JSON_OUTPUT_SCHEMA = `
 IMPORTANT: You MUST return the result as a JSON object with the EXACT following structure. Do not use any other schema.
 {
+  "structuredAnalysisData": {
+    "evidence": { "items": ["<fact1>", "<fact2>"] },
+    "marketOpportunity": { "score": <number 0-10>, "evidence": ["<cit1>"], "reasoning": "<text>", "uncertainty": "<text>" },
+    "technicalFeasibility": { "score": <number 0-10>, "evidence": ["<cit1>"], "reasoning": "<text>", "uncertainty": "<text>" },
+    "competitiveMoat": { "score": <number 0-10>, "evidence": ["<cit1>"], "reasoning": "<text>", "uncertainty": "<text>" },
+    "executionReadiness": { "score": <number 0-10>, "evidence": ["<cit1>"], "reasoning": "<text>", "uncertainty": "<text>" },
+    "overall": { "composition": "<formula>", "finalScore": <0-10>, "confidence": "HIGH", "topRisk": "<text>" }
+  },
   "overallScore": <number 0-100>,
   "reasoningSteps": ["<step1>", "<step2>", "<step3>"],
   "fatalFlaw": {
@@ -348,7 +361,7 @@ IMPORTANT: You MUST return the result as a JSON object with the EXACT following 
   "launchReadinessScore": <number 0-100>,
   "launchReadinessLabel": "low" | "medium" | "high",
   "launchReadinessSignals": ["<signal1>", "<signal2>"],
-  "structuredAnalysis": "<optional markdown block with ## section headers for evidence, sub-scores, and composition math>"
+  "launchReadinessSignals": ["<signal1>", "<signal2>"]
 }`;
 
 /**
@@ -478,11 +491,11 @@ INSTRUCTIONS:
 1. Read both reports. Acknowledge the valid points from both sides.
 2. You are the "Adult in the room". Don't be as negative as the Bear, nor as delusional as the Bull.
 3. Your "Final Score" must be a weighted balance of Risk vs Upside.
-4. **CRITICAL:** If the Bear identified a "Fatal Flaw" (e.g. Regulatory, Scam, Impossible Tech), you MUST weight that heavily.
+4. **CRITICAL:** You MUST output the 'structuredAnalysisData' object with strict 0-10 scores and evidence arrays.
+5. If the Bear identified a "Fatal Flaw" (e.g. Regulatory, Scam, Impossible Tech), you MUST weight that heavily.
 5. Any claim marked "uncorroborated" must be treated as tentative; do not state it as certain fact.
 6. If evidence is missing, explicitly mention uncertainty and reduce confidence in recommendations.
 7. Use the provided scoring rubric anchors to validate and calibrate committee scores while synthesizing, not to ignore committee context.
-8. You must include a structuredAnalysis markdown block with explicit section headers and score composition math.
 
 OUTPUT FORMAT:
 You must output the standard 'IdeaEvaluationResult' JSON structure exactly as defined in the 'JSON_OUTPUT_SCHEMA'.
@@ -491,9 +504,5 @@ However, in the 'reasoningSteps' array, you must explicitly mention the committe
 - "Reviewing Bull Case: <key_alpha>..."
 - "Synthesizing final verdict..."
 
-Also include an additional field:
-- "structuredAnalysis": "<markdown string using the required headers below>"
-
-Required section header format:
-${COMMITTEE_STRUCTURED_ANALYSIS_TEMPLATE}
+Ensure the 'structuredAnalysisData' is populated first as the foundation of your report.
 `;

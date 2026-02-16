@@ -15,6 +15,7 @@ import { ClaimsEvidence } from './report/components/ClaimsEvidence';
 import { ThreatDetection } from './report/components/ThreatDetection';
 import { SecurityChecks } from './report/components/SecurityChecks';
 import { AiReasoning } from './report/components/AiReasoning';
+import { StructuredAnalysis } from './report/components/StructuredAnalysis';
 import { ReportSectionErrorBoundary } from './report/components/ReportSectionErrorBoundary';
 import { IdeaEvaluationResult } from '@/lib/ideaEvaluationTypes';
 import { Sparkles } from 'lucide-react';
@@ -73,6 +74,11 @@ export default function IdeaEvaluationReport({
                 {/* ========== INVESTMENT COMMITTEE DEBATE ========== */}
                 <ReportSectionErrorBoundary sectionName="Committee Debate">
                     <CommitteeDebate committeeDebate={committeeDebate} />
+                </ReportSectionErrorBoundary>
+
+                {/* ========== STRUCTURED ANALYSIS DEEP DIVE ========== */}
+                <ReportSectionErrorBoundary sectionName="Structured Analysis">
+                    <StructuredAnalysis result={result} />
                 </ReportSectionErrorBoundary>
 
                 {/* ========== RED FLAG BOX ========== */}

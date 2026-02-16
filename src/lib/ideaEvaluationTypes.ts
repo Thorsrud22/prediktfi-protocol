@@ -8,6 +8,43 @@ export interface StructuredSubScore {
   uncertainty: string;
 }
 
+// Structured Data from LLM (New Schema)
+export interface StructuredAnalysisData {
+  evidence: {
+    items: string[];
+  };
+  marketOpportunity: {
+    score: number;
+    evidence: string[];
+    reasoning: string;
+    uncertainty: string;
+  };
+  technicalFeasibility: {
+    score: number;
+    evidence: string[];
+    reasoning: string;
+    uncertainty: string;
+  };
+  competitiveMoat: {
+    score: number;
+    evidence: string[];
+    reasoning: string;
+    uncertainty: string;
+  };
+  executionReadiness: {
+    score: number;
+    evidence: string[];
+    reasoning: string;
+    uncertainty: string;
+  };
+  overall: {
+    composition: string;
+    finalScore: number;
+    confidence: "HIGH" | "MEDIUM" | "LOW";
+    topRisk: string;
+  };
+}
+
 export type IdeaEvaluationResult = {
   overallScore: number;
 
@@ -106,6 +143,9 @@ export type IdeaEvaluationResult = {
   launchReadinessScore?: number;
   launchReadinessLabel?: 'low' | 'medium' | 'high';
   launchReadinessSignals?: string[];
+
+
+  structuredAnalysisData?: StructuredAnalysisData;
   structuredAnalysis?: string;
   subScores?: Record<string, StructuredSubScore>;
   compositionFormula?: string;

@@ -79,6 +79,67 @@ export function parseEvaluationResponse(response: unknown): IdeaEvaluationResult
     // Validate required fields
     validateEvaluationResult(result);
 
+    // --- NEW PATH: Derive from structuredAnalysisData object (reliable JSON) ---
+    const sad = (result as any).structuredAnalysisData;
+    if (sad && typeof sad === 'object' && sad.overall) {
+        // Reconstruct markdown for frontend display
+        const lines: string[] = [];
+        if (sad.evidence?.items?.length) {
+            lines.push('## EVIDENCE');
+            for (const item of sad.evidence.items) lines.push(`- ${item}`);
+            lines.push('');
+        }
+        const dims = [
+            { key: 'marketOpportunity', label: 'MARKET OPPORTUNITY' },
+            { key: 'technicalFeasibility', label: 'TECHNICAL FEASIBILITY' },
+            { key: 'competitiveMoat', label: 'COMPETITIVE MOAT' },
+            { key: 'executionReadiness', label: 'EXECUTION READINESS' },
+        ] as const;
+        const subScores: Record<string, any> = {};
+        for (const dim of dims) {
+            const d = sad[dim.key];
+            if (!d) continue;
+            lines.push(`## ${dim.label}`);
+            if (d.evidence?.length) {
+                for (const e of d.evidence) lines.push(`- Evidence: ${e}`);
+            }
+            if (d.reasoning) lines.push(`- Reasoning: ${d.reasoning}`);
+            if (d.uncertainty) lines.push(`- Uncertainty: ${d.uncertainty}`);
+            if (typeof d.score === 'number') lines.push(`- Sub-score: ${d.score}/10`);
+            lines.push('');
+
+            // Populate subScores directly
+            const camelKey = dim.key;
+            subScores[camelKey] = {
+                score: typeof d.score === 'number' ? d.score : 0,
+                evidence: Array.isArray(d.evidence) ? d.evidence : [],
+                reasoning: d.reasoning || '',
+                uncertainty: d.uncertainty || '',
+            };
+        }
+        if (sad.overall) {
+            lines.push('## OVERALL');
+            if (sad.overall.composition) lines.push(`- Composition: ${sad.overall.composition}`);
+            if (typeof sad.overall.finalScore === 'number') lines.push(`- Final score: ${sad.overall.finalScore}/10`);
+            if (sad.overall.confidence) lines.push(`- Confidence: ${sad.overall.confidence}`);
+            if (sad.overall.topRisk) lines.push(`- Top risk to thesis: ${sad.overall.topRisk}`);
+        }
+
+        result.structuredAnalysis = lines.join('\n');
+        result.structuredAnalysisData = sad;
+        if (Object.keys(subScores).length > 0) {
+            result.subScores = subScores;
+        }
+        if (sad.overall?.composition) result.compositionFormula = sad.overall.composition;
+        if (sad.overall?.confidence) result.modelConfidenceLevel = sad.overall.confidence;
+        result.meta = result.meta || {};
+        result.meta.structuredOutputParsed = true;
+        result.meta.structuredOutputWarnings = [];
+
+        return result;
+    }
+
+    // --- LEGACY PATH: Parse from markdown string (fallback) ---
     const structuredText = resolveStructuredAnalysisText(result, responseContent);
     const structured = extractStructuredOutput(structuredText);
     result.meta = result.meta || {};

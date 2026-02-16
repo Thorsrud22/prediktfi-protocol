@@ -454,16 +454,16 @@ Current Time: ${new Date().toISOString()}
 
 Idea Data:
 ${JSON.stringify(
-  {
-    description: idea.description,
-    projectType: idea.projectType,
-    mvpScope: idea.mvpScope,
-    successDefinition: idea.successDefinition,
-    targetTVL: idea.targetTVL,
-  },
-  null,
-  2
-)}
+    {
+      description: idea.description,
+      projectType: idea.projectType,
+      mvpScope: idea.mvpScope,
+      successDefinition: idea.successDefinition,
+      targetTVL: idea.targetTVL,
+    },
+    null,
+    2
+  )}
 
 Evidence IDs available for citation:
 ${evidenceIdHints || "- none"}
@@ -491,7 +491,7 @@ ${dexScreenerContext}
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
     const response = await openai().chat.completions.create(params as any, { signal: controller.signal });
     clearTimeout(timeoutId);
 
