@@ -1,6 +1,15 @@
 // Helper functions for mathematical operations
 
 /**
+ * Clamps a value to the range [0, 1]
+ * @param value - Value to clamp
+ * @returns Value clamped between 0 and 1
+ */
+export function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+/**
  * Clamp a value between min and max bounds
  */
 export function clamp(value: number, min: number, max: number): number {

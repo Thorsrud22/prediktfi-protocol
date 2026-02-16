@@ -17,7 +17,7 @@ export interface PriceSeries {
   candles: Candle[];
   source: string;
   fetchedAt: number;
-  quality: number; // 0 to 1
+  quality: number; // Data quality score: 0 (poor) to 1 (excellent)
 }
 
 export interface TechnicalSummary {
